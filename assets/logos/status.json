@@ -12,8 +12,10 @@
     "bytes": 269
   },
   "kairos-longevity": {
-    "ok": false,
-    "error": "HTTP Error 403: Forbidden"
+    "ok": true,
+    "orig": "kairos-longevity.png",
+    "thumb": "kairos-longevity.png",
+    "bytes": 14654
   },
   "neolife": {
     "ok": true,
@@ -52,8 +54,10 @@
     "bytes": 139985
   },
   "tiara-health": {
-    "ok": false,
-    "error": "HTTP Error 403: Forbidden"
+    "ok": true,
+    "orig": "tiara-health.svg",
+    "thumb": "tiara-health.svg",
+    "bytes": 3864
   },
   "arvila-magna": {
     "ok": true,
