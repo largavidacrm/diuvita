@@ -25,7 +25,11 @@ def ext_for(url, ctype):
 for slug, info in logos.items():
     url = info["url"]
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; DiuvitaBot/1.0; +https://diuvita.com)"})
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "Accept": "image/avif,image/webp,image/svg+xml,image/*,*/*;q=0.8",
+            "Referer": url.split("/wp-content")[0] + "/" if "/wp-content" in url else url,
+        })
         resp = urllib.request.urlopen(req, timeout=20)
         data = resp.read()
         ctype = resp.headers.get("Content-Type", "")
