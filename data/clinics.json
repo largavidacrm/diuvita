@@ -1,0 +1,293 @@
+[
+  {
+    "slug": "monarka-clinic",
+    "name": "Monarka Clinic",
+    "city": "Barcelona",
+    "address": "Paseo de Gracia 130, 08008 Barcelona",
+    "web": "https://monarkaclinic.com",
+    "summary": "Clínica de longevidad y medicina integrativa en Paseo de Gracia. Combina neurolongevidad y medicina de precisión con una Unidad del Dolor y Neurocirugía mínimamente invasiva y psicología humanista, bajo un modelo médico 360º con más de 20 especialistas.",
+    "services": [
+      "Neurolongevidad y medicina de precisión",
+      "Unidad del Dolor y Neurocirugía",
+      "Psicología humanista",
+      "Salud de la mujer (lipedema, suelo pélvico)",
+      "Medicina del sueño",
+      "Medicina deportiva"
+    ],
+    "tech": "IHHT (hipoxia intermitente), calorimetría indirecta, INDIBA ginecológico, plasmaféresis",
+    "status": "publicada",
+    "country": "España",
+    "specialties": [
+      "Neurolongevidad",
+      "Dolor y neurocirugía",
+      "Salud de la mujer",
+      "Medicina del sueño",
+      "Psicología"
+    ]
+  },
+  {
+    "slug": "clinica-neleva",
+    "name": "Clínica Neleva",
+    "city": "Madrid",
+    "address": "C/ Claudio Coello 19, Madrid",
+    "web": "https://clinicaneleva.com",
+    "summary": "Centro de medicina preventiva para la longevidad saludable en el barrio de Salamanca, con 700 m² y metodología propia: chequeo inicial de 3 horas, plan personalizado y seguimiento semestral. Más de 15 años de experiencia.",
+    "services": [
+      "Chequeos personalizados de longevidad",
+      "Diagnóstico avanzado con biomarcadores",
+      "Medicina de precisión",
+      "Programas corporativos"
+    ],
+    "tech": "Panel de más de 18.000 pruebas con laboratorios españoles de referencia",
+    "status": "publicada",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores",
+      "Medicina de precisión"
+    ]
+  },
+  {
+    "slug": "kairos-longevity",
+    "name": "Kairos Longevity Clinic",
+    "city": "Madrid",
+    "address": "C/ Alonso Cano 4, Madrid",
+    "web": "https://kairoslongevity.com",
+    "summary": "Clínica de longevidad con enfoque en medicina funcional e integrativa: trabaja a nivel epigenético, molecular y celular combinando diagnóstico de precisión con terapias regenerativas.",
+    "services": [
+      "Medicina interna integrativa",
+      "Nutrición y microbiota",
+      "Medicina del sueño",
+      "Ginecología regenerativa",
+      "Medicina estética regenerativa"
+    ],
+    "tech": "Terapias de hipoxia, infrarrojos, péptidos",
+    "status": "publicada",
+    "country": "España",
+    "specialties": [
+      "Medicina funcional",
+      "Nutrición y microbiota",
+      "Medicina del sueño",
+      "Medicina regenerativa",
+      "Salud de la mujer"
+    ]
+  },
+  {
+    "slug": "neolife",
+    "name": "Neolife",
+    "city": "Madrid",
+    "cities_extra": [
+      "Marbella",
+      "Barcelona"
+    ],
+    "address": "C/ Velázquez 14, Madrid · C/ Calvario 6, Marbella · C/ Ferrán Agulló 8, Barcelona",
+    "web": "https://www.neolifesalud.com",
+    "summary": "Grupo médico pionero de la medicina de longevidad en España, con más de 15 años y tres sedes. Programas de seguimiento basados en biomarcadores de edad biológica y Age Management Medicine.",
+    "services": [
+      "Chequeos preventivos de biomarcadores",
+      "Programas de seguimiento personalizados",
+      "Terapia hormonal (menopausia y andropausia)",
+      "Microbiota intestinal",
+      "Nutrición avanzada",
+      "Programas corporativos"
+    ],
+    "tech": "Paneles de biomarcadores cardiovasculares, metabólicos, neurológicos y óseos",
+    "status": "publicada",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores",
+      "Salud hormonal",
+      "Nutrición y microbiota"
+    ]
+  },
+  {
+    "slug": "age-reversal",
+    "name": "Age Reversal",
+    "city": "Barcelona",
+    "cities_extra": [
+      "Mallorca"
+    ],
+    "address": "Barcelona y Mallorca",
+    "web": "https://agereversal.es",
+    "summary": "Clínica de medicina de longevidad y precisión con sedes en Barcelona y Mallorca, centrada en evaluaciones exhaustivas de salud y protocolos personalizados de optimización.",
+    "services": [
+      "Evaluaciones completas de salud",
+      "Protocolos personalizados de longevidad",
+      "Medicina preventiva y de precisión"
+    ],
+    "tech": "Evaluaciones con más de 1.000 biomarcadores",
+    "status": "publicada",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores",
+      "Medicina de precisión"
+    ]
+  },
+  {
+    "slug": "arvila-magna",
+    "name": "Clínica Arvila Magna",
+    "city": "Barcelona",
+    "address": "Barcelona",
+    "web": "https://arvilamagna.com",
+    "summary": "Clínica con área específica de longevidad dentro de una oferta médica y estética más amplia. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Área de longevidad",
+      "Medicina preventiva"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral"
+    ]
+  },
+  {
+    "slug": "turo-park-clinics",
+    "name": "Turó Park Clinics",
+    "city": "Barcelona",
+    "address": "Barcelona",
+    "web": "https://www.turoparkmedical.com",
+    "summary": "Clínica internacional multiespecialidad de Barcelona con programas de longevidad y chequeo preventivo, orientada también a paciente expatriado. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Programas de longevidad",
+      "Chequeos preventivos",
+      "Multiespecialidad"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores",
+      "Longevidad integral"
+    ]
+  },
+  {
+    "slug": "longevitek",
+    "name": "Longevitek",
+    "city": "Barcelona",
+    "address": "Barcelona",
+    "web": "https://longevitek.com",
+    "summary": "Centro de longevidad en Barcelona. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Medicina de longevidad"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral"
+    ]
+  },
+  {
+    "slug": "progevita",
+    "name": "Progevita",
+    "city": "Valencia",
+    "cities_extra": [
+      "Madrid"
+    ],
+    "address": "Valencia y Madrid",
+    "web": "https://progevita.com",
+    "summary": "Centros de longevidad en Valencia y Madrid con programas de medicina preventiva y evaluación de edad biológica. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Programas de longevidad",
+      "Medicina preventiva"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores"
+    ]
+  },
+  {
+    "slug": "sensabell",
+    "name": "Sensabell",
+    "city": "Valencia",
+    "address": "Valencia",
+    "web": "https://sensabell.com",
+    "summary": "Clínica con unidad de longevidad y consulta de medicina preventiva en Valencia. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Unidad de longevidad",
+      "Medicina preventiva"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Medicina de precisión"
+    ]
+  },
+  {
+    "slug": "longevidad-y-salud-360",
+    "name": "Longevidad y Salud 360",
+    "city": "Sevilla",
+    "address": "Sevilla",
+    "web": "https://www.longevidadysalud.com",
+    "summary": "Clínica de longevidad y medicina antienvejecimiento en Sevilla con enfoque de salud 360º. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Medicina de longevidad",
+      "Medicina antienvejecimiento"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral"
+    ]
+  },
+  {
+    "slug": "longlife-clinic",
+    "name": "LongLife Clinic",
+    "city": "Marbella",
+    "address": "Marbella",
+    "web": "https://longlifeclinic.com",
+    "summary": "Clínica de Marbella con programa específico de longevidad y antiaging orientado a paciente nacional e internacional. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Programa de longevidad",
+      "Medicina antiaging"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral",
+      "Medicina regenerativa"
+    ]
+  },
+  {
+    "slug": "tiara-health",
+    "name": "Tiara Health",
+    "city": "Marbella",
+    "address": "Marbella",
+    "web": "https://www.tiarahealth.com",
+    "summary": "Clínica de antienvejecimiento y bienestar en Marbella. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Medicina antienvejecimiento",
+      "Bienestar y prevención"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral",
+      "Medicina regenerativa"
+    ]
+  },
+  {
+    "slug": "bl-longevity",
+    "name": "BL Longevity",
+    "city": "Madrid",
+    "address": "Madrid",
+    "web": "https://bllongevity.com",
+    "summary": "Clínica de longevidad y medicina regenerativa en Madrid, con tratamientos personalizados antiedad. Ficha preliminar pendiente de ampliar.",
+    "services": [
+      "Medicina regenerativa",
+      "Tratamientos antiedad personalizados"
+    ],
+    "tech": "",
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Medicina regenerativa"
+    ]
+  }
+]
