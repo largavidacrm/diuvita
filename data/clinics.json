@@ -144,16 +144,17 @@
     "slug": "turo-park-clinics",
     "name": "Turó Park Clinics",
     "city": "Barcelona",
-    "address": "Barcelona",
+    "address": "Plaça de Sant Gregori Taumaturg 5, 08021 Barcelona",
     "web": "https://www.turoparkmedical.com",
-    "summary": "Clínica internacional multiespecialidad de Barcelona con programas de longevidad y chequeo preventivo, orientada también a paciente expatriado. Ficha preliminar pendiente de ampliar.",
+    "summary": "Clínica internacional multiespecialidad del Turó Park con programas de longevidad y chequeos preventivos (well-aging). Más de 70 médicos en 25+ especialidades y atención en 7 idiomas, con fuerte orientación a paciente internacional; abierta 7 días a la semana.",
     "services": [
-      "Programas de longevidad",
-      "Chequeos preventivos",
-      "Multiespecialidad"
+      "Programas de longevidad y well-aging",
+      "Chequeos preventivos completos",
+      "+25 especialidades médicas",
+      "Laboratorio clínico propio y consultas online"
     ],
-    "tech": "",
-    "status": "preliminar",
+    "tech": "Laboratorio clínico propio",
+    "status": "publicada",
     "country": "España",
     "specialties": [
       "Chequeos y biomarcadores",
@@ -161,38 +162,21 @@
     ]
   },
   {
-    "slug": "longevitek",
-    "name": "Longevitek",
-    "city": "Barcelona",
-    "address": "Barcelona",
-    "web": "https://longevitek.com",
-    "summary": "Centro de longevidad en Barcelona. Ficha preliminar pendiente de ampliar.",
-    "services": [
-      "Medicina de longevidad"
-    ],
-    "tech": "",
-    "status": "preliminar",
-    "country": "España",
-    "specialties": [
-      "Longevidad integral"
-    ]
-  },
-  {
     "slug": "progevita",
     "name": "Progevita",
     "city": "Valencia",
-    "cities_extra": [
-      "Madrid"
-    ],
-    "address": "Valencia y Madrid",
+    "address": "Cofrentes (Valencia)",
     "web": "https://progevita.com",
-    "summary": "Centros de longevidad en Valencia y Madrid con programas de medicina preventiva y evaluación de edad biológica. Ficha preliminar pendiente de ampliar.",
+    "summary": "Centro de longevidad dirigido por el Dr. Miguel Ángel Fernández Torán (más de 30 años de experiencia), clasificado #4 mundial y #1 en relación calidad-precio en World Longevity Clinics 2026. Programas residenciales en entorno natural con seguimiento por biomarcadores, desde ~1.470€.",
     "services": [
-      "Programas de longevidad",
-      "Medicina preventiva"
+      "Programas residenciales de longevidad con biomarcadores",
+      "Programa antiinflamatorio (inflammaging)",
+      "Salud hormonal femenina (Women's Vital Path)",
+      "Detox y ayuno supervisado",
+      "Programas para directivos (Leadership Path)"
     ],
-    "tech": "",
-    "status": "preliminar",
+    "tech": "Seguimiento por biomarcadores de longevidad",
+    "status": "publicada",
     "country": "España",
     "specialties": [
       "Chequeos y biomarcadores"
@@ -220,37 +204,45 @@
     "slug": "longevidad-y-salud-360",
     "name": "Longevidad y Salud 360",
     "city": "Sevilla",
-    "address": "Sevilla",
+    "address": "Sevilla (presencial y online)",
     "web": "https://www.longevidadysalud.com",
-    "summary": "Clínica de longevidad y medicina antienvejecimiento en Sevilla con enfoque de salud 360º. Ficha preliminar pendiente de ampliar.",
+    "summary": "Clínica de medicina antienvejecimiento centrada en prevenir el deterioro funcional: edad biológica por biomarcadores, estudio epigenético y de telómeros y estudio genético preventivo. Filosofía de hábitos primero, medicación solo cuando aporta valor.",
     "services": [
-      "Medicina de longevidad",
-      "Medicina antienvejecimiento"
+      "Edad biológica por biomarcadores",
+      "Estudio epigenético y de telómeros",
+      "Estudio genético preventivo",
+      "Optimización metabólica y hormonal",
+      "Plan neuroprotector (memoria y foco)",
+      "Sueroterapia"
     ],
-    "tech": "",
-    "status": "preliminar",
+    "tech": "Epigenética, telómeros y genética preventiva",
+    "status": "publicada",
     "country": "España",
     "specialties": [
-      "Longevidad integral"
+      "Chequeos y biomarcadores",
+      "Neurolongevidad",
+      "Salud hormonal"
     ]
   },
   {
     "slug": "longlife-clinic",
     "name": "LongLife Clinic",
     "city": "Marbella",
-    "address": "Marbella",
+    "address": "Marbella (también videoconsulta)",
     "web": "https://longlifeclinic.com",
-    "summary": "Clínica de Marbella con programa específico de longevidad y antiaging orientado a paciente nacional e internacional. Ficha preliminar pendiente de ampliar.",
+    "summary": "Clínica de medicina preventiva y antiaging dirigida por el Dr. Jean Garant (SEMAL y ACAM, en ejercicio desde 1991). Programa de longevidad en 4 fases: diagnóstico con más de 100 biomarcadores, plan personalizado, tratamientos y optimización continua con retest a 90 días.",
     "services": [
-      "Programa de longevidad",
-      "Medicina antiaging"
+      "Análisis de 100+ biomarcadores (inflamación, NAD+, HOMA-IR)",
+      "Edad biológica epigenética (EpiAge)",
+      "Análisis genético",
+      "Optimización mitocondrial y medicina de precisión"
     ],
-    "tech": "",
-    "status": "preliminar",
+    "tech": "EpiAge, panel de 100+ biomarcadores, magnesio intracelular (RBC)",
+    "status": "publicada",
     "country": "España",
     "specialties": [
-      "Longevidad integral",
-      "Medicina regenerativa"
+      "Chequeos y biomarcadores",
+      "Medicina de precisión"
     ]
   },
   {
