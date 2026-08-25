@@ -54,6 +54,20 @@ with open(os.path.join(ROOT, "data", "clinics.json"), encoding="utf-8") as f:
     clinics = json.load(f)
 clinics = [c for c in clinics if c.get("status") in ("publicada", "preliminar")]
 
+# logos aprobados (descargados por GitHub Actions en assets/logos/orig)
+LOGOS_FILE = os.path.join(ROOT, "data", "logos.json")
+ORIG_DIR = os.path.join(ROOT, "assets", "logos", "orig")
+logo_files = {}
+if os.path.exists(LOGOS_FILE) and os.path.isdir(ORIG_DIR):
+    _logos = json.load(open(LOGOS_FILE, encoding="utf-8"))
+    for _slug, _info in _logos.items():
+        if not _info.get("aprobado"):
+            continue
+        for _fn in os.listdir(ORIG_DIR):
+            if os.path.splitext(_fn)[0] == _slug:
+                logo_files[_slug] = _fn
+                break
+
 cities = {}
 for c in clinics:
     cities.setdefault(c["city"], []).append(c)
@@ -101,6 +115,8 @@ header.site nav a{margin-left:1.2rem;color:var(--muted);font-size:.95rem}
 .tags{display:flex;flex-wrap:wrap;gap:.35rem}
 .tag{font-size:.74rem;padding:.16rem .6rem;border-radius:99px;background:var(--wash);color:var(--green-deep)}
 .badge{display:inline-block;font-size:.7rem;padding:.14rem .5rem;border-radius:99px;background:#f0e9da;color:var(--muted);margin-left:.4rem;vertical-align:middle}
+.clogo{max-height:36px;max-width:170px;object-fit:contain;align-self:flex-start;margin-bottom:.2rem}
+.flogo{max-height:52px;max-width:220px;margin-bottom:.8rem;display:block}
 .hidden{display:none}
 /* FICHA */
 .ficha{max-width:760px;margin:0 auto;padding:2.5rem 5vw 4rem}
@@ -146,11 +162,17 @@ def attrs(c):
     all_cities = "|".join([c["city"]] + extra)
     return f'data-city="{all_cities}" data-country="{c["country"]}" data-spec="{"|".join(c["specialties"])}" data-text="{c["name"].lower()} {c["city"].lower()} {" ".join(c["specialties"]).lower()}"'
 
+def logo_img(c, cls="clogo"):
+    fn = logo_files.get(c["slug"])
+    if not fn:
+        return ""
+    return f'<img class="{cls}" src="/assets/logos/{fn}" alt="Logo de {c["name"]}" loading="lazy">'
+
 def card(c):
     badge = ' <span class="badge">ficha preliminar</span>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     tags = "".join(f'<span class="tag">{s}</span>' for s in c["specialties"])
-    return f'''<div class="card" {attrs(c)}><span class="loc">{c["city"]}{extra} · {c["country"]}</span>
+    return f'''<div class="card" {attrs(c)}>{logo_img(c)}<span class="loc">{c["city"]}{extra} · {c["country"]}</span>
 <h3><a href="/clinica/{c["slug"]}/">{c["name"]}</a>{badge}</h3>
 <p>{c["summary"][:150]}{"…" if len(c["summary"])>150 else ""}</p>
 <div class="tags">{tags}</div></div>'''
@@ -228,7 +250,7 @@ def ficha(c):
     }, ensure_ascii=False) + "</script>"
     return head(f'{c["name"]} — clínica de longevidad en {c["city"]} | {SITE}', c["summary"][:150], f'/clinica/{c["slug"]}/', ld) + f"""
 <div class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/ciudad/{slugify(c["city"])}/">{c["city"]}</a> → {c["name"]}</p>
-<h1>{c["name"]}</h1><p class="loc">{c["city"]}{extra} · {c["country"]} · {c["address"]}</p>
+{logo_img(c, "clogo flogo")}<h1>{c["name"]}</h1><p class="loc">{c["city"]}{extra} · {c["country"]} · {c["address"]}</p>
 <div class="tags">{tags}</div>
 <p class="summary">{c["summary"]}</p>
 <h2>Servicios</h2><ul>{servicios}</ul>
@@ -297,6 +319,11 @@ for city in cities:
     d = os.path.join(DIST, "ciudad", slugify(city))
     os.makedirs(d)
     open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(ciudad_page(city))
+if logo_files:
+    ldir = os.path.join(DIST, "assets", "logos")
+    os.makedirs(ldir)
+    for _slug, _fn in logo_files.items():
+        shutil.copy(os.path.join(ORIG_DIR, _fn), os.path.join(ldir, _fn))
 os.makedirs(os.path.join(DIST, "blog"))
 open(os.path.join(DIST, "blog", "index.html"), "w", encoding="utf-8").write(blog_index())
 for p in posts:
