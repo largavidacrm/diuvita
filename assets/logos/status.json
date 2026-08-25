@@ -1,0 +1,76 @@
+{
+  "monarka-clinic": {
+    "ok": true,
+    "orig": "monarka-clinic.webp",
+    "thumb": "monarka-clinic.png",
+    "bytes": 5694
+  },
+  "clinica-neleva": {
+    "ok": true,
+    "orig": "clinica-neleva.png",
+    "thumb": "clinica-neleva.png",
+    "bytes": 269
+  },
+  "kairos-longevity": {
+    "ok": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  "neolife": {
+    "ok": true,
+    "orig": "neolife.png",
+    "thumb": "neolife.png",
+    "bytes": 87427
+  },
+  "age-reversal": {
+    "ok": true,
+    "orig": "age-reversal.png",
+    "thumb": "age-reversal.png",
+    "bytes": 931503
+  },
+  "turo-park-clinics": {
+    "ok": true,
+    "orig": "turo-park-clinics.png",
+    "thumb": "turo-park-clinics.png",
+    "bytes": 14083
+  },
+  "progevita": {
+    "ok": true,
+    "orig": "progevita.png",
+    "thumb": "progevita.png",
+    "bytes": 5125
+  },
+  "longlife-clinic": {
+    "ok": true,
+    "orig": "longlife-clinic.png",
+    "thumb": "longlife-clinic.png",
+    "bytes": 1353
+  },
+  "longevidad-y-salud-360": {
+    "ok": true,
+    "orig": "longevidad-y-salud-360.png",
+    "thumb": "longevidad-y-salud-360.png",
+    "bytes": 139985
+  },
+  "tiara-health": {
+    "ok": false,
+    "error": "HTTP Error 403: Forbidden"
+  },
+  "arvila-magna": {
+    "ok": true,
+    "orig": "arvila-magna.png",
+    "thumb": "arvila-magna.png",
+    "bytes": 2389
+  },
+  "sensabell": {
+    "ok": true,
+    "orig": "sensabell.jpg",
+    "thumb": "sensabell.png",
+    "bytes": 1268
+  },
+  "bl-longevity": {
+    "ok": true,
+    "orig": "bl-longevity.png",
+    "thumb": "bl-longevity.png",
+    "bytes": 1282
+  }
+}
