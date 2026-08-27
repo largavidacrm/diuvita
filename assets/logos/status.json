@@ -12,10 +12,8 @@
     "bytes": 269
   },
   "kairos-longevity": {
-    "ok": true,
-    "orig": "kairos-longevity.png",
-    "thumb": "kairos-longevity.png",
-    "bytes": 14654
+    "ok": false,
+    "skipped": "no aprobado"
   },
   "neolife": {
     "ok": true,
@@ -66,10 +64,8 @@
     "bytes": 2389
   },
   "sensabell": {
-    "ok": true,
-    "orig": "sensabell.jpg",
-    "thumb": "sensabell.png",
-    "bytes": 1268
+    "ok": false,
+    "skipped": "no aprobado"
   },
   "bl-longevity": {
     "ok": true,
