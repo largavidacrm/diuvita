@@ -23,6 +23,9 @@ def ext_for(url, ctype):
     return ".png"
 
 for slug, info in logos.items():
+    if not info.get("aprobado"):
+        status[slug] = {"ok": False, "skipped": "no aprobado"}
+        continue
     url = info["url"]
     try:
         req = urllib.request.Request(url, headers={

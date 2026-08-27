@@ -139,6 +139,9 @@ header.site nav a{margin-left:1.2rem;color:var(--muted);font-size:.95rem}
 .ficha .summary{font-size:1.13rem;margin-bottom:1.5rem}
 .ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.2rem;margin:1.5rem 0 .5rem}
 .ficha ul{padding-left:1.2rem;color:var(--muted)}
+.contacto{list-style:none;padding-left:0 !important}
+.contacto li{margin:.25rem 0}
+.contacto b{color:var(--ink);font-weight:600}
 .ficha .visit{display:inline-block;margin-top:2rem;background:var(--green);color:#fff;padding:.65rem 1.4rem;border-radius:10px;font-weight:600}
 .ficha .visit:hover{text-decoration:none;background:var(--green-deep)}
 .note{background:#f2ecdf;border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;font-size:.9rem;color:var(--muted);margin-top:2.2rem}
@@ -256,24 +259,60 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </div>{JS}""" + FOOTER
 
 # --- fichas ---
+def contacto_block(c):
+    """Bloque de contacto: solo campos verificados presentes en la ficha."""
+    items = []
+    if c.get("email"):
+        items.append(f'<li><b>Email:</b> <a href="mailto:{c["email"]}">{c["email"]}</a></li>')
+    if c.get("telefono"):
+        tel = c["telefono"]
+        items.append(f'<li><b>Tel\u00e9fono:</b> <a href="tel:{tel.replace(" ", "")}">{tel}</a></li>')
+    if c.get("instagram"):
+        ig = c["instagram"]
+        url = ig if ig.startswith("http") else f"https://www.instagram.com/{ig.lstrip('@')}/"
+        handle = ig if not ig.startswith("http") else "@" + ig.rstrip("/").rsplit("/", 1)[-1]
+        items.append(f'<li><b>Instagram:</b> <a href="{url}" rel="nofollow noopener" target="_blank">{handle}</a></li>')
+    if not items:
+        return ""
+    return '<h2>Contacto</h2><ul class="contacto">' + "".join(items) + "</ul>"
+
 def ficha(c):
     servicios = "".join(f"<li>{s}</li>" for s in c["services"])
     tags = "".join(f'<span class="tag">{s}</span>' for s in c["specialties"])
     tech = f'<h2>Tecnología destacada</h2><p style="color:var(--muted)">{c["tech"]}</p>' if c.get("tech") else ""
+    unidades = ""
+    if c.get("unidades"):
+        unidades = "<h2>Unidades y áreas clínicas</h2><ul>" + "".join(f"<li>{u}</li>" for u in c["unidades"]) + "</ul>"
+    equipo = ""
+    if c.get("profesionales"):
+        equipo = "<h2>Equipo</h2><ul>" + "".join(f"<li>{p}</li>" for p in c["profesionales"]) + "</ul>"
+    contacto = contacto_block(c)
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
-    ld = '<script type="application/ld+json">' + json.dumps({
+    ld_obj = {
         "@context": "https://schema.org", "@type": "MedicalClinic",
         "name": c["name"], "url": c["web"], "address": c["address"],
         "medicalSpecialty": c["specialties"], "description": c["summary"],
-    }, ensure_ascii=False) + "</script>"
+    }
+    _lf = logo_files.get(c["slug"]) or thumb_files.get(c["slug"])
+    if _lf:
+        _ls = "orig" if logo_files.get(c["slug"]) else "thumb"
+        ld_obj["logo"] = f"{BASE}/assets/logos/{_ls}/{_lf}"
+    if c.get("email"):
+        ld_obj["email"] = c["email"]
+    if c.get("telefono"):
+        ld_obj["telephone"] = c["telefono"]
+    ld = '<script type="application/ld+json">' + json.dumps(ld_obj, ensure_ascii=False) + "</script>"
     return head(f'{c["name"]} — clínica de longevidad en {c["city"]} | {SITE}', c["summary"][:150], f'/clinica/{c["slug"]}/', ld) + f"""
 <div class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/ciudad/{slugify(c["city"])}/">{c["city"]}</a> → {c["name"]}</p>
 {logo_img(c, ficha=True)}<h1>{c["name"]}</h1><p class="loc">{c["city"]}{extra} · {c["country"]} · {c["address"]}</p>
 <div class="tags">{tags}</div>
 <p class="summary">{c["summary"]}</p>
 <h2>Servicios</h2><ul>{servicios}</ul>
+{unidades}
 {tech}
+{equipo}
+{contacto}
 <a class="visit" href="{c["web"]}" rel="nofollow noopener" target="_blank">Visitar web oficial ↗</a>
 {prelim}</div>""" + FOOTER
 
