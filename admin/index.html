@@ -191,6 +191,10 @@
               <dt>Fuente</dt>
               <dd id="reviewCandidateSource">—</dd>
             </div>
+            <div class="detail-wide">
+              <dt>Coincidencias en Diuvita</dt>
+              <dd id="reviewCandidateDuplicates">—</dd>
+            </div>
             <div>
               <dt>Servicios detectados</dt>
               <dd id="reviewCandidateServices">—</dd>
@@ -477,6 +481,28 @@
       }).join("") + "</ul>";
     }
 
+    function duplicateReason(reason) {
+      var reasons = {
+        same_website: "misma web",
+        same_name_city: "mismo nombre y ciudad",
+        same_name_country: "mismo nombre y país",
+        same_name_slug: "nombre muy parecido"
+      };
+      return reasons[reason] || "parecido";
+    }
+
+    function setDuplicateMatches(matches, probability) {
+      if (!Array.isArray(matches) || !matches.length) {
+        el("reviewCandidateDuplicates").textContent = "—";
+        return;
+      }
+      el("reviewCandidateDuplicates").innerHTML = '<ul class="compact-list">' + matches.map(function (match) {
+        var label = [match.name, match.city, match.country].filter(Boolean).join(" · ");
+        var detail = duplicateReason(match.reason) + " · " + pct(match.duplicate_probability || probability);
+        return "<li><strong>" + html(label || match.slug) + "</strong><small>" + html(detail) + "</small></li>";
+      }).join("") + "</ul>";
+    }
+
     function renderClinics() {
       var clinicsBody = el("clinicsBody");
       var query = trimmed("clinicSearch").toLowerCase();
@@ -553,6 +579,8 @@
       var website = candidate.website || candidate.web;
       var source = candidate.source_url || payload.candidate_source_url || website;
       var confidence = candidate.discovery_confidence || candidate.confidence;
+      var duplicateProbability = Number(payload.duplicate_probability || 0);
+      var blocksDraft = duplicateProbability >= 0.9;
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
       el("reviewEditorMeta").textContent = activeReview.review_type + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
@@ -562,8 +590,11 @@
       setText("reviewCandidateConfidence", confidence == null ? "" : pct(confidence));
       setLink("reviewCandidateWebsite", website);
       setLink("reviewCandidateSource", source);
+      setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
       setInlineList("reviewCandidateServices", candidateList(candidate, "services"));
       setInlineList("reviewCandidateProfessionals", candidateList(candidate, "profesionales", "professionals"));
+      el("reviewCreateDraftBtn").disabled = blocksDraft;
+      el("reviewCreateDraftBtn").textContent = blocksDraft ? "Duplicado probable" : "Crear borrador";
       setInput("reviewResolutionNote", "");
       show(el("reviewEditor"), true);
       el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
