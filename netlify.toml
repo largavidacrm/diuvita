@@ -2,9 +2,6 @@
   command = "python3 scripts/validate_data.py && python3 build.py"
   publish = "dist"
 
-[functions]
-  directory = "netlify/functions"
-
 [[redirects]]
   from = "https://diuvita.com/*"
   to = "https://www.diuvita.com/:splat"

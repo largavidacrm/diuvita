@@ -55,6 +55,7 @@ Apply a later migration:
 scripts/apply_supabase_sql.sh supabase/migrations/0002_admin_access.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0003_admin_clinic_editing.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0004_public_site_feed.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0005_private_rebuild_hook.sql
 ```
 
 Allow a first admin email after creating the Auth user in Supabase:
@@ -111,7 +112,7 @@ Local values can live in `.env`, which is ignored by Git. The publishable key ca
 
 `public.public_clinics_for_site` returns only publishable clinic data (`published` and `preliminary`) for the static site build. In Netlify, set `DIUVITA_DATA_SOURCE=supabase` so `build.py` reads this feed when generating the public pages.
 
-The admin panel can request a rebuild through `/.netlify/functions/rebuild-site`. That function verifies the Supabase session is an authorized admin before using `NETLIFY_BUILD_HOOK_URL`.
+`supabase/migrations/0005_private_rebuild_hook.sql` adds a private Supabase setting and trigger. Once the build hook URL is stored in `private.app_settings`, public clinic changes ask Netlify to rebuild the static site. The hook URL is not committed to Git and is not exposed to the browser.
 
 ## Runtime principle
 
