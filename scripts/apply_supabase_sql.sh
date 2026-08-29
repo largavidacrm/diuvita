@@ -3,6 +3,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$ROOT/.env"
+SQL_FILE="${1:-}"
+
+if [ -z "$SQL_FILE" ] || [ ! -f "$SQL_FILE" ]; then
+  echo "Usage: scripts/apply_supabase_sql.sh path/to/file.sql" >&2
+  exit 1
+fi
 
 if [ ! -f "$ENV_FILE" ]; then
   echo "Missing .env." >&2
@@ -66,9 +72,4 @@ export PGSSLMODE=require
   -d "$SUPABASE_DB_NAME" \
   -U "$SUPABASE_DB_USER" \
   -v ON_ERROR_STOP=1 \
-  -c "select count(*) as allowed_admin_emails from public.admin_users where active = true;" \
-  -c "select lower(u.email) as admin_email, u.email_confirmed_at is not null as email_confirmed from auth.users u join public.admin_users au on lower(au.email) = lower(u.email) where au.active = true order by admin_email;" \
-  -c "select count(*) as admin_clinic_edit_function from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_update_clinic';" \
-  -c "select status, count(*) from public.clinics group by status order by status;" \
-  -c "select count(*) as open_review_items from public.review_queue where status = 'open';" \
-  -c "select count(*) as queued_jobs from public.agent_jobs where status = 'queued';"
+  -f "$SQL_FILE"

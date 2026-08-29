@@ -76,6 +76,10 @@ Done in this repo now:
 
 - Add data validation before the static build.
 - Add a Supabase foundation migration.
+- Apply the Supabase foundation to the live project.
+- Add admin access controls in Supabase.
+- Add the first static `/admin` control center.
+- Add manual clinic editing in `/admin` with audit events and entity versions.
 - Add a seed exporter for the current clinic JSON.
 - Add this CTO roadmap.
 - Protect local secrets and generated files in `.gitignore`.
@@ -83,13 +87,11 @@ Done in this repo now:
 
 Next implementation steps:
 
-1. Push the foundation commit to GitHub once Daniel explicitly approves.
+1. Push the admin foundation commit to GitHub once Daniel explicitly approves.
 2. Confirm `.deploy/`, `.env*`, ZIPs and generated `dist/` are not committed.
-3. Apply `supabase/migrations/0001_agent_foundation.sql`.
-4. Import current clinics using `scripts/export_supabase_seed.py`.
-5. Add Netlify environment variables.
-6. Build a private `/admin` app with Supabase Auth.
-7. Add the first shadow-mode workflow: `DISCOVER_CLINIC`.
+3. Publish `/admin` once Daniel approves.
+4. Add the Supabase-to-public-site sync so manual edits can update `data/clinics.json`.
+5. Add the first shadow-mode workflow worker: `DISCOVER_CLINIC`.
 
 ## Phase 2: first autonomous loop
 
@@ -157,7 +159,7 @@ The first private admin should show:
 - Rollback links.
 - Human-lock controls.
 
-This is where Daniel supervises the machine instead of entering clinic data manually.
+This is where Daniel supervises the machine, corrects clinic data manually, approves exceptions and protects fields the AI should not overwrite.
 
 ## Access needed from Daniel
 

@@ -49,6 +49,26 @@ Check the imported foundation:
 scripts/check_supabase_foundation.sh
 ```
 
+Apply a later migration:
+
+```bash
+scripts/apply_supabase_sql.sh supabase/migrations/0002_admin_access.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0003_admin_clinic_editing.sql
+```
+
+Allow a first admin email after creating the Auth user in Supabase:
+
+```bash
+scripts/add_supabase_admin.sh daniel@example.com
+```
+
+Create and check the Auth user:
+
+```bash
+python3 scripts/create_supabase_auth_user.py daniel@example.com
+python3 scripts/check_supabase_auth_login.py daniel@example.com
+```
+
 If the direct database host does not resolve from this machine, use Supabase's Session pooler from the dashboard's green **Connect** button and set:
 
 ```text
@@ -81,6 +101,10 @@ OPENAI_API_KEY=
 `SUPABASE_SERVICE_ROLE_KEY` and the database password must never be exposed in browser code or committed to Git.
 
 Local values can live in `.env`, which is ignored by Git. The publishable key can be used in browser-side code only when row-level security policies are correct.
+
+## Manual clinic editing
+
+`/admin/` lets an authorized admin open a clinic, edit the main public fields and save the result to Supabase. The save path uses `public.admin_update_clinic`, which checks admin access, updates the clinic and records the change in `change_events` and `entity_versions`.
 
 ## Runtime principle
 

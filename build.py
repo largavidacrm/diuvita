@@ -10,8 +10,32 @@ DIST = os.path.join(ROOT, "dist")
 SITE = "Diuvita"
 TAGLINE = "La guía de las clínicas de longevidad"
 BASE = "https://www.diuvita.com"
+PUBLIC_ENV_DEFAULTS = {
+    "SUPABASE_URL": "https://twxhcmvzbpnrneywdece.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_IHIMbYQacziyL1GcU6Mdtw_7AQdaCWg",
+}
 
 import re
+
+def load_env_file():
+    values = {}
+    path = os.path.join(ROOT, ".env")
+    if not os.path.exists(path):
+        return values
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip().strip("\"'")
+    return values
+
+LOCAL_ENV = load_env_file()
+
+def public_env(key):
+    return os.environ.get(key) or LOCAL_ENV.get(key) or PUBLIC_ENV_DEFAULTS.get(key, "")
+
 def md_to_html(md):
     """Conversor markdown mínimo (sin dependencias, corre en Netlify build)."""
     out, paras = [], re.split(r"\n\s*\n", md.strip())
@@ -361,6 +385,22 @@ def blog_post(p):
 <div class="note">Contenido divulgativo: no sustituye la valoración de un profesional sanitario. Diuvita no emite recomendaciones médicas.</div>
 </div>""" + FOOTER
 
+def write_admin():
+    src = os.path.join(ROOT, "admin")
+    if not os.path.isdir(src):
+        return
+    dest = os.path.join(DIST, "admin")
+    os.makedirs(dest, exist_ok=True)
+    config = {
+        "supabaseUrl": public_env("SUPABASE_URL"),
+        "supabasePublishableKey": public_env("SUPABASE_PUBLISHABLE_KEY"),
+    }
+    config_json = json.dumps(config, ensure_ascii=False).replace("<", "\\u003c")
+    html = open(os.path.join(src, "index.html"), encoding="utf-8").read()
+    html = html.replace("__DIUVITA_ADMIN_CONFIG__", config_json)
+    open(os.path.join(dest, "index.html"), "w", encoding="utf-8").write(html)
+    shutil.copy(os.path.join(src, "admin.css"), os.path.join(dest, "admin.css"))
+
 # --- write ---
 if os.path.exists(DIST):
     shutil.rmtree(DIST)
@@ -389,6 +429,7 @@ for p in posts:
     d = os.path.join(DIST, "blog", p["slug"])
     os.makedirs(d)
     open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(blog_post(p))
+write_admin()
 
 # --- sitemap y robots ---
 urls = ["/", "/sobre/", "/blog/"]
