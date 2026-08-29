@@ -756,8 +756,9 @@
         .from("review_queue")
         .select("id, title, review_type, priority, status, payload, created_at")
         .eq("status", "open")
+        .order("priority", { ascending: true })
         .order("created_at", { ascending: false })
-        .limit(8);
+        .limit(30);
 
       var reviewsBody = el("reviewsBody");
       if (reviewRows.error || !reviewRows.data || reviewRows.data.length === 0) {
