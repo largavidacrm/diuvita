@@ -59,6 +59,7 @@ scripts/apply_supabase_sql.sh supabase/migrations/0005_private_rebuild_hook.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0006_shadow_discovery_queue.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0007_candidate_duplicate_hints.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0008_capture_candidate_sources.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0009_promote_candidate_sources_and_claims.sql
 ```
 
 Allow a first admin email after creating the Auth user in Supabase:
@@ -124,6 +125,8 @@ Local values can live in `.env`, which is ignored by Git. The publishable key ca
 `supabase/migrations/0007_candidate_duplicate_hints.sql` adds conservative duplicate hints. Candidates with the same website or a very similar name are still sent to review, but the review card shows likely existing matches and blocks draft creation for clear duplicates.
 
 `supabase/migrations/0008_capture_candidate_sources.sql` captures candidate source URLs as `source_records`, so every review proposal keeps an auditable evidence trail before it becomes a clinic draft.
+
+`supabase/migrations/0009_promote_candidate_sources_and_claims.sql` promotes that source when a review becomes a draft clinic and stores the candidate's main facts as `field_claims` with `verification_status = 'review'`.
 
 Local candidate batches can be submitted with:
 
