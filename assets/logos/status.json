@@ -72,5 +72,41 @@
     "orig": "bl-longevity.png",
     "thumb": "bl-longevity.png",
     "bytes": 1282
+  },
+  "quironsalud-valencia-longevidad": {
+    "ok": true,
+    "orig": "quironsalud-valencia-longevidad.png",
+    "thumb": "quironsalud-valencia-longevidad.png",
+    "bytes": 436
+  },
+  "olympia-longevidad": {
+    "ok": true,
+    "orig": "olympia-longevidad.png",
+    "thumb": "olympia-longevidad.png",
+    "bytes": 436
+  },
+  "the-long-game": {
+    "ok": true,
+    "orig": "the-long-game.jpg",
+    "thumb": "the-long-game.png",
+    "bytes": 2174
+  },
+  "mb-wellness-clinic": {
+    "ok": true,
+    "orig": "mb-wellness-clinic.png",
+    "thumb": "mb-wellness-clinic.png",
+    "bytes": 1841
+  },
+  "clinicas-ume": {
+    "ok": true,
+    "orig": "clinicas-ume.png",
+    "thumb": "clinicas-ume.png",
+    "bytes": 1186
+  },
+  "clinica-benzaquen": {
+    "ok": true,
+    "orig": "clinica-benzaquen.png",
+    "thumb": "clinica-benzaquen.png",
+    "bytes": 2116
   }
 }

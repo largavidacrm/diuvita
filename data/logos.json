@@ -54,5 +54,29 @@
   "bl-longevity": {
     "url": "https://www.google.com/s2/favicons?domain=bllongevity.com&sz=128",
     "aprobado": true
+  },
+  "quironsalud-valencia-longevidad": {
+    "url": "https://www.google.com/s2/favicons?domain=quironsalud.com&sz=128",
+    "aprobado": true
+  },
+  "olympia-longevidad": {
+    "url": "https://www.google.com/s2/favicons?domain=olympia.quironsalud.com&sz=128",
+    "aprobado": true
+  },
+  "the-long-game": {
+    "url": "https://www.google.com/s2/favicons?domain=thelongame.es&sz=128",
+    "aprobado": true
+  },
+  "mb-wellness-clinic": {
+    "url": "https://www.google.com/s2/favicons?domain=mbwellnessclinic.com&sz=128",
+    "aprobado": true
+  },
+  "clinicas-ume": {
+    "url": "https://www.google.com/s2/favicons?domain=clinicaume.com&sz=128",
+    "aprobado": true
+  },
+  "clinica-benzaquen": {
+    "url": "https://www.google.com/s2/favicons?domain=clinicabenzaquen.com&sz=128",
+    "aprobado": true
   }
 }
