@@ -82,6 +82,7 @@ Done in this repo now:
 - Add manual clinic editing in `/admin` with audit events and entity versions.
 - Add a public Supabase feed for the static site build.
 - Add a private Supabase-triggered Netlify rebuild path after public clinic edits.
+- Add a shadow discovery review path: candidates become review cards or unpublished drafts, never public pages.
 - Add a seed exporter for the current clinic JSON.
 - Add this CTO roadmap.
 - Protect local secrets and generated files in `.gitignore`.
@@ -89,11 +90,11 @@ Done in this repo now:
 
 Next implementation steps:
 
-1. Push the admin foundation commit to GitHub once Daniel explicitly approves.
-2. Confirm `.deploy/`, `.env*`, ZIPs and generated `dist/` are not committed.
-3. Set Netlify environment variables for Supabase build reads.
-4. Publish the Supabase-to-public-site sync.
-5. Add the first shadow-mode workflow worker: `DISCOVER_CLINIC`.
+1. Add the first real research provider for `DISCOVER_CLINIC`.
+2. Add source capture and structured field claims for candidate clinics.
+3. Add duplicate detection before creating review cards.
+4. Add a daily digest for review items and failed jobs.
+5. Measure the first 100-200 reviewed candidates before enabling any auto-publish path.
 
 ## Phase 2: first autonomous loop
 

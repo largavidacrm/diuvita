@@ -56,6 +56,7 @@ scripts/apply_supabase_sql.sh supabase/migrations/0002_admin_access.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0003_admin_clinic_editing.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0004_public_site_feed.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0005_private_rebuild_hook.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0006_shadow_discovery_queue.sql
 ```
 
 Allow a first admin email after creating the Auth user in Supabase:
@@ -113,6 +114,18 @@ Local values can live in `.env`, which is ignored by Git. The publishable key ca
 `public.public_clinics_for_site` returns only publishable clinic data (`published` and `preliminary`) for the static site build. In Netlify, set `DIUVITA_DATA_SOURCE=supabase` so `build.py` reads this feed when generating the public pages.
 
 `supabase/migrations/0005_private_rebuild_hook.sql` adds a private Supabase setting and trigger. Once the build hook URL is stored in `private.app_settings`, public clinic changes ask Netlify to rebuild the static site. The hook URL is not committed to Git and is not exposed to the browser.
+
+## Shadow discovery review
+
+`supabase/migrations/0006_shadow_discovery_queue.sql` adds the first safe workflow surface for `DISCOVER_CLINIC`. A discovery job can be picked, completed with candidate clinics and converted into `review_queue` cards. Review cards can then be dismissed or turned into draft clinic records. Drafts are not published on Diuvita until an admin manually edits their status to `published` or `preliminary`.
+
+Local candidate batches can be submitted with:
+
+```bash
+python3 scripts/submit_discovery_candidates.py --create-job "longevity clinic Spain" --candidates /path/to/candidates.json
+```
+
+The JSON file can be either a list or an object with a `candidates` list. Each item may include `name`, `website`, `city`, `country`, `summary`, `source_url`, `discovery_confidence`, `services`, `specialties` and `profesionales`.
 
 ## Runtime principle
 

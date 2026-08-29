@@ -399,6 +399,55 @@ td small {
   scroll-margin-top: 5rem;
 }
 
+.review-detail {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 1rem;
+  margin: 0;
+}
+
+.detail-grid div {
+  min-width: 0;
+}
+
+.detail-grid dt {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detail-grid dd {
+  margin: 0.16rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.detail-grid a {
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+.detail-wide {
+  grid-column: 1 / -1;
+}
+
+.compact-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ink);
+}
+
+.compact-list li {
+  margin: 0.08rem 0;
+}
+
 .edit-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -462,6 +511,7 @@ td small {
 
   .metrics,
   .work-grid,
+  .detail-grid,
   .edit-form {
     grid-template-columns: 1fr;
   }

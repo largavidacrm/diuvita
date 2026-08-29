@@ -157,6 +157,61 @@
         </form>
       </section>
 
+      <section class="panel editor-panel hidden" id="reviewEditor">
+        <div class="panel-head">
+          <div>
+            <h2 id="reviewEditorTitle">Revisar propuesta</h2>
+            <span class="muted" id="reviewEditorMeta"></span>
+          </div>
+          <button class="btn secondary" id="reviewCloseTop" type="button">Cerrar</button>
+        </div>
+        <div class="review-detail">
+          <dl class="detail-grid">
+            <div>
+              <dt>Nombre</dt>
+              <dd id="reviewCandidateName">—</dd>
+            </div>
+            <div>
+              <dt>Ciudad</dt>
+              <dd id="reviewCandidateCity">—</dd>
+            </div>
+            <div>
+              <dt>País</dt>
+              <dd id="reviewCandidateCountry">—</dd>
+            </div>
+            <div>
+              <dt>Confianza</dt>
+              <dd id="reviewCandidateConfidence">—</dd>
+            </div>
+            <div class="detail-wide">
+              <dt>Web</dt>
+              <dd id="reviewCandidateWebsite">—</dd>
+            </div>
+            <div class="detail-wide">
+              <dt>Fuente</dt>
+              <dd id="reviewCandidateSource">—</dd>
+            </div>
+            <div>
+              <dt>Servicios detectados</dt>
+              <dd id="reviewCandidateServices">—</dd>
+            </div>
+            <div>
+              <dt>Especialistas detectados</dt>
+              <dd id="reviewCandidateProfessionals">—</dd>
+            </div>
+          </dl>
+          <div class="field">
+            <label for="reviewResolutionNote">Nota interna</label>
+            <textarea id="reviewResolutionNote" rows="2"></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn" id="reviewCreateDraftBtn" type="button">Crear borrador</button>
+            <button class="btn danger" id="reviewDismissBtn" type="button">Descartar</button>
+            <button class="btn secondary" id="reviewCloseBtn" type="button">Cerrar</button>
+          </div>
+        </div>
+      </section>
+
       <section class="work-grid">
         <section class="panel">
           <div class="panel-head">
@@ -171,6 +226,7 @@
                   <th>Tipo</th>
                   <th>Prioridad</th>
                   <th>Fecha</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="reviewsBody"></tbody>
@@ -261,7 +317,9 @@
     var client = null;
     var session = null;
     var clinicCache = [];
+    var reviewCache = [];
     var activeClinic = null;
+    var activeReview = null;
 
     function el(id) {
       return document.getElementById(id);
@@ -323,6 +381,23 @@
       target.innerHTML = '<tr><td colspan="' + columns + '" class="empty">' + html(text) + '</td></tr>';
     }
 
+    function setText(id, value) {
+      el(id).textContent = text(value).trim() || "—";
+    }
+
+    function setLink(id, value) {
+      var clean = text(value).trim();
+      if (!clean) {
+        el(id).textContent = "—";
+        return;
+      }
+      if (/^https?:\/\//i.test(clean)) {
+        el(id).innerHTML = '<a href="' + html(clean) + '" rel="nofollow noopener" target="_blank">' + html(clean) + '</a>';
+      } else {
+        el(id).textContent = clean;
+      }
+    }
+
     function text(value) {
       return String(value == null ? "" : value);
     }
@@ -377,6 +452,29 @@
         archived: "archivada"
       };
       return map[status] || status;
+    }
+
+    function candidateFromReview(row) {
+      var payload = row && row.payload ? row.payload : {};
+      return payload.candidate || payload;
+    }
+
+    function candidateList(candidate, firstKey, secondKey) {
+      var value = candidate[firstKey];
+      if (!Array.isArray(value) && secondKey) value = candidate[secondKey];
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string" && value.trim()) return linesToArray(value);
+      return [];
+    }
+
+    function setInlineList(id, items) {
+      if (!items || !items.length) {
+        el(id).textContent = "—";
+        return;
+      }
+      el(id).innerHTML = '<ul class="compact-list">' + items.map(function (item) {
+        return "<li>" + html(item) + "</li>";
+      }).join("") + "</ul>";
     }
 
     function renderClinics() {
@@ -444,6 +542,36 @@
     function closeClinicEditor() {
       activeClinic = null;
       show(el("clinicEditor"), false);
+    }
+
+    function openReviewEditor(id) {
+      activeReview = reviewCache.find(function (row) { return row.id === id; });
+      if (!activeReview) return;
+
+      var candidate = candidateFromReview(activeReview);
+      var payload = activeReview.payload || {};
+      var website = candidate.website || candidate.web;
+      var source = candidate.source_url || payload.candidate_source_url || website;
+      var confidence = candidate.discovery_confidence || candidate.confidence;
+
+      el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
+      el("reviewEditorMeta").textContent = activeReview.review_type + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
+      setText("reviewCandidateName", candidate.name || candidate.clinic_name);
+      setText("reviewCandidateCity", candidate.city);
+      setText("reviewCandidateCountry", candidate.country || (payload.job_input || {}).country);
+      setText("reviewCandidateConfidence", confidence == null ? "" : pct(confidence));
+      setLink("reviewCandidateWebsite", website);
+      setLink("reviewCandidateSource", source);
+      setInlineList("reviewCandidateServices", candidateList(candidate, "services"));
+      setInlineList("reviewCandidateProfessionals", candidateList(candidate, "profesionales", "professionals"));
+      setInput("reviewResolutionNote", "");
+      show(el("reviewEditor"), true);
+      el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function closeReviewEditor() {
+      activeReview = null;
+      show(el("reviewEditor"), false);
     }
 
     async function saveClinic(event) {
@@ -536,17 +664,21 @@
 
       var reviewRows = await client
         .from("review_queue")
-        .select("title, review_type, priority, created_at")
+        .select("id, title, review_type, priority, status, payload, created_at")
         .eq("status", "open")
         .order("created_at", { ascending: false })
         .limit(8);
 
       var reviewsBody = el("reviewsBody");
       if (reviewRows.error || !reviewRows.data || reviewRows.data.length === 0) {
-        emptyRow(reviewsBody, 4, "Sin revisiones abiertas");
+        reviewCache = [];
+        emptyRow(reviewsBody, 5, "Sin revisiones abiertas");
       } else {
+        reviewCache = reviewRows.data;
         reviewsBody.innerHTML = reviewRows.data.map(function (row) {
-          return "<tr><td>" + html(row.title) + "</td><td>" + html(row.review_type) + "</td><td>" + html(row.priority) + "</td><td>" + date(row.created_at) + "</td></tr>";
+          return "<tr><td>" + html(row.title) + "</td><td>" + html(row.review_type) + "</td><td>" + html(row.priority) + "</td><td>" +
+            date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
+            html(row.id) + '">Revisar</button></td></tr>';
         }).join("");
       }
 
@@ -608,6 +740,49 @@
       await loadDashboard();
     }
 
+    async function createClinicDraftFromReview() {
+      if (!activeReview) return;
+      el("reviewCreateDraftBtn").disabled = true;
+      el("reviewDismissBtn").disabled = true;
+      var result = await client.rpc("admin_create_draft_clinic_from_review", {
+        p_review_id: activeReview.id,
+        p_note: trimmed("reviewResolutionNote") || null
+      });
+      el("reviewCreateDraftBtn").disabled = false;
+      el("reviewDismissBtn").disabled = false;
+
+      if (result.error) {
+        toast("No se pudo crear el borrador. Puede que ya exista.");
+        return;
+      }
+
+      closeReviewEditor();
+      await loadDashboard();
+      toast("Borrador creado. Aún no está publicado.");
+    }
+
+    async function dismissReview() {
+      if (!activeReview) return;
+      el("reviewCreateDraftBtn").disabled = true;
+      el("reviewDismissBtn").disabled = true;
+      var result = await client.rpc("admin_resolve_review_item", {
+        p_review_id: activeReview.id,
+        p_status: "dismissed",
+        p_note: trimmed("reviewResolutionNote") || null
+      });
+      el("reviewCreateDraftBtn").disabled = false;
+      el("reviewDismissBtn").disabled = false;
+
+      if (result.error) {
+        toast("No se pudo descartar la propuesta.");
+        return;
+      }
+
+      closeReviewEditor();
+      await loadDashboard();
+      toast("Propuesta descartada.");
+    }
+
     async function createJob(event) {
       event.preventDefault();
       el("jobBtn").disabled = true;
@@ -653,7 +828,15 @@
       el("clinicForm").addEventListener("submit", saveClinic);
       el("clinicCancelBtn").addEventListener("click", closeClinicEditor);
       el("clinicCancelTop").addEventListener("click", closeClinicEditor);
+      el("reviewCloseBtn").addEventListener("click", closeReviewEditor);
+      el("reviewCloseTop").addEventListener("click", closeReviewEditor);
+      el("reviewCreateDraftBtn").addEventListener("click", createClinicDraftFromReview);
+      el("reviewDismissBtn").addEventListener("click", dismissReview);
       el("clinicSearch").addEventListener("input", renderClinics);
+      el("reviewsBody").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-review-id]");
+        if (button) openReviewEditor(button.getAttribute("data-review-id"));
+      });
       el("clinicsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-edit-clinic]");
         if (button) openClinicEditor(button.getAttribute("data-edit-clinic"));
