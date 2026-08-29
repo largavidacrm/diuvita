@@ -112,6 +112,8 @@ Local values can live in `.env`, which is ignored by Git. The publishable key ca
 
 `/admin/` lets an authorized admin open a clinic, edit the main public fields, list the specialists published by that clinic and save the result to Supabase. The save path uses `public.admin_update_clinic`, which checks admin access, updates the clinic and records the change in `change_events` and `entity_versions`.
 
+Daniel's non-technical panel guide lives in `docs/DANIEL_ADMIN_GUIDE.md`.
+
 ## Public site feed
 
 `public.public_clinics_for_site` returns only publishable clinic data (`published` and `preliminary`) for the static site build. In Netlify, set `DIUVITA_DATA_SOURCE=supabase` so `build.py` reads this feed when generating the public pages.
