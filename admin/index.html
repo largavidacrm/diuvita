@@ -288,6 +288,26 @@
 
       <section class="panel">
         <div class="panel-head">
+          <h2>Actividad reciente</h2>
+          <span class="pill" id="eventCount">0 movimientos</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Qué pasó</th>
+                <th>Quién</th>
+                <th>Detalle</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="eventsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
           <h2>Clínicas</h2>
           <div class="panel-tools">
             <input id="clinicSearch" type="search" placeholder="Buscar clínica">
@@ -456,6 +476,45 @@
         archived: "archivada"
       };
       return map[status] || status;
+    }
+
+    function eventLabel(name) {
+      var labels = {
+        clinic_manual_update: "Clínica editada",
+        agent_job_picked: "Trabajo iniciado",
+        discovery_shadow_completed: "Descubrimiento revisable",
+        agent_job_failed: "Trabajo fallido",
+        review_item_status_changed: "Revisión cerrada",
+        candidate_review_draft_created: "Borrador creado",
+        public_site_rebuild_requested: "Publicación solicitada",
+        public_site_rebuild_skipped: "Publicación agrupada"
+      };
+      return labels[name] || name || "Movimiento";
+    }
+
+    function eventActor(row) {
+      var actor = row.actor_id || row.actor_type || "";
+      return actor || "sistema";
+    }
+
+    function eventDetail(row) {
+      var payload = row.payload || {};
+      if (payload.note) return payload.note;
+      if (row.event_name === "clinic_manual_update") {
+        return ((payload.after || {}).display_name) || "Ficha actualizada";
+      }
+      if (row.event_name === "discovery_shadow_completed") {
+        var reviews = Number(payload.review_items_created || 0);
+        var duplicates = Number(payload.duplicate_review_items_created || 0);
+        return reviews + " propuestas; " + duplicates + " posibles duplicados";
+      }
+      if (row.event_name === "candidate_review_draft_created") {
+        return "Propuesta convertida en borrador interno";
+      }
+      if (row.event_name === "agent_job_failed") {
+        return payload.error || "Revisar trabajo fallido";
+      }
+      return row.entity_type || "";
     }
 
     function candidateFromReview(row) {
@@ -725,6 +784,25 @@
       } else {
         jobsBody.innerHTML = jobRows.data.map(function (row) {
           return "<tr><td>" + html(row.job_type) + "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) + "</td><td>" + money(row.cost_cents) + "</td><td>" + date(row.created_at) + "</td></tr>";
+        }).join("");
+      }
+
+      var eventRows = await client
+        .from("change_events")
+        .select("event_name, actor_type, actor_id, entity_type, payload, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      var eventsBody = el("eventsBody");
+      if (eventRows.error || !eventRows.data || eventRows.data.length === 0) {
+        el("eventCount").textContent = "0 movimientos";
+        emptyRow(eventsBody, 4, "Sin actividad reciente");
+      } else {
+        el("eventCount").textContent = eventRows.data.length + " movimientos";
+        eventsBody.innerHTML = eventRows.data.map(function (row) {
+          return "<tr><td><strong>" + html(eventLabel(row.event_name)) + "</strong><small>" +
+            html(row.event_name) + "</small></td><td>" + html(eventActor(row)) + "</td><td>" +
+            html(eventDetail(row)) + "</td><td>" + date(row.created_at) + "</td></tr>";
         }).join("");
       }
 
