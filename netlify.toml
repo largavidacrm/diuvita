@@ -1,5 +1,5 @@
 [build]
-  command = "python3 scripts/validate_data.py && python3 build.py"
+  command = "python3 scripts/validate_data.py && DIUVITA_DATA_SOURCE=supabase python3 build.py"
   publish = "dist"
 
 [[redirects]]
