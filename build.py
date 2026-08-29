@@ -9,7 +9,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
 SITE = "Diuvita"
 TAGLINE = "La guía de las clínicas de longevidad"
-BASE = "https://diuvita.com"
+BASE = "https://www.diuvita.com"
 
 import re
 def md_to_html(md):

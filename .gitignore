@@ -1,0 +1,32 @@
+.deploy/
+.DS_Store
+
+# Local secrets and environment
+.env
+.env.*
+!.env.example
+
+# Generated site output
+dist/
+
+# Python local files
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# Netlify local state
+.netlify/
+
+# Future JS tooling
+node_modules/
+
+# Transitional archives and local backups
+*.zip
+_to_delete/
+
+# Local/private strategy notes
+BASELINE.md
+Diuvita_24_Month_Founder_Playbook.md

@@ -1,0 +1,169 @@
+# Diuvita agent workflows
+
+This document defines the first agent-ready workflows. It intentionally starts narrow: clinics only.
+
+## Shared job lifecycle
+
+Every workflow uses `public.agent_jobs`.
+
+```text
+queued -> running -> completed
+queued -> running -> failed -> queued
+queued -> running -> failed -> dead_letter
+queued -> running -> completed + requires_human
+```
+
+Every job stores:
+
+- `job_type`
+- `status`
+- `priority`
+- `clinic_id` or generic `entity_id`
+- `input`
+- `output`
+- `confidence`
+- `attempts`
+- `error_message`
+- `model_tier`
+- `cost_cents`
+
+## DISCOVER_CLINIC
+
+Purpose: find a clinic Diuvita does not already know about.
+
+Input:
+
+```json
+{
+  "country": "Espana",
+  "query": "longevity clinic Madrid",
+  "max_results": 20
+}
+```
+
+Output:
+
+```json
+{
+  "candidates": [
+    {
+      "name": "Example Clinic",
+      "website": "https://example.com",
+      "city": "Madrid",
+      "country": "Espana",
+      "discovery_confidence": 0.91,
+      "source_url": "https://example.com"
+    }
+  ]
+}
+```
+
+Rules:
+
+- Never publish from discovery.
+- Store candidates as jobs or draft clinic records.
+- Anything with low clinic probability goes to review or is discarded.
+
+## DEDUPE_CLINIC
+
+Purpose: decide whether a candidate is new, duplicate or ambiguous.
+
+Signals:
+
+- Domain match.
+- Name similarity.
+- Address similarity.
+- Phone/email match.
+- Medical director/team overlap.
+- Embedding similarity once pgvector is active.
+
+Rules:
+
+- `duplicate_probability >= 0.90`: propose merge.
+- `duplicate_probability <= 0.20`: treat as new candidate.
+- Anything between: create a review item.
+
+## EXTRACT_CLINIC_PROFILE
+
+Purpose: convert web evidence into structured facts.
+
+Output goes into `field_claims`, not directly into published clinic data.
+
+Required for each claim:
+
+- `field_path`
+- `value`
+- `source_record_id`
+- `agent_name`
+- `agent_version`
+- `confidence`
+
+Examples of field paths:
+
+- `identity.canonical_name`
+- `location.address`
+- `contact.email`
+- `services.diagnostics.vo2max`
+- `services.treatments.ihht`
+- `pricing.initial_consultation`
+- `team.medical_director`
+
+## VERIFY_CLINIC_PROFILE
+
+Purpose: adversarial verification.
+
+The verifier does not improve the extractor's answer. It challenges each important claim independently.
+
+Verdicts:
+
+- `accepted`
+- `rejected`
+- `stale`
+- `conflict`
+- `review`
+
+Medical claims, physician credentials and prices need stronger verification than address/contact fields.
+
+## APPLY_PUBLICATION_RULES
+
+Purpose: deterministic arbiter.
+
+Rules examples:
+
+- Accepted address/contact fields can update draft data when confidence is high.
+- Treatment claims need explicit source support.
+- Price claims with stale sources can be stored but marked stale.
+- Any conflict with `human_overrides.locked = true` creates review and does not overwrite.
+- Any rejected claim remains stored for audit but is not published.
+
+## PUBLISH_CANDIDATE
+
+Purpose: update the canonical record after rules pass.
+
+Required side effects:
+
+- Write `entity_versions`.
+- Write `change_events`.
+- Update `clinics.current_data`.
+- Trigger static-site regeneration or future API cache refresh.
+
+Early mode:
+
+- Shadow only.
+- Produce proposed output but do not update public pages.
+
+## NOTIFY_DIGEST
+
+Purpose: avoid noisy notifications.
+
+Daily digest should include:
+
+- Clinics discovered.
+- Clinics proposed.
+- Duplicates detected.
+- Fields updated.
+- Review items created.
+- Failed jobs.
+- Estimated AI cost.
+
+Individual notifications should be reserved for failures, data conflicts or high-value decisions.
