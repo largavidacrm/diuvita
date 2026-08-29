@@ -58,6 +58,7 @@ scripts/apply_supabase_sql.sh supabase/migrations/0004_public_site_feed.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0005_private_rebuild_hook.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0006_shadow_discovery_queue.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0007_candidate_duplicate_hints.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0008_capture_candidate_sources.sql
 ```
 
 Allow a first admin email after creating the Auth user in Supabase:
@@ -121,6 +122,8 @@ Local values can live in `.env`, which is ignored by Git. The publishable key ca
 `supabase/migrations/0006_shadow_discovery_queue.sql` adds the first safe workflow surface for `DISCOVER_CLINIC`. A discovery job can be picked, completed with candidate clinics and converted into `review_queue` cards. Review cards can then be dismissed or turned into draft clinic records. Drafts are not published on Diuvita until an admin manually edits their status to `published` or `preliminary`.
 
 `supabase/migrations/0007_candidate_duplicate_hints.sql` adds conservative duplicate hints. Candidates with the same website or a very similar name are still sent to review, but the review card shows likely existing matches and blocks draft creation for clear duplicates.
+
+`supabase/migrations/0008_capture_candidate_sources.sql` captures candidate source URLs as `source_records`, so every review proposal keeps an auditable evidence trail before it becomes a clinic draft.
 
 Local candidate batches can be submitted with:
 

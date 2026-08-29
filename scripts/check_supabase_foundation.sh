@@ -75,4 +75,5 @@ export PGSSLMODE=require
   -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'diuvita_build_hook_url' and btrim(value) <> '';" \
   -c "select status, count(*) from public.clinics group by status order by status;" \
   -c "select count(*) as open_review_items from public.review_queue where status = 'open';" \
+  -c "select count(*) as candidate_source_records from public.source_records where entity_type = 'candidate_clinic';" \
   -c "select count(*) as queued_jobs from public.agent_jobs where status = 'queued';"
