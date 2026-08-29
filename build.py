@@ -3,7 +3,7 @@
 Uso: python3 build.py  ->  genera el sitio en dist/
 Datos en data/clinics.json. Las fichas en pendientes/ NO se publican.
 """
-import json, os, shutil, unicodedata
+import json, os, shutil, unicodedata, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
@@ -35,6 +35,74 @@ LOCAL_ENV = load_env_file()
 
 def public_env(key):
     return os.environ.get(key) or LOCAL_ENV.get(key) or PUBLIC_ENV_DEFAULTS.get(key, "")
+
+def env_value(key, default=""):
+    return os.environ.get(key) or LOCAL_ENV.get(key) or default
+
+def load_clinics_from_json():
+    with open(os.path.join(ROOT, "data", "clinics.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+def load_clinics_from_supabase():
+    url = public_env("SUPABASE_URL")
+    key = public_env("SUPABASE_PUBLISHABLE_KEY")
+    if not url or not key:
+        raise RuntimeError("missing Supabase public config")
+
+    request = urllib.request.Request(
+        url.rstrip("/") + "/rest/v1/rpc/public_clinics_for_site",
+        data=b"{}",
+        headers={
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=15) as response:
+        clinics = json.loads(response.read().decode("utf-8"))
+    if not isinstance(clinics, list):
+        raise RuntimeError("Supabase clinic feed did not return a list")
+    return clinics
+
+def load_clinics():
+    source = env_value("DIUVITA_DATA_SOURCE", "json").strip().lower()
+    if source in ("supabase", "auto"):
+        try:
+            clinics = load_clinics_from_supabase()
+            print(f"OK source: Supabase ({len(clinics)} clinics)")
+            return clinics
+        except (OSError, RuntimeError, urllib.error.URLError, json.JSONDecodeError) as exc:
+            if source == "supabase":
+                raise
+            print(f"WARN source: Supabase unavailable, using data/clinics.json ({exc})")
+    return load_clinics_from_json()
+
+def normalize_clinic(clinic):
+    clinic = dict(clinic)
+    for key in ("slug", "name", "city", "country", "address", "web", "summary", "status"):
+        clinic[key] = clinic.get(key) or ""
+    for key in ("tech", "email", "telefono", "instagram"):
+        if key in clinic and clinic[key] is None:
+            clinic[key] = ""
+    for key in ("services", "specialties", "cities_extra", "profesionales", "unidades"):
+        if not isinstance(clinic.get(key), list):
+            clinic[key] = []
+    return clinic
+
+def sort_clinics(clinics):
+    fallback_order = {
+        clinic.get("slug"): index
+        for index, clinic in enumerate(load_clinics_from_json())
+        if clinic.get("slug")
+    }
+    return sorted(
+        clinics,
+        key=lambda clinic: (
+            fallback_order.get(clinic.get("slug"), len(fallback_order) + 1),
+            clinic.get("name", ""),
+        ),
+    )
 
 def md_to_html(md):
     """Conversor markdown mínimo (sin dependencias, corre en Netlify build)."""
@@ -74,9 +142,9 @@ def slugify(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
     return s.lower().replace(" ", "-")
 
-with open(os.path.join(ROOT, "data", "clinics.json"), encoding="utf-8") as f:
-    clinics = json.load(f)
+clinics = [normalize_clinic(c) for c in load_clinics()]
 clinics = [c for c in clinics if c.get("status") in ("publicada", "preliminar")]
+clinics = sort_clinics(clinics)
 
 # logos aprobados (descargados por GitHub Actions en assets/logos/)
 # Homogeneidad: en tarjetas se usa la MINIATURA normalizada (thumb, <=260x64) dentro

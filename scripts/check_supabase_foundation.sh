@@ -69,6 +69,7 @@ export PGSSLMODE=require
   -c "select count(*) as allowed_admin_emails from public.admin_users where active = true;" \
   -c "select lower(u.email) as admin_email, u.email_confirmed_at is not null as email_confirmed from auth.users u join public.admin_users au on lower(au.email) = lower(u.email) where au.active = true order by admin_email;" \
   -c "select count(*) as admin_clinic_edit_function from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_update_clinic';" \
+  -c "select count(*) as public_site_feed_function from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'public_clinics_for_site';" \
   -c "select status, count(*) from public.clinics group by status order by status;" \
   -c "select count(*) as open_review_items from public.review_queue where status = 'open';" \
   -c "select count(*) as queued_jobs from public.agent_jobs where status = 'queued';"

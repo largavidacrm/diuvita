@@ -54,6 +54,7 @@ Apply a later migration:
 ```bash
 scripts/apply_supabase_sql.sh supabase/migrations/0002_admin_access.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0003_admin_clinic_editing.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0004_public_site_feed.sql
 ```
 
 Allow a first admin email after creating the Auth user in Supabase:
@@ -105,6 +106,12 @@ Local values can live in `.env`, which is ignored by Git. The publishable key ca
 ## Manual clinic editing
 
 `/admin/` lets an authorized admin open a clinic, edit the main public fields and save the result to Supabase. The save path uses `public.admin_update_clinic`, which checks admin access, updates the clinic and records the change in `change_events` and `entity_versions`.
+
+## Public site feed
+
+`public.public_clinics_for_site` returns only publishable clinic data (`published` and `preliminary`) for the static site build. In Netlify, set `DIUVITA_DATA_SOURCE=supabase` so `build.py` reads this feed when generating the public pages.
+
+The admin panel can request a rebuild through `/.netlify/functions/rebuild-site`. That function verifies the Supabase session is an authorized admin before using `NETLIFY_BUILD_HOOK_URL`.
 
 ## Runtime principle
 

@@ -80,6 +80,8 @@ Done in this repo now:
 - Add admin access controls in Supabase.
 - Add the first static `/admin` control center.
 - Add manual clinic editing in `/admin` with audit events and entity versions.
+- Add a public Supabase feed for the static site build.
+- Add an admin-triggered Netlify rebuild path after manual edits.
 - Add a seed exporter for the current clinic JSON.
 - Add this CTO roadmap.
 - Protect local secrets and generated files in `.gitignore`.
@@ -89,8 +91,8 @@ Next implementation steps:
 
 1. Push the admin foundation commit to GitHub once Daniel explicitly approves.
 2. Confirm `.deploy/`, `.env*`, ZIPs and generated `dist/` are not committed.
-3. Publish `/admin` once Daniel approves.
-4. Add the Supabase-to-public-site sync so manual edits can update `data/clinics.json`.
+3. Set Netlify environment variables for Supabase build reads and the rebuild hook.
+4. Publish the Supabase-to-public-site sync.
 5. Add the first shadow-mode workflow worker: `DISCOVER_CLINIC`.
 
 ## Phase 2: first autonomous loop
