@@ -33,6 +33,14 @@ Cuando sea un duplicado probable, el botón de crear borrador queda bloqueado. E
 
 Si la clínica está como **Publicada** o **Preliminar**, el cambio se manda a la web automáticamente. Puede tardar unos minutos.
 
+## Auditar fichas
+
+En **Crear trabajo**, puedes elegir **Auditar fichas**.
+
+Eso revisa las fichas visibles y crea tareas si falta algo importante, por ejemplo especialistas, servicios, especialidades, dirección, resumen o contacto.
+
+La auditoría no cambia la web. Solo crea tareas internas para revisar.
+
 ## Estados importantes
 
 - **Publicada**: aparece en la web.

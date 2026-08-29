@@ -486,6 +486,7 @@
         agent_job_failed: "Trabajo fallido",
         review_item_status_changed: "Revisión cerrada",
         candidate_review_draft_created: "Borrador creado",
+        quality_audit_completed: "Auditoría completada",
         public_site_rebuild_requested: "Publicación solicitada",
         public_site_rebuild_skipped: "Publicación agrupada"
       };
@@ -510,6 +511,9 @@
       }
       if (row.event_name === "candidate_review_draft_created") {
         return "Propuesta convertida en borrador interno";
+      }
+      if (row.event_name === "quality_audit_completed") {
+        return (payload.review_items_created || 0) + " fichas para revisar";
       }
       if (row.event_name === "agent_job_failed") {
         return payload.error || "Revisar trabajo fallido";
@@ -560,6 +564,13 @@
         var detail = duplicateReason(match.reason) + " · " + pct(match.duplicate_probability || probability);
         return "<li><strong>" + html(label || match.slug) + "</strong><small>" + html(detail) + "</small></li>";
       }).join("") + "</ul>";
+    }
+
+    function issueLabels(issues) {
+      if (!Array.isArray(issues)) return [];
+      return issues.map(function (issue) {
+        return issue.label || issue.code || String(issue);
+      });
     }
 
     function renderClinics() {
@@ -635,6 +646,7 @@
 
       var candidate = candidateFromReview(activeReview);
       var payload = activeReview.payload || {};
+      var isQualityAudit = activeReview.review_type === "clinic_quality_audit";
       var website = candidate.website || candidate.web;
       var source = candidate.source_url || payload.candidate_source_url || website;
       var confidence = candidate.discovery_confidence || candidate.confidence;
@@ -643,17 +655,17 @@
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
       el("reviewEditorMeta").textContent = activeReview.review_type + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
-      setText("reviewCandidateName", candidate.name || candidate.clinic_name);
-      setText("reviewCandidateCity", candidate.city);
-      setText("reviewCandidateCountry", candidate.country || (payload.job_input || {}).country);
+      setText("reviewCandidateName", isQualityAudit ? payload.clinic_name : candidate.name || candidate.clinic_name);
+      setText("reviewCandidateCity", isQualityAudit ? payload.clinic_city : candidate.city);
+      setText("reviewCandidateCountry", isQualityAudit ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
       setText("reviewCandidateConfidence", confidence == null ? "" : pct(confidence));
-      setLink("reviewCandidateWebsite", website);
+      setLink("reviewCandidateWebsite", isQualityAudit ? payload.website : website);
       setLink("reviewCandidateSource", source);
       setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
-      setInlineList("reviewCandidateServices", candidateList(candidate, "services"));
-      setInlineList("reviewCandidateProfessionals", candidateList(candidate, "profesionales", "professionals"));
-      el("reviewCreateDraftBtn").disabled = blocksDraft;
-      el("reviewCreateDraftBtn").textContent = blocksDraft ? "Duplicado probable" : "Crear borrador";
+      setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : candidateList(candidate, "services"));
+      setInlineList("reviewCandidateProfessionals", isQualityAudit ? [] : candidateList(candidate, "profesionales", "professionals"));
+      el("reviewCreateDraftBtn").disabled = !isQualityAudit && blocksDraft;
+      el("reviewCreateDraftBtn").textContent = isQualityAudit ? "Editar clínica" : blocksDraft ? "Duplicado probable" : "Crear borrador";
       setInput("reviewResolutionNote", "");
       show(el("reviewEditor"), true);
       el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -754,7 +766,7 @@
 
       var reviewRows = await client
         .from("review_queue")
-        .select("id, title, review_type, priority, status, payload, created_at")
+        .select("id, job_id, clinic_id, title, review_type, priority, status, payload, created_at")
         .eq("status", "open")
         .order("priority", { ascending: true })
         .order("created_at", { ascending: false })
@@ -852,6 +864,13 @@
 
     async function createClinicDraftFromReview() {
       if (!activeReview) return;
+      if (activeReview.review_type === "clinic_quality_audit" && activeReview.clinic_id) {
+        var clinicId = activeReview.clinic_id;
+        closeReviewEditor();
+        openClinicEditor(clinicId);
+        return;
+      }
+
       el("reviewCreateDraftBtn").disabled = true;
       el("reviewDismissBtn").disabled = true;
       var result = await client.rpc("admin_create_draft_clinic_from_review", {
@@ -908,13 +927,27 @@
         model_tier: "cheap",
         requires_human: false
       };
-      var result = await client.from("agent_jobs").insert(payload);
-      el("jobBtn").disabled = false;
+      var result = await client.from("agent_jobs").insert(payload).select("id").single();
       if (result.error) {
+        el("jobBtn").disabled = false;
         toast("No se pudo crear el trabajo.");
         return;
       }
-      toast("Trabajo enviado a cola.");
+
+      if (payload.job_type === "QUALITY_AUDIT" && result.data && result.data.id) {
+        var auditResult = await client.rpc("admin_complete_quality_audit_job", {
+          p_job_id: result.data.id,
+          p_limit: 80
+        });
+        if (auditResult.error) {
+          toast("Auditoría creada, pero no se pudo completar.");
+        } else {
+          toast("Auditoría terminada: " + (auditResult.data.review_items_created || 0) + " fichas para revisar.");
+        }
+      } else {
+        toast("Trabajo enviado a cola.");
+      }
+      el("jobBtn").disabled = false;
       await loadDashboard();
     }
 

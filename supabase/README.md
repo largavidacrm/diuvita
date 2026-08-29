@@ -60,6 +60,7 @@ scripts/apply_supabase_sql.sh supabase/migrations/0006_shadow_discovery_queue.sq
 scripts/apply_supabase_sql.sh supabase/migrations/0007_candidate_duplicate_hints.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0008_capture_candidate_sources.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0009_promote_candidate_sources_and_claims.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0010_quality_audit_workflow.sql
 ```
 
 Allow a first admin email after creating the Auth user in Supabase:
@@ -129,6 +130,8 @@ Daniel's non-technical panel guide lives in `docs/DANIEL_ADMIN_GUIDE.md`.
 `supabase/migrations/0008_capture_candidate_sources.sql` captures candidate source URLs as `source_records`, so every review proposal keeps an auditable evidence trail before it becomes a clinic draft.
 
 `supabase/migrations/0009_promote_candidate_sources_and_claims.sql` promotes that source when a review becomes a draft clinic and stores the candidate's main facts as `field_claims` with `verification_status = 'review'`.
+
+`supabase/migrations/0010_quality_audit_workflow.sql` adds a zero-cost quality audit for visible clinic profiles. It creates review cards for missing or weak public fields and never edits the public profile directly.
 
 Local candidate batches can be submitted with:
 
