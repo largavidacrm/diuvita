@@ -377,7 +377,7 @@ def ficha(c):
         unidades = "<h2>Unidades y áreas clínicas</h2><ul>" + "".join(f"<li>{u}</li>" for u in c["unidades"]) + "</ul>"
     equipo = ""
     if c.get("profesionales"):
-        equipo = "<h2>Equipo</h2><ul>" + "".join(f"<li>{p}</li>" for p in c["profesionales"]) + "</ul>"
+        equipo = "<h2>Especialistas publicados por la clínica</h2><ul>" + "".join(f"<li>{p}</li>" for p in c["profesionales"]) + "</ul>"
     contacto = contacto_block(c)
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""

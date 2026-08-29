@@ -106,7 +106,7 @@ Local values can live in `.env`, which is ignored by Git. The publishable key ca
 
 ## Manual clinic editing
 
-`/admin/` lets an authorized admin open a clinic, edit the main public fields and save the result to Supabase. The save path uses `public.admin_update_clinic`, which checks admin access, updates the clinic and records the change in `change_events` and `entity_versions`.
+`/admin/` lets an authorized admin open a clinic, edit the main public fields, list the specialists published by that clinic and save the result to Supabase. The save path uses `public.admin_update_clinic`, which checks admin access, updates the clinic and records the change in `change_events` and `entity_versions`.
 
 ## Public site feed
 

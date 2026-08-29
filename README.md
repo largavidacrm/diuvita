@@ -14,7 +14,7 @@ python3 build.py
 El build de Netlify ejecuta la validacion antes de generar el sitio.
 El dominio canonico es `https://www.diuvita.com`.
 
-El panel operativo se genera en `/admin/`. Los datos quedan protegidos por Supabase Auth y por la lista `admin_users`. Desde ese panel se pueden revisar métricas, crear trabajos en cola y editar clínicas manualmente. Tras guardar una ficha, Supabase inicia una nueva publicacion de Netlify para que la web estatica recoja los datos vivos.
+El panel operativo se genera en `/admin/`. Los datos quedan protegidos por Supabase Auth y por la lista `admin_users`. Desde ese panel se pueden revisar métricas, crear trabajos en cola y editar clínicas manualmente, incluidos los especialistas publicados por cada clínica. Tras guardar una ficha, Supabase inicia una nueva publicacion de Netlify para que la web estatica recoja los datos vivos.
 
 ## Siguiente arquitectura
 

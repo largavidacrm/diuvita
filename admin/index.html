@@ -123,6 +123,10 @@
             <textarea id="clinicSpecialties" name="clinicSpecialties" rows="7"></textarea>
           </div>
           <div class="field field-wide">
+            <label for="clinicProfessionals">Especialistas publicados por la clínica</label>
+            <textarea id="clinicProfessionals" name="clinicProfessionals" rows="6"></textarea>
+          </div>
+          <div class="field field-wide">
             <label for="clinicTech">Tecnología</label>
             <textarea id="clinicTech" name="clinicTech" rows="3"></textarea>
           </div>
@@ -425,6 +429,7 @@
       setInput("clinicSummary", activeClinic.summary || data.summary);
       setInput("clinicServices", arrayLines(data.services));
       setInput("clinicSpecialties", arrayLines(data.specialties));
+      setInput("clinicProfessionals", arrayLines(data.profesionales));
       setInput("clinicTech", data.tech);
       setInput("clinicEmail", data.email);
       setInput("clinicPhone", data.telefono);
@@ -470,6 +475,7 @@
       setJsonText(currentData, "instagram", trimmed("clinicInstagram"));
       setJsonArray(currentData, "services", el("clinicServices").value);
       setJsonArray(currentData, "specialties", el("clinicSpecialties").value);
+      setJsonArray(currentData, "profesionales", el("clinicProfessionals").value);
 
       el("clinicSaveBtn").disabled = true;
       var result = await client.rpc("admin_update_clinic", {
