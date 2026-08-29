@@ -752,12 +752,15 @@
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
       var evidence = summary.evidence || {};
+      var automation = summary.automation || {};
 
       el("metrics").innerHTML = [
         metric("Clínicas", clinics.total || 0),
         metric("Publicadas", clinics.published || 0),
         metric("Revisión", reviews.open || 0),
-        metric("Fuentes", evidence.sources || 0)
+        metric("Fuentes", evidence.sources || 0),
+        metric("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada"),
+        metric("Modo sombra", automation.shadow_mode_active === false ? "No" : "Activo")
       ].join("");
 
       el("reviewCount").textContent = (reviews.open || 0) + " abiertas";

@@ -74,6 +74,7 @@ export PGSSLMODE=require
   -c "select count(*) as candidate_dedupe_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('normalized_url_host', 'admin_candidate_duplicate_matches');" \
   -c "select count(*) as quality_audit_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_complete_quality_audit_job';" \
   -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'diuvita_build_hook_url' and btrim(value) <> '';" \
+  -c "select key, value from private.app_settings where key in ('diuvita_agents_enabled', 'diuvita_auto_publish_enabled', 'diuvita_shadow_review_target') order by key;" \
   -c "select status, count(*) from public.clinics group by status order by status;" \
   -c "select count(*) as open_review_items from public.review_queue where status = 'open';" \
   -c "select count(*) as candidate_source_records from public.source_records where entity_type = 'candidate_clinic';" \
