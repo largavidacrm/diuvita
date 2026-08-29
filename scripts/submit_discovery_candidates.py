@@ -7,6 +7,7 @@ and never publishes a clinic. Candidates become review cards first.
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -15,6 +16,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_FILE = os.path.join(ROOT, ".env")
 PROJECT_REF = "twxhcmvzbpnrneywdece"
+UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 
 def load_env_file():
@@ -152,7 +154,11 @@ values (
 )
 returning id;
 """
-    return run_psql(sql, local_env).splitlines()[-1].strip()
+    for line in run_psql(sql, local_env).splitlines():
+        clean = line.strip()
+        if UUID_RE.match(clean):
+            return clean
+    raise SystemExit("Could not read created job id.")
 
 
 def pick_next_job(admin_email, worker, local_env):
