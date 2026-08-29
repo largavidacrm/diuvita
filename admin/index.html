@@ -344,6 +344,7 @@
     var reviewCache = [];
     var activeClinic = null;
     var activeReview = null;
+    var activeClinicReview = null;
 
     function el(id) {
       return document.getElementById(id);
@@ -637,6 +638,7 @@
 
     function closeClinicEditor() {
       activeClinic = null;
+      activeClinicReview = null;
       show(el("clinicEditor"), false);
     }
 
@@ -689,10 +691,11 @@
       }
 
       var confidence = Math.max(0, Math.min(100, Number(el("clinicConfidence").value || 0))) / 100;
+      var selectedStatus = trimmed("clinicStatus");
       var currentData = Object.assign({}, activeClinic.current_data || {});
       currentData.slug = activeClinic.slug;
       currentData.name = name;
-      currentData.status = publicStatus(trimmed("clinicStatus"));
+      currentData.status = publicStatus(selectedStatus);
       setJsonText(currentData, "web", trimmed("clinicWebsite"));
       setJsonText(currentData, "country", country);
       setJsonText(currentData, "city", city);
@@ -716,7 +719,7 @@
         p_city: city,
         p_region: trimmed("clinicRegion") || null,
         p_address: trimmed("clinicAddress") || null,
-        p_status: trimmed("clinicStatus"),
+        p_status: selectedStatus,
         p_summary: trimmed("clinicSummary") || null,
         p_current_data: currentData,
         p_profile_confidence: confidence,
@@ -730,9 +733,21 @@
         return;
       }
 
+      if (activeClinicReview && activeClinicReview.clinic_id === activeClinic.id) {
+        await client.rpc("admin_resolve_review_item", {
+          p_review_id: activeClinicReview.id,
+          p_status: "resolved",
+          p_note: trimmed("clinicNote") || "Ficha actualizada desde revisión de calidad."
+        });
+      }
+
       closeClinicEditor();
       await loadDashboard();
-      toast("Clínica guardada. Publicación iniciada.");
+      if (selectedStatus === "published" || selectedStatus === "preliminary") {
+        toast("Clínica guardada. Publicación iniciada.");
+      } else {
+        toast("Clínica guardada. No está publicada.");
+      }
     }
 
     async function loadDashboard() {
@@ -869,6 +884,7 @@
       if (!activeReview) return;
       if (activeReview.review_type === "clinic_quality_audit" && activeReview.clinic_id) {
         var clinicId = activeReview.clinic_id;
+        activeClinicReview = activeReview;
         closeReviewEditor();
         openClinicEditor(clinicId);
         return;
