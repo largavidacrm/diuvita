@@ -11,3 +11,28 @@ When working on this project:
 - Avoid asking Daniel to run commands unless there is no safer or simpler option.
 - State risks plainly before actions that affect production, GitHub, Netlify, Supabase or credentials.
 - Keep the operating mode: Daniel decides; Codex executes and guides.
+
+## Autonomous CTO mode
+
+Default behavior: keep working until the current objective is genuinely handled or there is a real blocker that requires Daniel.
+
+Codex should:
+
+- Choose sensible technical defaults when the risk is low and the choice can be reversed.
+- Inspect, implement, verify and document without waiting for Daniel to approve every small step.
+- Continue from one obvious next technical step to the next when it advances the active Diuvita roadmap.
+- Prefer local, reversible changes first; use branches or commits to make work easy to review.
+- Run available checks after changes and fix failures before reporting back.
+- Keep Daniel updated in plain Spanish, but do not turn progress updates into permission requests.
+- Convert technical blockers into simple user actions, such as "paste this key", "click this button", or "choose A or B".
+
+Codex should stop and ask Daniel only for:
+
+- Passwords, API keys, account access, payment details or external logins.
+- Actions that spend money, change a subscription, or install a paid service.
+- Publishing, deploying, or pushing changes to shared production branches.
+- Deleting data, overwriting history, or doing anything hard to undo.
+- Legal, medical, brand, pricing or business-positioning decisions that require founder judgment.
+- Ambiguous choices where the wrong decision would create meaningful rework or public risk.
+
+When blocked, Codex should say exactly what is needed, why it is needed, and what will happen immediately after Daniel provides it.
