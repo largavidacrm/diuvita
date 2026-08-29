@@ -3,7 +3,7 @@
 Uso: python3 build.py  ->  genera el sitio en dist/
 Datos en data/clinics.json. Las fichas en pendientes/ NO se publican.
 """
-import json, os, shutil, unicodedata, urllib.error, urllib.request
+import html, json, os, shutil, unicodedata, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
@@ -142,6 +142,42 @@ def slugify(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
     return s.lower().replace(" ", "-")
 
+def h(value):
+    return html.escape(str(value or ""), quote=True)
+
+def visible_values(values):
+    return [str(value).strip() for value in values if str(value or "").strip()]
+
+def external_url(value):
+    value = str(value or "").strip()
+    if value.startswith(("https://", "http://")):
+        return value
+    return ""
+
+def display_url(value):
+    value = str(value or "").strip()
+    return value.replace("https://", "").replace("http://", "").rstrip("/")
+
+def instagram_parts(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return "", ""
+    if raw.startswith(("https://", "http://")):
+        handle = "@" + raw.rstrip("/").rsplit("/", 1)[-1].lstrip("@")
+        return handle, raw
+    handle = raw if raw.startswith("@") else "@" + raw
+    return handle, f"https://www.instagram.com/{handle.lstrip('@').strip('/')}/"
+
+def split_text_list(value):
+    if isinstance(value, list):
+        return visible_values(value)
+    text = str(value or "").strip()
+    if not text:
+        return []
+    for sep in ("\n", ";"):
+        text = text.replace(sep, ",")
+    return visible_values(text.split(","))
+
 clinics = [normalize_clinic(c) for c in load_clinics()]
 clinics = [c for c in clinics if c.get("status") in ("publicada", "preliminar")]
 clinics = sort_clinics(clinics)
@@ -231,6 +267,14 @@ header.site nav a{margin-left:1.2rem;color:var(--muted);font-size:.95rem}
 .ficha .summary{font-size:1.13rem;margin-bottom:1.5rem}
 .ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.2rem;margin:1.5rem 0 .5rem}
 .ficha ul{padding-left:1.2rem;color:var(--muted)}
+.profile-block{margin-top:1.5rem}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem 1.2rem;margin:.8rem 0 0}
+.facts div{border-top:1px solid var(--line);padding-top:.6rem}
+.facts dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--coral);font-weight:600}
+.facts dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.info-list{display:grid;gap:.35rem}
+.pill-list{display:flex;flex-wrap:wrap;gap:.45rem;list-style:none;padding-left:0 !important}
+.pill-list li{font-size:.86rem;padding:.28rem .75rem;border-radius:99px;background:var(--wash);color:var(--green-deep)}
 .contacto{list-style:none;padding-left:0 !important}
 .contacto li{margin:.25rem 0}
 .contacto b{color:var(--ink);font-weight:600}
@@ -240,6 +284,7 @@ header.site nav a{margin-left:1.2rem;color:var(--muted);font-size:.95rem}
 footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.88rem}
 .crumbs{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}
 @media(prefers-reduced-motion:reduce){.card{transition:none}}
+@media(max-width:640px){.facts{grid-template-columns:1fr}header.site{align-items:flex-start;gap:.75rem;flex-direction:column}header.site nav a{margin-left:0;margin-right:1rem}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -268,7 +313,8 @@ FOOTER = """<footer><p><strong>Diuvita</strong> — {tag}. Guía informativa e i
 def attrs(c):
     extra = c.get("cities_extra", [])
     all_cities = "|".join([c["city"]] + extra)
-    return f'data-city="{all_cities}" data-country="{c["country"]}" data-spec="{"|".join(c["specialties"])}" data-text="{c["name"].lower()} {c["city"].lower()} {" ".join(c["specialties"]).lower()}"'
+    search_text = f'{c["name"].lower()} {c["city"].lower()} {" ".join(c["specialties"]).lower()}'
+    return f'data-city="{h(all_cities)}" data-country="{h(c["country"])}" data-spec="{h("|".join(c["specialties"]))}" data-text="{h(search_text)}"'
 
 def logo_img(c, ficha=False):
     if ficha:
@@ -280,21 +326,22 @@ def logo_img(c, ficha=False):
     if not fn:
         return ""
     cls = "logobox flogo" if ficha else "logobox"
-    return f'<span class="{cls}"><img src="/assets/logos/{sub}/{fn}" alt="Logo de {c["name"]}" loading="lazy"></span>'
+    return f'<span class="{cls}"><img src="/assets/logos/{sub}/{h(fn)}" alt="Logo de {h(c["name"])}" loading="lazy"></span>'
 
 def card(c):
     badge = ' <span class="badge">ficha preliminar</span>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
-    tags = "".join(f'<span class="tag">{s}</span>' for s in c["specialties"])
-    return f'''<div class="card" {attrs(c)}>{logo_img(c)}<span class="loc">{c["city"]}{extra} · {c["country"]}</span>
-<h3><a href="/clinica/{c["slug"]}/">{c["name"]}</a>{badge}</h3>
-<p>{c["summary"][:150]}{"…" if len(c["summary"])>150 else ""}</p>
+    tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
+    summary = h(c["summary"][:150]) + ("…" if len(c["summary"]) > 150 else "")
+    return f'''<div class="card" {attrs(c)}>{logo_img(c)}<span class="loc">{h(c["city"])}{h(extra)} · {h(c["country"])}</span>
+<h3><a href="/clinica/{h(c["slug"])}/">{h(c["name"])}</a>{badge}</h3>
+<p>{summary}</p>
 <div class="tags">{tags}</div></div>'''
 
 # --- index ---
-city_chips = "".join(f'<button class="chip" data-f="city" data-v="{ct}">{ct}</button>' for ct in city_order)
-country_chips = "".join(f'<button class="chip" data-f="country" data-v="{co}">{co}</button>' for co in countries)
-spec_chips = "".join(f'<button class="chip" data-f="spec" data-v="{s}">{s}</button>' for s in specialties)
+city_chips = "".join(f'<button class="chip" data-f="city" data-v="{h(ct)}">{h(ct)}</button>' for ct in city_order)
+country_chips = "".join(f'<button class="chip" data-f="country" data-v="{h(co)}">{h(co)}</button>' for co in countries)
+spec_chips = "".join(f'<button class="chip" data-f="spec" data-v="{h(s)}">{h(s)}</button>' for s in specialties)
 allcards = "".join(card(c) for c in clinics)
 
 JS = """<script>
@@ -351,36 +398,87 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </div>{JS}""" + FOOTER
 
 # --- fichas ---
+def status_label(c):
+    if c.get("status") == "preliminar":
+        return "Ficha preliminar"
+    if c.get("status") == "publicada":
+        return "Ficha publicada"
+    return str(c.get("status") or "").capitalize()
+
+def facts_block(c):
+    facts = []
+    location = []
+    seen = set()
+    for value in (c.get("city"), c.get("region"), c.get("country")):
+        value = str(value or "").strip()
+        key = value.lower()
+        if value and key not in seen:
+            location.append(value)
+            seen.add(key)
+    if location:
+        facts.append(("Ubicación", h(" · ".join(location))))
+    if c.get("address"):
+        facts.append(("Dirección", h(c["address"])))
+    if c.get("web") and external_url(c["web"]):
+        url = external_url(c["web"])
+        facts.append(("Web oficial", f'<a href="{h(url)}" rel="nofollow noopener" target="_blank">{h(display_url(url))}</a>'))
+    if c.get("cities_extra"):
+        facts.append(("También aparece en", h(" · ".join(c["cities_extra"]))))
+    if c.get("status"):
+        facts.append(("Estado en Diuvita", h(status_label(c))))
+    if not facts:
+        return ""
+    rows = "".join(f"<div><dt>{h(label)}</dt><dd>{value}</dd></div>" for label, value in facts)
+    return f'<section class="profile-block"><h2>Datos clave</h2><dl class="facts">{rows}</dl></section>'
+
+def list_section(title, items, list_class="info-list"):
+    items = visible_values(items)
+    if not items:
+        return ""
+    return f'<section class="profile-block"><h2>{h(title)}</h2><ul class="{h(list_class)}">' + "".join(f"<li>{h(item)}</li>" for item in items) + "</ul></section>"
+
+def tech_block(c):
+    items = split_text_list(c.get("tech"))
+    if not items:
+        return ""
+    if len(items) == 1:
+        return f'<section class="profile-block"><h2>Tecnología destacada</h2><p style="color:var(--muted)">{h(items[0])}</p></section>'
+    return list_section("Tecnología destacada", items, "pill-list")
+
 def contacto_block(c):
     """Bloque de contacto: solo campos verificados presentes en la ficha."""
     items = []
     if c.get("email"):
-        items.append(f'<li><b>Email:</b> <a href="mailto:{c["email"]}">{c["email"]}</a></li>')
+        email = str(c["email"]).strip()
+        items.append(f'<li><b>Email:</b> <a href="mailto:{h(email)}">{h(email)}</a></li>')
     if c.get("telefono"):
-        tel = c["telefono"]
-        items.append(f'<li><b>Tel\u00e9fono:</b> <a href="tel:{tel.replace(" ", "")}">{tel}</a></li>')
+        tel = str(c["telefono"]).strip()
+        tel_href = re.sub(r"[^0-9+]", "", tel)
+        items.append(f'<li><b>Tel\u00e9fono:</b> <a href="tel:{h(tel_href)}">{h(tel)}</a></li>')
     if c.get("instagram"):
-        ig = c["instagram"]
-        url = ig if ig.startswith("http") else f"https://www.instagram.com/{ig.lstrip('@')}/"
-        handle = ig if not ig.startswith("http") else "@" + ig.rstrip("/").rsplit("/", 1)[-1]
-        items.append(f'<li><b>Instagram:</b> <a href="{url}" rel="nofollow noopener" target="_blank">{handle}</a></li>')
+        handle, url = instagram_parts(c["instagram"])
+        items.append(f'<li><b>Instagram:</b> <a href="{h(url)}" rel="nofollow noopener" target="_blank">{h(handle)}</a></li>')
     if not items:
         return ""
-    return '<h2>Contacto</h2><ul class="contacto">' + "".join(items) + "</ul>"
+    return '<section class="profile-block"><h2>Contacto publicado</h2><ul class="contacto info-list">' + "".join(items) + "</ul></section>"
 
 def ficha(c):
-    servicios = "".join(f"<li>{s}</li>" for s in c["services"])
-    tags = "".join(f'<span class="tag">{s}</span>' for s in c["specialties"])
-    tech = f'<h2>Tecnología destacada</h2><p style="color:var(--muted)">{c["tech"]}</p>' if c.get("tech") else ""
-    unidades = ""
-    if c.get("unidades"):
-        unidades = "<h2>Unidades y áreas clínicas</h2><ul>" + "".join(f"<li>{u}</li>" for u in c["unidades"]) + "</ul>"
-    equipo = ""
-    if c.get("profesionales"):
-        equipo = "<h2>Especialistas publicados por la clínica</h2><ul>" + "".join(f"<li>{p}</li>" for p in c["profesionales"]) + "</ul>"
+    tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
+    datos = facts_block(c)
     contacto = contacto_block(c)
+    areas = list_section("Áreas de especialidad", c["specialties"])
+    servicios = list_section("Servicios", c["services"])
+    unidades = list_section("Unidades y áreas clínicas", c.get("unidades"))
+    tech = tech_block(c)
+    equipo = list_section("Especialistas publicados por la clínica", c.get("profesionales"))
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
+    city_label = c["city"] + extra
+    loc = " · ".join(visible_values([city_label, c.get("country"), c.get("address")]))
+    visit = ""
+    if c.get("web") and external_url(c["web"]):
+        visit_url = external_url(c["web"])
+        visit = f'<a class="visit" href="{h(visit_url)}" rel="nofollow noopener" target="_blank">Visitar web oficial ↗</a>'
     ld_obj = {
         "@context": "https://schema.org", "@type": "MedicalClinic",
         "name": c["name"], "url": c["web"], "address": c["address"],
@@ -396,16 +494,18 @@ def ficha(c):
         ld_obj["telephone"] = c["telefono"]
     ld = '<script type="application/ld+json">' + json.dumps(ld_obj, ensure_ascii=False) + "</script>"
     return head(f'{c["name"]} — clínica de longevidad en {c["city"]} | {SITE}', c["summary"][:150], f'/clinica/{c["slug"]}/', ld) + f"""
-<div class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/ciudad/{slugify(c["city"])}/">{c["city"]}</a> → {c["name"]}</p>
-{logo_img(c, ficha=True)}<h1>{c["name"]}</h1><p class="loc">{c["city"]}{extra} · {c["country"]} · {c["address"]}</p>
+<div class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/ciudad/{slugify(c["city"])}/">{h(c["city"])}</a> → {h(c["name"])}</p>
+{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
 <div class="tags">{tags}</div>
-<p class="summary">{c["summary"]}</p>
-<h2>Servicios</h2><ul>{servicios}</ul>
+<p class="summary">{h(c["summary"])}</p>
+{datos}
+{contacto}
+{areas}
+{servicios}
 {unidades}
 {tech}
 {equipo}
-{contacto}
-<a class="visit" href="{c["web"]}" rel="nofollow noopener" target="_blank">Visitar web oficial ↗</a>
+{visit}
 {prelim}</div>""" + FOOTER
 
 def ciudad_page(city):
