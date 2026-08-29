@@ -29,7 +29,7 @@
     "slug": "clinica-neleva",
     "name": "Clínica Neleva",
     "city": "Madrid",
-    "address": "C/ Claudio Coello 19, Madrid",
+    "address": "C/ Claudio Coello 19, 1ª planta, 28001 Madrid",
     "web": "https://clinicaneleva.com",
     "summary": "Centro de medicina preventiva para la longevidad saludable en el barrio de Salamanca, con 700 m² y metodología propia: chequeo inicial de 3 horas, plan personalizado y seguimiento semestral. Más de 15 años de experiencia.",
     "services": [
@@ -44,7 +44,10 @@
     "specialties": [
       "Chequeos y biomarcadores",
       "Medicina de precisión"
-    ]
+    ],
+    "email": "atencionpaciente@clinicaneleva.com",
+    "telefono": "+34 915 622 278",
+    "instagram": "@clinicaneleva"
   },
   {
     "slug": "kairos-longevity",
@@ -79,7 +82,7 @@
       "Marbella",
       "Barcelona"
     ],
-    "address": "C/ Velázquez 14, Madrid · C/ Calvario 6, Marbella · C/ Ferrán Agulló 8, Barcelona",
+    "address": "C/ Velázquez 14, 28001 Madrid · C/ del Calvario 6, 29601 Marbella · C/ Ferran Agulló 8, 08021 Barcelona",
     "web": "https://www.neolifesalud.com",
     "summary": "Grupo médico pionero de la medicina de longevidad en España, con más de 15 años y tres sedes. Programas de seguimiento basados en biomarcadores de edad biológica y Age Management Medicine.",
     "services": [
@@ -97,7 +100,10 @@
       "Chequeos y biomarcadores",
       "Salud hormonal",
       "Nutrición y microbiota"
-    ]
+    ],
+    "email": "info@neolifesalud.com",
+    "telefono": "+34 91 732 59 50 (Madrid) · +34 95 130 44 88 (Marbella) · +34 93 193 51 62 (Barcelona)",
+    "instagram": "@clinicaneolife"
   },
   {
     "slug": "age-reversal",
@@ -126,18 +132,24 @@
     "slug": "arvila-magna",
     "name": "Clínica Arvila Magna",
     "city": "Barcelona",
-    "address": "Barcelona",
+    "address": "Avinguda Diagonal 442, 08037 Barcelona",
     "web": "https://arvilamagna.com",
-    "summary": "Clínica con área específica de longevidad dentro de una oferta médica y estética más amplia. Ficha preliminar pendiente de ampliar.",
+    "summary": "Clínica de medicina integrativa en pleno Eixample de Barcelona, con un área específica de Longevidad dirigida por el Dr. Jordi Ibáñez dentro de una oferta médica más amplia que combina medicina convencional, funcional y terapias complementarias.",
     "services": [
-      "Área de longevidad",
-      "Medicina preventiva"
+      "Área de Longevidad (Dr. Jordi Ibáñez)",
+      "Medicina integrativa y funcional",
+      "Valoración médica y chequeos personalizados",
+      "Terapias complementarias"
     ],
     "tech": "",
-    "status": "preliminar",
+    "status": "publicada",
     "country": "España",
     "specialties": [
-      "Longevidad integral"
+      "Longevidad integral",
+      "Medicina funcional"
+    ],
+    "profesionales": [
+      "Dr. Jordi Ibáñez — responsable del Área de Longevidad"
     ]
   },
   {
@@ -186,18 +198,22 @@
     "slug": "sensabell",
     "name": "Sensabell",
     "city": "Valencia",
-    "address": "Valencia",
+    "address": "Valencia (Ciutat Vella); sede también en Madrid",
     "web": "https://sensabell.com",
-    "summary": "Clínica con unidad de longevidad y consulta de medicina preventiva en Valencia. Ficha preliminar pendiente de ampliar.",
+    "summary": "Clínica de cirugía plástica y estética en Valencia, con sede también en Madrid, que ha incorporado una Consulta de Longevidad de medicina preventiva junto a su programa premium Sensabell Luxe, orientada a optimizar la salud a largo plazo más allá de lo estético.",
     "services": [
-      "Unidad de longevidad",
-      "Medicina preventiva"
+      "Consulta de Longevidad (medicina preventiva)",
+      "Cirugía plástica y estética",
+      "Programa Sensabell Luxe (Xperience Program)"
     ],
     "tech": "",
-    "status": "preliminar",
+    "status": "publicada",
     "country": "España",
     "specialties": [
       "Medicina de precisión"
+    ],
+    "cities_extra": [
+      "Madrid"
     ]
   },
   {
@@ -281,5 +297,174 @@
     "specialties": [
       "Medicina regenerativa"
     ]
+  },
+  {
+    "slug": "quironsalud-valencia-longevidad",
+    "name": "Unidad de Longevidad · Hospital Quirónsalud Valencia",
+    "city": "Valencia",
+    "address": "Avda. Blasco Ibáñez 14, 46010 Valencia",
+    "web": "https://www.quironsalud.com/valencia/es/cartera-servicios/unidad-longevidad",
+    "summary": "Unidad de longevidad integrada en el Hospital Quirónsalud Valencia. Evalúa el estado de salud actual mediante analítica avanzada, composición corporal y biomarcadores de envejecimiento, y a partir de ahí diseña un plan personalizado. Combina nutrición de precisión, ejercicio terapéutico y optimización neuroendocrina y hormonal.",
+    "services": [
+      "Historia clínica y evaluación del estilo de vida",
+      "Analítica avanzada (metabolismo, inflamación, estado nutricional, función tiroidea)",
+      "Biomarcadores de envejecimiento y composición corporal",
+      "Microbiota y genómica",
+      "Nutrición de precisión y suplementación personalizada",
+      "Ejercicio terapéutico",
+      "Optimización neuroendocrina y hormonal"
+    ],
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores",
+      "Nutrición y microbiota",
+      "Salud hormonal"
+    ],
+    "unidades": [
+      "Unidad de Longevidad (dentro de la cartera de servicios del hospital)"
+    ],
+    "telefono": "963 690 600",
+    "instagram": "@quironsalud"
+  },
+  {
+    "slug": "olympia-longevidad",
+    "name": "Unidad de Longevidad · Centro médico-quirúrgico Olympia",
+    "city": "Madrid",
+    "address": "Paseo de la Castellana 259 E, 28046 Madrid",
+    "web": "https://olympia.quironsalud.com",
+    "summary": "Unidad de longevidad del centro médico-quirúrgico Olympia, en las Cuatro Torres de Madrid. Se plantea como un espacio de enfoque integral orientado al envejecimiento saludable y a la salud a largo plazo, dentro de su área de estilo de vida.",
+    "services": [
+      "Programa de envejecimiento saludable con enfoque integral"
+    ],
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral"
+    ],
+    "unidades": [
+      "Unidad de Longevidad (dentro del Lifestyle Center)"
+    ],
+    "email": "atencionusuario.oly@quironsalud.es",
+    "telefono": "900 605 055 (pacientes privados) · 914 101 200 (pacientes con seguro)",
+    "instagram": "@olympia_grupoqs"
+  },
+  {
+    "slug": "the-long-game",
+    "name": "The Long Game by Horizon Medical Group",
+    "city": "Sevilla",
+    "address": "C/ José Recuerda Rubio 4 (Manzana 2), Portal B, 1E, 41018 Sevilla",
+    "web": "https://thelongame.es",
+    "summary": "Clínica privada de medicina de longevidad en Sevilla. Parte de un análisis de 94 biomarcadores y de un cálculo de edad biológica con modelo propio para elaborar un protocolo firmado por médico, con seguimiento trimestral. Trabaja por programas cerrados de precio publicado y admite videoconsulta.",
+    "services": [
+      "Análisis de 94 biomarcadores",
+      "Cálculo de edad biológica (modelo propio HBA)",
+      "Programas Esencial, Active, Terapéutica y Ejecutivo Plus",
+      "Videoconsulta médica",
+      "Suplementación clínica personalizada",
+      "Seguimiento trimestral"
+    ],
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores",
+      "Medicina de precisión"
+    ],
+    "tech": "Modelo propio Horizon Biological Age (HBA), kit de análisis a domicilio, panel de resultados por semáforo",
+    "profesionales": [
+      "Dr. Manuel Baturone Castillo — director científico (reumatología)",
+      "Dra. Nazaret Roldán — medicina interna"
+    ],
+    "telefono": "+34 674 787 825"
+  },
+  {
+    "slug": "mb-wellness-clinic",
+    "name": "MB Wellness Clinic",
+    "city": "Zaragoza",
+    "address": "C/ de San Vicente Mártir 17, local, 50008 Zaragoza",
+    "web": "https://mbwellnessclinic.com",
+    "summary": "Clínica de Zaragoza con un programa de medicina de longevidad estructurado en cuatro fases: evaluación con más de 50 biomarcadores, cálculo de edad biológica, plan personalizado a 6-12 meses y seguimiento trimestral. Interviene sobre nutrición, suplementación y optimización hormonal y regenerativa.",
+    "services": [
+      "Evaluación con más de 50 biomarcadores",
+      "Cálculo de edad biológica",
+      "Planes de longevidad Start, Plus y Elite",
+      "Optimización hormonal",
+      "Análisis de microbiota intestinal",
+      "Valoración de inflamación crónica y estrés oxidativo",
+      "Seguimiento trimestral"
+    ],
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Chequeos y biomarcadores",
+      "Salud hormonal",
+      "Nutrición y microbiota"
+    ],
+    "email": "info@mbwellnessclinic.com",
+    "telefono": "+34 604 956 510"
+  },
+  {
+    "slug": "clinicas-ume",
+    "name": "Clínicas UME",
+    "city": "Alicante",
+    "address": "Plaza de Calvo Sotelo 1, 03001 Alicante (y otros centros en la ciudad)",
+    "web": "https://clinicaume.com",
+    "summary": "Centro multiespecialidad de Alicante con una Unidad de Longevidad y Biohacking de medicina preventiva. Trabaja sobre energía mitocondrial, microbiota y equilibrio hormonal con protocolos medibles, apoyados en análisis genético-epigenético y terapias como la hipoxia intermitente.",
+    "services": [
+      "Medicina de precisión con análisis genético-epigenético",
+      "Hipoxia intermitente (IHHT)",
+      "Sueroterapia intravenosa",
+      "Ozonoterapia",
+      "Estudios de microbiota"
+    ],
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral",
+      "Medicina de precisión",
+      "Nutrición y microbiota"
+    ],
+    "unidades": [
+      "Unidad de Longevidad y Biohacking",
+      "Medicina Integrativa",
+      "Hematología",
+      "Ginecología",
+      "Cardiología Integrativa",
+      "Psicología",
+      "Fisioterapia"
+    ],
+    "tech": "Hipoxia intermitente (IHHT), análisis epigenético, estudios de microbiota",
+    "email": "admin@clinicaume.com",
+    "telefono": "965 218 484",
+    "instagram": "@clinicas_ume"
+  },
+  {
+    "slug": "clinica-benzaquen",
+    "name": "Clínica Benzaquén",
+    "city": "Málaga",
+    "address": "Calle Sagasta 8, 29005 Málaga",
+    "web": "https://clinicabenzaquen.com",
+    "summary": "Clínica de medicina y cirugía estética de Málaga que ha incorporado una Unidad de Longevidad Saludable orientada al diagnóstico temprano y la prevención de enfermedades crónicas, con objetivos de rendimiento físico y cognitivo además de los puramente estéticos.",
+    "services": [
+      "Unidad de Longevidad Saludable (prevención y diagnóstico temprano)",
+      "Medicina estética facial y corporal",
+      "Cirugía estética",
+      "Bienestar y nutrición"
+    ],
+    "status": "preliminar",
+    "country": "España",
+    "specialties": [
+      "Longevidad integral"
+    ],
+    "unidades": [
+      "Unidad de Longevidad Saludable",
+      "Medicina Estética Facial",
+      "Medicina Estética Corporal",
+      "Cirugía Estética",
+      "Bienestar y Nutrición"
+    ],
+    "email": "info@clinicabenzaquen.com",
+    "telefono": "+34 952 22 31 07",
+    "instagram": "@clinica_benzaquen"
   }
 ]
