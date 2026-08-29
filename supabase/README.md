@@ -27,6 +27,37 @@ python3 scripts/export_supabase_bootstrap.py > /tmp/diuvita_supabase_bootstrap.s
 2. Review `/tmp/diuvita_supabase_bootstrap.sql`.
 3. Run it in the Supabase SQL editor.
 
+Local apply option:
+
+```bash
+scripts/apply_supabase_bootstrap.sh
+```
+
+This reads `DATABASE_URL` from `.env`, generates `/tmp/diuvita_supabase_bootstrap.sql` and applies it with `psql`.
+
+For local use, the easiest option is to set only this value in `.env`:
+
+```text
+SUPABASE_DB_PASSWORD=
+```
+
+The script will build the safe local connection itself.
+
+Check the imported foundation:
+
+```bash
+scripts/check_supabase_foundation.sh
+```
+
+If the direct database host does not resolve from this machine, use Supabase's Session pooler from the dashboard's green **Connect** button and set:
+
+```text
+SUPABASE_DB_HOST=aws-1-eu-west-1.pooler.supabase.com
+SUPABASE_DB_PORT=5432
+SUPABASE_DB_NAME=postgres
+SUPABASE_DB_USER=postgres.twxhcmvzbpnrneywdece
+```
+
 Alternative two-step setup:
 
 1. Run `supabase/migrations/0001_agent_foundation.sql` in the Supabase SQL editor or through the Supabase CLI.
@@ -43,6 +74,7 @@ python3 scripts/export_supabase_seed.py > /tmp/diuvita_seed.sql
 SUPABASE_URL=https://twxhcmvzbpnrneywdece.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_DB_PASSWORD=
 OPENAI_API_KEY=
 ```
 

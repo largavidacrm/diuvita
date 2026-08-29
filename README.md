@@ -23,4 +23,6 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `scripts/export_supabase_seed.py`: exporta las clinicas actuales a SQL para Supabase.
 - `scripts/export_supabase_bootstrap.py`: genera un SQL unico con migracion e importacion inicial.
+- `scripts/apply_supabase_bootstrap.sh`: aplica el bootstrap contra Supabase usando `DATABASE_URL` local.
+- `scripts/check_supabase_foundation.sh`: comprueba recuentos basicos de la base Supabase.
 - `.env.example`: plantilla de variables locales y de despliegue.
