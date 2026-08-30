@@ -426,6 +426,7 @@
                 <label for="jobCountry">País</label>
                 <input id="jobCountry" name="jobCountry" value="España">
               </div>
+              <p class="job-backlog-hint" id="jobBacklogHint">El freno de bandeja se calculará al cargar el panel.</p>
               <button class="btn" id="jobBtn" type="submit">Enviar a cola</button>
             </form>
           </div>
@@ -538,6 +539,7 @@
     var activeClinicSourceCount = 0;
     var dashboardLoading = false;
     var dashboardAutomation = {};
+    var dashboardOpenReviewCount = 0;
     var REVIEW_TYPE_FILTERS = [
       ["", "Todas"],
       ["candidate_clinic", "Clínicas nuevas"],
@@ -1709,6 +1711,21 @@
       if (count >= limit) return { label: "Activo · " + count + "/" + limit, tone: "danger-text" };
       if (limit - count <= 5) return { label: "Cerca · " + count + "/" + limit, tone: "warning-text" };
       return { label: "Normal · " + count + "/" + limit, tone: "" };
+    }
+
+    function updateJobBacklogHint(openCount) {
+      dashboardOpenReviewCount = Number(openCount || 0);
+      var remaining = SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount;
+      var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
+      var near = !full && remaining <= 5;
+      var node = el("jobBacklogHint");
+      node.className = "job-backlog-hint" + (full ? " danger" : near ? " warning" : "");
+      node.textContent = full
+        ? "Freno activo: limpia revisiones antes de crear más trabajos."
+        : near
+          ? "Casi lleno: crear trabajos puede añadir más tarjetas de revisión."
+          : "Bandeja con margen: puedes crear trabajos si aportan valor.";
+      el("jobBtn").disabled = full;
     }
 
     function duplicateEnrichmentClinicIds(rows) {
@@ -3659,6 +3676,7 @@
         var evidence = summary.evidence || {};
         var automation = summary.automation || {};
         dashboardAutomation = automation;
+        updateJobBacklogHint(reviews.open || 0);
 
         el("metrics").innerHTML = [
           metric("Clínicas", clinics.total || 0),
@@ -3850,6 +3868,18 @@
 
     async function createJob(event) {
       event.preventDefault();
+      if (dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT) {
+        updateJobBacklogHint(dashboardOpenReviewCount);
+        toast("Freno de bandeja activo. Primero limpia revisiones.");
+        return;
+      }
+      if (SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount <= 5) {
+        var shouldContinue = window.confirm(
+          "La bandeja está casi llena (" + dashboardOpenReviewCount + "/" + SAFE_WRITE_REVIEW_BACKLOG_LIMIT + ").\n\n" +
+          "Crear un trabajo puede añadir más tarjetas para revisar. ¿Crear igualmente?"
+        );
+        if (!shouldContinue) return;
+      }
       el("jobBtn").disabled = true;
       var payload = {
         job_type: el("jobType").value,

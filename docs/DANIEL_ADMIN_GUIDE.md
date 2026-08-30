@@ -80,6 +80,9 @@ Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. S
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
 
+En **Crear trabajo**, el panel avisa cuando la bandeja está casi llena. Si el
+freno llega al límite, bloquea crear más trabajos hasta limpiar revisiones.
+
 ## Revisar mejoras de una ficha existente
 
 Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que ya existe.

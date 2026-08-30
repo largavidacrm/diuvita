@@ -63,6 +63,12 @@ def main() -> None:
         "firstDuplicateTarget",
         "Freno bandeja",
         "SAFE_WRITE_REVIEW_BACKLOG_LIMIT",
+        'id="jobBacklogHint"',
+        "dashboardOpenReviewCount",
+        "function updateJobBacklogHint",
+        "Freno activo: limpia revisiones antes de crear más trabajos.",
+        "Casi lleno: crear trabajos puede añadir más tarjetas de revisión.",
+        "Freno de bandeja activo. Primero limpia revisiones.",
         "Cerca · ",
         "Activo · ",
         "Sin duplicados",
@@ -76,6 +82,9 @@ def main() -> None:
         ".related-review-counts",
         ".related-review-list",
         ".related-review-item",
+        ".job-backlog-hint",
+        ".job-backlog-hint.warning",
+        ".job-backlog-hint.danger",
     ]:
         check(marker in css, f"missing related review style: {marker}")
 

@@ -619,6 +619,29 @@ td small {
   gap: 0.8rem;
 }
 
+.job-backlog-hint {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.72);
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.job-backlog-hint.warning {
+  border-color: rgba(168, 105, 18, 0.3);
+  background: #f8ecd8;
+  color: var(--amber);
+}
+
+.job-backlog-hint.danger {
+  border-color: rgba(182, 59, 46, 0.28);
+  background: #f8dfdc;
+  color: var(--danger);
+}
+
 .editor-panel {
   scroll-margin-top: 5rem;
 }
