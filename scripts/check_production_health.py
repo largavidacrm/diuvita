@@ -41,6 +41,7 @@ CHECKS = [
             "Web pública",
             "Caso prioritario",
             "openPriorityReviewBtn",
+            "openClinicGroupBtn",
             "reviewFlowPanel",
             "data-review-duplicate",
             "openDuplicateReviewBtn",

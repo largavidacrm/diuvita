@@ -76,6 +76,7 @@ def main():
     check("Web pública" in admin_check["markers"], "admin deployment should include public-health marker")
     check("Caso prioritario" in admin_check["markers"], "admin deployment should include priority case marker")
     check("openPriorityReviewBtn" in admin_check["markers"], "admin deployment should include priority button marker")
+    check("openClinicGroupBtn" in admin_check["markers"], "admin deployment should include clinic-group button marker")
     check("reviewFlowPanel" in admin_check["markers"], "admin deployment should include publication-flow marker")
     check("data-review-duplicate" in admin_check["markers"], "admin deployment should include duplicate filter marker")
     check("openDuplicateReviewBtn" in admin_check["markers"], "admin deployment should include duplicate open button marker")

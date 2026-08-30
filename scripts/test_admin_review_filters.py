@@ -28,8 +28,10 @@ def main() -> None:
         "data-review-type",
         "data-review-priority",
         "data-review-duplicate",
+        "data-review-group-clear",
         "reviewDuplicateFilter",
-        "[data-review-type],[data-review-priority],[data-review-duplicate]",
+        "reviewClinicGroupFilter",
+        "[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-group-clear]",
     ]:
         check(marker in index, f"missing admin review filter marker: {marker}")
 

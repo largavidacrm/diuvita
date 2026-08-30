@@ -354,6 +354,7 @@
                 <option value="low">Baja</option>
               </select>
               <button class="btn secondary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
+              <button class="btn secondary hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
               <button class="btn secondary hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
               <button class="btn secondary hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
               <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
@@ -494,6 +495,7 @@
     var reviewPriorityFilter = "";
     var reviewSearchQuery = "";
     var reviewDuplicateFilter = false;
+    var reviewClinicGroupFilter = "";
     var sourceCoverageCache = null;
     var clinicStatusFilter = "";
     var activeClinic = null;
@@ -1435,6 +1437,74 @@
       })[0];
     }
 
+    function clinicReviewWorkgroups(rows) {
+      var grouped = {};
+      (rows || []).forEach(function (row) {
+        if (!row.clinic_id) return;
+        if (!grouped[row.clinic_id]) {
+          grouped[row.clinic_id] = {
+            clinicId: row.clinic_id,
+            label: reviewPrimarySubject(row),
+            count: 0,
+            blockingClaims: 0,
+            maxPriority: 0,
+            oldestCreatedAt: row.created_at || null,
+            rows: []
+          };
+        }
+        grouped[row.clinic_id].count += 1;
+        grouped[row.clinic_id].rows.push(row);
+        if (isBlockingClaimReview(row)) grouped[row.clinic_id].blockingClaims += 1;
+        grouped[row.clinic_id].maxPriority = Math.max(grouped[row.clinic_id].maxPriority, Number(row.priority || 0));
+        var currentOldest = parseDateValue(grouped[row.clinic_id].oldestCreatedAt);
+        var rowDate = parseDateValue(row.created_at);
+        if (rowDate && (!currentOldest || rowDate < currentOldest)) grouped[row.clinic_id].oldestCreatedAt = row.created_at;
+      });
+      return Object.keys(grouped).map(function (key) {
+        return grouped[key];
+      }).sort(function (a, b) {
+        return Number(b.blockingClaims || 0) - Number(a.blockingClaims || 0) ||
+          Number(b.count || 0) - Number(a.count || 0) ||
+          Number(b.maxPriority || 0) - Number(a.maxPriority || 0) ||
+          (parseDateValue(a.oldestCreatedAt) || new Date(8640000000000000)) -
+          (parseDateValue(b.oldestCreatedAt) || new Date(8640000000000000)) ||
+          text(a.label).localeCompare(text(b.label));
+      });
+    }
+
+    function firstClinicWorkgroup(rows) {
+      return clinicReviewWorkgroups(rows).find(function (group) {
+        return group.count > 1;
+      }) || null;
+    }
+
+    function clinicWorkgroupSubject(group) {
+      return group && group.label ? group.label : "clínica";
+    }
+
+    function activeClinicWorkgroup() {
+      if (!reviewClinicGroupFilter) return null;
+      return clinicReviewWorkgroups(reviewCache).find(function (group) {
+        return String(group.clinicId || "") === String(reviewClinicGroupFilter);
+      }) || null;
+    }
+
+    function reviewMatchesClinicGroup(row) {
+      return !reviewClinicGroupFilter || String(row.clinic_id || "") === String(reviewClinicGroupFilter);
+    }
+
+    function openClinicWorkgroup() {
+      var group = firstClinicWorkgroup(reviewCache);
+      if (!group) return;
+      reviewClinicGroupFilter = group.clinicId;
+      setInput("reviewSearch", "");
+      el("reviewTypeFilter").value = "";
+      el("reviewPriorityFilter").value = "";
+      reviewDuplicateFilter = false;
+      renderReviews();
+      toast("Bandeja filtrada por " + clinicWorkgroupSubject(group) + ".");
+    }
+
     function sourceTargetSubject(target) {
       if (!target) return "fuente";
       return target.clinicName || target.slug || "fuente";
@@ -1553,10 +1623,14 @@
       }
 
       var typeBase = reviewCache.filter(function (row) {
-        return reviewMatchesSearch(row) && (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
+        return reviewMatchesClinicGroup(row) &&
+          reviewMatchesSearch(row) &&
+          (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
       });
       var priorityBase = reviewCache.filter(function (row) {
-        return reviewMatchesSearch(row) && reviewMatchesType(row, reviewTypeFilter);
+        return reviewMatchesClinicGroup(row) &&
+          reviewMatchesSearch(row) &&
+          reviewMatchesType(row, reviewTypeFilter);
       });
       var typeChips = REVIEW_TYPE_FILTERS.map(function (filter) {
         var value = filter[0];
@@ -1569,7 +1643,8 @@
         return filterChip(filter[1], count, reviewPriorityFilter === value, { "data-review-priority": value });
       }).join("");
       var duplicateBase = reviewCache.filter(function (row) {
-        return reviewMatchesSearch(row) &&
+        return reviewMatchesClinicGroup(row) &&
+          reviewMatchesSearch(row) &&
           reviewMatchesType(row, reviewTypeFilter) &&
           (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
       });
@@ -1579,10 +1654,17 @@
           filterChip("Varias propuestas", duplicateCount, reviewDuplicateFilter, { "data-review-duplicate": "true" }) +
           '</div>'
         : "";
+      var activeGroup = activeClinicWorkgroup();
+      var groupChips = reviewClinicGroupFilter
+        ? '<div class="filter-chip-row"><strong>Grupo</strong>' +
+          filterChip(clinicWorkgroupSubject(activeGroup), activeGroup ? activeGroup.count : 0, true, { "data-review-group-clear": "true" }) +
+          '</div>'
+        : "";
 
       container.innerHTML = '<div class="filter-chip-row"><strong>Tipo</strong>' + typeChips + '</div>' +
         '<div class="filter-chip-row"><strong>Prioridad</strong>' + priorityChips + '</div>' +
-        duplicateChips;
+        duplicateChips +
+        groupChips;
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
@@ -1747,10 +1829,11 @@
     }
 
     function activeReviewFilters() {
-      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery || reviewDuplicateFilter);
+      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery || reviewDuplicateFilter || reviewClinicGroupFilter);
     }
 
     function reviewMatchesFilters(row) {
+      if (!reviewMatchesClinicGroup(row)) return false;
       if (!reviewMatchesType(row, reviewTypeFilter)) return false;
       if (reviewPriorityFilter && priorityBand(row.priority) !== reviewPriorityFilter) return false;
       if (reviewDuplicateFilter && !isDuplicateEnrichmentReview(row)) return false;
@@ -1763,6 +1846,7 @@
       el("reviewTypeFilter").value = "";
       el("reviewPriorityFilter").value = "";
       reviewDuplicateFilter = false;
+      reviewClinicGroupFilter = "";
       renderReviews();
     }
 
@@ -3005,12 +3089,15 @@
       var rows = reviewCache.filter(reviewMatchesFilters);
       var hasFilters = activeReviewFilters();
       var nextReview = firstActionReview(reviewCache, 0);
+      var clinicGroup = firstClinicWorkgroup(reviewCache);
       var duplicateReview = firstDuplicateReview(reviewCache);
       var sourceReview = firstSourceTargetReview(reviewCache);
       var sourceTarget = sourceCoverageCache && sourceCoverageCache.nextTarget;
       renderReviewFilterChips();
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
       el("openPriorityReviewBtn").textContent = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "Abrir prioridad";
+      show(el("openClinicGroupBtn"), Boolean(clinicGroup));
+      el("openClinicGroupBtn").textContent = clinicGroup ? "Filtrar grupo: " + clinicWorkgroupSubject(clinicGroup) : "Filtrar grupo";
       show(el("openDuplicateReviewBtn"), Boolean(duplicateReview));
       el("openDuplicateReviewBtn").textContent = duplicateReview ? "Abrir atasco: " + reviewPrimarySubject(duplicateReview) : "Abrir atasco";
       show(el("openSourceTargetBtn"), Boolean(sourceTarget));
@@ -3583,7 +3670,7 @@
         if (button) openReviewEditor(button.getAttribute("data-related-review-id"));
       });
       el("reviewFilterChips").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate]");
+        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-group-clear]");
         if (!button) return;
         if (button.hasAttribute("data-review-type")) {
           el("reviewTypeFilter").value = button.getAttribute("data-review-type");
@@ -3594,12 +3681,16 @@
         if (button.hasAttribute("data-review-duplicate")) {
           reviewDuplicateFilter = !reviewDuplicateFilter;
         }
+        if (button.hasAttribute("data-review-group-clear")) {
+          reviewClinicGroupFilter = "";
+        }
         renderReviews();
       });
       el("openPriorityReviewBtn").addEventListener("click", function () {
         var nextReview = firstActionReview(reviewCache, 0);
         if (nextReview) openReviewEditor(nextReview.id);
       });
+      el("openClinicGroupBtn").addEventListener("click", openClinicWorkgroup);
       el("openDuplicateReviewBtn").addEventListener("click", function () {
         var duplicateReview = firstDuplicateReview(reviewCache);
         if (duplicateReview) openReviewEditor(duplicateReview.id);

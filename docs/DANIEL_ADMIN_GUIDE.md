@@ -53,6 +53,10 @@ En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta d
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
 clínica.
 
+El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
+que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
+auditoría, cambio de fuente y mejoras abiertas a la vez.
+
 El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
 marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la
 bandeja por esa clínica.
