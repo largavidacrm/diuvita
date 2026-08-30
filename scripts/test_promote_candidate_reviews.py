@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for candidate review promotion gating."""
 
-from promote_candidate_reviews import classify_review
+from promote_candidate_reviews import classify_review, promote_review_sql
 
 
 def check(condition, message):
@@ -66,6 +66,8 @@ def main():
     check(classify_review(low_confidence, 0.55, 0.9)["status"] == "hold", "low confidence should wait")
     check(classify_review(duplicate, 0.55, 0.9)["reason"] == "probable_duplicate", "duplicate not blocked")
     check(classify_review(missing, 0.55, 0.9)["reason"] == "missing_city", "missing city not flagged")
+    sql = promote_review_sql("00000000-0000-0000-0000-000000000001", "admin@example.com", "note")
+    check("admin_create_draft_clinic_from_review_v2" in sql, "draft validation function missing")
     print("OK promote: candidate review gating")
 
 

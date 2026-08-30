@@ -19,7 +19,7 @@ Safety rules:
 
 - candidates below the confidence threshold stay on hold;
 - probable duplicates are blocked;
-- created clinics are `draft`, never public;
+- created clinics are `draft`, never public; the admin opens the draft for final validation before publication;
 - the existing Supabase function writes source records, field claims, an entity
   version and audit events.
 

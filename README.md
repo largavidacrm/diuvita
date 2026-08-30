@@ -39,6 +39,8 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/CTO_SHADOW_CYCLE.md`: ciclo seguro para encadenar tareas internas repetibles.
 - `docs/LOCAL_CHECKS.md`: comprobaciones locales antes de guardar y subir cambios.
 - `supabase/migrations/0014_source_snapshots.sql`: historial interno de capturas compactas de fuentes.
+- `supabase/migrations/0015_candidate_draft_validation_flow.sql`: flujo claro candidata -> borrador -> validación final.
+- `supabase/migrations/0016_normalize_existing_candidate_drafts.sql`: normaliza candidatas internas antiguas a borrador.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.

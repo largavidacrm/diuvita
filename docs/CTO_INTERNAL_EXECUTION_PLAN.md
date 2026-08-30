@@ -38,6 +38,7 @@ Already built:
 - Audit events and entity versions for manual edits.
 - `agent_jobs`, `review_queue`, `source_records`, `field_claims`, `human_overrides` and related foundation tables.
 - Admin visibility for clinic version history, protected fields and internal evidence claims.
+- Candidate reviews now create internal drafts and route Daniel to final validation before publication.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.

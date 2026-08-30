@@ -519,7 +519,8 @@ td small {
 .proposal-preview-head,
 .version-history-head,
 .evidence-head,
-.source-head {
+.source-head,
+.validation-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -530,6 +531,7 @@ td small {
 .version-history h3,
 .evidence-panel h3,
 .source-panel h3,
+.validation-panel h3,
 .diff-item h4 {
   margin: 0;
   font-size: 0.96rem;
@@ -538,14 +540,16 @@ td small {
 .proposal-preview p,
 .version-history p,
 .evidence-panel p,
-.source-panel p {
+.source-panel p,
+.validation-panel p {
   margin: 0.15rem 0 0;
   color: var(--muted);
 }
 
 .version-history,
 .evidence-panel,
-.source-panel {
+.source-panel,
+.validation-panel {
   display: grid;
   gap: 0.8rem;
   padding: 1rem;
@@ -555,7 +559,8 @@ td small {
 
 .version-list,
 .claim-list,
-.source-list {
+.source-list,
+.validation-list {
   display: grid;
   gap: 0.65rem;
 }
@@ -631,6 +636,26 @@ td small {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.35rem;
+}
+
+.validation-list {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.validation-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.62rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.validation-item strong {
+  min-width: 0;
+  line-height: 1.25;
 }
 
 .claim-meta a,

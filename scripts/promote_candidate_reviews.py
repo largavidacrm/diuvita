@@ -103,8 +103,8 @@ from (
     return json.loads(run_psql(sql, local_env) or "[]")
 
 
-def promote_review(review_id: str, admin_email: str, note: str, local_env: dict[str, str]) -> dict[str, Any]:
-    sql = f"""
+def promote_review_sql(review_id: str, admin_email: str, note: str) -> str:
+    return f"""
 with claims as (
   select set_config(
     'request.jwt.claims',
@@ -113,7 +113,7 @@ with claims as (
   )
 ),
 promoted as (
-  select public.admin_create_draft_clinic_from_review(
+  select public.admin_create_draft_clinic_from_review_v2(
     {sql_literal(review_id)}::uuid,
     {sql_literal(note)}::text
   ) as clinic
@@ -128,6 +128,10 @@ select jsonb_build_object(
 )
 from promoted;
 """
+
+
+def promote_review(review_id: str, admin_email: str, note: str, local_env: dict[str, str]) -> dict[str, Any]:
+    sql = promote_review_sql(review_id, admin_email, note)
     return json.loads(run_psql(sql, local_env))
 
 
