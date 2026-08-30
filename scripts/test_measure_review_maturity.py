@@ -39,6 +39,16 @@ def sample_measurement():
         "claims_by_field": [
             {"field_path": "services.list", "total": 7, "needs_review": 7},
         ],
+        "blocked_claims": [
+            {
+                "clinic_name": "Clinic",
+                "clinic_slug": "clinic",
+                "field_path": "services.list",
+                "verification_status": "conflict",
+                "confidence": 0.82,
+                "source_record_id": "source-1",
+            }
+        ],
         "source_coverage": {
             "source_records": 9,
             "source_snapshots": 5,
@@ -60,6 +70,8 @@ def main():
     check("# Diuvita review maturity" in output, "title missing")
     check("Low-risk auto-publish readiness: not ready" in output, "decision missing")
     check("clinicas candidatas: 2/4 closed" in output, "candidate review summary missing")
+    check("## Blocking claims" in output, "blocking claims section missing")
+    check("Clinic | services.list: conflict, 82%, con fuente" in output, "blocking claim detail missing")
     check("Source snapshots: 5" in output, "source coverage missing")
     check("services.list: 7 total" in output, "field grouping missing")
     print("OK maturity: review measurement")

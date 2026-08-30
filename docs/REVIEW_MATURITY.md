@@ -10,6 +10,8 @@ It checks:
 - candidate clinic review decisions against the target sample size;
 - open, resolved and dismissed review cards by type;
 - field claims by verification status;
+- specific blocking claims, including clinic, field, verification status and
+  whether a source is attached;
 - claims with or without saved sources;
 - failed or stuck jobs in the last 7 days.
 

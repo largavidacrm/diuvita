@@ -78,6 +78,34 @@ claims_by_field as (
     limit 30
   ) grouped
 ),
+blocked_claims as (
+  select coalesce(jsonb_agg(to_jsonb(items) order by items.severity desc, items.created_at desc), '[]'::jsonb) as data
+  from (
+    select
+      fc.id,
+      fc.field_path,
+      fc.verification_status,
+      fc.confidence,
+      fc.source_record_id,
+      fc.created_at,
+      c.slug as clinic_slug,
+      c.display_name as clinic_name,
+      sr.source_url,
+      case
+        when fc.verification_status = 'conflict' then 3
+        when fc.verification_status = 'rejected' then 2
+        when fc.source_record_id is null then 1
+        else 0
+      end as severity
+    from public.field_claims fc
+    left join public.clinics c on c.id = fc.clinic_id
+    left join public.source_records sr on sr.id = fc.source_record_id
+    where fc.verification_status in ('conflict', 'rejected')
+       or fc.source_record_id is null
+    order by severity desc, fc.created_at desc
+    limit 20
+  ) items
+),
 source_coverage as (
   select jsonb_build_object(
     'source_records', (select count(*) from public.source_records),
@@ -103,6 +131,7 @@ select jsonb_build_object(
   'reviews_by_type', (select data from reviews_by_type),
   'claims_by_status', (select data from claims_by_status),
   'claims_by_field', (select data from claims_by_field),
+  'blocked_claims', (select data from blocked_claims),
   'source_coverage', (select data from source_coverage),
   'jobs_7d', (select data from jobs_7d),
   'generated_at', now()
@@ -121,6 +150,13 @@ def review_target(measurement: dict[str, Any], requested_target: int | None) -> 
     summary = measurement.get("summary") or {}
     automation = summary.get("automation") or {}
     return as_int(automation.get("shadow_review_target")) or DEFAULT_REVIEW_TARGET
+
+
+def confidence_label(value: Any) -> str:
+    try:
+        return f"{round(float(value or 0) * 100)}%"
+    except (TypeError, ValueError):
+        return "-"
 
 
 def maturity_status(measurement: dict[str, Any], target: int) -> dict[str, Any]:
@@ -157,6 +193,7 @@ def format_measurement(measurement: dict[str, Any], target: int) -> str:
     reviews = measurement.get("reviews_by_type") or []
     claims_status = measurement.get("claims_by_status") or []
     claims_field = measurement.get("claims_by_field") or []
+    blocked_claims = measurement.get("blocked_claims") or []
     source_coverage = measurement.get("source_coverage") or {}
     jobs = measurement.get("jobs_7d") or {}
     status = maturity_status(measurement, target)
@@ -205,6 +242,17 @@ def format_measurement(measurement: dict[str, Any], target: int) -> str:
             lines.append(f"- {row.get('verification_status')}: {as_int(row.get('total'))}")
     else:
         lines.append("- No field claims recorded.")
+
+    if blocked_claims:
+        lines.extend(["", "## Blocking claims"])
+        for row in blocked_claims[:10]:
+            clinic = row.get("clinic_name") or row.get("clinic_slug") or "sin clinica"
+            verification = row.get("verification_status") or "sin fuente"
+            source = "con fuente" if row.get("source_record_id") else "sin fuente"
+            lines.append(
+                f"- {clinic} | {row.get('field_path')}: {verification}, "
+                f"{confidence_label(row.get('confidence'))}, {source}"
+            )
 
     lines.extend([
         "",
