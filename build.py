@@ -447,6 +447,8 @@ if os.path.exists(LOGOS_FILE):
 cities = {}
 for c in clinics:
     cities.setdefault(c["city"], []).append(c)
+city_order = sorted(cities.keys(), key=lambda k: (-len(cities[k]), k))
+countries = sorted({c["country"] for c in clinics})
 specialties = sorted({s for c in clinics for s in c["specialties"]})
 
 CSS = """
@@ -470,6 +472,18 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .finder{margin-top:1.35rem;background:var(--surface-strong);border:1px solid var(--line);border-radius:8px;padding:.9rem;box-shadow:var(--shadow)}
 .finder input{width:100%;min-height:3.35rem;font:inherit;font-size:1.04rem;padding:.75rem 1rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
 .finder input:focus{outline:3px solid rgba(30,122,90,.2);border-color:var(--green)}
+.filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin-top:.85rem}
+.fgroup{min-width:0}
+.fgroup .flabel{display:block;margin-bottom:.35rem;color:var(--muted);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
+.chips{display:flex;flex-wrap:nowrap;gap:.38rem;overflow-x:auto;padding-bottom:.08rem;scrollbar-width:thin}
+.chip{font:inherit;font-size:.84rem;line-height:1.2;min-height:2.1rem;padding:.34rem .62rem;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--green);color:var(--green-deep)}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff}
+.logo-strip{display:flex;gap:.6rem;overflow-x:auto;max-width:1180px;margin:.25rem auto 0;padding:.5rem 5vw 1.05rem;scrollbar-width:thin}
+.mini-logo{flex:0 0 auto;height:42px;display:flex;align-items:center;padding:.35rem .7rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.82)}
+.mini-logo:hover{text-decoration:none;background:#fff;border-color:#cbd9ce}
+.mini-logo:focus-visible{outline:3px solid rgba(30,122,90,.25);outline-offset:3px}
+.mini-logo img{max-width:126px;max-height:26px;object-fit:contain;display:block}
 .results-section{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
 .wrap{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
 .resbar{position:sticky;top:66px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:.9rem;margin:.5rem 0 1rem;padding:.72rem .85rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.94);backdrop-filter:blur(12px)}
@@ -563,8 +577,8 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.9rem;background:rgba(255,253,248,.56)}
 footer p{max-width:1120px;margin:0 auto}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
-@media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
-@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;justify-content:space-between;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
+@media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;justify-content:space-between;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -679,31 +693,52 @@ def card(c):
 <div class="tags">{tags}</div><a class="card-cta" href="/clinica/{h(c["slug"])}/">Ver ficha</a></article>'''
 
 # --- index ---
+city_chips = "".join(f'<button class="chip" data-f="city" data-v="{h(ct)}">{h(ct)}</button>' for ct in city_order)
+country_chips = "".join(f'<button class="chip" data-f="country" data-v="{h(co)}">{h(co)}</button>' for co in countries)
+spec_chips = "".join(f'<button class="chip" data-f="spec" data-v="{h(s)}">{h(s)}</button>' for s in specialties)
 allcards = "".join(card(c) for c in clinics)
+featured_logo_clinics = [c for c in clinics if c.get("slug") in thumb_files][:12]
+featured_logos = "".join(
+    f'<a class="mini-logo" href="/clinica/{h(c["slug"])}/" aria-label="Ver ficha de {h(c["name"])}"><img src="/assets/logos/thumb/{h(thumb_files[c["slug"]])}" alt="{h(c["name"])}" loading="lazy"></a>'
+    for c in featured_logo_clinics
+)
 
 JS = """<script>
 (function(){
-  var state={q:""};
+  var state={city:null,country:null,spec:null,q:""};
   var cards=[].slice.call(document.querySelectorAll(".grid .card"));
   var count=document.getElementById("count");
   var clear=document.getElementById("clearFilters");
   var empty=document.getElementById("emptyState");
-  function hasFilters(){return Boolean(state.q);}
+  function hasFilters(){return Boolean(state.city||state.country||state.spec||state.q);}
   function apply(){
     var n=0;
     cards.forEach(function(el){
       var ok=true;
+      if(state.city && el.dataset.city.split("|").indexOf(state.city)<0) ok=false;
+      if(state.country && el.dataset.country!==state.country) ok=false;
+      if(state.spec && el.dataset.spec.split("|").indexOf(state.spec)<0) ok=false;
       if(state.q && el.dataset.text.indexOf(state.q)<0) ok=false;
       el.classList.toggle("hidden",!ok); if(ok) n++;
     });
-    count.innerHTML="<b>"+n+"</b> clínica"+(n===1?"":"s");
+    count.innerHTML="<b>"+n+"</b> clínica"+(n===1?"":"s")+(state.city?" en "+state.city:"")+(state.spec?" · "+state.spec:"");
     if(clear) clear.disabled=!hasFilters();
     if(empty) empty.classList.toggle("hidden",n!==0);
   }
+  document.querySelectorAll(".chip").forEach(function(ch){
+    ch.addEventListener("click",function(){
+      var f=ch.dataset.f,v=ch.dataset.v;
+      var on=state[f]===v; state[f]=on?null:v;
+      document.querySelectorAll('.chip[data-f="'+f+'"]').forEach(function(o){o.classList.remove("on")});
+      if(!on) ch.classList.add("on");
+      apply();
+    });
+  });
   document.getElementById("q").addEventListener("input",function(e){state.q=e.target.value.toLowerCase().trim();apply();});
   if(clear) clear.addEventListener("click",function(){
-    state={q:""};
+    state={city:null,country:null,spec:null,q:""};
     document.getElementById("q").value="";
+    document.querySelectorAll(".chip").forEach(function(ch){ch.classList.remove("on")});
     apply();
   });
   apply();
@@ -722,8 +757,14 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 <p class="sub">Compara centros por ciudad, país y área médica con una guía independiente: sin rankings, sin publicidad y con revisión humana antes de publicar.</p></div>
 <div class="finder" id="buscar">
 <input id="q" type="search" placeholder="Busca por nombre, ciudad o especialidad…" aria-label="Buscar clínica">
+<div class="filter-grid">
+<div class="fgroup"><span class="flabel">País</span><div class="chips">{country_chips}</div></div>
+<div class="fgroup"><span class="flabel">Ciudad</span><div class="chips">{city_chips}</div></div>
+<div class="fgroup"><span class="flabel">Especialidad</span><div class="chips">{spec_chips}</div></div>
+</div>
 </div>
 </section>
+<section class="logo-strip" aria-label="Clínicas destacadas">{featured_logos}</section>
 <section class="results-section">
 <div class="resbar"><p class="rescount" id="count"></p><button class="clear-btn" id="clearFilters" type="button">Limpiar filtros</button></div>
 <div class="grid">{allcards}</div>
