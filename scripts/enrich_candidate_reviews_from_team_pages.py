@@ -146,12 +146,26 @@ def candidate_source_urls(payload: dict[str, Any]) -> list[str]:
     return clean
 
 
-def candidate_has_professionals(payload: dict[str, Any]) -> bool:
+def candidate_professionals(payload: dict[str, Any]) -> list[str]:
     candidate = payload.get("candidate") or {}
-    return bool(as_list(candidate.get("profesionales")) or as_list(candidate.get("professionals")))
+    return as_list(candidate.get("profesionales")) or as_list(candidate.get("professionals"))
 
 
-def load_open_candidate_reviews(limit: int, local_env: dict[str, str]) -> list[dict[str, Any]]:
+def candidate_has_professionals(payload: dict[str, Any]) -> bool:
+    return bool(candidate_professionals(payload))
+
+
+def load_open_candidate_reviews(
+    limit: int,
+    local_env: dict[str, str],
+    review_id: str | None = None,
+    candidate_query: str | None = None,
+) -> list[dict[str, Any]]:
+    review_filter = f"and id = {sql_literal(review_id)}::uuid" if review_id else ""
+    query_filter = ""
+    if candidate_query:
+        like = "%" + candidate_query.lower().strip() + "%"
+        query_filter = f"and lower(coalesce(title, '') || ' ' || coalesce(payload::text, '')) like {sql_literal(like)}"
     sql = f"""
 select coalesce(jsonb_agg(to_jsonb(items) order by items.created_at asc), '[]'::jsonb)
 from (
@@ -163,6 +177,8 @@ from (
   from public.review_queue
   where status = 'open'
     and review_type = 'candidate_clinic'
+    {review_filter}
+    {query_filter}
   order by created_at asc
   limit {int(limit)}
 ) items;
@@ -189,7 +205,15 @@ def enrich_review(row: dict[str, Any], args: argparse.Namespace, local_env: dict
     name = candidate.get("name") or payload.get("candidate_name") or row.get("title")
 
     if candidate_has_professionals(payload) and not args.include_with_professionals:
-        return {"review_id": row.get("id"), "candidate_name": name, "status": "skipped_has_professionals"}
+        professionals = candidate_professionals(payload)
+        return {
+            "review_id": row.get("id"),
+            "candidate_name": name,
+            "status": "skipped_has_professionals",
+            "professionals_count": len(professionals),
+            "professionals": professionals[:12],
+            "source_urls": candidate_source_urls(payload),
+        }
 
     seed_urls = candidate_source_urls(payload)[: args.max_seed_urls]
     if not seed_urls:
@@ -270,6 +294,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-seed-urls", type=int, default=3)
     parser.add_argument("--max-team-links", type=int, default=5)
     parser.add_argument("--timeout", type=int, default=20)
+    parser.add_argument("--review-id", help="Process one candidate review.")
+    parser.add_argument("--candidate-query", help="Process open candidate reviews matching this text.")
     parser.add_argument("--include-with-professionals", action="store_true")
     parser.add_argument("--apply", action="store_true", help="Update candidate review cards in Supabase.")
     return parser.parse_args()
@@ -281,7 +307,7 @@ def main() -> int:
         raise SystemExit("--limit must be at least 1.")
 
     local_env = load_env_file()
-    rows = load_open_candidate_reviews(args.limit, local_env)
+    rows = load_open_candidate_reviews(args.limit, local_env, args.review_id, args.candidate_query)
     results = [enrich_review(row, args, local_env) for row in rows]
     print(json.dumps({
         "mode": "apply" if args.apply else "dry_run",

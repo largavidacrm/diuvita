@@ -43,6 +43,8 @@ def main():
         "pending_fields": ["contact", "specialists", "technology"],
         "has_open_review": False,
         "has_open_clinic_review": False,
+        "open_review": None,
+        "open_clinic_review": None,
     }
     args = Namespace(timeout=15, apply=False, replace_existing=False, allow_multiple_open_clinic_reviews=False)
     result = process_source(source, args, "admin@example.test", {}, fetcher=fake_fetch)
@@ -53,7 +55,7 @@ def main():
     check("specialists" in result["pending_fields"], "pending-field context should be preserved")
 
     skipped = process_source(
-        dict(source, has_open_review=True),
+        dict(source, has_open_review=True, open_review={"id": "review-source-1", "title": "Open source review"}),
         args,
         "admin@example.test",
         {},
@@ -61,9 +63,10 @@ def main():
     )
     check(skipped["status"] == "skipped", "existing open review should be skipped by default")
     check("already exists" in skipped["reason"], "skip reason should be readable")
+    check(skipped["open_review"]["title"] == "Open source review", "source skip should explain existing review")
 
     clinic_skipped = process_source(
-        dict(source, has_open_clinic_review=True),
+        dict(source, has_open_clinic_review=True, open_clinic_review={"id": "review-clinic-1", "title": "Open clinic review"}),
         args,
         "admin@example.test",
         {},
@@ -71,6 +74,7 @@ def main():
     )
     check(clinic_skipped["status"] == "skipped", "existing clinic review should be skipped by default")
     check("for this clinic" in clinic_skipped["reason"], "clinic skip reason should be readable")
+    check(clinic_skipped["open_clinic_review"]["title"] == "Open clinic review", "clinic skip should explain existing review")
 
     calls = []
 
@@ -137,6 +141,8 @@ def main():
     check("jsonb_agg(to_jsonb(items) order by items.pending_count desc" in sql, "source batch output should preserve priority order")
     check("cardinality(candidate.pending_fields) desc" in sql, "source batch should prioritize incomplete profiles")
     check("has_open_review asc" in sql, "source batch should prefer sources without open review cards")
+    check("open_review" in sql, "source batch should return existing source review context")
+    check("open_clinic_review" in sql, "source batch should return existing clinic review context")
     print("OK source shadow reviews: batch is safe")
 
 

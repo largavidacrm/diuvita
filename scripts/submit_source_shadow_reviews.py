@@ -55,6 +55,36 @@ from (
     c.slug as clinic_slug,
     c.display_name as clinic_name,
     c.status as clinic_status,
+    (
+      select jsonb_build_object(
+        'id', rq.id,
+        'title', rq.title,
+        'priority', rq.priority,
+        'created_at', rq.created_at
+      )
+      from public.review_queue rq
+      where rq.clinic_id = c.id
+        and rq.status = 'open'
+        and rq.review_type = 'clinic_profile_enrichment'
+        and rq.payload ->> 'source_url' = sr.source_url
+      order by rq.priority desc, rq.created_at asc
+      limit 1
+    ) as open_review,
+    (
+      select jsonb_build_object(
+        'id', rq.id,
+        'title', rq.title,
+        'priority', rq.priority,
+        'source_url', rq.payload ->> 'source_url',
+        'created_at', rq.created_at
+      )
+      from public.review_queue rq
+      where rq.clinic_id = c.id
+        and rq.status = 'open'
+        and rq.review_type = 'clinic_profile_enrichment'
+      order by rq.priority desc, rq.created_at asc
+      limit 1
+    ) as open_clinic_review,
     exists (
       select 1
       from public.review_queue rq
@@ -155,6 +185,8 @@ def process_source(
         "source_url": source_url,
         "pending_count": source.get("pending_count") or 0,
         "pending_fields": source.get("pending_fields") or [],
+        "open_review": source.get("open_review"),
+        "open_clinic_review": source.get("open_clinic_review"),
     }
 
     if not clinic_slug or not source_url:
