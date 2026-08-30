@@ -116,6 +116,7 @@ Initial policy:
 Definition of done:
 
 - A new clinic can move from discovery to review card with evidence and no manual data entry.
+- Candidate review cards can be preflighted for internal draft creation with `scripts/promote_candidate_reviews.py`.
 
 ### Lane 4: Monitoring
 
