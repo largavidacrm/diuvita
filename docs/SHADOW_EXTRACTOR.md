@@ -15,6 +15,8 @@ It reads one public source page and returns:
 - Field claims.
 - Rules-engine decisions.
 - Publicly listed specialists and clinical units when they are explicit enough.
+- Clinic name only when the page title looks like an actual clinic name, not a
+  marketing sentence.
 
 It does not publish anything.
 
@@ -64,6 +66,8 @@ That folder is local/ignored by Git.
   doctor titles or name-role pairs inside explicit team sections, clinical
   units and known longevity keywords.
 - It should not decide final clinic names from generic page titles.
+- It suppresses generic or marketing-like page titles instead of turning them
+  into identity claims.
 - All extracted claims start without independent verifier acceptance.
 - The rules engine therefore sends them to review by default.
 

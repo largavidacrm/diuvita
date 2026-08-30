@@ -99,6 +99,36 @@ ROLE_START_WORDS = {
     "Técnico",
 }
 TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora"}
+CLINIC_NAME_TERMS = {
+    "age",
+    "center",
+    "centre",
+    "clinic",
+    "clínica",
+    "clinica",
+    "health",
+    "healthspan",
+    "hospital",
+    "institute",
+    "instituto",
+    "longevity",
+    "longevidad",
+    "medical",
+    "medicina",
+    "wellness",
+}
+TITLE_NOISE_TERMS = {
+    "adaptarse",
+    "bienvenido",
+    "contacto",
+    "home",
+    "inicio",
+    "nace",
+    "pasión",
+    "quienes",
+    "servicios",
+    "somos",
+}
 
 
 def role_pattern(phrase: str) -> str:
@@ -280,6 +310,19 @@ def guess_name(snapshot: dict[str, Any]) -> str:
     return title[:90]
 
 
+def plausible_clinic_name(value: str) -> bool:
+    clean = normalize_space(value)
+    if not clean:
+        return False
+    words = re.findall(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+", clean)
+    if len(words) < 1 or len(words) > 8:
+        return False
+    lower_words = {word.lower() for word in words}
+    if lower_words & TITLE_NOISE_TERMS:
+        return False
+    return bool(lower_words & CLINIC_NAME_TERMS)
+
+
 def claim(field_path: str, value: Any, confidence: float, source_url: str) -> dict[str, Any]:
     return {
         "field_path": field_path,
@@ -302,7 +345,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     claims: list[dict[str, Any]] = []
 
     name = guess_name(snapshot)
-    if name:
+    if plausible_clinic_name(name):
         claims.append(claim("identity.canonical_name", name, 0.55, source_url))
     if source_url:
         parsed = urlparse(source_url)
@@ -326,8 +369,9 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     contacts = extract_contacts(text)
     professionals = extract_professionals(text)
     keywords = detect_keywords(text)
+    name = guess_name(snapshot)
     profile = {
-        "name": guess_name(snapshot) or None,
+        "name": name if plausible_clinic_name(name) else None,
         "website": claim_website(str(snapshot.get("final_url") or snapshot.get("source_url") or "")),
         "emails": contacts["emails"],
         "phones": contacts["phones"],

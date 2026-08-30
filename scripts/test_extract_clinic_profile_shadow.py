@@ -73,6 +73,28 @@ def main():
         all("Dirección Xavier" not in item for item in regenera_professionals),
         "role and next name should not merge",
     )
+
+    noisy_title_html = b"""
+<!doctype html>
+<html>
+<head><title>RegeneraClinic nace de la pasion por adaptarse a envejecer de forma natural</title></head>
+<body>
+  <p>NUESTRO EQUIPO Dra. Example Name Direccion Contacto</p>
+</body>
+</html>
+"""
+    noisy = extract_from_fetch(
+        FetchResult(
+            source_url="https://regeneraclinic.example/quienes-somos",
+            final_url="https://regeneraclinic.example/quienes-somos",
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=noisy_title_html,
+        )
+    )
+    noisy_fields = {claim["field_path"] for claim in noisy["field_claims"]}
+    check("name" not in noisy["candidate_profile"], "noisy title should not become profile name")
+    check("identity.canonical_name" not in noisy_fields, "noisy title should not become identity claim")
     print("OK extraction: shadow clinic profile")
 
 
