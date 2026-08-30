@@ -354,6 +354,11 @@ Next 10 technical steps:
 50. Surface the recommended review group in quick filters. Done locally in `/admin/`: the review inbox now shows a `Grupo recomendado` chip so Daniel can jump into the highest-friction clinic group from the filter row.
 51. Treat explicit locations as their own source-shadow gap. Done locally in `scripts/submit_source_shadow_reviews.py`: location proposals can still surface for multi-sede clinics even when a legacy top-level address already exists.
 52. Suppress uppercase navigation text in professional extraction. Done locally in `scripts/extract_clinic_profile_shadow.py`: a live Neolife read-only check no longer proposes treatment-menu text as a professional.
+53. Clean navigation boilerplate before source extraction. Done locally in `scripts/capture_source_snapshot.py`: repeated menu/header text is suppressed while useful contact links are preserved, so source excerpts reach clinic content earlier.
+54. Extract decade-based practice years. Done locally in `scripts/extract_clinic_profile_shadow.py`: phrases such as "más de una década" now become `más de 10 años` for human review.
+55. Require clinic context for ambiguous short Maps links. Done locally in `scripts/discover_clinic_google_links.py`: generic `maps.app.goo.gl` links stay pending unless the clinic name is visible around the link.
+56. Split adjacent phone numbers. Done locally in `scripts/extract_clinic_profile_shadow.py`: two Spanish phone numbers written together are separated before review.
+57. Add official location-page source discovery. Done locally in `scripts/discover_clinic_location_sources.py`: contact/location/sedes pages can be stored as internal sources without editing profiles or publishing.
 
 ## Daniel decision checkpoints
 
