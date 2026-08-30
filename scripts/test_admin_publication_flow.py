@@ -17,8 +17,13 @@ def main() -> None:
 
     for marker in [
         'id="clinicPublicationHint"',
+        'id="reviewActionNote"',
         "function publicVisibilityText",
         "function updateClinicSaveButtonLabel",
+        "function reviewActionNote",
+        "Crear borrador y validar",
+        "Primero crea un borrador interno",
+        "La publicación se decide después en el editor, en Validación final.",
         "Guardar como publicada",
         "Guardar borrador",
         "no aparecerá en la web",
@@ -29,6 +34,7 @@ def main() -> None:
     check("updateClinicSaveButtonLabel();" in index, "validation should refresh save button label")
     check(".publication-hint" in css, "publication hint style missing")
     check(".publication-hint.visible-target" in css, "public-target hint style missing")
+    check(".review-action-note" in css, "review action note style missing")
     print("OK admin publication flow: status consequences are visible")
 
 

@@ -15,7 +15,7 @@ https://www.diuvita.com/admin/
 5. Si parece una clínica válida, pulsa **Crear borrador y validar**.
 6. Si no encaja con Diuvita, pulsa **Descartar**.
 
-Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma.
+Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma. El botón de publicar aparece después, al editar esa ficha, dentro de **Validación final**.
 
 ## Entender el estado del sistema
 

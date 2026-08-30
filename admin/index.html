@@ -307,6 +307,7 @@
             <label for="reviewResolutionNote">Nota interna</label>
             <textarea id="reviewResolutionNote" rows="2"></textarea>
           </div>
+          <p class="review-action-note" id="reviewActionNote">La publicación final se decide después, en Validación final.</p>
           <div class="form-actions">
             <button class="btn" id="reviewCreateDraftBtn" type="button">Crear borrador</button>
             <button class="btn danger" id="reviewDismissBtn" type="button">Descartar</button>
@@ -1144,6 +1145,20 @@
       if (reviewType === "candidate_clinic") return blocksDraft ? "Duplicado probable" : "Crear borrador y validar";
       if (reviewType === "source_change_detected") return "Revisar ficha";
       return "Editar clínica";
+    }
+
+    function reviewActionNote(reviewType, blocksDraft) {
+      if (reviewType === "candidate_clinic") {
+        if (blocksDraft) return "Duplicado probable: revisa las coincidencias antes de crear una ficha nueva.";
+        return "Primero crea un borrador interno. La publicación se decide después en el editor, en Validación final.";
+      }
+      if (reviewType === "source_change_detected") {
+        return "Abrirá el editor de la clínica. La web solo cambia si guardas como preliminar o publicada.";
+      }
+      if (reviewType === "clinic_quality_audit" || reviewType === "clinic_profile_enrichment") {
+        return "Abrirá el editor de la clínica. Revisa la propuesta y decide el estado en Validación final.";
+      }
+      return "La publicación final se decide después, en Validación final.";
     }
 
     function riskPill(risk) {
@@ -2244,6 +2259,7 @@
       renderReviewRules(payload);
       el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;
       el("reviewCreateDraftBtn").textContent = primaryReviewButtonLabel(activeReview.review_type, blocksDraft);
+      el("reviewActionNote").textContent = reviewActionNote(activeReview.review_type, blocksDraft);
       el("reviewDismissBtn").textContent = dismissButtonLabel(activeReview.review_type);
       setInput("reviewResolutionNote", "");
       show(el("reviewEditor"), true);
