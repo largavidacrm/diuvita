@@ -88,6 +88,8 @@ Si varias tarjetas abiertas intentan mejorar la misma ficha, la tabla muestra **
 Si la clínica está como **Publicada** o **Preliminar**, el cambio se manda a la web automáticamente. Puede tardar unos minutos.
 Si está como **Borrador**, **Revisión**, **Descubierta**, **Extraída**, **Verificada** o **Archivada**, se guarda dentro del panel pero no aparece como ficha pública.
 
+En **Historial de cambios**, cada versión antigua indica qué campos cambiarían si la restauras. Restaurar pide confirmación, sobrescribe la ficha actual y queda registrado como una nueva versión.
+
 ## Auditar fichas
 
 En **Crear trabajo**, puedes elegir **Auditar fichas**.

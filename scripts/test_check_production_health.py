@@ -43,6 +43,7 @@ def main():
     check("openPriorityReviewBtn" in admin_check["markers"], "admin deployment should include priority button marker")
     check("reviewFlowPanel" in admin_check["markers"], "admin deployment should include publication-flow marker")
     check("data-review-duplicate" in admin_check["markers"], "admin deployment should include duplicate filter marker")
+    check("restoreChangeText" in admin_check["markers"], "admin deployment should include rollback preview marker")
     print("OK production health: report is read-only")
 
 

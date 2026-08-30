@@ -489,6 +489,7 @@
     var activeClinic = null;
     var activeReview = null;
     var activeClinicReview = null;
+    var activeClinicVersions = [];
     var activeClinicVersionRequest = 0;
     var activeClinicLockRequest = 0;
     var activeClinicClaimRequest = 0;
@@ -2271,7 +2272,65 @@
       };
     }
 
+    function comparableClinicFields() {
+      return [
+        "display_name",
+        "website",
+        "country",
+        "city",
+        "region",
+        "address",
+        "status",
+        "profile_confidence",
+        "summary",
+        "services",
+        "specialties",
+        "unidades",
+        "profesionales",
+        "tech",
+        "email",
+        "telefono",
+        "instagram",
+        "verification_status"
+      ];
+    }
+
+    function versionClinicField(row, key) {
+      var data = (row && row.data) || {};
+      var current = data.current_data || {};
+      var topLevel = {
+        display_name: data.display_name || current.name,
+        name: data.display_name || current.name,
+        web: data.website || current.web,
+        website: data.website || current.web,
+        country: data.country || current.country,
+        city: data.city || current.city,
+        region: data.region || current.region,
+        address: data.address || current.address,
+        summary: data.summary || current.summary,
+        status: data.status || current.status,
+        profile_confidence: data.profile_confidence == null ? "" : Math.round(Number(data.profile_confidence || 0) * 100),
+        verification_status: data.verification_status || current.verification_status
+      };
+      if (hasOwn(topLevel, key)) return topLevel[key];
+      return current[key];
+    }
+
+    function restoreChangeLabels(row) {
+      if (!activeClinic || !row) return [];
+      return comparableClinicFields().filter(function (key) {
+        return normalizedFieldValue(currentClinicField(activeClinic, key)) !== normalizedFieldValue(versionClinicField(row, key));
+      }).map(proposalLabel);
+    }
+
+    function restoreChangeText(row) {
+      var labels = restoreChangeLabels(row);
+      if (!labels.length) return "No se aprecian cambios frente a la ficha actual.";
+      return "Cambiaría: " + labels.slice(0, 6).join(", ") + (labels.length > 6 ? " y " + (labels.length - 6) + " campos más" : "") + ".";
+    }
+
     function renderClinicVersions(rows) {
+      activeClinicVersions = Array.isArray(rows) ? rows : [];
       var list = el("clinicVersionList");
       var count = Array.isArray(rows) ? rows.length : 0;
       el("clinicVersionCount").textContent = count + (count === 1 ? " version" : " versiones");
@@ -2292,7 +2351,8 @@
           : '<button class="link-btn" type="button" data-restore-version="' + html(row.id) + '" data-restore-version-number="' + html(row.version_number || "?") + '">Restaurar</button>';
         return '<article class="version-item">' +
           '<div class="version-main"><strong>v' + html(row.version_number || "?") + " · " + html(data.name) + '</strong>' +
-          '<span>' + html(date(row.created_at)) + (place ? " · " + html(place) : "") + '</span></div>' +
+          '<span>' + html(date(row.created_at)) + (place ? " · " + html(place) : "") + '</span>' +
+          '<small>' + html(restoreChangeText(row)) + '</small></div>' +
           '<div class="version-tags">' + clinicStatusPill(data.status) + '<span class="pill">' + html(pct(data.confidence)) + '</span>' + action + '</div>' +
           '<p>' + html(compactText(data.summary, 180)) + '</p>' +
           '</article>';
@@ -2301,8 +2361,11 @@
 
     async function restoreClinicVersion(versionId, versionNumber) {
       if (!activeClinic || !versionId) return;
+      var versionRow = activeClinicVersions.find(function (row) { return row.id === versionId; });
+      var changeText = restoreChangeText(versionRow);
       var shouldRestore = window.confirm(
-        "Vas a restaurar la versión v" + versionNumber + " de esta clínica.\n\nEsto sobrescribirá la ficha actual, quedará registrado en el historial y podrás volver a cambiarla después. ¿Restaurar?"
+        "Vas a restaurar la versión v" + versionNumber + " de esta clínica.\n\n" +
+        changeText + "\n\nEsto sobrescribirá la ficha actual, quedará registrado en el historial y podrás volver a cambiarla después. ¿Restaurar?"
       );
       if (!shouldRestore) return;
 

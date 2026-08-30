@@ -761,13 +761,21 @@ td small {
 }
 
 .version-main strong,
-.version-main span {
+.version-main span,
+.version-main small {
   display: block;
 }
 
 .version-main span {
   color: var(--muted);
   font-size: 0.82rem;
+}
+
+.version-main small {
+  margin-top: 0.25rem;
+  color: var(--amber);
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .version-tags {

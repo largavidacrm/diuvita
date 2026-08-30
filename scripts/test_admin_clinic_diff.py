@@ -20,6 +20,12 @@ def main() -> None:
         "function clinicFormFields",
         "function diffItemHtml",
         "function renderUnsavedChanges",
+        "function comparableClinicFields",
+        "function versionClinicField",
+        "function restoreChangeLabels",
+        "function restoreChangeText",
+        "activeClinicVersions",
+        "Cambiaría:",
         "Cambios sin guardar",
         "Guardado",
         "Formulario",
@@ -31,6 +37,7 @@ def main() -> None:
         ".proposal-diff",
         ".diff-item",
         ".diff-cols",
+        ".version-main small",
     ]:
         check(marker in css, f"missing clinic diff style: {marker}")
 

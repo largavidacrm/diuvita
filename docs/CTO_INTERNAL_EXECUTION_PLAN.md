@@ -44,7 +44,7 @@ Already built:
 - `agent_jobs`, `review_queue`, `source_records`, `field_claims`, `human_overrides` and related foundation tables.
 - Admin visibility for clinic version history, protected fields and internal evidence claims.
 - Admin evidence cards show field risk and the current rule decision for each claim.
-- Admin rollback control from clinic version history, with every restore audited as a new version.
+- Admin rollback control from clinic version history, with field-change preview before restore and every restore audited as a new version.
 - Candidate reviews now create internal drafts and route Daniel to final validation before publication.
 - Candidate reviews now show a three-step publication path so Daniel sees that draft creation is not publication.
 - Admin system status shows why auto-publication is or is not mature enough to discuss.
@@ -93,7 +93,7 @@ Not yet mature:
 - Specialist coverage can now be measured, but publication of new professional details still needs manual review.
 - Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
 - Daily/weekly digest and notification cadence.
-- Rollback controls in the admin UI need operational usage, but the restore path now exists.
+- Rollback controls in the admin UI need operational usage, but the restore path and preview now exist.
 - Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.
 
 ## Execution lanes
@@ -273,7 +273,7 @@ Next 10 technical steps:
 
 1. Add review inbox filters and clearer counts in `/admin/`. Done locally with quick filters by type, priority and repeated enrichment proposals, visible counts and a clear-filters control.
 2. Add a proposal diff view before saving clinic changes. Done locally with a live before/after panel for manual edits and loaded proposals.
-3. Add rollback view using `entity_versions`. Done as a read-only version history in `/admin/`; restoring an old version remains intentionally gated.
+3. Add rollback view using `entity_versions`. Done in `/admin/` with version history, restore confirmation and field-change preview; restoring an old version remains intentionally gated.
 4. Add human-lock controls for fields Daniel corrects manually. Done locally in `supabase/migrations/0012_human_field_locks.sql` and `/admin/`.
 5. Add source snapshot capture for reviewed proposals. Done locally in `scripts/capture_source_snapshot.py`; enrichment review URLs can now be linked into Supabase `source_records` with `scripts/capture_enrichment_review_claims.py`.
 6. Convert enrichment proposals into `field_claims`, not only review payloads. Done for existing review payloads with `scripts/capture_enrichment_review_claims.py`.

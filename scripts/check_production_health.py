@@ -33,6 +33,7 @@ CHECKS = [
             "openPriorityReviewBtn",
             "reviewFlowPanel",
             "data-review-duplicate",
+            "restoreChangeText",
         ],
     },
     {
