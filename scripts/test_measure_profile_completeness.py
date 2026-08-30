@@ -24,6 +24,10 @@ def main():
             {"field": "google_maps", "label": "Google Maps de clínica", "present": 1, "pending": 3},
             {"field": "google_reviews", "label": "Valoraciones Google", "present": 0, "pending": 4},
             {"field": "specialists", "label": "Especialistas publicados", "present": 1, "pending": 3},
+            {"field": "years_in_practice", "label": "Años en ejercicio", "present": 1, "pending": 3},
+            {"field": "specialists_count", "label": "Número de especialistas", "present": 2, "pending": 2},
+            {"field": "team_credentialing_visible", "label": "Colegiación visible", "present": 1, "pending": 3},
+            {"field": "public_pricing", "label": "Precio público", "present": 0, "pending": 4},
         ],
         "pending_profiles": [
             {
@@ -75,6 +79,10 @@ def main():
     check("Google Maps de clínica: 1 listos / 3 pendientes" in output, "Google Maps field missing")
     check("Valoraciones Google: 0 listos / 4 pendientes" in output, "Google reviews field missing")
     check("Especialistas publicados: 1 listos / 3 pendientes" in output, "specialist field missing")
+    check("Años en ejercicio: 1 listos / 3 pendientes" in output, "years-in-practice field missing")
+    check("Número de especialistas: 2 listos / 2 pendientes" in output, "specialist-count field missing")
+    check("Colegiación visible: 1 listos / 3 pendientes" in output, "credentialing field missing")
+    check("Precio público: 0 listos / 4 pendientes" in output, "public pricing field missing")
     check(
         "Clinic A · Madrid · publicada · pendiente: Email o teléfono, Especialistas publicados · 1 revisión abierta" in output,
         "pending profile line missing",

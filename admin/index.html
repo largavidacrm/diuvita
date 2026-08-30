@@ -894,6 +894,10 @@
         pendingUnits: 0,
         pendingSpecialists: 0,
         pendingTechnology: 0,
+        pendingYearsInPractice: 0,
+        pendingSpecialistsCount: 0,
+        pendingTeamCredentialingVisible: 0,
+        pendingPublicPricing: 0,
         explicitLocationRows: 0,
         multiLocationClinics: 0,
         locationRowsMissingAddress: 0,
@@ -916,18 +920,22 @@
         ["pendingSpecialties", "Especialidades"],
         ["pendingUnits", "Unidades"],
         ["pendingSpecialists", "Especialistas"],
-        ["pendingTechnology", "Tecnología"]
+        ["pendingTechnology", "Tecnología"],
+        ["pendingYearsInPractice", "Años en ejercicio"],
+        ["pendingSpecialistsCount", "Número de especialistas"],
+        ["pendingTeamCredentialingVisible", "Colegiación visible"],
+        ["pendingPublicPricing", "Precio público"]
       ];
     }
 
     function topPendingProfileField(completeness) {
       if (!completeness || completeness.unavailable) return "—";
-      var fields = profileCompletenessFields().map(function (field) {
-        return { key: field[0], label: field[1], count: Number(completeness[field[0]] || 0) };
+      var fields = profileCompletenessFields().map(function (field, index) {
+        return { key: field[0], label: field[1], count: Number(completeness[field[0]] || 0), index: index };
       }).filter(function (field) {
         return field.count > 0;
       }).sort(function (a, b) {
-        return b.count - a.count || a.label.localeCompare(b.label);
+        return b.count - a.count || a.index - b.index;
       });
       if (!fields.length) return "Sin campo pendiente";
       return fields[0].label + " · " + fields[0].count + " fichas";
@@ -1254,6 +1262,19 @@
       return hasVisibleText(value);
     }
 
+    function dataPathValue(data, path) {
+      return text(path).split(".").reduce(function (current, part) {
+        if (!current || typeof current !== "object") return "";
+        return current[part];
+      }, data);
+    }
+
+    function hasDataPathValue(data, paths) {
+      return paths.some(function (path) {
+        return hasVisibleText(dataPathValue(data, path));
+      });
+    }
+
     function locationCoverageForClinic(currentData) {
       var locations = normalizedLocations((currentData || {}).locations);
       return locations.reduce(function (stats, location) {
@@ -1284,6 +1305,10 @@
       if (!countVisibleArray(data.unidades)) fields.push("pendingUnits");
       if (!countVisibleArray(data.profesionales)) fields.push("pendingSpecialists");
       if (!hasTechnologyValue(data.tech)) fields.push("pendingTechnology");
+      if (!hasDataPathValue(data, ["years_in_practice", "years_active", "founded_year", "transparency.years_in_practice", "transparency.years_active"])) fields.push("pendingYearsInPractice");
+      if (!hasDataPathValue(data, ["specialists_count", "num_specialists", "specialists_public_count", "transparency.specialists_count"])) fields.push("pendingSpecialistsCount");
+      if (!hasDataPathValue(data, ["team_credentialing_visible", "medical_license_visible", "colegiacion_visible", "team.credentialing_visible"])) fields.push("pendingTeamCredentialingVisible");
+      if (!hasDataPathValue(data, ["public_pricing", "prices_public", "price_public", "prices.public_status"])) fields.push("pendingPublicPricing");
       return fields;
     }
 

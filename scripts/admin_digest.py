@@ -785,6 +785,35 @@ visible_profile_base as (
     ) as has_google_reviews,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null
       or nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_contact,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'years_in_practice',
+      c.current_data ->> 'years_active',
+      c.current_data ->> 'founded_year',
+      c.current_data #>> '{{transparency,years_in_practice}}',
+      c.current_data #>> '{{transparency,years_active}}',
+      ''
+    )), '') is not null as has_years_in_practice,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'specialists_count',
+      c.current_data ->> 'num_specialists',
+      c.current_data ->> 'specialists_public_count',
+      c.current_data #>> '{{transparency,specialists_count}}',
+      ''
+    )), '') is not null as has_specialists_count,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'team_credentialing_visible',
+      c.current_data ->> 'medical_license_visible',
+      c.current_data ->> 'colegiacion_visible',
+      c.current_data #>> '{{team,credentialing_visible}}',
+      ''
+    )), '') is not null as has_team_credentialing_visible,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'public_pricing',
+      c.current_data ->> 'prices_public',
+      c.current_data ->> 'price_public',
+      c.current_data #>> '{{prices,public_status}}',
+      ''
+    )), '') is not null as has_public_pricing,
     case
       when jsonb_typeof(c.current_data -> 'services') = 'array'
         then jsonb_array_length(c.current_data -> 'services')
@@ -845,7 +874,11 @@ visible_profile_checks as (
       case when not has_specialties then 'Especialidades' end,
       case when not has_units then 'Unidades clínicas' end,
       case when not has_specialists then 'Especialistas publicados' end,
-      case when not has_technology then 'Tecnología destacada' end
+      case when not has_technology then 'Tecnología destacada' end,
+      case when not has_years_in_practice then 'Años en ejercicio' end,
+      case when not has_specialists_count then 'Número de especialistas' end,
+      case when not has_team_credentialing_visible then 'Colegiación visible' end,
+      case when not has_public_pricing then 'Precio público' end
     ], null) as pending_fields
   from visible_profile_base
 ),
@@ -853,32 +886,10 @@ profile_completeness as (
   select jsonb_build_object(
     'visible_clinics', count(*),
     'without_pending_fields', count(*) filter (
-      where has_summary
-        and has_website
-        and has_address
-        and has_google_maps
-        and has_google_reviews
-        and has_contact
-        and has_services
-        and has_specialties
-        and has_units
-        and has_specialists
-        and has_technology
+      where coalesce(array_length(pending_fields, 1), 0) = 0
     ),
     'with_pending_fields', count(*) filter (
-      where not (
-        has_summary
-        and has_website
-        and has_address
-        and has_google_maps
-        and has_google_reviews
-        and has_contact
-        and has_services
-        and has_specialties
-        and has_units
-        and has_specialists
-        and has_technology
-      )
+      where coalesce(array_length(pending_fields, 1), 0) > 0
     ),
     'pending_summary', count(*) filter (where not has_summary),
     'pending_website', count(*) filter (where not has_website),
@@ -890,7 +901,11 @@ profile_completeness as (
     'pending_specialties', count(*) filter (where not has_specialties),
     'pending_units', count(*) filter (where not has_units),
     'pending_specialists', count(*) filter (where not has_specialists),
-    'pending_technology', count(*) filter (where not has_technology)
+    'pending_technology', count(*) filter (where not has_technology),
+    'pending_years_in_practice', count(*) filter (where not has_years_in_practice),
+    'pending_specialists_count', count(*) filter (where not has_specialists_count),
+    'pending_team_credentialing_visible', count(*) filter (where not has_team_credentialing_visible),
+    'pending_public_pricing', count(*) filter (where not has_public_pricing)
   ) as data
   from visible_profile_checks
 ),
@@ -1071,19 +1086,23 @@ PROFILE_COMPLETENESS_FIELDS = [
     ("pending_units", "Unidades"),
     ("pending_specialists", "Especialistas"),
     ("pending_technology", "Tecnología"),
+    ("pending_years_in_practice", "Años en ejercicio"),
+    ("pending_specialists_count", "Número de especialistas"),
+    ("pending_team_credentialing_visible", "Colegiación visible"),
+    ("pending_public_pricing", "Precio público"),
 ]
 
 
 def top_pending_profile_field(digest: dict[str, Any]) -> str:
     completeness = digest.get("profile_completeness") or {}
     rows = [
-        (label, as_int(completeness.get(key)))
-        for key, label in PROFILE_COMPLETENESS_FIELDS
+        (index, label, as_int(completeness.get(key)))
+        for index, (key, label) in enumerate(PROFILE_COMPLETENESS_FIELDS)
         if as_int(completeness.get(key))
     ]
     if not rows:
         return "sin campo pendiente"
-    label, count = sorted(rows, key=lambda item: (-item[1], item[0]))[0]
+    _, label, count = sorted(rows, key=lambda item: (-item[2], item[0]))[0]
     return f"{label} · {count} fichas"
 
 

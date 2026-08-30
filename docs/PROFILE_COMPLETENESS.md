@@ -16,7 +16,11 @@ the current quality audit expects:
 - specialties;
 - clinical units;
 - published specialists;
-- highlighted technology.
+- highlighted technology;
+- years in practice when publicly stated;
+- public specialist/team count when publicly stated;
+- whether medical-team credentialing is visibly identified;
+- whether pricing is public.
 
 It does not publish clinics, edit clinic data, resolve review cards or rank
 clinics by quality. The output is an internal operational checklist only.
@@ -48,6 +52,11 @@ The top-line signal is also shown in `/admin/` as:
 - `Fichas con pendientes`.
 - `Campo más pendiente`;
 - `Siguiente ficha`.
+
+The transparency fields are measured separately from the underlying content.
+For example, a clinic can have named professionals listed but still be missing
+the public team-size signal, and a clinic can show an address while still
+missing the direct Google Business/Profile URL.
 
 Multi-location clinics are treated as one clinic profile with one or more
 locations. A complete location can satisfy the address check even when the

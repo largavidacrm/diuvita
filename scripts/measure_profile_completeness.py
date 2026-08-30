@@ -77,6 +77,35 @@ with clinic_rows as (
     ) as has_google_reviews,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null as has_email,
     nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_phone,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'years_in_practice',
+      c.current_data ->> 'years_active',
+      c.current_data ->> 'founded_year',
+      c.current_data #>> '{{transparency,years_in_practice}}',
+      c.current_data #>> '{{transparency,years_active}}',
+      ''
+    )), '') is not null as has_years_in_practice,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'specialists_count',
+      c.current_data ->> 'num_specialists',
+      c.current_data ->> 'specialists_public_count',
+      c.current_data #>> '{{transparency,specialists_count}}',
+      ''
+    )), '') is not null as has_specialists_count,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'team_credentialing_visible',
+      c.current_data ->> 'medical_license_visible',
+      c.current_data ->> 'colegiacion_visible',
+      c.current_data #>> '{{team,credentialing_visible}}',
+      ''
+    )), '') is not null as has_team_credentialing_visible,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'public_pricing',
+      c.current_data ->> 'prices_public',
+      c.current_data ->> 'price_public',
+      c.current_data #>> '{{prices,public_status}}',
+      ''
+    )), '') is not null as has_public_pricing,
     case
       when jsonb_typeof(c.current_data -> 'services') = 'array'
         then jsonb_array_length(c.current_data -> 'services')
@@ -148,7 +177,11 @@ profile_checks as (
       case when not has_specialties then 'Especialidades' end,
       case when not has_units then 'Unidades clínicas' end,
       case when not has_specialists then 'Especialistas publicados' end,
-      case when not has_technology then 'Tecnología destacada' end
+      case when not has_technology then 'Tecnología destacada' end,
+      case when not has_years_in_practice then 'Años en ejercicio' end,
+      case when not has_specialists_count then 'Número de especialistas' end,
+      case when not has_team_credentialing_visible then 'Colegiación visible' end,
+      case when not has_public_pricing then 'Precio público' end
     ], null) as pending_fields
   from checks
 ),
@@ -177,7 +210,11 @@ field_summary as (
     jsonb_build_object('field', 'specialties', 'label', 'Especialidades', 'present', count(*) filter (where has_specialties), 'pending', count(*) filter (where not has_specialties)),
     jsonb_build_object('field', 'units', 'label', 'Unidades clínicas', 'present', count(*) filter (where has_units), 'pending', count(*) filter (where not has_units)),
     jsonb_build_object('field', 'specialists', 'label', 'Especialistas publicados', 'present', count(*) filter (where has_specialists), 'pending', count(*) filter (where not has_specialists)),
-    jsonb_build_object('field', 'technology', 'label', 'Tecnología destacada', 'present', count(*) filter (where has_technology), 'pending', count(*) filter (where not has_technology))
+    jsonb_build_object('field', 'technology', 'label', 'Tecnología destacada', 'present', count(*) filter (where has_technology), 'pending', count(*) filter (where not has_technology)),
+    jsonb_build_object('field', 'years_in_practice', 'label', 'Años en ejercicio', 'present', count(*) filter (where has_years_in_practice), 'pending', count(*) filter (where not has_years_in_practice)),
+    jsonb_build_object('field', 'specialists_count', 'label', 'Número de especialistas', 'present', count(*) filter (where has_specialists_count), 'pending', count(*) filter (where not has_specialists_count)),
+    jsonb_build_object('field', 'team_credentialing_visible', 'label', 'Colegiación visible', 'present', count(*) filter (where has_team_credentialing_visible), 'pending', count(*) filter (where not has_team_credentialing_visible)),
+    jsonb_build_object('field', 'public_pricing', 'label', 'Precio público', 'present', count(*) filter (where has_public_pricing), 'pending', count(*) filter (where not has_public_pricing))
   ) as data
   from checks
 ),

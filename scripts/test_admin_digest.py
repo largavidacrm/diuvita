@@ -219,6 +219,10 @@ def main():
             "pending_units": 14,
             "pending_specialists": 17,
             "pending_technology": 5,
+            "pending_years_in_practice": 19,
+            "pending_specialists_count": 19,
+            "pending_team_credentialing_visible": 19,
+            "pending_public_pricing": 19,
         },
         "location_coverage": {
             "clinics_with_locations": 2,
@@ -294,6 +298,7 @@ def main():
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist line missing")
     check("Fichas sin campos pendientes medidos: 0/19" in output, "profile completeness missing")
     check("Campo mas pendiente: Google Maps · 19 fichas" in output, "top pending profile field line missing")
+    check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending field should use operational priority on ties")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile line missing")
     check("Sedes: 3 sedes explícitas; 1 clínica multisede; 2 sin Maps de clínica" in output, "location coverage line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
