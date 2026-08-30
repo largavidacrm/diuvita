@@ -48,6 +48,24 @@ def main():
     check(compact_items["items_count"] == 2, "items count should be kept")
     check("items" not in compact_items, "full item list should be removed")
     check("snapshot" not in compact_items["sample_items"][0], "large nested snapshot should be omitted")
+    compact_seed_sources = compact_summary("seed_visible_clinic_sources", {
+        "mode": "apply",
+        "candidates_seen": 2,
+        "inserted_count": 1,
+        "items": [
+            {
+                "clinic_name": "Clinic A",
+                "city": "Madrid",
+                "status": "published",
+                "website": "https://clinic-a.example/",
+                "source_url": "https://clinic-a.example/",
+                "metadata": {"large": True},
+            }
+        ],
+    })
+    check(compact_seed_sources["items_count"] == 1, "seed source count should be kept")
+    check("metadata" not in compact_seed_sources["sample_items"][0], "large seed metadata should be omitted")
+    check("source_url" in compact_seed_sources["sample_items"][0], "seed source URL should be kept")
     compact_top_sources = compact_summary("measure_source_snapshot_retention", {
         "summary": {"total_snapshots": 2},
         "top_sources": [
@@ -264,6 +282,7 @@ def main():
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
+        seed_source_limit=12,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,
@@ -287,6 +306,7 @@ def main():
         production_timeout=7,
     ))
     names = [step[0] for step in steps]
+    check("seed_visible_clinic_sources" in names, "official source seeding step missing")
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
@@ -294,6 +314,11 @@ def main():
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
+    seed_step = [step for step in steps if step[0] == "seed_visible_clinic_sources"][0]
+    check("--json" in seed_step[1], "source seeding should be machine readable")
+    check("12" in seed_step[1], "seed source limit should pass through")
+    hydrate_step = [step for step in steps if step[0] == "hydrate_source_records"][0]
+    check(steps.index(seed_step) < steps.index(hydrate_step), "source seeding should run before hydration")
     source_change_step = [step for step in steps if step[0] == "process_source_change_reviews"][0]
     check("8" in source_change_step[1], "source-change limit should be passed through")
     blocking_step = [step for step in steps if step[0] == "submit_blocking_claim_reviews"][0]
@@ -318,6 +343,7 @@ def main():
     optional_steps = build_steps(Namespace(
         apply_safe=True,
         review_limit=2,
+        seed_source_limit=12,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,
@@ -341,6 +367,8 @@ def main():
         production_timeout=7,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
+    seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
+    check("--apply" in seed_apply_step[1], "source seeding should follow safe apply mode")
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")

@@ -42,6 +42,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SPECIALIST_COVERAGE.md`: medición solo lectura de cobertura de especialistas publicados.
 - `docs/PROFILE_COMPLETENESS.md`: checklist solo lectura de campos públicos pendientes en fichas visibles.
 - `docs/SOURCE_COVERAGE.md`: medición solo lectura de cobertura de fuentes y claims por ficha visible.
+- `scripts/seed_visible_clinic_sources.py`: guarda como fuente interna la web oficial ya conocida de fichas visibles que aún no tienen esa fuente.
 - `docs/ENRICHMENT_CLAIMS_CAPTURE.md`: captura interna de fuentes y claims desde propuestas de mejora.
 - `docs/CANDIDATE_DRAFT_PROMOTION.md`: herramienta conservadora para convertir candidatas en borradores internos.
 - `docs/BLOCKING_CLAIM_REVIEWS.md`: tarjetas y brief de claims bloqueantes antes de publicar o relajar reglas.
@@ -84,6 +85,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/measure_specialist_coverage.py`: mide cobertura de especialistas publicados por clínica, sin editar fichas.
 - `scripts/measure_profile_completeness.py`: mide campos públicos pendientes en fichas visibles, sin editar fichas.
 - `scripts/measure_source_coverage.py`: mide fuentes, claims y bloqueos por ficha visible, sin editar fichas.
+- `scripts/seed_visible_clinic_sources.py`: guarda webs oficiales ya conocidas como fuentes internas, sin editar fichas ni publicar.
 - `scripts/capture_enrichment_review_claims.py`: convierte propuestas internas en `source_records` y `field_claims`.
 - `scripts/promote_candidate_reviews.py`: simula o crea borradores internos desde candidatas revisables.
 - `scripts/hydrate_source_records.py`: completa `source_records` con título, hash y extracto corto.

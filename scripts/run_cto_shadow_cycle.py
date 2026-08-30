@@ -46,6 +46,14 @@ STEP_ITEM_KEYS = {
         "field_claims_created",
         "source_records_created",
     ),
+    "seed_visible_clinic_sources": (
+        "clinic_name",
+        "city",
+        "status",
+        "website",
+        "source_url",
+        "source_type",
+    ),
     "hydrate_source_records": ("source_url", "status"),
     "monitor_source_changes": ("source_url", "clinic_name", "status", "hash"),
     "process_source_change_reviews": (
@@ -106,6 +114,7 @@ STEP_ITEM_KEYS = {
 
 STEP_LABELS = {
     "capture_enrichment_review_claims": "captura de claims desde propuestas",
+    "seed_visible_clinic_sources": "siembra de webs oficiales como fuentes",
     "hydrate_source_records": "hidratacion de fuentes",
     "monitor_source_changes": "vigilancia de cambios de fuentes",
     "process_source_change_reviews": "conversion de cambios en propuestas",
@@ -424,6 +433,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             90,
         ),
         (
+            "seed_visible_clinic_sources",
+            ["seed_visible_clinic_sources.py", "--limit", str(args.seed_source_limit), "--json", *apply_flag],
+            45,
+        ),
+        (
             "hydrate_source_records",
             [
                 "hydrate_source_records.py",
@@ -556,6 +570,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply-safe", action="store_true", help="Run safe internal writes; never publish or edit clinics.")
     parser.add_argument("--review-limit", type=int, default=100)
+    parser.add_argument("--seed-source-limit", type=int, default=20)
     parser.add_argument("--source-limit", type=int, default=40)
     parser.add_argument("--monitor-limit", type=int, default=40)
     parser.add_argument("--source-change-limit", type=int, default=10)
@@ -602,6 +617,7 @@ def main() -> int:
     args = parse_args()
     if min(
         args.review_limit,
+        args.seed_source_limit,
         args.source_limit,
         args.monitor_limit,
         args.source_change_limit,
@@ -618,6 +634,7 @@ def main() -> int:
         raise SystemExit("limits must be zero or greater.")
     if min(
         args.review_limit,
+        args.seed_source_limit,
         args.source_limit,
         args.monitor_limit,
         args.source_change_limit,

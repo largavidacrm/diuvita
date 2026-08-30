@@ -8,19 +8,20 @@ communication or product action. If a step touches one of those limits, it stops
 for Daniel instead of implementing, softening or silently discarding the change.
 
 1. capture enrichment review claims;
-2. hydrate pending source records;
-3. monitor source changes;
-4. process changed-source cards into profile-enrichment proposals;
-5. optionally run saved-source shadow extraction batches;
-6. turn blocking claims into internal quality-review cards;
-7. measure source snapshot retention without deleting evidence;
-8. measure visible source coverage without writing evidence;
-9. measure visible-profile completeness without editing clinics;
-10. measure review-inbox bottlenecks without resolving cards;
-11. print the admin digest;
-12. evaluate stored claims against publication rules.
-13. optionally run strict editorial limit checks;
-14. optionally check public production URLs without logging in or writing data.
+2. seed official website source records for visible clinics;
+3. hydrate pending source records;
+4. monitor source changes;
+5. process changed-source cards into profile-enrichment proposals;
+6. optionally run saved-source shadow extraction batches;
+7. turn blocking claims into internal quality-review cards;
+8. measure source snapshot retention without deleting evidence;
+9. measure visible source coverage without writing evidence;
+10. measure visible-profile completeness without editing clinics;
+11. measure review-inbox bottlenecks without resolving cards;
+12. print the admin digest;
+13. evaluate stored claims against publication rules.
+14. optionally run strict editorial limit checks;
+15. optionally check public production URLs without logging in or writing data.
 
 Default mode is dry-run:
 
@@ -36,6 +37,8 @@ python3 scripts/run_cto_shadow_cycle.py --apply-safe
 
 Safe apply still does not publish, edit public clinic data or promote candidate
 reviews into draft clinics. It only writes internal evidence/review state.
+Official website seeding only stores already-known clinic websites as internal
+source records when the same website host is missing.
 The claim-rule evaluation step is read-only in both modes. Blocking-claim cards
 are internal review items only. Source snapshot retention is measured only; no
 cleanup/deletion path is enabled. Profile completeness is also measured only;

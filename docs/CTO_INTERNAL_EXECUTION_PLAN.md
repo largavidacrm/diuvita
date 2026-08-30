@@ -73,6 +73,7 @@ Already built:
 - Stored field claims can be evaluated read-only against publication rules before any policy change.
 - Blocking field claims can be routed into internal quality-review cards without editing clinic data.
 - Blocking field claims have a read-only Daniel brief so the first manual review target is clearer.
+- Visible clinics with an existing official website can now get a matching internal source record before hydration, without editing profile fields or publishing.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
@@ -304,6 +305,7 @@ Next 10 technical steps:
 22. Add a reusable global plan status snapshot. Done locally in `scripts/global_plan_status.py`; it explains the current roadmap phase from real admin/digest state.
 23. Add clinic-workgroup shortcuts and status. Done locally in `/admin/`, `scripts/review_backlog_brief.py`, the Daniel brief and global status so clustered review cards can be handled together.
 24. Clarify blocking-claim next steps. Done locally in `scripts/blocking_claim_brief.py`; it stays read-only and tells Daniel whether to compare evidence, replace a rejected claim or find an official source.
+25. Seed official website sources for visible clinics. Done locally in `scripts/seed_visible_clinic_sources.py` and wired into the safe CTO cycle before source hydration.
 
 ## Daniel decision checkpoints
 
