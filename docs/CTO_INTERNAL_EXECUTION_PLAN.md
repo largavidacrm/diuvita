@@ -50,6 +50,7 @@ Already built:
 - Admin system status shows whether source monitoring is fresh or pending.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
+- Source snapshot retention can be measured read-only before any cleanup policy.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
 - Source-change reviews include material hints for contact, team, services, prices and medical claims.
 - Open source-change reviews can be processed into separate profile-enrichment proposals without editing public clinic data.
@@ -68,7 +69,7 @@ Not yet mature:
 
 - Real recurring internet discovery.
 - Source snapshots are durable and the watcher now respects monitoring cadence;
-  retention policy is still early.
+  cleanup is still disabled and retention is measured read-only.
 - Extraction and verification exist in shadow mode, but they are not yet independent production workers.
 - Deterministic field rules exist locally, but low-risk auto-approval stays disabled until accuracy is measured.
 - Doctor, pricing, treatment and SEO workflows.
@@ -266,6 +267,7 @@ Next 10 technical steps:
 13. Add source-monitoring cadence so the watcher checks due sources instead of repeatedly scanning the same fresh sources. Done locally in `scripts/monitor_source_changes.py`; use `--force` for manual spot checks.
 14. Show source-monitoring freshness in the admin control center. Done locally in `/admin/`, using source records and latest snapshots.
 15. Turn rejected/conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle.
+16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py`; no cleanup/deletion path is enabled.
 
 ## Daniel decision checkpoints
 

@@ -40,6 +40,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SOURCE_RECORD_HYDRATION.md`: hidratación de evidencias compactas para fuentes guardadas.
 - `docs/SOURCE_CHANGE_MONITORING.md`: primer watcher para detectar cambios en fuentes ya guardadas.
 - `docs/SOURCE_CHANGE_REVIEW_PROCESSING.md`: puente seguro desde fuente cambiada a propuesta interna revisable.
+- `docs/SOURCE_SNAPSHOT_RETENTION.md`: informe solo lectura sobre retencion de capturas de fuentes.
 - `docs/CTO_SHADOW_CYCLE.md`: ciclo seguro para encadenar tareas internas repetibles.
 - `docs/LOCAL_CHECKS.md`: comprobaciones locales antes de guardar y subir cambios.
 - `supabase/migrations/0014_source_snapshots.sql`: historial interno de capturas compactas de fuentes.
@@ -69,6 +70,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/hydrate_source_records.py`: completa `source_records` con título, hash y extracto corto.
 - `scripts/monitor_source_changes.py`: compara hashes de fuentes y crea revisiones internas si cambian.
 - `scripts/process_source_change_reviews.py`: convierte revisiones de fuente cambiada en propuestas internas de mejora.
+- `scripts/measure_source_snapshot_retention.py`: mide si hay capturas antiguas candidatas a limpieza, sin borrar nada.
 - `scripts/run_cto_shadow_cycle.py`: ejecuta el ciclo sombra seguro de CTO.
 - `scripts/run_local_checks.py`: ejecuta pruebas, validación, build y revisión básica del admin.
 - `scripts/apply_supabase_sql.sh`: aplica un SQL concreto contra Supabase.

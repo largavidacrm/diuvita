@@ -40,6 +40,17 @@ def main():
     check(compact_items["items_count"] == 2, "items count should be kept")
     check("items" not in compact_items, "full item list should be removed")
     check("snapshot" not in compact_items["sample_items"][0], "large nested snapshot should be omitted")
+    compact_top_sources = compact_summary("measure_source_snapshot_retention", {
+        "summary": {"total_snapshots": 2},
+        "top_sources": [
+            {"clinic_name": "A", "source_url": "https://a.test", "snapshots": 3, "prunable": 0, "source_record_id": "large"},
+            {"clinic_name": "B", "source_url": "https://b.test", "snapshots": 1, "prunable": 0, "source_record_id": "large"},
+        ],
+    })
+    check(compact_top_sources["top_sources_count"] == 2, "top source count should be kept")
+    check("top_sources" not in compact_top_sources, "full top source list should be removed")
+    check("source_url" in compact_top_sources["sample_top_sources"][0], "source url should distinguish compact top sources")
+    check("source_record_id" not in compact_top_sources["sample_top_sources"][0], "large source ids should be omitted")
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -49,16 +60,23 @@ def main():
         digest_limit=5,
         claim_limit=6,
         blocking_claim_limit=9,
+        snapshot_retention_days=180,
+        snapshot_keep_latest=3,
+        snapshot_retention_limit=7,
         fetch_timeout=7,
     ))
     names = [step[0] for step in steps]
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
+    check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
     source_change_step = [step for step in steps if step[0] == "process_source_change_reviews"][0]
     check("8" in source_change_step[1], "source-change limit should be passed through")
     blocking_step = [step for step in steps if step[0] == "submit_blocking_claim_reviews"][0]
     check("9" in blocking_step[1], "blocking-claim limit should be passed through")
+    retention_step = [step for step in steps if step[0] == "measure_source_snapshot_retention"][0]
+    check("--json" in retention_step[1], "retention report should be machine readable")
+    check("180" in retention_step[1] and "3" in retention_step[1] and "7" in retention_step[1], "retention settings should pass through")
     claim_step = [step for step in steps if step[0] == "evaluate_claim_rules"][0]
     check("--json" in claim_step[1], "claim rule evaluation should be machine readable")
     check("6" in claim_step[1], "claim limit should be passed through")

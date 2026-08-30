@@ -6,7 +6,7 @@ It is the quickest way to confirm that a change is ready to save and push.
 The full pass currently covers:
 
 1. Python syntax across local scripts.
-2. Source snapshot and durable evidence helpers.
+2. Source snapshot, durable evidence and retention-report helpers.
 3. Operational-limit red flags in source content and generated public pages.
 4. Publication rules and stored-claim rule evaluation.
 5. Shadow extraction, verification and review-card creation.

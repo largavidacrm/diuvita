@@ -46,6 +46,7 @@ STEP_ITEM_KEYS = {
         "created_review",
     ),
     "submit_blocking_claim_reviews": ("clinic_slug", "clinic_name", "status", "claims"),
+    "measure_source_snapshot_retention": ("clinic_name", "source_url", "snapshots", "prunable"),
 }
 
 
@@ -71,6 +72,14 @@ def compact_summary(name: str, summary: Any) -> Any:
     if isinstance(evaluations, list):
         compact["evaluations_count"] = len(evaluations)
         compact.pop("evaluations", None)
+    top_sources = compact.get("top_sources")
+    if isinstance(top_sources, list):
+        compact["top_sources_count"] = len(top_sources)
+        compact["sample_top_sources"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in top_sources[:3]
+        ]
+        compact.pop("top_sources", None)
     return compact
 
 
@@ -150,6 +159,20 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
         (
+            "measure_source_snapshot_retention",
+            [
+                "measure_source_snapshot_retention.py",
+                "--retention-days",
+                str(args.snapshot_retention_days),
+                "--keep-latest",
+                str(args.snapshot_keep_latest),
+                "--limit",
+                str(args.snapshot_retention_limit),
+                "--json",
+            ],
+            45,
+        ),
+        (
             "admin_digest",
             ["admin_digest.py", "--limit", str(args.digest_limit)],
             45,
@@ -172,6 +195,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--digest-limit", type=int, default=8)
     parser.add_argument("--claim-limit", type=int, default=100)
     parser.add_argument("--blocking-claim-limit", type=int, default=20)
+    parser.add_argument("--snapshot-retention-days", type=int, default=180)
+    parser.add_argument("--snapshot-keep-latest", type=int, default=3)
+    parser.add_argument("--snapshot-retention-limit", type=int, default=8)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     return parser.parse_args()
 
@@ -186,6 +212,9 @@ def main() -> int:
         args.digest_limit,
         args.claim_limit,
         args.blocking_claim_limit,
+        args.snapshot_retention_days,
+        args.snapshot_keep_latest,
+        args.snapshot_retention_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:

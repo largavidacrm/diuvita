@@ -2,6 +2,11 @@
 
 This document defines the first agent-ready workflows. It intentionally starts narrow: clinics only.
 
+Operational boundary: every workflow in this document is subordinate to
+`docs/DIUVITA_LIMITES_OPERATIVOS.md`. If a job, review, extraction or publishing
+step touches a hard limit, it must stop and escalate to Daniel using that guide's
+format before acting.
+
 ## Shared job lifecycle
 
 Every workflow uses `public.agent_jobs`.
