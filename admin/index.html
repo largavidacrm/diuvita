@@ -2438,6 +2438,17 @@
       }).filter(Boolean);
     }
 
+    function blockingClaimStatusLabel(status) {
+      var labels = {
+        conflict: "Conflicto de fuente",
+        rejected: "Dato rechazado",
+        without_source: "Sin fuente",
+        stale: "Fuente antigua",
+        verified: "Verificado"
+      };
+      return labels[status] || status || "Revisar";
+    }
+
     function reviewRecommendedStep(payload) {
       var statuses = blockingClaimStatuses(payload || {});
       if (statuses.indexOf("conflict") >= 0) {
@@ -2493,8 +2504,63 @@
     function relatedOpenReviews(row) {
       if (!row || !row.clinic_id) return [];
       return reviewCache.filter(function (item) {
-        return item.id !== row.id && item.clinic_id === row.clinic_id;
+        return item.id !== row.id && item.clinic_id === row.clinic_id && item.status === "open";
       });
+    }
+
+    function enrichmentFieldKeys(row) {
+      if (!row || row.review_type !== "clinic_profile_enrichment") return [];
+      var fields = proposedFields(row.payload || {});
+      return Object.keys(fields).filter(function (key) {
+        return proposalListValue(fields[key]);
+      });
+    }
+
+    function relatedReviewSummaryItems(row) {
+      var payload = (row && row.payload) || {};
+      if (!row) return [];
+      if (row.review_type === "clinic_profile_enrichment") {
+        return enrichmentFieldKeys(row).map(proposalLabel);
+      }
+      if (row.review_type === "source_change_detected") {
+        return materialChangeItems(payload).map(function (item) {
+          return item.replace(/^Posible impacto:\s*/i, "");
+        });
+      }
+      if (isBlockingClaimReview(row)) {
+        return blockingClaimStatuses(payload).map(blockingClaimStatusLabel);
+      }
+      if (row.review_type === "clinic_quality_audit") {
+        return issueLabels(payload.issues);
+      }
+      return candidateList(candidateFromReview(row), "services");
+    }
+
+    function duplicateProposalFieldLabels(bundle) {
+      var counts = {};
+      (bundle || []).forEach(function (row) {
+        enrichmentFieldKeys(row).forEach(function (key) {
+          counts[key] = (counts[key] || 0) + 1;
+        });
+      });
+      return Object.keys(counts).filter(function (key) {
+        return counts[key] > 1;
+      }).map(proposalLabel);
+    }
+
+    function relatedReviewFieldsHtml(row) {
+      var items = relatedReviewSummaryItems(row).filter(function (item) {
+        return text(item).trim();
+      });
+      if (!items.length) {
+        return '<small>Sin campos detallados en la propuesta.</small>';
+      }
+      var hiddenCount = Math.max(0, items.length - 5);
+      var pills = items.slice(0, 5).map(function (item) {
+        return '<span class="pill">' + html(item) + '</span>';
+      });
+      if (hiddenCount) pills.push('<span class="pill">+' + html(hiddenCount) + " más</span>");
+      return '<div class="related-review-fields">' + pills.join("") + '</div>';
     }
 
     function reviewWorkgroupRank(row) {
@@ -2546,6 +2612,11 @@
         return '<span class="pill' + (item[0] === "Bloqueantes" ? " warning" : "") + '">' +
           html(item[0] + ": " + item[1]) + '</span>';
       }).join("");
+      var duplicateFields = duplicateProposalFieldLabels(bundle);
+      if (duplicateFields.length) {
+        chips += '<span class="pill warning">Campos repetidos: ' + html(duplicateFields.slice(0, 3).join(", ")) +
+          (duplicateFields.length > 3 ? html(" +" + (duplicateFields.length - 3)) : "") + '</span>';
+      }
       node.innerHTML = '<div><span>Orden recomendado</span><strong>' +
         html(reviewWorkgroupRecommendation(bundle)) + '</strong></div><div class="related-review-counts">' +
         chips + '<span class="pill">Actual: ' + html(reviewVisibleLabel(row)) + '</span></div>';
@@ -2565,13 +2636,14 @@
       show(panel, true);
       el("relatedReviewsMeta").textContent = bundle.length + (bundle.length === 1
         ? " tarjeta abierta en este grupo."
-        : " tarjetas abiertas en este grupo.");
+        : " tarjetas abiertas en este grupo.") + " Revisa los campos solapados antes de guardar.";
       renderRelatedReviewPlan(row, bundle);
       list.innerHTML = related.map(function (item) {
         return '<button class="related-review-item" type="button" data-related-review-id="' + html(item.id) + '">' +
-          '<strong>' + html(reviewVisibleLabel(item)) + '</strong>' +
-          '<span>' + html(priorityLabel(item.priority)) + " · " + html(date(item.created_at)) + '</span>' +
+          '<div><strong>' + html(reviewVisibleLabel(item)) + '</strong>' +
+          '<span>' + html(priorityLabel(item.priority)) + " · " + html(date(item.created_at)) + '</span></div>' +
           '<small>' + html(item.title || "Revisión abierta") + '</small>' +
+          relatedReviewFieldsHtml(item) +
           '</button>';
       }).join("");
     }

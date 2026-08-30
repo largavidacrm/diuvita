@@ -955,6 +955,17 @@ td small {
   color: var(--muted);
 }
 
+.related-review-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.related-review-fields .pill {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .rule-item strong,
 .rule-item p {
   display: block;
