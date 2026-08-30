@@ -373,11 +373,8 @@ button:disabled {
 
 .global-plan-simple {
   display: grid;
-  gap: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(247, 244, 238, 0.62);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
 }
 
 .global-plan-checkpoints {
@@ -504,6 +501,7 @@ button:disabled {
 }
 
 .global-plan-item span,
+.global-plan-role span,
 .global-next-box span {
   display: block;
   color: var(--muted);
@@ -514,6 +512,7 @@ button:disabled {
 }
 
 .global-plan-item strong,
+.global-plan-role strong,
 .global-next-box strong {
   display: block;
   overflow-wrap: anywhere;
@@ -521,10 +520,27 @@ button:disabled {
 }
 
 .global-plan-item p,
+.global-plan-role p,
 .global-next-box p {
   margin: 0;
   color: var(--muted);
   line-height: 1.32;
+}
+
+.global-plan-role {
+  min-width: 0;
+  padding: 0.86rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+.global-plan-role strong {
+  margin-top: 0.2rem;
+}
+
+.global-plan-role p {
+  margin-top: 0.42rem;
 }
 
 .global-next-box {
