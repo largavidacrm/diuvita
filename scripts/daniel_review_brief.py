@@ -20,6 +20,7 @@ from admin_digest import (
     parse_timestamp,
     review_backlog_guard_status,
     source_coverage_status,
+    specialist_review_status,
     top_pending_profile_field,
 )
 from check_production_health import run_checks
@@ -241,6 +242,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Google Maps pendientes: {google_link_review_status(digest)}.",
         f"- Siguiente ficha: {next_profile_action(digest)}.",
         f"- Especialistas publicados: {specialist_status(digest)}.",
+        f"- Tarjetas con especialistas: {specialist_review_status(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Cobertura fuentes: {source_coverage_status(digest)}.",

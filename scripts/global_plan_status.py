@@ -22,6 +22,7 @@ from admin_digest import (
     publication_control_status,
     review_backlog_guard_status,
     source_coverage_status,
+    specialist_review_status,
     top_pending_profile_field,
 )
 from submit_discovery_candidates import get_default_admin_email, load_env_file
@@ -177,6 +178,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Revisión principal: {next_action_label(digest)}.",
         f"- Grupo por clínica: {first_clinic_workgroup(digest)}.",
         f"- Google Maps propuestos: {google_link_review_status(digest)}.",
+        f"- Especialistas propuestos: {specialist_review_status(digest)}.",
         f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Siguiente ficha: {next_profile_action(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",

@@ -12,6 +12,7 @@ from admin_digest import (
     next_specialist_action,
     review_backlog_guard_status,
     source_coverage_status,
+    specialist_review_status,
     top_pending_profile_field,
 )
 
@@ -125,6 +126,17 @@ def main():
                 "priority": 60,
                 "clinic_name": "Sensabell",
                 "title": "Completar enlaces Google: Sensabell",
+            },
+        },
+        "specialist_reviews": {
+            "open_count": 2,
+            "professionals_count": 17,
+            "first_review": {
+                "review_type": "candidate_clinic",
+                "priority": 90,
+                "clinic_name": "",
+                "title": "Regenera Clinic Medicina de la Longevidad",
+                "professionals_count": 11,
             },
         },
         "recent_failed_jobs": [],
@@ -244,6 +256,10 @@ def main():
         google_link_review_status(digest) == "4 tarjetas; primera: Completar enlaces Google: Sensabell",
         "Google link review status missing",
     )
+    check(
+        specialist_review_status(digest) == "2 tarjetas; 17 especialistas propuestos; primera: Regenera Clinic Medicina de la Longevidad · 11 especialistas",
+        "specialist review status missing",
+    )
     limited_digest = dict(digest)
     limited_digest["open_reviews"] = [
         {
@@ -261,6 +277,7 @@ def main():
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Fichas con especialistas: 2/19" in output, "specialist coverage missing")
+    check("Tarjetas con especialistas: 2 tarjetas; 17 especialistas propuestos" in output, "specialist review status line missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist line missing")
     check("Fichas sin campos pendientes medidos: 0/19" in output, "profile completeness missing")
     check("Campo mas pendiente: Google Maps · 19 fichas" in output, "top pending profile field line missing")
@@ -280,6 +297,7 @@ def main():
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
     check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
+    check("Especialistas pendientes: 2 tarjetas; 17 especialistas propuestos" in output, "specialist pending line missing")
     check("Grupo por clinica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck line missing")

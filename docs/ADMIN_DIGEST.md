@@ -13,6 +13,8 @@ It answers:
 - whether the review inbox is near the safe-write backlog guard;
 - whether Google Maps/review-link proposals are open and which safe review card
   should be opened first;
+- whether specialist proposals are already present and which card has the
+  largest batch;
 - what the next recommended internal action is;
 - whether agents are in shadow mode;
 - whether low-risk auto-publish is mature enough to discuss;

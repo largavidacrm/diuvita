@@ -79,6 +79,17 @@ def sample_digest():
                 "title": "Completar enlaces Google: Sensabell",
             },
         },
+        "specialist_reviews": {
+            "open_count": 2,
+            "professionals_count": 17,
+            "first_review": {
+                "review_type": "candidate_clinic",
+                "priority": 90,
+                "clinic_name": "",
+                "title": "Regenera Clinic Medicina de la Longevidad",
+                "professionals_count": 11,
+            },
+        },
         "profile_completeness": {
             "visible_clinics": 19,
             "pending_google_maps": 19,
@@ -131,6 +142,7 @@ def main():
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Google Maps propuestos: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps proposed line missing")
+    check("Especialistas propuestos: 2 tarjetas; 17 especialistas propuestos" in output, "specialist proposed line missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending field missing")

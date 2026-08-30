@@ -14,6 +14,7 @@ It is designed for future morning or weekly automations. It answers:
 - which measured public field is missing from the most visible profiles;
 - whether there are open Google Maps/review-link proposals and which one to
   start with;
+- whether there are open cards with specialist names already proposed;
 - which incomplete visible profile should be reviewed next;
 - how many visible profiles include published specialists;
 - which missing-specialist profile is the best first review target;

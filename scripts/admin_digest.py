@@ -311,6 +311,84 @@ google_link_reviews as (
   ) as data
   from google_link_review_rows
 ),
+specialist_review_rows as (
+  select *
+  from (
+    select
+      rq.id,
+      rq.review_type as raw_review_type,
+      case
+        when rq.review_type = 'clinic_quality_audit'
+          and rq.payload ->> 'quality_context' = 'blocking_claims'
+          then 'blocking_claim_review'
+        else rq.review_type
+      end as review_type,
+      rq.title,
+      rq.priority,
+      rq.created_at,
+      rq.updated_at,
+      c.slug as clinic_slug,
+      c.display_name as clinic_name,
+      case
+        when rq.review_type = 'candidate_clinic' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{candidate,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{candidate,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,professionals}}') end,
+          case when jsonb_typeof(rq.payload -> 'profesionales') = 'array'
+            then jsonb_array_length(rq.payload -> 'profesionales') end,
+          0
+        )
+        when rq.review_type = 'clinic_profile_enrichment' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{proposed_fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_fields,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{proposed_current_data,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_current_data,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{fields,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{proposed_fields,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_fields,professionals}}') end,
+          case when jsonb_typeof(rq.payload #> '{{fields,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{fields,professionals}}') end,
+          0
+        )
+        else 0
+      end as professionals_count
+    from public.review_queue rq
+    left join public.clinics c on c.id = rq.clinic_id
+    where rq.status = 'open'
+  ) rows
+  where professionals_count > 0
+),
+specialist_reviews as (
+  select jsonb_build_object(
+    'open_count', count(*),
+    'professionals_count', coalesce(sum(professionals_count), 0),
+    'first_review', coalesce(
+      (
+        select to_jsonb(items)
+        from (
+          select
+            id,
+            raw_review_type,
+            review_type,
+            title,
+            priority,
+            created_at,
+            updated_at,
+            clinic_slug,
+            clinic_name,
+            professionals_count
+          from specialist_review_rows
+          order by professionals_count desc, priority desc, created_at asc
+          limit 1
+        ) items
+      ),
+      '{{}}'::jsonb
+    )
+  ) as data
+  from specialist_review_rows
+),
 review_examples_by_type as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
   from (
@@ -864,6 +942,7 @@ select jsonb_build_object(
   'review_backlog_first_duplicate_target', (select data from review_backlog_first_duplicate_target),
   'review_first_clinic_workgroup', (select data from review_first_clinic_workgroup),
   'google_link_reviews', (select data from google_link_reviews),
+  'specialist_reviews', (select data from specialist_reviews),
   'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
@@ -1135,6 +1214,30 @@ def google_link_review_status(digest: dict[str, Any]) -> str:
     return f"{count} {plural(count, 'tarjeta', 'tarjetas')}; primera: {first_label}"
 
 
+def specialist_review_status(digest: dict[str, Any]) -> str:
+    status = digest.get("specialist_reviews") or {}
+    if not isinstance(status, dict):
+        return "sin tarjetas con especialistas"
+    count = as_int(status.get("open_count"))
+    if not count:
+        return "sin tarjetas con especialistas"
+    professionals = as_int(status.get("professionals_count"))
+    first = status.get("first_review") or {}
+    name = str((first or {}).get("clinic_name") or (first or {}).get("clinic_slug") or "").strip()
+    title = str((first or {}).get("title") or "").strip()
+    first_count = as_int((first or {}).get("professionals_count"))
+    if name and title and name.lower() not in title.lower():
+        first_label = f"{name}: {title}"
+    else:
+        first_label = title or name or "primera tarjeta"
+    detail = f"{professionals} {plural(professionals, 'especialista propuesto', 'especialistas propuestos')}"
+    if first_count:
+        detail += f"; primera: {first_label} · {first_count} {plural(first_count, 'especialista', 'especialistas')}"
+    else:
+        detail += f"; primera: {first_label}"
+    return f"{count} {plural(count, 'tarjeta', 'tarjetas')}; {detail}"
+
+
 def format_digest(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
@@ -1167,6 +1270,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     specialist_with = as_int(specialist_coverage.get("with_specialists"))
     if specialist_visible:
         output.append(line("Fichas con especialistas", f"{specialist_with}/{specialist_visible}"))
+        specialist_reviews = specialist_review_status(digest)
+        if specialist_reviews != "sin tarjetas con especialistas":
+            output.append(line("Tarjetas con especialistas", specialist_reviews))
         output.append(line("Siguiente especialistas", next_specialist_action(digest)))
     completeness_visible = as_int(profile_completeness.get("visible_clinics"))
     completeness_ready = as_int(profile_completeness.get("without_pending_fields"))
@@ -1210,6 +1316,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     google_links = google_link_review_status(digest)
     if google_links != "sin tarjetas con Google Maps":
         output.append(line("Google Maps pendientes", google_links))
+    specialist_reviews = specialist_review_status(digest)
+    if specialist_reviews != "sin tarjetas con especialistas":
+        output.append(line("Especialistas pendientes", specialist_reviews))
     clinic_group = first_clinic_workgroup(digest)
     if clinic_group != "sin grupo por clínica medido":
         output.append(line("Grupo por clinica", clinic_group))

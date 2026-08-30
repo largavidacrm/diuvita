@@ -81,6 +81,17 @@ def sample_digest():
                 "title": "Completar enlaces Google: Sensabell",
             },
         },
+        "specialist_reviews": {
+            "open_count": 2,
+            "professionals_count": 17,
+            "first_review": {
+                "review_type": "candidate_clinic",
+                "priority": 90,
+                "clinic_name": "",
+                "title": "Regenera Clinic Medicina de la Longevidad",
+                "professionals_count": 11,
+            },
+        },
         "recent_failed_jobs": [],
         "source_monitoring": {
             "due_sources": 0,
@@ -181,6 +192,7 @@ def main():
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps review target missing")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile action missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
+    check("Tarjetas con especialistas: 2 tarjetas; 17 especialistas propuestos" in output, "specialist review status missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
     check("Cobertura fuentes: 11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente" in output, "source coverage missing")
