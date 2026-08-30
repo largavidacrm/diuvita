@@ -2908,6 +2908,71 @@
       return linesToLocations(value);
     }
 
+    function decodedLowerUrl(value) {
+      var clean = text(value).trim();
+      if (!clean) return "";
+      try {
+        return decodeURIComponent(clean).toLowerCase();
+      } catch (error) {
+        return clean.toLowerCase();
+      }
+    }
+
+    function isGoogleMapsLikeUrl(value) {
+      var lower = decodedLowerUrl(value);
+      return Boolean(
+        (lower.indexOf("google.") >= 0 && lower.indexOf("/maps") >= 0) ||
+        lower.indexOf("maps.app.goo.gl") >= 0 ||
+        lower.indexOf("goo.gl/maps") >= 0 ||
+        lower.indexOf("g.page/") >= 0
+      );
+    }
+
+    function googleMapsUrlHasPlaceSignal(value) {
+      var lower = decodedLowerUrl(value);
+      return Boolean(
+        lower.indexOf("/maps/place/") >= 0 ||
+        lower.indexOf("place_id=") >= 0 ||
+        lower.indexOf("query_place_id=") >= 0 ||
+        lower.indexOf("cid=") >= 0 ||
+        lower.indexOf("ftid=") >= 0 ||
+        lower.indexOf("maps.app.goo.gl") >= 0 ||
+        lower.indexOf("goo.gl/maps") >= 0 ||
+        lower.indexOf("g.page/") >= 0
+      );
+    }
+
+    function googleMapsUrlNeedsManualReview(value) {
+      var lower = decodedLowerUrl(value);
+      if (!isGoogleMapsLikeUrl(lower)) return false;
+      if (googleMapsUrlHasPlaceSignal(lower)) return false;
+      return Boolean(
+        lower.indexOf("/maps/search") >= 0 ||
+        lower.indexOf("/maps/dir") >= 0 ||
+        lower.indexOf("google.com/search") >= 0 ||
+        /[?&](q|query)=/.test(lower)
+      );
+    }
+
+    function currentClinicMapsUrls() {
+      var urls = [trimmed("clinicMapsUrl")];
+      currentClinicLocations().forEach(function (location) {
+        var url = locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]);
+        if (url) urls.push(url);
+      });
+      return urls.filter(Boolean);
+    }
+
+    function hasReviewedClinicMapsProfile() {
+      return currentClinicMapsUrls().some(function (url) {
+        return isGoogleMapsLikeUrl(url) && googleMapsUrlHasPlaceSignal(url) && !googleMapsUrlNeedsManualReview(url);
+      });
+    }
+
+    function hasGenericClinicMapsCandidate() {
+      return currentClinicMapsUrls().some(googleMapsUrlNeedsManualReview);
+    }
+
     function locationRowHtml(location, index) {
       location = normalizedLocation(location) || {};
       return '<article class="location-row" data-location-row>' +
@@ -3405,7 +3470,8 @@
     function finalValidationItems(publicTarget) {
       var noBlockingClaims = activeClinicBlockingClaimCount !== null && activeClinicBlockingClaimCount === 0;
       var hasLocation = trimmed("clinicAddress") || locationsHaveAddress(currentClinicLocations());
-      var hasMapAccess = trimmed("clinicMapsUrl") || hasLocation;
+      var hasClinicMapsProfile = hasReviewedClinicMapsProfile();
+      var hasGenericMapsCandidate = hasGenericClinicMapsCandidate();
       return [
         validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry")),
         validationItem("Web oficial revisada", /^https?:\/\//i.test(trimmed("clinicWebsite"))),
@@ -3414,7 +3480,7 @@
         validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0),
         validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false),
-        validationItem("Dirección preparada para Google Maps", hasMapAccess, false),
+        validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, false),
         validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false),
         validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false)
       ];

@@ -204,6 +204,10 @@ ese enlace directo guardado. Si todavía falta, la web busca por nombre de
 clínica, ciudad y país; no por la dirección suelta. El enlace directo a
 valoraciones de Google se guarda aparte cuando exista.
 
+En **Validación final**, Google Maps queda como pendiente si el enlace parece
+una búsqueda genérica, una ruta o una dirección suelta en vez de un perfil de
+clínica.
+
 Los campos de transparencia —años en ejercicio, número de especialistas,
 colegiación visible y precio público— solo deben rellenarse cuando salgan de una
 fuente pública revisable. No son rankings ni recomendaciones.
