@@ -11,6 +11,7 @@ It is designed for future morning or weekly automations. It answers:
 - how many open cards exist by type;
 - whether auto-publication is still off;
 - how many visible profiles still have measured public fields pending;
+- which measured public field is missing from the most visible profiles;
 - how many visible profiles include published specialists;
 - whether the review inbox has repeated improvement cards for the same clinic;
 - whether source monitoring is fresh or pending;

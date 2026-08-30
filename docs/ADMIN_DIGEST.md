@@ -16,6 +16,7 @@ It answers:
 - whether clinic source monitoring is fresh or due;
 - how many visible profiles include published specialists;
 - how many visible profiles have all measured public fields present;
+- which measured public field is missing from the most visible profiles;
 - how much agent cost is recorded in the database.
 
 It does not publish clinics, edit data, or resolve review items.

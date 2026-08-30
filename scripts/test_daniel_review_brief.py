@@ -63,6 +63,15 @@ def sample_digest():
             "visible_clinics": 19,
             "without_pending_fields": 1,
             "with_pending_fields": 18,
+            "pending_summary": 0,
+            "pending_website": 0,
+            "pending_address": 0,
+            "pending_contact": 6,
+            "pending_services": 0,
+            "pending_specialties": 0,
+            "pending_units": 14,
+            "pending_specialists": 17,
+            "pending_technology": 5,
         },
     }
 
@@ -85,6 +94,7 @@ def main():
     check("Modo sombra: activo" in output, "shadow mode state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
     check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
+    check("Campo más pendiente: Especialistas · 17 fichas" in output, "top pending profile field missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")

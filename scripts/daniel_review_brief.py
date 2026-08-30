@@ -7,7 +7,7 @@ import json
 import sys
 from typing import Any
 
-from admin_digest import as_int, load_digest, next_action_label, parse_timestamp
+from admin_digest import as_int, load_digest, next_action_label, parse_timestamp, top_pending_profile_field
 from check_production_health import run_checks
 from submit_discovery_candidates import get_default_admin_email, load_env_file
 
@@ -208,6 +208,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         "## Señales técnicas",
         f"- Clínicas visibles: {as_int(clinics.get('published'))} publicadas y {as_int(clinics.get('preliminary'))} preliminares.",
         f"- Completitud de fichas: {profile_completeness_status(digest)}.",
+        f"- Campo más pendiente: {top_pending_profile_field(digest)}.",
         f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Bandeja: {review_backlog_status(digest)}.",

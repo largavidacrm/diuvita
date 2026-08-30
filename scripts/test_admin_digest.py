@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for the internal CTO digest formatter."""
 
-from admin_digest import format_digest, next_action_label
+from admin_digest import format_digest, next_action_label, top_pending_profile_field
 
 
 def check(condition, message):
@@ -115,6 +115,7 @@ def main():
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
+    check(top_pending_profile_field(digest) == "Especialistas · 17 fichas", "top pending profile field missing")
     limited_digest = dict(digest)
     limited_digest["open_reviews"] = [
         {
@@ -133,6 +134,7 @@ def main():
     check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Fichas con especialistas: 2/19" in output, "specialist coverage missing")
     check("Fichas sin campos pendientes medidos: 1/19" in output, "profile completeness missing")
+    check("Campo mas pendiente: Especialistas · 17 fichas" in output, "top pending profile field line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Bajo riesgo: no lista" in output, "maturity signal missing")
     check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")

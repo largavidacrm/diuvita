@@ -420,6 +420,32 @@ def maturity_blockers(digest: dict[str, Any]) -> list[str]:
     return blockers
 
 
+PROFILE_COMPLETENESS_FIELDS = [
+    ("pending_summary", "Resumen"),
+    ("pending_website", "Web oficial"),
+    ("pending_address", "Dirección"),
+    ("pending_contact", "Contacto"),
+    ("pending_services", "Servicios"),
+    ("pending_specialties", "Especialidades"),
+    ("pending_units", "Unidades"),
+    ("pending_specialists", "Especialistas"),
+    ("pending_technology", "Tecnología"),
+]
+
+
+def top_pending_profile_field(digest: dict[str, Any]) -> str:
+    completeness = digest.get("profile_completeness") or {}
+    rows = [
+        (label, as_int(completeness.get(key)))
+        for key, label in PROFILE_COMPLETENESS_FIELDS
+        if as_int(completeness.get(key))
+    ]
+    if not rows:
+        return "sin campo pendiente"
+    label, count = sorted(rows, key=lambda item: (-item[1], item[0]))[0]
+    return f"{label} · {count} fichas"
+
+
 def next_action_label(digest: dict[str, Any]) -> str:
     failed = digest.get("recent_failed_jobs") or []
     open_reviews = digest.get("open_reviews") or []
@@ -480,6 +506,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     completeness_ready = as_int(profile_completeness.get("without_pending_fields"))
     if completeness_visible:
         output.append(line("Fichas sin campos pendientes medidos", f"{completeness_ready}/{completeness_visible}"))
+        output.append(line("Campo mas pendiente", top_pending_profile_field(digest)))
     output.append("")
 
     output.append("## Automatizacion")
