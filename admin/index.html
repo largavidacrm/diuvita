@@ -122,6 +122,10 @@
             <label for="clinicSpecialties">Especialidades</label>
             <textarea id="clinicSpecialties" name="clinicSpecialties" rows="7"></textarea>
           </div>
+          <div class="field">
+            <label for="clinicUnits">Unidades / áreas clínicas</label>
+            <textarea id="clinicUnits" name="clinicUnits" rows="7"></textarea>
+          </div>
           <div class="field field-wide">
             <label for="clinicProfessionals">Especialistas publicados por la clínica</label>
             <textarea id="clinicProfessionals" name="clinicProfessionals" rows="6"></textarea>
@@ -196,11 +200,11 @@
               <dd id="reviewCandidateDuplicates">—</dd>
             </div>
             <div>
-              <dt>Servicios detectados</dt>
+              <dt>Servicios / campos</dt>
               <dd id="reviewCandidateServices">—</dd>
             </div>
             <div>
-              <dt>Especialistas detectados</dt>
+              <dt>Especialistas publicados</dt>
               <dd id="reviewCandidateProfessionals">—</dd>
             </div>
           </dl>
@@ -488,6 +492,7 @@
         review_item_status_changed: "Revisión cerrada",
         candidate_review_draft_created: "Borrador creado",
         quality_audit_completed: "Auditoría completada",
+        clinic_profile_enrichment_proposals_created: "Propuestas de ficha creadas",
         public_site_rebuild_requested: "Publicación solicitada",
         public_site_rebuild_skipped: "Publicación agrupada"
       };
@@ -574,6 +579,79 @@
       });
     }
 
+    function proposedFields(payload) {
+      payload = payload || {};
+      var fields = payload.proposed_fields || payload.proposed_current_data || payload.fields || {};
+      return fields && typeof fields === "object" ? fields : {};
+    }
+
+    function hasOwn(object, key) {
+      return Object.prototype.hasOwnProperty.call(object, key);
+    }
+
+    function proposalListValue(value) {
+      if (Array.isArray(value)) return value.join(", ");
+      return text(value).trim();
+    }
+
+    function proposalFieldItems(payload) {
+      var fields = proposedFields(payload);
+      var labels = {
+        display_name: "Nombre",
+        name: "Nombre",
+        web: "Web",
+        website: "Web",
+        country: "País",
+        city: "Ciudad",
+        region: "Región",
+        address: "Dirección",
+        summary: "Resumen",
+        services: "Servicios",
+        specialties: "Especialidades",
+        unidades: "Unidades",
+        profesionales: "Especialistas",
+        tech: "Tecnología",
+        email: "Email",
+        telefono: "Teléfono",
+        instagram: "Instagram"
+      };
+      return Object.keys(labels).filter(function (key) {
+        return hasOwn(fields, key) && proposalListValue(fields[key]);
+      }).map(function (key) {
+        return labels[key] + ": " + proposalListValue(fields[key]);
+      });
+    }
+
+    function proposalProfessionals(payload) {
+      var fields = proposedFields(payload);
+      return candidateList(fields, "profesionales", "professionals");
+    }
+
+    function sourceList(payload) {
+      var urls = [];
+      var raw = payload && (payload.source_urls || payload.sources || payload.source_url);
+      if (Array.isArray(raw)) {
+        urls = raw;
+      } else if (raw) {
+        urls = [raw];
+      }
+      return urls.map(function (url) { return text(url).trim(); }).filter(Boolean);
+    }
+
+    function setLinks(id, urls) {
+      urls = urls || [];
+      if (!urls.length) {
+        el(id).textContent = "—";
+        return;
+      }
+      el(id).innerHTML = '<ul class="compact-list">' + urls.map(function (url) {
+        if (/^https?:\/\//i.test(url)) {
+          return '<li><a href="' + html(url) + '" rel="nofollow noopener" target="_blank">' + html(url) + '</a></li>';
+        }
+        return "<li>" + html(url) + "</li>";
+      }).join("") + "</ul>";
+    }
+
     function renderClinics() {
       var clinicsBody = el("clinicsBody");
       var query = trimmed("clinicSearch").toLowerCase();
@@ -624,6 +702,7 @@
       setInput("clinicSummary", activeClinic.summary || data.summary);
       setInput("clinicServices", arrayLines(data.services));
       setInput("clinicSpecialties", arrayLines(data.specialties));
+      setInput("clinicUnits", arrayLines(data.unidades));
       setInput("clinicProfessionals", arrayLines(data.profesionales));
       setInput("clinicTech", data.tech);
       setInput("clinicEmail", data.email);
@@ -634,6 +713,45 @@
       show(el("clinicEditor"), true);
       el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
       el("clinicName").focus();
+    }
+
+    function applyClinicProposal(payload) {
+      var fields = proposedFields(payload);
+      var textFields = {
+        display_name: "clinicName",
+        name: "clinicName",
+        web: "clinicWebsite",
+        website: "clinicWebsite",
+        country: "clinicCountry",
+        city: "clinicCity",
+        region: "clinicRegion",
+        address: "clinicAddress",
+        summary: "clinicSummary",
+        tech: "clinicTech",
+        email: "clinicEmail",
+        telefono: "clinicPhone",
+        instagram: "clinicInstagram"
+      };
+      Object.keys(textFields).forEach(function (key) {
+        if (hasOwn(fields, key) && proposalListValue(fields[key])) {
+          setInput(textFields[key], proposalListValue(fields[key]));
+        }
+      });
+      if (hasOwn(fields, "services")) setInput("clinicServices", arrayLines(fields.services));
+      if (hasOwn(fields, "specialties")) setInput("clinicSpecialties", arrayLines(fields.specialties));
+      if (hasOwn(fields, "unidades")) setInput("clinicUnits", arrayLines(fields.unidades));
+      if (hasOwn(fields, "profesionales")) setInput("clinicProfessionals", arrayLines(fields.profesionales));
+
+      var note = ["Propuesta interna cargada. Revisa antes de guardar."];
+      if (Array.isArray(payload.warnings) && payload.warnings.length) {
+        note.push("Revisar: " + payload.warnings.join(" | "));
+      }
+      var urls = sourceList(payload);
+      if (urls.length) {
+        note.push("Fuentes: " + urls.join(" | "));
+      }
+      setInput("clinicNote", note.join("\n"));
+      toast("Propuesta cargada. Revisa y guarda si quieres publicarla.");
     }
 
     function closeClinicEditor() {
@@ -649,6 +767,7 @@
       var candidate = candidateFromReview(activeReview);
       var payload = activeReview.payload || {};
       var isQualityAudit = activeReview.review_type === "clinic_quality_audit";
+      var isEnrichment = activeReview.review_type === "clinic_profile_enrichment";
       var website = candidate.website || candidate.web;
       var source = candidate.source_url || payload.candidate_source_url || website;
       var confidence = candidate.discovery_confidence || candidate.confidence;
@@ -657,17 +776,21 @@
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
       el("reviewEditorMeta").textContent = activeReview.review_type + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
-      setText("reviewCandidateName", isQualityAudit ? payload.clinic_name : candidate.name || candidate.clinic_name);
-      setText("reviewCandidateCity", isQualityAudit ? payload.clinic_city : candidate.city);
-      setText("reviewCandidateCountry", isQualityAudit ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
+      setText("reviewCandidateName", (isQualityAudit || isEnrichment) ? payload.clinic_name : candidate.name || candidate.clinic_name);
+      setText("reviewCandidateCity", (isQualityAudit || isEnrichment) ? payload.clinic_city : candidate.city);
+      setText("reviewCandidateCountry", (isQualityAudit || isEnrichment) ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
       setText("reviewCandidateConfidence", confidence == null ? "" : pct(confidence));
-      setLink("reviewCandidateWebsite", isQualityAudit ? payload.website : website);
-      setLink("reviewCandidateSource", source);
+      setLink("reviewCandidateWebsite", (isQualityAudit || isEnrichment) ? payload.website : website);
+      if (isEnrichment) {
+        setLinks("reviewCandidateSource", sourceList(payload));
+      } else {
+        setLink("reviewCandidateSource", source);
+      }
       setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
-      setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : candidateList(candidate, "services"));
-      setInlineList("reviewCandidateProfessionals", isQualityAudit ? [] : candidateList(candidate, "profesionales", "professionals"));
-      el("reviewCreateDraftBtn").disabled = !isQualityAudit && blocksDraft;
-      el("reviewCreateDraftBtn").textContent = isQualityAudit ? "Editar clínica" : blocksDraft ? "Duplicado probable" : "Crear borrador";
+      setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : candidateList(candidate, "services"));
+      setInlineList("reviewCandidateProfessionals", isQualityAudit ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
+      el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && blocksDraft;
+      el("reviewCreateDraftBtn").textContent = (isQualityAudit || isEnrichment) ? "Editar clínica" : blocksDraft ? "Duplicado probable" : "Crear borrador";
       setInput("reviewResolutionNote", "");
       show(el("reviewEditor"), true);
       el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -708,6 +831,7 @@
       setJsonText(currentData, "instagram", trimmed("clinicInstagram"));
       setJsonArray(currentData, "services", el("clinicServices").value);
       setJsonArray(currentData, "specialties", el("clinicSpecialties").value);
+      setJsonArray(currentData, "unidades", el("clinicUnits").value);
       setJsonArray(currentData, "profesionales", el("clinicProfessionals").value);
 
       el("clinicSaveBtn").disabled = true;
@@ -734,10 +858,13 @@
       }
 
       if (activeClinicReview && activeClinicReview.clinic_id === activeClinic.id) {
+        var defaultNote = activeClinicReview.review_type === "clinic_profile_enrichment"
+          ? "Ficha actualizada desde propuesta de ampliación."
+          : "Ficha actualizada desde revisión de calidad.";
         await client.rpc("admin_resolve_review_item", {
           p_review_id: activeClinicReview.id,
           p_status: "resolved",
-          p_note: trimmed("clinicNote") || "Ficha actualizada desde revisión de calidad."
+          p_note: trimmed("clinicNote") || defaultNote
         });
       }
 
@@ -882,11 +1009,14 @@
 
     async function createClinicDraftFromReview() {
       if (!activeReview) return;
-      if (activeReview.review_type === "clinic_quality_audit" && activeReview.clinic_id) {
+      if ((activeReview.review_type === "clinic_quality_audit" || activeReview.review_type === "clinic_profile_enrichment") && activeReview.clinic_id) {
         var clinicId = activeReview.clinic_id;
         activeClinicReview = activeReview;
+        var payload = activeReview.payload || {};
+        var shouldApplyProposal = activeReview.review_type === "clinic_profile_enrichment";
         closeReviewEditor();
         openClinicEditor(clinicId);
+        if (shouldApplyProposal) applyClinicProposal(payload);
         return;
       }
 
