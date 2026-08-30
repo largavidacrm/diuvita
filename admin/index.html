@@ -699,6 +699,24 @@
       };
     }
 
+    function emptySourceCoverage() {
+      return {
+        visibleClinics: 0,
+        withSources: 0,
+        withoutSources: 0,
+        withHydratedSources: 0,
+        withoutHydratedSources: 0,
+        withClaims: 0,
+        withoutClaims: 0,
+        needingSourceWork: 0,
+        claimsWithSource: 0,
+        claimsWithoutSource: 0,
+        blockingClaims: 0,
+        nextTarget: null,
+        unavailable: false
+      };
+    }
+
     function emptySpecialistCoverage() {
       return {
         visibleClinics: 0,
@@ -920,6 +938,129 @@
       monitoring.snapshotRetention = sourceSnapshotRetentionStatus(snapshots);
       if (snapshotUnavailable) monitoring.snapshotRetention.unavailable = true;
       return monitoring;
+    }
+
+    function sourceCoverageTargetSort(a, b) {
+      return Number(b.blockingClaims || 0) - Number(a.blockingClaims || 0) ||
+        (Number(a.sourceRecords || 0) === 0 ? 0 : 1) - (Number(b.sourceRecords || 0) === 0 ? 0 : 1) ||
+        (Number(a.hydratedSourceRecords || 0) === 0 ? 0 : 1) - (Number(b.hydratedSourceRecords || 0) === 0 ? 0 : 1) ||
+        Number(b.claimsWithoutSource || 0) - Number(a.claimsWithoutSource || 0) ||
+        Number(a.totalClaims || 0) - Number(b.totalClaims || 0) ||
+        (text(a.status) === "published" ? 0 : 1) - (text(b.status) === "published" ? 0 : 1) ||
+        text(a.clinicName || a.slug).localeCompare(text(b.clinicName || b.slug));
+    }
+
+    function sourceCoverageTargetLabel(target) {
+      if (!target) return "—";
+      var name = target.clinicName || target.slug || "Ficha pendiente";
+      if (target.blockingClaims) {
+        return name + " · " + target.blockingClaims + (target.blockingClaims === 1 ? " bloqueante" : " bloqueantes");
+      }
+      if (!target.sourceRecords) return name + " · sin fuente";
+      if (!target.hydratedSourceRecords) return name + " · hidratar fuente";
+      if (target.claimsWithoutSource) {
+        return name + " · " + target.claimsWithoutSource + (target.claimsWithoutSource === 1 ? " claim sin fuente" : " claims sin fuente");
+      }
+      if (!target.totalClaims) return name + " · sin claims";
+      return name + " · revisar fuentes";
+    }
+
+    async function loadSourceCoverage() {
+      var coverage = emptySourceCoverage();
+      var clinicResult = await client
+        .from("clinics")
+        .select("id, slug, display_name, city, status")
+        .in("status", ["published", "preliminary"])
+        .limit(500);
+
+      if (clinicResult.error) {
+        coverage.unavailable = true;
+        return coverage;
+      }
+
+      var clinicRows = clinicResult.data || [];
+      var clinicById = {};
+      clinicRows.forEach(function (row) {
+        clinicById[row.id] = {
+          clinicId: row.id,
+          slug: row.slug,
+          clinicName: row.display_name,
+          city: row.city,
+          status: row.status,
+          sourceRecords: 0,
+          hydratedSourceRecords: 0,
+          totalClaims: 0,
+          claimsWithSource: 0,
+          claimsWithoutSource: 0,
+          blockingClaims: 0
+        };
+      });
+      var clinicIds = clinicRows.map(function (row) { return row.id; }).filter(Boolean);
+      if (!clinicIds.length) return coverage;
+
+      var sourceResult = await client
+        .from("source_records")
+        .select("id, clinic_id, content_hash")
+        .eq("entity_type", "clinic")
+        .in("clinic_id", clinicIds)
+        .limit(2000);
+      if (sourceResult.error) {
+        coverage.unavailable = true;
+        return coverage;
+      }
+      (sourceResult.data || []).forEach(function (source) {
+        var row = clinicById[source.clinic_id];
+        if (!row) return;
+        row.sourceRecords += 1;
+        if (text(source.content_hash).trim()) row.hydratedSourceRecords += 1;
+      });
+
+      var claimResult = await client
+        .from("field_claims")
+        .select("clinic_id, source_record_id, verification_status")
+        .eq("entity_type", "clinic")
+        .in("clinic_id", clinicIds)
+        .limit(2000);
+      if (claimResult.error) {
+        coverage.unavailable = true;
+        return coverage;
+      }
+      (claimResult.data || []).forEach(function (claim) {
+        var row = clinicById[claim.clinic_id];
+        if (!row) return;
+        row.totalClaims += 1;
+        if (claim.source_record_id) row.claimsWithSource += 1;
+        else row.claimsWithoutSource += 1;
+        if (["conflict", "rejected"].indexOf(claim.verification_status) >= 0 || !claim.source_record_id) {
+          row.blockingClaims += 1;
+        }
+      });
+
+      var targets = [];
+      Object.keys(clinicById).forEach(function (id) {
+        var row = clinicById[id];
+        var needsSourceWork = !row.sourceRecords ||
+          !row.hydratedSourceRecords ||
+          !row.totalClaims ||
+          row.claimsWithoutSource ||
+          row.blockingClaims;
+        coverage.visibleClinics += 1;
+        if (row.sourceRecords) coverage.withSources += 1;
+        else coverage.withoutSources += 1;
+        if (row.hydratedSourceRecords) coverage.withHydratedSources += 1;
+        else coverage.withoutHydratedSources += 1;
+        if (row.totalClaims) coverage.withClaims += 1;
+        else coverage.withoutClaims += 1;
+        coverage.claimsWithSource += row.claimsWithSource;
+        coverage.claimsWithoutSource += row.claimsWithoutSource;
+        coverage.blockingClaims += row.blockingClaims;
+        if (needsSourceWork) {
+          coverage.needingSourceWork += 1;
+          targets.push(row);
+        }
+      });
+      coverage.nextTarget = targets.sort(sourceCoverageTargetSort)[0] || null;
+      return coverage;
     }
 
     function countPublishedSpecialists(currentData) {
@@ -1403,7 +1544,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, openReviews) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, openReviews) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -1435,6 +1576,16 @@
       var retentionInventory = retention.unavailable
         ? "—"
         : (retention.olderThanPolicy || 0) + " antiguas · " + (retention.totalSnapshots || 0) + " total";
+      var sourceCoverageStatus = sourceCoverage || emptySourceCoverage();
+      var sourceCoverageLabel = sourceCoverageStatus.unavailable
+        ? "No disponible"
+        : sourceCoverageStatus.withHydratedSources + "/" + sourceCoverageStatus.visibleClinics + " fichas";
+      var sourceCoverageGapLabel = sourceCoverageStatus.unavailable
+        ? "—"
+        : sourceCoverageStatus.withoutSources + " sin fuente";
+      var sourceCoverageNextLabel = sourceCoverageStatus.unavailable
+        ? "—"
+        : sourceCoverageTargetLabel(sourceCoverageStatus.nextTarget);
       var specialists = specialistCoverage || emptySpecialistCoverage();
       var specialistLabel = specialists.unavailable
         ? "No disponible"
@@ -1486,6 +1637,9 @@
         systemItem(sourceMonitorDateLabel, sourceMonitorDate ? date(sourceMonitorDate) : "—"),
         systemItem("Retención capturas", retentionLabel, retention.unavailable || retention.cleanupCandidates ? "warning-text" : ""),
         systemItem("Inventario capturas", retentionInventory),
+        systemItem("Fuentes por ficha", sourceCoverageLabel, sourceCoverageStatus.unavailable || sourceCoverageStatus.needingSourceWork ? "warning-text" : ""),
+        systemItem("Fichas sin fuente", sourceCoverageGapLabel, sourceCoverageStatus.withoutSources ? "warning-text" : ""),
+        systemItem("Siguiente fuente", sourceCoverageNextLabel, sourceCoverageStatus.nextTarget ? "warning-text" : ""),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
         systemItem("Freno bandeja", backlogGuard.label, backlogGuard.tone),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
@@ -3177,10 +3331,11 @@
         }
         var claimQuality = await loadClaimQuality();
         var sourceMonitoring = await loadSourceMonitoring();
+        var sourceCoverage = await loadSourceCoverage();
         var specialistCoverage = await loadSpecialistCoverage(reviewCache);
         var profileCompleteness = await loadProfileCompleteness(reviewCache);
         var publicHealth = await loadPublicHealth();
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
 
         var clinicRows = await client
           .from("clinics")

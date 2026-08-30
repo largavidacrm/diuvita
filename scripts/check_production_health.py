@@ -26,9 +26,13 @@ CHECKS = [
         "markers": [
             "Centro de control",
             "loadProfileCompleteness",
+            "loadSourceCoverage",
             "Fichas completas",
             "Campo más pendiente",
             "Siguiente ficha",
+            "Fuentes por ficha",
+            "Fichas sin fuente",
+            "Siguiente fuente",
             "Siguiente especialistas",
             "Duplicados mejoras",
             "Primer atasco",

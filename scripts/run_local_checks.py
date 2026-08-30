@@ -32,6 +32,7 @@ TEST_STEPS = [
     ("test: admin blocking claim labels", "scripts/test_admin_blocking_claim_labels.py"),
     ("test: admin maturity status", "scripts/test_admin_maturity_status.py"),
     ("test: admin source monitoring status", "scripts/test_admin_source_monitoring_status.py"),
+    ("test: admin source coverage status", "scripts/test_admin_source_coverage_status.py"),
     ("test: admin snapshot retention status", "scripts/test_admin_snapshot_retention_status.py"),
     ("test: admin specialist coverage status", "scripts/test_admin_specialist_coverage_status.py"),
     ("test: admin profile completeness status", "scripts/test_admin_profile_completeness_status.py"),

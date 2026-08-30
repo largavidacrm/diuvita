@@ -38,7 +38,7 @@ def main() -> None:
         check(marker in index, f"missing admin specialist coverage marker: {marker}")
 
     check(
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, reviewCache);"
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);"
         in index,
         "dashboard should render specialist coverage status",
     )

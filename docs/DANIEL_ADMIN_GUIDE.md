@@ -32,6 +32,9 @@ En **Estado del sistema**, mira especialmente:
 - **Próxima revisión fuentes**: fecha aproximada del siguiente control de fuentes cuando todo está al día.
 - **Retención capturas**: te dice si hay capturas antiguas que podrían revisarse para limpieza futura.
 - **Inventario capturas**: resume cuántas capturas antiguas y totales tiene guardadas el sistema.
+- **Fuentes por ficha**: muestra cuántas fichas visibles ya tienen fuentes guardadas y trazables.
+- **Fichas sin fuente**: indica cuántas fichas visibles todavía necesitan una fuente principal guardada.
+- **Siguiente fuente**: señala la ficha que conviene revisar primero para cerrar problemas de fuentes o claims bloqueantes.
 - **Especialistas**: muestra cuántas fichas visibles ya tienen especialistas publicados por la clínica.
 - **Pendientes especialistas**: indica cuántas fichas visibles siguen sin ese apartado.
 - **Siguiente especialistas**: señala la ficha más fácil de revisar para completar especialistas porque ya tiene tarjetas o claims internos.
