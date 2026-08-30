@@ -215,76 +215,98 @@ countries = sorted({c["country"] for c in clinics})
 specialties = sorted({s for c in clinics for s in c["specialties"]})
 
 CSS = """
-:root{--bg:#f7f3ea;--ink:#182420;--muted:#5f6b63;--green:#1e7a5a;--green-deep:#134737;--coral:#e0704a;--card:#fffdf8;--line:#e6dfd0;--wash:#ecf3ee}
+:root{--bg:#f3f6f1;--surface:#fffdf8;--surface-strong:#fff;--ink:#17231f;--muted:#647168;--green:#1e7a5a;--green-deep:#123f32;--coral:#df6c4b;--line:#dfe6dc;--wash:#e9f2ec;--soft:#f8f4eb;--shadow:0 18px 44px rgba(23,35,31,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{font-family:'Source Sans 3',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
-a{color:var(--green);text-decoration:none}a:hover{text-decoration:underline}
-header.site{padding:1.1rem 5vw;display:flex;justify-content:space-between;align-items:baseline}
-header.site .logo{font-family:'Fraunces',Georgia,serif;font-size:1.6rem;font-weight:600;color:var(--ink)}
-header.site .logo em{color:var(--coral);font-style:normal}
-header.site nav a{margin-left:1.2rem;color:var(--muted);font-size:.95rem}
-/* HERO */
-.hero{padding:3.5rem 5vw 2.5rem;max-width:1050px;margin:0 auto;text-align:center}
-.hero .kicker{text-transform:uppercase;letter-spacing:.14em;font-size:.8rem;color:var(--coral);font-weight:600}
-.hero h1{font-family:'Fraunces',Georgia,serif;font-size:clamp(2.1rem,5.5vw,3.6rem);font-weight:500;line-height:1.12;margin:.7rem auto 0;max-width:17ch;text-wrap:balance}
-.hero h1 em{font-style:italic;color:var(--green)}
-.hero p.sub{margin:1.1rem auto 0;font-size:1.15rem;color:var(--muted);max-width:44ch}
-/* SEARCH */
-.finder{max-width:860px;margin:2.2rem auto 0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.3rem 1.4rem;box-shadow:0 10px 30px rgba(24,36,32,.06);text-align:left}
-.finder input{width:100%;font:inherit;font-size:1.05rem;padding:.75rem 1rem;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
-.finder input:focus{outline:2px solid var(--green);border-color:var(--green)}
-.fgroup{margin-top:1rem}
-.fgroup .flabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
-.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.45rem}
-.chip{font:inherit;font-size:.86rem;padding:.32rem .85rem;border-radius:99px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
-.chip:hover{border-color:var(--green)}
+body{font-family:'Source Sans 3',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.58}
+a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:3px}
+.site{position:sticky;top:0;z-index:10;padding:.95rem 5vw;display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid var(--line);background:rgba(255,253,248,.92);backdrop-filter:blur(14px)}
+.site .logo{font-family:'Fraunces',Georgia,serif;font-size:1.55rem;font-weight:600;color:var(--ink)}
+.site .logo em{color:var(--coral);font-style:normal}
+.site nav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;justify-content:flex-end}
+.site nav a{padding:.42rem .7rem;border-radius:8px;color:var(--muted);font-weight:700;font-size:.95rem}
+.site nav a:hover{background:var(--wash);color:var(--green-deep);text-decoration:none}
+.hero{max-width:1180px;margin:0 auto;padding:2.35rem 5vw 1rem}
+.hero-copy{max-width:860px}
+.hero .kicker{color:var(--coral);font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
+.hero h1{max-width:24ch;margin:.55rem 0 0;font-family:'Fraunces',Georgia,serif;font-size:3.2rem;font-weight:500;line-height:1.05;text-wrap:balance}
+.hero h1 em{color:var(--green);font-style:italic}
+.hero p.sub{max-width:660px;margin:1rem 0 0;color:var(--muted);font-size:1.18rem}
+.finder{margin-top:1.35rem;background:var(--surface-strong);border:1px solid var(--line);border-radius:8px;padding:.9rem;box-shadow:var(--shadow)}
+.finder input{width:100%;min-height:3.35rem;font:inherit;font-size:1.04rem;padding:.75rem 1rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.finder input:focus{outline:3px solid rgba(30,122,90,.2);border-color:var(--green)}
+.filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.9rem;margin-top:.9rem}
+.fgroup{min-width:0}
+.fgroup .flabel{display:block;margin-bottom:.45rem;color:var(--muted);font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
+.chips{display:flex;flex-wrap:nowrap;gap:.38rem;overflow-x:auto;padding-bottom:.1rem;scrollbar-width:thin}
+.chip{font:inherit;font-size:.86rem;line-height:1.2;padding:.38rem .65rem;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--green);color:var(--green-deep)}
 .chip.on{background:var(--green);border-color:var(--green);color:#fff}
-.rescount{margin:1.6rem auto .4rem;max-width:1050px;padding:0 5vw;color:var(--muted);font-size:.95rem}
+.hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem;margin-top:.85rem}
+.hero-stats div{border-top:1px solid var(--line);padding-top:.7rem}
+.hero-stats strong{display:block;font-size:1.55rem;line-height:1;color:var(--green-deep)}
+.hero-stats span{display:block;margin-top:.2rem;color:var(--muted);font-size:.86rem}
+.logo-strip{display:flex;gap:.65rem;overflow-x:auto;max-width:1180px;margin:.4rem auto 0;padding:.6rem 5vw 1.1rem;scrollbar-width:thin}
+.mini-logo{flex:0 0 auto;height:42px;display:flex;align-items:center;padding:.35rem .7rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.82)}
+.mini-logo img{max-width:126px;max-height:26px;object-fit:contain;display:block}
+.results-section{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
+.wrap{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
+.resbar{position:sticky;top:66px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:.9rem;margin:.5rem 0 1rem;padding:.72rem .85rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.94);backdrop-filter:blur(12px)}
+.rescount{color:var(--muted);font-size:.96rem}
 .rescount b{color:var(--ink)}
-/* GRID */
-.wrap{padding:0 5vw 4rem;max-width:1050px;margin:0 auto}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.1rem}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.3rem;display:flex;flex-direction:column;gap:.55rem;transition:transform .15s,box-shadow .15s}
-.card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(24,36,32,.09)}
-.card .loc{font-size:.8rem;color:var(--coral);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
-.card h3{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.2rem}
+.clear-btn{font:inherit;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);padding:.4rem .7rem;font-weight:800;cursor:pointer}
+.clear-btn:disabled{cursor:not-allowed;opacity:.45}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:1rem}
+.card{position:relative;display:flex;flex-direction:column;min-height:315px;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:#cbd9ce;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem;min-height:48px}
+.card .loc{display:block;margin-top:.35rem;color:var(--coral);font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
+.card h3{margin-top:.25rem;font-family:'Fraunces',Georgia,serif;font-size:1.28rem;font-weight:600;line-height:1.12}
 .card h3 a{color:var(--ink)}
-.card p{font-size:.94rem;color:var(--muted);flex:1}
-.tags{display:flex;flex-wrap:wrap;gap:.35rem}
-.tag{font-size:.74rem;padding:.16rem .6rem;border-radius:99px;background:var(--wash);color:var(--green-deep)}
-.badge{display:inline-block;font-size:.7rem;padding:.14rem .5rem;border-radius:99px;background:#f0e9da;color:var(--muted);margin-left:.4rem;vertical-align:middle}
-.logobox{height:46px;width:fit-content;max-width:200px;display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;padding:.35rem .7rem;margin-bottom:.35rem;align-self:flex-start}
-.logobox img{max-height:30px;max-width:170px;object-fit:contain;display:block}
-.flogo{height:60px;max-width:250px;margin-bottom:1rem}
-.flogo img{max-height:42px;max-width:220px}
-.hidden{display:none}
-/* FICHA */
-.ficha{max-width:760px;margin:0 auto;padding:2.5rem 5vw 4rem}
-.ficha h1{font-family:'Fraunces',Georgia,serif;font-size:2.3rem;font-weight:500}
-.ficha .loc{color:var(--coral);text-transform:uppercase;letter-spacing:.06em;font-size:.85rem;font-weight:600;margin:.3rem 0 1rem}
-.ficha .tags{margin-bottom:1.4rem}
-.ficha .summary{font-size:1.13rem;margin-bottom:1.5rem}
-.ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.2rem;margin:1.5rem 0 .5rem}
-.ficha ul{padding-left:1.2rem;color:var(--muted)}
-.profile-block{margin-top:1.5rem}
-.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem 1.2rem;margin:.8rem 0 0}
-.facts div{border-top:1px solid var(--line);padding-top:.6rem}
-.facts dt{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--coral);font-weight:600}
+.card p{margin-top:.6rem;color:var(--muted);font-size:.96rem;flex:1}
+.tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.8rem}
+.tag{display:inline-flex;align-items:center;min-height:1.55rem;font-size:.78rem;padding:.18rem .55rem;border-radius:8px;background:var(--wash);color:var(--green-deep)}
+.badge{display:inline-flex;align-items:center;min-height:1.45rem;font-size:.72rem;padding:.18rem .5rem;border-radius:8px;background:var(--soft);color:var(--muted);font-weight:800;white-space:nowrap}
+.card-cta{align-self:flex-start;margin-top:1rem;padding:.48rem .75rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font-weight:800}
+.card-cta:hover{background:var(--wash);text-decoration:none}
+.logobox{height:44px;width:fit-content;max-width:190px;display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:.35rem .65rem;align-self:flex-start}
+.logobox img{max-height:29px;max-width:160px;object-fit:contain;display:block}
+.flogo{height:62px;max-width:255px;margin-bottom:1rem}
+.flogo img{max-height:43px;max-width:225px}
+.hidden{display:none!important}
+.empty-state{padding:2rem;border:1px dashed #cbd9ce;border-radius:8px;background:rgba(255,253,248,.72);color:var(--muted);text-align:center}
+.ficha{max-width:1120px;margin:0 auto;padding:2.1rem 5vw 4rem}
+.crumbs{font-size:.9rem;color:var(--muted);margin-bottom:1.25rem}
+.clinic-intro{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:2rem;align-items:start}
+.clinic-main h1,.ficha>h1{font-family:'Fraunces',Georgia,serif;font-size:3.05rem;font-weight:500;line-height:1.04;text-wrap:balance}
+.ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0}
+.ficha .summary{max-width:720px;margin-top:1rem;font-size:1.18rem;color:var(--ink)}
+.clinic-side{display:grid;gap:1rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
+.clinic-side .profile-block{margin-top:0;padding:0;border-top:0;background:transparent}
+.clinic-side h2{margin-top:0}
+.profile-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.5rem}
+.profile-block{padding:1rem;border-top:1px solid var(--line);background:rgba(255,253,248,.46)}
+.ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.22rem;margin:0 0 .55rem}
+.ficha ul{padding-left:1.1rem;color:var(--muted)}
+.facts{display:grid;grid-template-columns:1fr;gap:.75rem;margin:.75rem 0 0}
+.facts div{border-top:1px solid var(--line);padding-top:.55rem}
+.facts dt{font-size:.74rem;text-transform:uppercase;color:var(--coral);font-weight:800;letter-spacing:0}
 .facts dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
-.info-list{display:grid;gap:.35rem}
-.pill-list{display:flex;flex-wrap:wrap;gap:.45rem;list-style:none;padding-left:0 !important}
-.pill-list li{font-size:.86rem;padding:.28rem .75rem;border-radius:99px;background:var(--wash);color:var(--green-deep)}
-.contacto{list-style:none;padding-left:0 !important}
-.contacto li{margin:.25rem 0}
-.contacto b{color:var(--ink);font-weight:600}
-.ficha .visit{display:inline-block;margin-top:2rem;background:var(--green);color:#fff;padding:.65rem 1.4rem;border-radius:10px;font-weight:600}
-.ficha .visit:hover{text-decoration:none;background:var(--green-deep)}
-.note{background:#f2ecdf;border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;font-size:.9rem;color:var(--muted);margin-top:2.2rem}
-footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.88rem}
-.crumbs{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}
-@media(prefers-reduced-motion:reduce){.card{transition:none}}
-@media(max-width:640px){.facts{grid-template-columns:1fr}header.site{align-items:flex-start;gap:.75rem;flex-direction:column}header.site nav a{margin-left:0;margin-right:1rem}}
+.info-list{display:grid;gap:.38rem}
+.pill-list{display:flex;flex-wrap:wrap;gap:.45rem;list-style:none;padding-left:0!important}
+.pill-list li{font-size:.86rem;padding:.3rem .62rem;border-radius:8px;background:var(--wash);color:var(--green-deep)}
+.contacto{list-style:none;padding-left:0!important}
+.contacto li{margin:.25rem 0;overflow-wrap:anywhere}
+.contacto b{color:var(--ink);font-weight:700}
+.muted-copy{color:var(--muted)}
+.visit{display:inline-flex;justify-content:center;align-items:center;margin-top:.25rem;background:var(--green);color:#fff;padding:.68rem 1rem;border-radius:8px;font-weight:800;text-align:center}
+.visit:hover{text-decoration:none;background:var(--green-deep)}
+.note{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:1rem 1.1rem;font-size:.93rem;color:var(--muted);margin-top:1.4rem}
+footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.9rem;background:rgba(255,253,248,.56)}
+footer p{max-width:1120px;margin:0 auto}
+@media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+@media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.hero-stats,.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.logo-strip{padding-left:5vw}.facts{grid-template-columns:1fr}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -297,7 +319,7 @@ HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta property="og:url" content="{url}"><meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 <script data-goatcounter="https://diuvita.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 {jsonld}</head><body>
@@ -313,7 +335,7 @@ FOOTER = """<footer><p><strong>Diuvita</strong> — {tag}. Guía informativa e i
 def attrs(c):
     extra = c.get("cities_extra", [])
     all_cities = "|".join([c["city"]] + extra)
-    search_text = f'{c["name"].lower()} {c["city"].lower()} {" ".join(c["specialties"]).lower()}'
+    search_text = f'{c["name"].lower()} {c["city"].lower()} {c["country"].lower()} {" ".join(c["specialties"]).lower()} {" ".join(c["services"]).lower()}'
     return f'data-city="{h(all_cities)}" data-country="{h(c["country"])}" data-spec="{h("|".join(c["specialties"]))}" data-text="{h(search_text)}"'
 
 def logo_img(c, ficha=False):
@@ -329,26 +351,42 @@ def logo_img(c, ficha=False):
     return f'<span class="{cls}"><img src="/assets/logos/{sub}/{h(fn)}" alt="Logo de {h(c["name"])}" loading="lazy"></span>'
 
 def card(c):
-    badge = ' <span class="badge">ficha preliminar</span>' if c["status"] == "preliminar" else ""
+    badge = '<span class="badge">Preliminar</span>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
     summary = h(c["summary"][:150]) + ("…" if len(c["summary"]) > 150 else "")
-    return f'''<div class="card" {attrs(c)}>{logo_img(c)}<span class="loc">{h(c["city"])}{h(extra)} · {h(c["country"])}</span>
-<h3><a href="/clinica/{h(c["slug"])}/">{h(c["name"])}</a>{badge}</h3>
+    return f'''<article class="card" {attrs(c)}><div class="card-head">{logo_img(c)}{badge}</div>
+<span class="loc">{h(c["city"])}{h(extra)} · {h(c["country"])}</span>
+<h3><a href="/clinica/{h(c["slug"])}/">{h(c["name"])}</a></h3>
 <p>{summary}</p>
-<div class="tags">{tags}</div></div>'''
+<div class="tags">{tags}</div><a class="card-cta" href="/clinica/{h(c["slug"])}/">Ver ficha</a></article>'''
 
 # --- index ---
 city_chips = "".join(f'<button class="chip" data-f="city" data-v="{h(ct)}">{h(ct)}</button>' for ct in city_order)
 country_chips = "".join(f'<button class="chip" data-f="country" data-v="{h(co)}">{h(co)}</button>' for co in countries)
 spec_chips = "".join(f'<button class="chip" data-f="spec" data-v="{h(s)}">{h(s)}</button>' for s in specialties)
 allcards = "".join(card(c) for c in clinics)
+featured_logo_clinics = [c for c in clinics if c.get("slug") in thumb_files][:12]
+featured_logos = "".join(
+    f'<span class="mini-logo"><img src="/assets/logos/thumb/{h(thumb_files[c["slug"]])}" alt="{h(c["name"])}" loading="lazy"></span>'
+    for c in featured_logo_clinics
+)
+hero_stats = f"""
+<div class="hero-stats" aria-label="Resumen de la guía">
+  <div><strong>{len(clinics)}</strong><span>clínicas visibles</span></div>
+  <div><strong>{len(cities)}</strong><span>ciudades</span></div>
+  <div><strong>{len(countries)}</strong><span>países</span></div>
+  <div><strong>{len(specialties)}</strong><span>especialidades</span></div>
+</div>"""
 
 JS = """<script>
 (function(){
   var state={city:null,country:null,spec:null,q:""};
   var cards=[].slice.call(document.querySelectorAll(".grid .card"));
   var count=document.getElementById("count");
+  var clear=document.getElementById("clearFilters");
+  var empty=document.getElementById("emptyState");
+  function hasFilters(){return Boolean(state.city||state.country||state.spec||state.q);}
   function apply(){
     var n=0;
     cards.forEach(function(el){
@@ -360,6 +398,8 @@ JS = """<script>
       el.classList.toggle("hidden",!ok); if(ok) n++;
     });
     count.innerHTML="<b>"+n+"</b> clínica"+(n===1?"":"s")+(state.city?" en "+state.city:"")+(state.spec?" · "+state.spec:"");
+    if(clear) clear.disabled=!hasFilters();
+    if(empty) empty.classList.toggle("hidden",n!==0);
   }
   document.querySelectorAll(".chip").forEach(function(ch){
     ch.addEventListener("click",function(){
@@ -371,6 +411,12 @@ JS = """<script>
     });
   });
   document.getElementById("q").addEventListener("input",function(e){state.q=e.target.value.toLowerCase().trim();apply();});
+  if(clear) clear.addEventListener("click",function(){
+    state={city:null,country:null,spec:null,q:""};
+    document.getElementById("q").value="";
+    document.querySelectorAll(".chip").forEach(function(ch){ch.classList.remove("on")});
+    apply();
+  });
   apply();
 })();
 </script>"""
@@ -381,21 +427,27 @@ INDEX_LD = '<script type="application/ld+json">' + json.dumps({
 }, ensure_ascii=False) + "</script>"
 
 index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud. Diuvita te ayuda a encontrar clínica de medicina de longevidad por ciudad, país y especialidad.", "/", INDEX_LD) + f"""
-<div class="hero">
-<p class="kicker">La guía de las clínicas de longevidad</p>
-<h1>Todos queremos vivir más años. La pregunta es <em>dónde empezar</em>.</h1>
-<p class="sub">La medicina de la longevidad ya existe: chequeos de edad biológica, biomarcadores, programas de prevención. Diuvita te ayuda a encontrar dónde — sin rankings, sin publicidad, con criterios claros.</p>
+<section class="hero">
+<div class="hero-copy"><p class="kicker">La guía de las clínicas de longevidad</p>
+<h1>Encuentra clínicas de longevidad con datos claros.</h1>
+<p class="sub">Compara centros por ciudad, país y área médica con una guía independiente: sin rankings, sin publicidad y con revisión humana antes de publicar.</p></div>
 <div class="finder" id="buscar">
 <input id="q" type="search" placeholder="Busca por nombre, ciudad o especialidad…" aria-label="Buscar clínica">
+<div class="filter-grid">
 <div class="fgroup"><span class="flabel">País</span><div class="chips">{country_chips}</div></div>
 <div class="fgroup"><span class="flabel">Ciudad</span><div class="chips">{city_chips}</div></div>
 <div class="fgroup"><span class="flabel">Superespecialidad</span><div class="chips">{spec_chips}</div></div>
 </div>
 </div>
-<p class="rescount" id="count"></p>
-<div class="wrap"><div class="grid">{allcards}</div>
+{hero_stats}
+</section>
+<section class="logo-strip">{featured_logos}</section>
+<section class="results-section">
+<div class="resbar"><p class="rescount" id="count"></p><button class="clear-btn" id="clearFilters" type="button">Limpiar filtros</button></div>
+<div class="grid">{allcards}</div>
+<p class="empty-state hidden" id="emptyState">No hay clínicas con esos filtros.</p>
 <div class="note">¿Diriges una clínica de longevidad que no aparece aquí? Escríbenos y la evaluaremos según nuestros <a href="/sobre/">criterios de inclusión</a>. Aparecer en Diuvita es gratuito — y no se puede pagar.</div>
-</div>{JS}""" + FOOTER
+</section>{JS}""" + FOOTER
 
 # --- fichas ---
 def status_label(c):
@@ -442,7 +494,7 @@ def tech_block(c):
     if not items:
         return ""
     if len(items) == 1:
-        return f'<section class="profile-block"><h2>Tecnología destacada</h2><p style="color:var(--muted)">{h(items[0])}</p></section>'
+        return f'<section class="profile-block"><h2>Tecnología destacada</h2><p class="muted-copy">{h(items[0])}</p></section>'
     return list_section("Tecnología destacada", items, "pill-list")
 
 def contacto_block(c):
@@ -479,6 +531,8 @@ def ficha(c):
     if c.get("web") and external_url(c["web"]):
         visit_url = external_url(c["web"])
         visit = f'<a class="visit" href="{h(visit_url)}" rel="nofollow noopener" target="_blank">Visitar web oficial ↗</a>'
+    sidebar = datos + contacto + visit
+    sidebar_html = f'<aside class="clinic-side">{sidebar}</aside>' if sidebar else ""
     ld_obj = {
         "@context": "https://schema.org", "@type": "MedicalClinic",
         "name": c["name"], "url": c["web"], "address": c["address"],
@@ -494,19 +548,19 @@ def ficha(c):
         ld_obj["telephone"] = c["telefono"]
     ld = '<script type="application/ld+json">' + json.dumps(ld_obj, ensure_ascii=False) + "</script>"
     return head(f'{c["name"]} — clínica de longevidad en {c["city"]} | {SITE}', c["summary"][:150], f'/clinica/{c["slug"]}/', ld) + f"""
-<div class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/ciudad/{slugify(c["city"])}/">{h(c["city"])}</a> → {h(c["name"])}</p>
-{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
+<main class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/ciudad/{slugify(c["city"])}/">{h(c["city"])}</a> → {h(c["name"])}</p>
+<section class="clinic-intro"><div class="clinic-main">{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
 <div class="tags">{tags}</div>
 <p class="summary">{h(c["summary"])}</p>
-{datos}
-{contacto}
+</div>{sidebar_html}</section>
+<div class="profile-sections">
 {areas}
 {servicios}
 {unidades}
 {tech}
 {equipo}
-{visit}
-{prelim}</div>""" + FOOTER
+</div>
+{prelim}</main>""" + FOOTER
 
 def ciudad_page(city):
     cs = cities[city]
