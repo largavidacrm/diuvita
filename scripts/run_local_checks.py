@@ -56,6 +56,7 @@ TEST_STEPS = [
     ("test: review backlog brief", "scripts/test_review_backlog_brief.py"),
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: specialist coverage", "scripts/test_measure_specialist_coverage.py"),
+    ("test: location coverage", "scripts/test_measure_location_coverage.py"),
     ("test: profile completeness", "scripts/test_measure_profile_completeness.py"),
     ("test: source coverage", "scripts/test_measure_source_coverage.py"),
     ("test: visible source seeding", "scripts/test_seed_visible_clinic_sources.py"),
