@@ -6,6 +6,7 @@ where Vitalarga is in the global CTO plan.
 It combines the protected admin digest with the roadmap lanes:
 
 - Daniel's immediate next review action;
+- the next panel clicks Daniel should use;
 - safe work Codex can continue without creating more review pressure;
 - what should not be activated yet;
 - control center;

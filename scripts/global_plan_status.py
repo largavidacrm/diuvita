@@ -25,6 +25,7 @@ from admin_digest import (
     specialist_review_status,
     top_pending_profile_field,
 )
+from daniel_review_brief import next_clicks
 from submit_discovery_candidates import get_default_admin_email, load_env_file
 
 
@@ -158,6 +159,9 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Daniel ahora: {daniel_now_status(digest)}.",
         f"- Codex puede seguir con: {codex_can_continue_status(digest)}.",
         f"- No activar todavía: {not_ready_status(digest)}.",
+        "",
+        "## Siguiente en el panel",
+        *[f"- {item}" for item in next_clicks(digest)],
         "",
         "## Dónde estamos",
         f"- Fase activa: {plan_phase(digest)}.",
