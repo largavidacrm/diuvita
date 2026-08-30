@@ -577,6 +577,63 @@ td small {
   line-height: 1.4;
 }
 
+.review-flow {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(30, 122, 90, 0.22);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.review-flow h3 {
+  margin: 0;
+  font-size: 0.96rem;
+}
+
+.review-flow p {
+  margin: 0.12rem 0 0;
+  color: var(--muted);
+}
+
+.review-flow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.review-flow-step {
+  min-width: 0;
+  padding: 0.68rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.review-flow-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 8px;
+  background: var(--green);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.review-flow-step strong {
+  display: block;
+  margin-top: 0.45rem;
+  line-height: 1.18;
+}
+
+.review-flow-step p {
+  margin-top: 0.22rem;
+  line-height: 1.32;
+}
+
 .review-rules {
   display: grid;
   gap: 0.7rem;
@@ -970,6 +1027,7 @@ td small {
   .work-grid,
   .detail-grid,
   .diff-cols,
+  .review-flow-steps,
   .version-item,
   .claim-item,
   .source-item,

@@ -18,9 +18,16 @@ def main() -> None:
     for marker in [
         'id="clinicPublicationHint"',
         'id="reviewActionNote"',
+        'id="reviewFlowPanel"',
+        'id="reviewFlowMeta"',
+        'id="reviewFlowSteps"',
         "function publicVisibilityText",
         "function updateClinicSaveButtonLabel",
         "function reviewActionNote",
+        "function renderReviewFlow",
+        "La candidata no se publica directamente.",
+        "Cambia Estado a preliminar o publicada.",
+        "La web pública solo cambia desde el editor de clínica.",
         "Crear borrador y validar",
         "Primero crea un borrador interno",
         "La publicación se decide después en el editor, en Validación final.",
@@ -35,6 +42,9 @@ def main() -> None:
     check(".publication-hint" in css, "publication hint style missing")
     check(".publication-hint.visible-target" in css, "public-target hint style missing")
     check(".review-action-note" in css, "review action note style missing")
+    check(".review-flow" in css, "review flow style missing")
+    check(".review-flow-steps" in css, "review flow steps style missing")
+    check(".review-flow-step" in css, "review flow step style missing")
     print("OK admin publication flow: status consequences are visible")
 
 

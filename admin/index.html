@@ -296,6 +296,13 @@
               <dd id="reviewCandidateProfessionals">—</dd>
             </div>
           </dl>
+          <section class="review-flow hidden" id="reviewFlowPanel">
+            <div>
+              <h3>Camino de publicación</h3>
+              <p id="reviewFlowMeta">La candidata no se publica directamente.</p>
+            </div>
+            <div class="review-flow-steps" id="reviewFlowSteps"></div>
+          </section>
           <section class="review-rules hidden" id="reviewRulesPanel">
             <div>
               <h3>Reglas aplicadas</h3>
@@ -1363,6 +1370,59 @@
         return "Abrirá el editor de la clínica. Revisa la propuesta y decide el estado en Validación final.";
       }
       return "La publicación final se decide después, en Validación final.";
+    }
+
+    function renderReviewFlow(reviewType, blocksDraft) {
+      var panel = el("reviewFlowPanel");
+      if (!panel) return;
+      var steps = [];
+      var meta = "La web pública solo cambia desde el editor de clínica.";
+      if (reviewType === "candidate_clinic" && blocksDraft) {
+        meta = "Parece que ya existe una ficha parecida.";
+        steps = [
+          ["1", "Mirar coincidencias", "Comprueba si es la misma clínica."],
+          ["2", "Decidir", "Si ya existe, descarta la candidata."],
+          ["3", "Crear solo si falta", "El borrador seguirá interno."]
+        ];
+      } else if (reviewType === "candidate_clinic") {
+        meta = "La candidata no se publica directamente.";
+        steps = [
+          ["1", "Crear borrador", "Crea una ficha interna."],
+          ["2", "Completar datos", "Revisa campos y evidencias."],
+          ["3", "Publicar", "Cambia Estado a preliminar o publicada."]
+        ];
+      } else if (reviewType === "clinic_profile_enrichment") {
+        meta = "La propuesta actualiza una ficha existente solo si la guardas.";
+        steps = [
+          ["1", "Abrir ficha", "Carga la propuesta en el editor."],
+          ["2", "Revisar cambios", "Comprueba datos y fuentes."],
+          ["3", "Guardar", "Decide el estado final."]
+        ];
+      } else if (reviewType === "source_change_detected") {
+        meta = "La fuente cambió; primero se revisa la ficha.";
+        steps = [
+          ["1", "Abrir ficha", "Revisa qué cambió en la fuente."],
+          ["2", "Ajustar datos", "Edita solo lo que esté claro."],
+          ["3", "Guardar", "Publica solo si el estado es visible."]
+        ];
+      } else if (reviewType === "clinic_quality_audit") {
+        meta = "La auditoría señala campos que conviene revisar.";
+        steps = [
+          ["1", "Abrir ficha", "Ve al editor de la clínica."],
+          ["2", "Completar", "Corrige los campos pendientes."],
+          ["3", "Validar", "Guarda cuando la ficha esté lista."]
+        ];
+      }
+      if (!steps.length) {
+        show(panel, false);
+        return;
+      }
+      el("reviewFlowMeta").textContent = meta;
+      el("reviewFlowSteps").innerHTML = steps.map(function (step) {
+        return '<div class="review-flow-step"><span>' + html(step[0]) + '</span><strong>' +
+          html(step[1]) + '</strong><p>' + html(step[2]) + '</p></div>';
+      }).join("");
+      show(panel, true);
     }
 
     function riskPill(risk) {
@@ -2461,6 +2521,7 @@
       ].concat(materialChangeItems(payload)) : candidateList(candidate, "services"));
       setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
       renderReviewRules(payload);
+      renderReviewFlow(activeReview.review_type, blocksDraft);
       el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;
       el("reviewCreateDraftBtn").textContent = primaryReviewButtonLabel(activeReview.review_type, blocksDraft);
       el("reviewActionNote").textContent = reviewActionNote(activeReview.review_type, blocksDraft);
