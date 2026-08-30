@@ -21,6 +21,7 @@ def main():
         "final_url": "https://clinic.example/final",
         "http_status": 200,
         "content_type": "text/html; charset=utf-8",
+        "request_profile": "browser_compatible",
         "content_sha256": "abc123",
         "text_sha256": "def456",
         "content_length": 1234,
@@ -30,6 +31,7 @@ def main():
     sql = update_source_record_sql("00000000-0000-0000-0000-000000000001", snapshot)
     check(metadata["hydrated_by"] == "diuvita-source-hydrator", "hydrator metadata missing")
     check(metadata["final_url"] == "https://clinic.example/final", "final URL missing")
+    check(metadata["request_profile"] == "browser_compatible", "request profile missing")
     check(metadata["text_sha256"] == "def456", "text hash metadata missing")
     check(metadata["text_excerpt_empty"] is False, "excerpt flag should be false")
     check("content_hash = 'abc123'" in sql, "content hash update missing")

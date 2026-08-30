@@ -13,6 +13,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -26,6 +27,21 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT_DIR = ROOT / "data" / "source_snapshots"
 DEFAULT_EXCERPT_CHARS = 1600
 USER_AGENT = "DiuvitaBot/0.1 (+https://www.diuvita.com; provenance snapshot)"
+BROWSER_COMPAT_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+)
+DEFAULT_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "es-ES,es;q=0.9,en;q=0.4",
+}
+BROWSER_COMPAT_HEADERS = {
+    "User-Agent": BROWSER_COMPAT_USER_AGENT,
+    "Accept": DEFAULT_HEADERS["Accept"],
+    "Accept-Language": DEFAULT_HEADERS["Accept-Language"],
+    "Upgrade-Insecure-Requests": "1",
+}
 
 
 class ReadableTextParser(HTMLParser):
@@ -80,6 +96,7 @@ class FetchResult:
     status_code: int | None
     content_type: str
     body: bytes
+    request_profile: str = "diuvita_bot"
 
 
 def normalize_space(value: str) -> str:
@@ -122,11 +139,8 @@ def parse_html(html_text: str) -> tuple[str, str]:
     return parser.title, parser.readable_text
 
 
-def fetch_url(url: str, timeout: int = 20) -> FetchResult:
-    parsed = urlparse(url)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("source URL must start with http:// or https://")
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+def open_url(url: str, timeout: int, headers: dict[str, str], request_profile: str) -> FetchResult:
+    request = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return FetchResult(
             source_url=url,
@@ -134,7 +148,20 @@ def fetch_url(url: str, timeout: int = 20) -> FetchResult:
             status_code=getattr(response, "status", None),
             content_type=response.headers.get("content-type", ""),
             body=response.read(),
+            request_profile=request_profile,
         )
+
+
+def fetch_url(url: str, timeout: int = 20) -> FetchResult:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("source URL must start with http:// or https://")
+    try:
+        return open_url(url, timeout, DEFAULT_HEADERS, "diuvita_bot")
+    except urllib.error.HTTPError as error:
+        if error.code not in {403, 406}:
+            raise
+        return open_url(url, timeout, BROWSER_COMPAT_HEADERS, "browser_compatible")
 
 
 def snapshot_from_fetch(result: FetchResult, excerpt_chars: int = DEFAULT_EXCERPT_CHARS) -> dict[str, Any]:
@@ -150,6 +177,7 @@ def snapshot_from_fetch(result: FetchResult, excerpt_chars: int = DEFAULT_EXCERP
         "retrieved_at": now_iso(),
         "http_status": result.status_code,
         "content_type": result.content_type or None,
+        "request_profile": result.request_profile,
         "content_sha256": digest,
         "text_sha256": text_digest,
         "content_length": len(result.body),

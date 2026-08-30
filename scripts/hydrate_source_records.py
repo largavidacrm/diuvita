@@ -34,7 +34,12 @@ def first_json_line(output: str) -> Any:
     raise ValueError("No JSON row returned by psql.")
 
 
-def fetch_pending_sources(limit: int, refresh: bool, local_env: dict[str, str]) -> list[dict[str, Any]]:
+def fetch_pending_sources(
+    limit: int,
+    refresh: bool,
+    retry_errors: bool,
+    local_env: dict[str, str],
+) -> list[dict[str, Any]]:
     pending_filter = "true" if refresh else """
     (
       sr.content_hash is null
@@ -44,6 +49,12 @@ def fetch_pending_sources(limit: int, refresh: bool, local_env: dict[str, str]) 
       )
       or sr.source_title is null
       or sr.metadata ->> 'text_sha256' is null
+    )
+"""
+    error_filter = "true" if refresh or retry_errors else """
+    (
+      sr.metadata ->> 'last_hydration_error_at' is null
+      or (sr.metadata ->> 'last_hydration_error_at')::timestamptz < now() - interval '24 hours'
     )
 """
     sql = f"""
@@ -60,10 +71,7 @@ from (
   from public.source_records sr
   where sr.source_url ~* '^https?://'
     and {pending_filter}
-    and (
-      sr.metadata ->> 'last_hydration_error_at' is null
-      or (sr.metadata ->> 'last_hydration_error_at')::timestamptz < now() - interval '24 hours'
-    )
+    and {error_filter}
   order by sr.created_at asc
   limit {int(limit)}
 ) items;
@@ -79,6 +87,7 @@ def snapshot_metadata(snapshot: dict[str, Any]) -> dict[str, Any]:
         "final_url": snapshot.get("final_url"),
         "http_status": snapshot.get("http_status"),
         "content_type": snapshot.get("content_type"),
+        "request_profile": snapshot.get("request_profile"),
         "content_length": snapshot.get("content_length"),
         "text_sha256": snapshot.get("text_sha256"),
         "text_excerpt_empty": not bool(snapshot.get("text_excerpt")),
@@ -174,6 +183,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=int, default=15)
     parser.add_argument("--excerpt-chars", type=int, default=1600)
     parser.add_argument("--refresh", action="store_true", help="Refresh already hydrated records too.")
+    parser.add_argument("--retry-errors", action="store_true", help="Retry sources that failed hydration recently.")
     parser.add_argument("--apply", action="store_true", help="Update Supabase source_records.")
     return parser.parse_args()
 
@@ -188,7 +198,7 @@ def main() -> int:
         raise SystemExit("--excerpt-chars must be between 200 and 5000.")
 
     local_env = load_env_file()
-    records = fetch_pending_sources(args.limit, args.refresh, local_env)
+    records = fetch_pending_sources(args.limit, args.refresh, args.retry_errors, local_env)
     results = [hydrate_record(record, args, local_env) for record in records]
     print(
         json.dumps(
