@@ -49,6 +49,7 @@ Already built:
 - Admin system status shows why auto-publication is or is not mature enough to discuss.
 - Admin system status shows whether source monitoring is fresh or pending.
 - Admin system status shows source snapshot retention without enabling cleanup.
+- Admin system status shows specialist coverage for visible clinic profiles.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
 - Source snapshot retention can be measured read-only before any cleanup policy.

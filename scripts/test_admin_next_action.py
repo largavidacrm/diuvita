@@ -23,7 +23,7 @@ def main() -> None:
         "Mejorar fichas existentes",
         "Completar fichas",
         "Sin acción urgente",
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, reviewCache);",
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, reviewCache);",
     ]:
         check(marker in index, f"missing next-action marker: {marker}")
 

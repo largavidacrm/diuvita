@@ -673,6 +673,16 @@
       };
     }
 
+    function emptySpecialistCoverage() {
+      return {
+        visibleClinics: 0,
+        withSpecialists: 0,
+        withoutSpecialists: 0,
+        totalEntries: 0,
+        unavailable: false
+      };
+    }
+
     function parseDateValue(value) {
       if (!value) return null;
       var parsed = new Date(value);
@@ -816,6 +826,36 @@
       return monitoring;
     }
 
+    function countPublishedSpecialists(currentData) {
+      var values = currentData && Array.isArray(currentData.profesionales)
+        ? currentData.profesionales
+        : [];
+      return values.filter(function (item) { return text(item).trim(); }).length;
+    }
+
+    async function loadSpecialistCoverage() {
+      var coverage = emptySpecialistCoverage();
+      var result = await client
+        .from("clinics")
+        .select("status, current_data")
+        .in("status", ["published", "preliminary"])
+        .limit(500);
+
+      if (result.error) {
+        coverage.unavailable = true;
+        return coverage;
+      }
+
+      (result.data || []).forEach(function (row) {
+        var entries = countPublishedSpecialists(row.current_data || {});
+        coverage.visibleClinics += 1;
+        coverage.totalEntries += entries;
+        if (entries > 0) coverage.withSpecialists += 1;
+        else coverage.withoutSpecialists += 1;
+      });
+      return coverage;
+    }
+
     function pill(status) {
       var tone = "";
       if (["failed", "dead_letter", "rejected", "conflict"].indexOf(status) >= 0) tone = " danger";
@@ -948,7 +988,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, openReviews) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, specialistCoverage, openReviews) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -980,6 +1020,13 @@
       var retentionInventory = retention.unavailable
         ? "—"
         : (retention.olderThanPolicy || 0) + " antiguas · " + (retention.totalSnapshots || 0) + " total";
+      var specialists = specialistCoverage || emptySpecialistCoverage();
+      var specialistLabel = specialists.unavailable
+        ? "No disponible"
+        : specialists.withSpecialists + "/" + specialists.visibleClinics + " fichas";
+      var specialistMissingLabel = specialists.unavailable
+        ? "—"
+        : specialists.withoutSpecialists + " pendientes";
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -997,6 +1044,8 @@
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
+        systemItem("Especialistas", specialistLabel, specialists.unavailable || specialists.withoutSpecialists ? "warning-text" : ""),
+        systemItem("Pendientes especialistas", specialistMissingLabel, specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
         systemItem("Fallos", failedJobs, failedJobs ? "danger-text" : ""),
         systemItem("Último trabajo", latestJob ? latestJob.job_type + " · " + date(latestJob.created_at) : "—"),
@@ -2465,7 +2514,8 @@
         }
         var claimQuality = await loadClaimQuality();
         var sourceMonitoring = await loadSourceMonitoring();
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, reviewCache);
+        var specialistCoverage = await loadSpecialistCoverage();
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, reviewCache);
 
         var clinicRows = await client
           .from("clinics")

@@ -30,6 +30,8 @@ En **Estado del sistema**, mira especialmente:
 - **Próxima revisión fuentes**: fecha aproximada del siguiente control de fuentes cuando todo está al día.
 - **Retención capturas**: te dice si hay capturas antiguas que podrían revisarse para limpieza futura.
 - **Inventario capturas**: resume cuántas capturas antiguas y totales tiene guardadas el sistema.
+- **Especialistas**: muestra cuántas fichas visibles ya tienen especialistas publicados por la clínica.
+- **Pendientes especialistas**: indica cuántas fichas visibles siguen sin ese apartado.
 
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 
