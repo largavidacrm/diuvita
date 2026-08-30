@@ -16,6 +16,7 @@ TEST_STEPS = [
     ("test: source snapshots", "scripts/test_capture_source_snapshot.py"),
     ("test: durable source rows", "scripts/test_source_snapshot_records.py"),
     ("test: source snapshot retention", "scripts/test_measure_source_snapshot_retention.py"),
+    ("test: production health formatter", "scripts/test_check_production_health.py"),
     ("test: operational limits", "scripts/test_check_operational_limits.py"),
     ("test: publication rules", "scripts/test_diuvita_rules.py"),
     ("test: claim rule evaluation", "scripts/test_evaluate_claim_rules.py"),

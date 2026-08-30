@@ -71,6 +71,7 @@ Already built:
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
 - Internal profile-enrichment review cards for existing clinics.
 - Public clinic pages display richer fields with clearer navigation, section counts and more scannable lists.
+- Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 
 Not yet mature:
 
@@ -281,6 +282,7 @@ Next 10 technical steps:
 17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/`.
 18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with section counts, a clear "En esta ficha" jump area and lighter profile lists.
 19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
+20. Add a production smoke check. Done locally in `scripts/check_production_health.py`; it reads public URLs only and is separate from local checks.
 
 ## Daniel decision checkpoints
 

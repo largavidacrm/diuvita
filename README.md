@@ -46,6 +46,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SOURCE_CHANGE_REVIEW_PROCESSING.md`: puente seguro desde fuente cambiada a propuesta interna revisable.
 - `docs/SOURCE_SNAPSHOT_RETENTION.md`: informe solo lectura sobre retencion de capturas de fuentes.
 - `docs/CTO_SHADOW_CYCLE.md`: ciclo seguro para encadenar tareas internas repetibles.
+- `docs/PRODUCTION_HEALTH.md`: comprobación solo lectura de salud del sitio publicado.
 - `docs/LOCAL_CHECKS.md`: comprobaciones locales antes de guardar y subir cambios.
 - `supabase/migrations/0014_source_snapshots.sql`: historial interno de capturas compactas de fuentes.
 - `supabase/migrations/0015_candidate_draft_validation_flow.sql`: flujo claro candidata -> borrador -> validación final.
@@ -80,6 +81,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/process_source_change_reviews.py`: convierte revisiones de fuente cambiada en propuestas internas de mejora.
 - `scripts/measure_source_snapshot_retention.py`: mide si hay capturas antiguas candidatas a limpieza, sin borrar nada.
 - `scripts/run_cto_shadow_cycle.py`: ejecuta el ciclo sombra seguro de CTO.
+- `scripts/check_production_health.py`: comprueba URLs públicas de producción, sin login ni escrituras.
 - `scripts/run_local_checks.py`: ejecuta pruebas, validación, build y revisión básica del admin.
 - `scripts/apply_supabase_sql.sh`: aplica un SQL concreto contra Supabase.
 - `scripts/add_supabase_admin.sh`: autoriza un email como administrador del panel.
