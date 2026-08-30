@@ -340,6 +340,7 @@ Next 10 technical steps:
 36. Add explicit multi-location coverage. Done locally in `scripts/measure_location_coverage.py`: clinics with several stored locations can be audited for per-sede address, clinic Maps profile and Google reviews coverage without writing data.
 37. Teach the shadow extractor to propose explicit locations. Done locally in `scripts/extract_clinic_profile_shadow.py`: clear street/postcode/city address patterns can become `locations` proposals, verified before review and never published automatically.
 38. Keep public Google Maps links direct-only. Done locally in the static site build: public clinic pages no longer generate generic Google Maps searches, no longer link addresses unless a direct clinic profile URL exists, and keep location blocks free of decorative numeric badges.
+39. Reduce team-page extraction noise. Done locally in `scripts/extract_clinic_profile_shadow.py`: WordPress menus, appointment CTAs and treatment-list tails are filtered before proposing professionals; the Arvila team page now yields 26 clean published professionals in a read-only live check.
 
 ## Daniel decision checkpoints
 

@@ -161,6 +161,37 @@ def main():
         all("Medicina" not in item and "Dermatología" not in item and "Chequeos" not in item for item in untitled_team_professionals),
         "untitled team roles should not be part of extracted names",
     )
+    arvila_menu_professionals = extract_professionals(
+        "Equipo Áreas Osteopatía Ginecología Integrativa Longevidad Dr. Jordi Ibañez "
+        "Chequeos de Longevidad Hipoxia Intermitente Select Page "
+        "Equipo de la Clínica de Medicina Integrativa en Barcelona Arvila Magna "
+        "D.O. Quim Vicent Director de la Clínica "
+        "Agenda tu Cita con Quim Equipo de Arvila Magna "
+        "Dr. Joan Josep Fuertes Medicina General COMB 08-29679-5 Agenda tu Cita con Joan "
+        "Dra. Mariana Díaz Dermatología Estética COMB 47856 Agenda tu Cita con Mariana "
+        "Marta Pradell Fisioterapeuta CFC 12370 Agenda tu Cita con Marta "
+        "Silvia Naranjo Óptica Optometrista CNOO 11618 Contacto"
+    )
+    check("D.O. Quim Vicent" in arvila_menu_professionals, "D.O. professional should be captured")
+    check("Marta Pradell" in arvila_menu_professionals, "CTA text should not merge adjacent professionals")
+    check("Silvia Naranjo" in arvila_menu_professionals, "attached optical role should be trimmed")
+    check(
+        all("Hipoxia" not in item and "PNIE" not in item and "Óptica" not in item for item in arvila_menu_professionals),
+        "menu or attached role text should not become professionals",
+    )
+    arvila_tail_professionals = extract_professionals(
+        "Equipo médico Gerardo Camors Auxiliar Jordi Gallifa Gerente Esther Pedrol Recepción "
+        "Osteopatía Osteopatía Deportiva Osteopatía Ginecológica Osteopatía Pediátrico "
+        "Médicina Medicina Integrativa Analítica de Frotis Sanguíneo "
+        "Nutrición Integrativa PNIE Fisioterapia Contacto"
+    )
+    check("Gerardo Camors" in arvila_tail_professionals, "assistant name should be captured before role")
+    check("Jordi Gallifa" in arvila_tail_professionals, "manager name should be captured before role")
+    check("Esther Pedrol" in arvila_tail_professionals, "reception name should be captured before role")
+    check(
+        all("Osteopatía" not in item and "PNIE" not in item and "Médicina" not in item for item in arvila_tail_professionals),
+        "service-list tail should not become professionals",
+    )
 
     kairos_professionals = extract_professionals(
         "Conoce nuestro equipo Dra. Anna Paola Medicina Estética Regenerativa y Longevidad "

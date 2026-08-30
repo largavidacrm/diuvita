@@ -32,7 +32,7 @@ from vitalarga_rules import decide_many
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "data" / "extractions"
 EXTRACTION_EXCERPT_CHARS = 5000
-MAX_PROFESSIONALS = 24
+MAX_PROFESSIONALS = 32
 MAX_LOCATIONS = 8
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
@@ -92,7 +92,7 @@ CITY_HINTS = (
     "Tarragona",
 )
 NAME_WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{2,}"
-TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora|Lic\.?|Licenciado|Licenciada)"
+TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora|Lic\.?|Licenciado|Licenciada|D\.O\.?)"
 PROFESSIONAL_RE = re.compile(
     rf"\b(?P<title>{TITLE_PREFIX})\s+(?P<name>{NAME_WORD}(?:\s+{NAME_WORD}){{0,5}})"
 )
@@ -120,6 +120,11 @@ TEAM_END_MARKERS = (
     "menu legal",
     "©",
 )
+NAV_END_MARKERS = (
+    "select page",
+    "saltar al contenido",
+    "skip to content",
+)
 ROLE_PHRASES = (
     "Cardiología",
     "Chequeos de Longevidad",
@@ -130,8 +135,11 @@ ROLE_PHRASES = (
     "Dirección",
     "Dirección médica",
     "Direccion medica",
+    "Director",
+    "Directora",
     "Endocrinología",
     "Fisioterapia",
+    "Fisioterapeuta",
     "Gerente / Nutrición",
     "Gerente/Nutrición",
     "Gerente",
@@ -150,9 +158,21 @@ ROLE_PHRASES = (
     "Medicina Integrativa",
     "Medicina Interna",
     "Medicina Regenerativa",
+    "Odontología y Posturología",
+    "Odontología",
+    "Odontóloga",
+    "Odontologo",
+    "Odontólogo",
+    "Óptica Optometrista",
+    "Optica Optometrista",
+    "Optometrista",
+    "Podoposturóloga",
+    "Podoposturologa",
     "Ginecología regenerativa y Salud integral de la mujer",
     "Neurofisiólogo clínico",
     "Oncología Integrativa",
+    "Osteópata",
+    "Osteopata",
     "Otorrinolaringología",
     "Otorrino",
     "Anestesia",
@@ -164,10 +184,16 @@ ROLE_PHRASES = (
     "Atencion al paciente",
     "Técnico Auxiliar",
     "Responsable RRSS",
+    "Higienista",
+    "Auxiliar",
+    "Recepción",
+    "Recepcion",
 )
 ROLE_START_WORDS = {
     "Administración",
     "Anestesia",
+    "Analítica",
+    "Analitica",
     "Atención",
     "Atencion",
     "Cardiología",
@@ -191,6 +217,8 @@ ROLE_START_WORDS = {
     "Cosmetica",
     "Clínico",
     "Clinico",
+    "Director",
+    "Directora",
     "Dirección",
     "Dermatología",
     "Dermatologia",
@@ -214,50 +242,77 @@ ROLE_START_WORDS = {
     "Fisioterapeuta",
     "Flebología",
     "Flebologia",
+    "Frotis",
     "General",
     "Gerencia",
     "Gerente",
+    "Ginecológica",
+    "Ginecologica",
     "Ginecología",
     "Ginecologia",
     "Ginecóloga",
     "Ginecologa",
     "Ginecólogo",
     "Ginecologo",
+    "Higienista",
     "Interna",
     "Longevidad",
     "Microbiota",
     "Médica",
+    "Médicina",
     "Médico",
     "Medicina",
     "Medico",
+    "Integrativa",
     "Mujer",
     "Neurofisiólogo",
     "Neurofisiologo",
     "Nutrición",
     "Nutricion",
     "Nutricionista",
+    "Odontología",
+    "Odontologia",
+    "Odontóloga",
+    "Odontologa",
+    "Odontólogo",
+    "Odontologo",
     "Oncológica",
     "Oncologica",
     "Oncología",
     "Oncologia",
     "Ortomolecular",
+    "Osteópata",
+    "Osteopata",
     "Otorrino",
     "Otorrinolaringología",
     "Otorrinolaringologia",
+    "Optica",
+    "Óptica",
+    "Optometrista",
     "Paciente",
+    "Pediátrico",
+    "Pediatrico",
+    "Podoposturóloga",
+    "Podoposturologa",
+    "PNIE",
     "Psicología",
     "Psicologia",
+    "Recepción",
+    "Recepcion",
     "Responsable",
     "Salud",
+    "Sanguíneo",
+    "Sanguineo",
     "Sesion",
     "Sesión",
+    "Auxiliar",
     "Subdirector",
     "Subdirectora",
     "Técnico",
     "Unidad",
     "Unidades",
 }
-TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora", "Lic", "Licenciado", "Licenciada"}
+TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora", "Lic", "Licenciado", "Licenciada", "D", "DO"}
 CLINIC_NAME_TERMS = {
     "age",
     "center",
@@ -300,6 +355,9 @@ ROLE_RE_FRAGMENT = "|".join(role_pattern(phrase) for phrase in sorted(ROLE_PHRAS
 TEAM_ROLE_PAIR_RE = re.compile(
     rf"\b(?P<name>(?:{TITLE_PREFIX}\s+)?{NAME_WORD}(?:\s+{NAME_WORD}){{0,3}})\s+"
     rf"(?P<role>(?i:{ROLE_RE_FRAGMENT}))(?=\s|$)"
+)
+TEAM_CTA_RE = re.compile(
+    rf"(?i:\b(?:agenda\s+tu\s+cita\s+con|pide\s+cita\s+con|reserva\s+cita\s+con|cita\s+con))\s+{NAME_WORD}\b"
 )
 
 KEYWORD_CATALOG = {
@@ -418,7 +476,16 @@ def clean_phone(raw: str) -> str:
 
 def professional_team_window(text: str) -> str:
     lower = text.lower()
-    starts = [lower.find(marker) for marker in TEAM_MARKERS if lower.find(marker) >= 0]
+    floor = 0
+    for marker in NAV_END_MARKERS:
+        pos = lower.find(marker)
+        if pos >= 0:
+            floor = max(floor, pos + len(marker))
+    starts = [
+        lower.find(marker, floor)
+        for marker in TEAM_MARKERS
+        if lower.find(marker, floor) >= 0
+    ]
     if not starts:
         return ""
     start = min(starts)
@@ -438,6 +505,8 @@ def name_words(raw: str) -> list[str]:
 def normalize_professional_title(raw: str) -> str:
     title = normalize_space(raw).rstrip(".")
     lower = title.lower()
+    if lower in {"d.o", "do"}:
+        return "D.O."
     if lower.startswith(("dra", "doctora")):
         return "Dra."
     if lower.startswith(("dr", "doctor")):
@@ -476,6 +545,10 @@ def clean_titled_professional(match: re.Match[str]) -> str:
     return clean_titled_name(match.group("title"), match.group("name"))
 
 
+def strip_team_ctas(text: str) -> str:
+    return normalize_space(TEAM_CTA_RE.sub(" ", text))
+
+
 def clean_team_professional(raw: str) -> str:
     clean = normalize_space(raw).strip(".,;:")
     titled = re.match(rf"^(?P<title>{TITLE_PREFIX})\s+(?P<name>.+)$", clean)
@@ -489,6 +562,32 @@ def clean_team_professional(raw: str) -> str:
     if len(words) < 2:
         return ""
     return " ".join(words[:4])
+
+
+def professional_key(value: str) -> str:
+    clean = re.sub(rf"^(?:{TITLE_PREFIX})\s+", "", normalize_space(value), flags=re.I)
+    return fold(clean)
+
+
+def has_professional_title(value: str) -> bool:
+    return bool(re.match(rf"^(?:{TITLE_PREFIX})\s+", normalize_space(value), flags=re.I))
+
+
+def dedupe_professionals(names: list[str]) -> list[str]:
+    positions: dict[str, int] = {}
+    result: list[str] = []
+    for name in names:
+        key = professional_key(name)
+        if not key:
+            continue
+        if key not in positions:
+            positions[key] = len(result)
+            result.append(name)
+            continue
+        index = positions[key]
+        if has_professional_title(name) and not has_professional_title(result[index]):
+            result[index] = name
+    return result
 
 
 def extract_contacts(text: str) -> dict[str, list[str]]:
@@ -507,17 +606,18 @@ def extract_contacts(text: str) -> dict[str, list[str]]:
 
 def extract_professionals(text: str) -> list[str]:
     professionals: list[tuple[int, str]] = []
-    for match in TITLE_SCAN_RE.finditer(text):
-        clean = clean_titled_name(match.group("title"), title_name_segment(text, match.end()))
+    clean_text = strip_team_ctas(text)
+    for match in TITLE_SCAN_RE.finditer(clean_text):
+        clean = clean_titled_name(match.group("title"), title_name_segment(clean_text, match.end()))
         if clean:
             professionals.append((match.start(), clean))
-    team_window = professional_team_window(text)
-    team_offset = text.find(team_window) if team_window else 0
+    team_window = strip_team_ctas(professional_team_window(text))
+    team_offset = clean_text.find(team_window) if team_window else 0
     for match in TEAM_ROLE_PAIR_RE.finditer(team_window):
         clean = clean_team_professional(match.group("name"))
         if clean:
             professionals.append((team_offset + match.start("name"), clean))
-    return unique([name for _, name in sorted(professionals, key=lambda item: item[0])])
+    return dedupe_professionals(unique([name for _, name in sorted(professionals, key=lambda item: item[0])]))
 
 
 def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:

@@ -73,10 +73,13 @@ That folder is local/ignored by Git.
 ## Current limitations
 
 - It only detects obvious contact details, public specialist names with clear
-  professional titles (`Dr.`, `Dra.`, `Lic.`) or name-role pairs inside explicit
-  team sections, including pages where the name appears before a clear medical
-  role such as medicina general, oncología integrativa, dermatología or
-  fisioterapia.
+  professional titles (`Dr.`, `Dra.`, `Lic.`, `D.O.`) or name-role pairs inside
+  explicit team sections, including pages where the name appears before a clear
+  role such as medicina general, oncología integrativa, dermatología,
+  fisioterapia, optometría, odontología or reception/admin team roles.
+- It skips common WordPress/navigation text and appointment CTAs before
+  extracting team names, so menu items such as treatment names are not proposed
+  as professionals.
 - It only detects locations from clear address patterns. It does not invent sede
   names and it does not label locations as `Sede 1` or `Sede 2`.
 - It does not infer years in practice from founding dates yet.
