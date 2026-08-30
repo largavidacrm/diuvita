@@ -2,6 +2,7 @@
 """Checks for Google Maps/review link discovery."""
 
 from argparse import Namespace
+from pathlib import Path
 
 from capture_source_snapshot import FetchResult
 from discover_clinic_google_links import (
@@ -198,6 +199,9 @@ def main():
     already_complete = dict(clinic, has_google_maps=True, has_google_reviews=True)
     complete = process_clinic(already_complete, args, "admin@example.test", {}, fake_fetcher, fake_review_creator)
     check(complete["status"] == "empty", "complete clinic should not propose duplicate Google links")
+
+    source = (Path(__file__).resolve().parents[1] / "scripts" / "discover_clinic_google_links.py").read_text(encoding="utf-8")
+    check("google_maps_profile_link_predicate" in source, "clinic loader should use direct-only Maps SQL rule")
     print("OK Google links: discovery creates review-ready proposals")
 
 

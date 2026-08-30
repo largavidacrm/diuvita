@@ -20,6 +20,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, unquote, urldefrag, urljoin, urlparse
 
 from capture_source_snapshot import FetchResult, decode_body, fetch_url, normalize_space
+from google_maps_url_rules import google_maps_profile_link_predicate
 from submit_discovery_candidates import get_default_admin_email, load_env_file, run_psql, sql_literal
 from submit_shadow_extraction_review import create_review
 
@@ -392,7 +393,7 @@ def direct_link_predicate(*keys: str) -> str:
 
 def load_visible_clinics(limit: int, clinic_slug: str | None, local_env: dict[str, str]) -> list[dict[str, Any]]:
     clinic_filter = f"and c.slug = {sql_literal(clinic_slug)}" if clinic_slug else ""
-    has_google_maps = direct_link_predicate("maps_url", "google_maps_url", "map_url")
+    has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
     has_google_reviews = direct_link_predicate("google_reviews_url", "reviews_url", "valoraciones_url")
     sql = f"""
 with visible as (
