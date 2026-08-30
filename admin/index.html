@@ -1648,7 +1648,11 @@
 
     function globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck) {
       if (!openCount) return "La bandeja está limpia. El siguiente bloque es completar fuentes, sedes y especialistas.";
-      return openCount + " tarjetas abiertas. Mira primero: " + nextClick + ". Cuello de botella: " + bottleneck + ".";
+      var detail = openCount + " tarjetas abiertas. Mira primero: " + nextClick + ". Cuello de botella: " + bottleneck + ".";
+      if (openCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) {
+        return "No crees trabajos nuevos. " + detail;
+      }
+      return detail;
     }
 
     function globalPlanDataDetail(sourceLabel, specialistLabel, sourceTarget, profileTarget) {
@@ -1712,7 +1716,7 @@
       el("globalPlanFocus").textContent = focus.title;
       el("globalPlanWhy").textContent = focus.detail;
       el("globalPlanGrid").innerHTML = [
-        globalPlanItem("Tú ahora", nextClick, globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount), openCount ? "warning-text" : ""),
+        globalPlanItem("Tú ahora", nextClick, globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck), openCount ? "warning-text" : ""),
         globalPlanItem("Yo puedo seguir con", failedJobs ? "Estabilidad técnica" : "Trabajo seguro", globalPlanCodexWorkDetail(openCount, failedJobs, sources, specialists, completeness), failedJobs ? "danger-text" : ""),
         globalPlanItem("Datos pendientes", "Fuentes + fichas", globalPlanDataDetail(sourcePlanLabel(sources), specialistPlanLabel(specialists), sourceTarget, profileTarget), sources.nextTarget || specialists.nextTarget ? "warning-text" : ""),
         globalPlanItem("No activar todavía", "Autonomía / Growth", blockers.length ? blockers[0] + ". Primero cerramos revisión humana y claims." : "Se deja parado hasta que tú lo decidas.", blockers.length ? "warning-text" : "")

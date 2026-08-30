@@ -36,6 +36,9 @@ grupo o tarjeta que el panel considera más importante. Si ves “control intern
 no significa que la web esté rota: significa que toca limpiar revisiones antes
 de subir la autonomía.
 
+Si **Tú ahora** dice **No crees trabajos nuevos**, usa primero **Filtrar grupo**,
+**Especialistas** o **Google Maps** para cerrar tarjetas abiertas.
+
 ## Entender el estado del sistema
 
 En **Estado del sistema**, mira especialmente:
