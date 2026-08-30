@@ -60,6 +60,7 @@ Already built:
 - Local safety checks are bundled in `scripts/run_local_checks.py`.
 - Daniel-facing review brief exists in `scripts/daniel_review_brief.py`, read-only and suitable for future notifications.
 - Review maturity can be measured read-only before considering low-risk auto-publish expansion.
+- Published specialist coverage can be measured read-only before creating more team-detail workflows.
 - Stored field claims can be evaluated read-only against publication rules before any policy change.
 - Blocking field claims can be routed into internal quality-review cards without editing clinic data.
 - Shadow discovery path for clinic candidates.
@@ -77,6 +78,7 @@ Not yet mature:
 - Batch source extraction exists as an operator tool, but should remain manual/supervised until review-card volume is comfortable.
 - Deterministic field rules exist locally, but low-risk auto-approval stays disabled until accuracy is measured.
 - Doctor, pricing, treatment and SEO workflows.
+- Specialist coverage can now be measured, but publication of new professional details still needs manual review.
 - Daily/weekly digest.
 - Rollback controls in the admin UI need operational usage, but the restore path now exists.
 - Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.

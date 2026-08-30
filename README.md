@@ -37,6 +37,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/DANIEL_REVIEW_BRIEF.md`: resumen accionable en lenguaje simple para que Daniel sepa qué revisar primero.
 - `docs/REVIEW_MATURITY.md`: medición de madurez antes de plantear auto-publicación de bajo riesgo.
 - `docs/HUMAN_FIELD_LOCKS.md`: protecciones para campos corregidos manualmente por Daniel.
+- `docs/SPECIALIST_COVERAGE.md`: medición solo lectura de cobertura de especialistas publicados.
 - `docs/ENRICHMENT_CLAIMS_CAPTURE.md`: captura interna de fuentes y claims desde propuestas de mejora.
 - `docs/CANDIDATE_DRAFT_PROMOTION.md`: herramienta conservadora para convertir candidatas en borradores internos.
 - `docs/SOURCE_RECORD_HYDRATION.md`: hidratación de evidencias compactas para fuentes guardadas.
@@ -69,6 +70,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
 - `scripts/daniel_review_brief.py`: imprime un brief de revisión para Daniel, solo lectura y sin payloads técnicos.
 - `scripts/measure_review_maturity.py`: mide si hay suficiente revisión humana antes de relajar reglas.
+- `scripts/measure_specialist_coverage.py`: mide cobertura de especialistas publicados por clínica, sin editar fichas.
 - `scripts/capture_enrichment_review_claims.py`: convierte propuestas internas en `source_records` y `field_claims`.
 - `scripts/promote_candidate_reviews.py`: simula o crea borradores internos desde candidatas revisables.
 - `scripts/hydrate_source_records.py`: completa `source_records` con título, hash y extracto corto.
