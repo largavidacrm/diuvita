@@ -15,7 +15,8 @@ The full pass currently covers:
    status, source monitoring status, snapshot-retention status and specialist
    coverage status.
 7. Public clinic profile UX and basic site asset checks.
-8. Admin digest, Daniel review brief, review-maturity and specialist-coverage checks.
+8. Admin digest, Daniel review brief, review-maturity, specialist-coverage and
+   profile-completeness checks.
 9. Enrichment, candidate promotion, source hydration and source monitoring.
 10. Changed-source processing, blocking-claim review routing and the safe CTO
     shadow cycle.

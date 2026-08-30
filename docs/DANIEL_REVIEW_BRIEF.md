@@ -9,6 +9,7 @@ It is designed for future morning or weekly automations. It answers:
 - which visible review card is the best starting point;
 - how many open cards exist by type;
 - whether auto-publication is still off;
+- how many visible profiles still have measured public fields pending;
 - how many visible profiles include published specialists;
 - whether source monitoring is fresh or pending;
 - whether there are open technical failures.

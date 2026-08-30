@@ -223,6 +223,82 @@ specialist_coverage as (
     'total_specialist_entries', coalesce(sum(specialist_entries), 0)
   ) as data
   from visible_specialist_rows
+),
+visible_profile_checks as (
+  select
+    length(btrim(coalesce(c.summary, c.current_data ->> 'summary', ''))) >= 120 as has_summary,
+    nullif(btrim(coalesce(c.website, c.current_data ->> 'web', '')), '') is not null as has_website,
+    nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is not null as has_address,
+    nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null
+      or nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_contact,
+    case
+      when jsonb_typeof(c.current_data -> 'services') = 'array'
+        then jsonb_array_length(c.current_data -> 'services')
+      else 0
+    end > 0 as has_services,
+    case
+      when jsonb_typeof(c.current_data -> 'specialties') = 'array'
+        then jsonb_array_length(c.current_data -> 'specialties')
+      else 0
+    end > 0 as has_specialties,
+    case
+      when jsonb_typeof(c.current_data -> 'unidades') = 'array'
+        then jsonb_array_length(c.current_data -> 'unidades')
+      else 0
+    end > 0 as has_units,
+    case
+      when jsonb_typeof(c.current_data -> 'profesionales') = 'array'
+        then jsonb_array_length(c.current_data -> 'profesionales')
+      else 0
+    end > 0 as has_specialists,
+    case
+      when jsonb_typeof(c.current_data -> 'tech') = 'array'
+        then jsonb_array_length(c.current_data -> 'tech')
+      when nullif(btrim(coalesce(c.current_data ->> 'tech', '')), '') is not null
+        then 1
+      else 0
+    end > 0 as has_technology
+  from public.clinics c
+  where c.status in ('published', 'preliminary')
+),
+profile_completeness as (
+  select jsonb_build_object(
+    'visible_clinics', count(*),
+    'without_pending_fields', count(*) filter (
+      where has_summary
+        and has_website
+        and has_address
+        and has_contact
+        and has_services
+        and has_specialties
+        and has_units
+        and has_specialists
+        and has_technology
+    ),
+    'with_pending_fields', count(*) filter (
+      where not (
+        has_summary
+        and has_website
+        and has_address
+        and has_contact
+        and has_services
+        and has_specialties
+        and has_units
+        and has_specialists
+        and has_technology
+      )
+    ),
+    'pending_summary', count(*) filter (where not has_summary),
+    'pending_website', count(*) filter (where not has_website),
+    'pending_address', count(*) filter (where not has_address),
+    'pending_contact', count(*) filter (where not has_contact),
+    'pending_services', count(*) filter (where not has_services),
+    'pending_specialties', count(*) filter (where not has_specialties),
+    'pending_units', count(*) filter (where not has_units),
+    'pending_specialists', count(*) filter (where not has_specialists),
+    'pending_technology', count(*) filter (where not has_technology)
+  ) as data
+  from visible_profile_checks
 )
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
@@ -235,6 +311,7 @@ select jsonb_build_object(
   'claim_quality', (select data from claim_quality),
   'source_monitoring', (select data from source_monitoring),
   'specialist_coverage', (select data from specialist_coverage),
+  'profile_completeness', (select data from profile_completeness),
   'generated_at', now()
 );
 """
@@ -316,6 +393,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     costs = digest.get("costs") or {}
     source_monitoring = digest.get("source_monitoring") or {}
     specialist_coverage = digest.get("specialist_coverage") or {}
+    profile_completeness = digest.get("profile_completeness") or {}
 
     output: list[str] = []
     output.append("# Diuvita CTO digest")
@@ -335,6 +413,10 @@ def format_digest(digest: dict[str, Any]) -> str:
     specialist_with = as_int(specialist_coverage.get("with_specialists"))
     if specialist_visible:
         output.append(line("Fichas con especialistas", f"{specialist_with}/{specialist_visible}"))
+    completeness_visible = as_int(profile_completeness.get("visible_clinics"))
+    completeness_ready = as_int(profile_completeness.get("without_pending_fields"))
+    if completeness_visible:
+        output.append(line("Fichas sin campos pendientes medidos", f"{completeness_ready}/{completeness_visible}"))
     output.append("")
 
     output.append("## Automatizacion")

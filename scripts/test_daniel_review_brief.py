@@ -47,6 +47,11 @@ def sample_digest():
             "without_specialists": 17,
             "total_specialist_entries": 3,
         },
+        "profile_completeness": {
+            "visible_clinics": 19,
+            "without_pending_fields": 1,
+            "with_pending_fields": 18,
+        },
     }
 
 
@@ -67,6 +72,7 @@ def main():
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
+    check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
 

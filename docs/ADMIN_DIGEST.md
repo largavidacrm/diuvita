@@ -13,6 +13,7 @@ It answers:
 - whether any jobs failed;
 - whether clinic source monitoring is fresh or due;
 - how many visible profiles include published specialists;
+- how many visible profiles have all measured public fields present;
 - how much agent cost is recorded in the database.
 
 It does not publish clinics, edit data, or resolve review items.
@@ -47,3 +48,9 @@ The digest includes a read-only "Vigilancia de fuentes" block:
 - `Cadencia`: how many sources are checked weekly, standard monthly, slow quarterly, or with a custom cadence.
 
 This is an operational signal only. It does not fetch sources, change public clinic data, publish clinics, or resolve review cards.
+
+## Profile completeness
+
+The digest also includes a read-only top-line completeness signal for visible
+profiles. It uses the same public-field checks as the quality-audit workflow and
+does not rank clinics, edit records or publish changes.

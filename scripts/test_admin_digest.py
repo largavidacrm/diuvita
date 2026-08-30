@@ -79,6 +79,20 @@ def main():
             "without_specialists": 17,
             "total_specialist_entries": 3,
         },
+        "profile_completeness": {
+            "visible_clinics": 19,
+            "without_pending_fields": 1,
+            "with_pending_fields": 18,
+            "pending_summary": 0,
+            "pending_website": 0,
+            "pending_address": 0,
+            "pending_contact": 6,
+            "pending_services": 0,
+            "pending_specialties": 0,
+            "pending_units": 14,
+            "pending_specialists": 17,
+            "pending_technology": 5,
+        },
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
@@ -99,6 +113,7 @@ def main():
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Fichas con especialistas: 2/19" in output, "specialist coverage missing")
+    check("Fichas sin campos pendientes medidos: 1/19" in output, "profile completeness missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Bajo riesgo: no lista" in output, "maturity signal missing")
     check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")

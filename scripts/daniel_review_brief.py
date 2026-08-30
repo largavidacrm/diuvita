@@ -85,6 +85,16 @@ def specialist_status(digest: dict[str, Any]) -> str:
     return f"{with_specialists}/{visible} fichas con especialistas; {without_specialists} pendientes"
 
 
+def profile_completeness_status(digest: dict[str, Any]) -> str:
+    completeness = digest.get("profile_completeness") or {}
+    visible = as_int(completeness.get("visible_clinics"))
+    ready = as_int(completeness.get("without_pending_fields"))
+    pending = as_int(completeness.get("with_pending_fields"))
+    if not visible:
+        return "sin fichas visibles medidas"
+    return f"{ready}/{visible} fichas sin campos pendientes medidos; {pending} con pendientes"
+
+
 def first_step(digest: dict[str, Any]) -> list[str]:
     counts = review_counts(digest)
     failed = digest.get("recent_failed_jobs") or []
@@ -172,6 +182,7 @@ def format_brief(digest: dict[str, Any]) -> str:
         "",
         "## Señales técnicas",
         f"- Clínicas visibles: {as_int(clinics.get('published'))} publicadas y {as_int(clinics.get('preliminary'))} preliminares.",
+        f"- Completitud de fichas: {profile_completeness_status(digest)}.",
         f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",
