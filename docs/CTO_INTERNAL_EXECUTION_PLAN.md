@@ -48,6 +48,7 @@ Already built:
 - Candidate reviews now create internal drafts and route Daniel to final validation before publication.
 - Admin system status shows why auto-publication is or is not mature enough to discuss.
 - Admin system status shows whether source monitoring is fresh or pending.
+- Admin system status shows source snapshot retention without enabling cleanup.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
 - Source snapshot retention can be measured read-only before any cleanup policy.
@@ -267,7 +268,7 @@ Next 10 technical steps:
 13. Add source-monitoring cadence so the watcher checks due sources instead of repeatedly scanning the same fresh sources. Done locally in `scripts/monitor_source_changes.py`; use `--force` for manual spot checks.
 14. Show source-monitoring freshness in the admin control center. Done locally in `/admin/`, using source records and latest snapshots.
 15. Turn rejected/conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle.
-16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py`; no cleanup/deletion path is enabled.
+16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py` and surfaced in `/admin/`; no cleanup/deletion path is enabled.
 
 ## Daniel decision checkpoints
 

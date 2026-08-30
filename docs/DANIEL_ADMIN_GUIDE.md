@@ -28,8 +28,12 @@ En **Estado del sistema**, mira especialmente:
 - **Motivo principal**: explica en lenguaje corto qué falta, por ejemplo más revisiones humanas o claims con conflicto.
 - **Vigilancia fuentes**: te dice si las webs fuente están recientes o si toca revisarlas.
 - **Próxima revisión fuentes**: fecha aproximada del siguiente control de fuentes cuando todo está al día.
+- **Retención capturas**: te dice si hay capturas antiguas que podrían revisarse para limpieza futura.
+- **Inventario capturas**: resume cuántas capturas antiguas y totales tiene guardadas el sistema.
 
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
+
+Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
 
 ## Revisar mejoras de una ficha existente
 

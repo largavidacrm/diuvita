@@ -530,6 +530,8 @@
     var DEFAULT_MONITOR_CADENCE_DAYS = 30;
     var MIN_MONITOR_CADENCE_DAYS = 7;
     var MAX_MONITOR_CADENCE_DAYS = 90;
+    var SNAPSHOT_RETENTION_DAYS = 180;
+    var SNAPSHOT_KEEP_LATEST = 3;
 
     function el(id) {
       return document.getElementById(id);
@@ -657,6 +659,19 @@
       };
     }
 
+    function emptySourceSnapshotRetention() {
+      return {
+        totalSnapshots: 0,
+        sourcesWithSnapshots: 0,
+        olderThanPolicy: 0,
+        protectedLatest: 0,
+        cleanupCandidates: 0,
+        oldestSnapshotAt: null,
+        newestSnapshotAt: null,
+        unavailable: false
+      };
+    }
+
     function parseDateValue(value) {
       if (!value) return null;
       var parsed = new Date(value);
@@ -734,6 +749,39 @@
       return status;
     }
 
+    function sourceSnapshotRetentionStatus(snapshots) {
+      var status = emptySourceSnapshotRetention();
+      var grouped = {};
+      var now = new Date();
+      var policyCutoff = addDays(now, -SNAPSHOT_RETENTION_DAYS);
+
+      (snapshots || []).forEach(function (snapshot) {
+        var key = snapshot.source_record_id || "";
+        if (!key) return;
+        var retrievedAt = parseDateValue(snapshot.retrieved_at);
+        if (!retrievedAt) return;
+        grouped[key] = grouped[key] || [];
+        grouped[key].push({ retrieved_at: retrievedAt });
+        status.totalSnapshots += 1;
+        if (!status.oldestSnapshotAt || retrievedAt < status.oldestSnapshotAt) status.oldestSnapshotAt = retrievedAt;
+        if (!status.newestSnapshotAt || retrievedAt > status.newestSnapshotAt) status.newestSnapshotAt = retrievedAt;
+      });
+
+      Object.keys(grouped).forEach(function (key) {
+        var rows = grouped[key].sort(function (a, b) { return b.retrieved_at - a.retrieved_at; });
+        status.sourcesWithSnapshots += 1;
+        rows.forEach(function (row, index) {
+          var olderThanPolicy = row.retrieved_at < policyCutoff;
+          if (!olderThanPolicy) return;
+          status.olderThanPolicy += 1;
+          if (index < SNAPSHOT_KEEP_LATEST) status.protectedLatest += 1;
+          else status.cleanupCandidates += 1;
+        });
+      });
+
+      return status;
+    }
+
     async function loadSourceMonitoring() {
       var sourceResult = await client
         .from("source_records")
@@ -749,6 +797,7 @@
       var sources = sourceResult.data || [];
       var sourceIds = sources.map(function (source) { return source.id; }).filter(Boolean);
       var snapshots = [];
+      var snapshotUnavailable = false;
       if (sourceIds.length) {
         var snapshotResult = await client
           .from("source_snapshots")
@@ -756,10 +805,14 @@
           .in("source_record_id", sourceIds)
           .order("retrieved_at", { ascending: false })
           .limit(2000);
-        if (!snapshotResult.error) snapshots = snapshotResult.data || [];
+        if (snapshotResult.error) snapshotUnavailable = true;
+        else snapshots = snapshotResult.data || [];
       }
 
-      return sourceMonitoringStatus(sources, snapshots);
+      var monitoring = sourceMonitoringStatus(sources, snapshots);
+      monitoring.snapshotRetention = sourceSnapshotRetentionStatus(snapshots);
+      if (snapshotUnavailable) monitoring.snapshotRetention.unavailable = true;
+      return monitoring;
     }
 
     function pill(status) {
@@ -917,6 +970,15 @@
           : "Todo reciente";
       var sourceMonitorDateLabel = monitoring.dueSources ? "Fuente más vencida" : "Próxima revisión fuentes";
       var sourceMonitorDate = monitoring.dueSources ? monitoring.oldestDueAt : monitoring.nextDueAt;
+      var retention = monitoring.snapshotRetention || emptySourceSnapshotRetention();
+      var retentionLabel = retention.unavailable
+        ? "No disponible"
+        : retention.cleanupCandidates
+          ? retention.cleanupCandidates + " candidatas"
+          : "Sin limpieza";
+      var retentionInventory = retention.unavailable
+        ? "—"
+        : (retention.olderThanPolicy || 0) + " antiguas · " + (retention.totalSnapshots || 0) + " total";
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -929,6 +991,8 @@
         systemItem("Motivo principal", blockers[0] || "Sin bloqueos medidos", blockers.length ? "warning-text" : ""),
         systemItem("Vigilancia fuentes", sourceMonitorLabel, monitoring.unavailable || monitoring.dueSources ? "warning-text" : ""),
         systemItem(sourceMonitorDateLabel, sourceMonitorDate ? date(sourceMonitorDate) : "—"),
+        systemItem("Retención capturas", retentionLabel, retention.unavailable || retention.cleanupCandidates ? "warning-text" : ""),
+        systemItem("Inventario capturas", retentionInventory),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),

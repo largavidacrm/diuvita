@@ -12,7 +12,7 @@ The full pass currently covers:
 5. Shadow extraction, verification and review-card creation.
 6. Admin review UX checks: filters, actions, publication flow, clinic diffs,
    blocking-claim labels, next-action guidance, claim-rule context, maturity
-   status and source monitoring status.
+   status, source monitoring status and snapshot-retention status.
 7. Public clinic profile UX and basic site asset checks.
 8. Admin digest and review-maturity checks.
 9. Enrichment, candidate promotion, source hydration and source monitoring.
