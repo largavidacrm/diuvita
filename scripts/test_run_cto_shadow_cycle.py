@@ -3,6 +3,7 @@
 from argparse import Namespace
 
 from run_cto_shadow_cycle import (
+    DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP,
     build_cycle_brief,
     build_steps,
     compact_summary,
@@ -247,6 +248,7 @@ def main():
     })
     check(compact_source_shadow["items_count"] == 1, "source shadow count should be kept")
     check("verification_summary" not in compact_source_shadow["sample_items"][0], "large source shadow details should be omitted")
+    check(DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP == 45, "safe CTO writes should stop in the near-full review zone")
     cycle_digest = {
         "summary": {
             "reviews": {"open": 45},

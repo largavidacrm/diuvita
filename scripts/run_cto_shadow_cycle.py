@@ -27,6 +27,7 @@ from admin_digest import (
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
+DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP = max(1, SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5)
 
 
 def try_parse_json(output: str) -> Any:
@@ -682,8 +683,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-open-reviews-for-safe-writes",
         type=int,
-        default=SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
-        help="In apply-safe mode, skip review-card writing steps once open reviews reach this count. Use 0 to disable.",
+        default=DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP,
+        help="In apply-safe mode, skip review-card writing steps once open reviews enter the near-full zone. Use 0 to disable.",
     )
     parser.add_argument("--production-base-url", default="https://www.vitalarga.com")
     parser.add_argument("--production-timeout", type=int, default=12)

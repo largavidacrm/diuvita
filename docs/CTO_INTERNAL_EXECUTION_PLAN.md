@@ -92,7 +92,7 @@ Already built:
   links and Google review links, creating internal review cards only.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle now includes a Daniel-facing brief in its JSON output and can optionally print only that brief for unattended logs.
-- Safe CTO shadow cycle has a backlog guard so safe-apply runs do not keep adding review cards when the inbox is already full.
+- Safe CTO shadow cycle has a backlog guard so safe-apply runs stop adding review cards once the inbox enters the near-full zone.
 - Safe CTO shadow cycle can optionally include the read-only production health check.
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.

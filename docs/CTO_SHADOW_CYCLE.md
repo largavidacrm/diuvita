@@ -52,9 +52,11 @@ cleanup/deletion path is enabled. Profile completeness is also measured only;
 it does not edit fields or resolve review cards.
 
 To avoid review noise, safe apply mode first checks the open review backlog.
-If there are 50 or more open review cards, the cycle skips the steps that could
-create more review cards and continues with safe read-only measurements. The
-limit can be adjusted:
+The hard guard remains 50 open cards, but the default unattended cycle stops
+review-card writing at 45 open cards so Daniel is not left at the edge of the
+limit. When the guard is active, the cycle skips the steps that could create
+more review cards and continues with safe read-only measurements. The soft stop
+can be adjusted:
 
 ```bash
 python3 scripts/run_cto_shadow_cycle.py --apply-safe --max-open-reviews-for-safe-writes 75
