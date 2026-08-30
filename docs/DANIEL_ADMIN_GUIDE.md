@@ -89,6 +89,10 @@ Si varias tarjetas abiertas intentan mejorar la misma ficha, la tabla muestra **
    **Guardar en revisión**, **Guardar como preliminar** o **Guardar como publicada**.
 7. Guarda cuando esté correcto.
 
+Si eliges **Preliminar** o **Publicada** y todavía hay claims bloqueantes,
+**Validación final** lo marcará como pendiente y el aviso de guardado te lo
+recordará antes de mandar la ficha a la web.
+
 Si la clínica está como **Publicada** o **Preliminar**, el cambio se manda a la web automáticamente. Puede tardar unos minutos.
 Si está como **Borrador**, **Revisión**, **Descubierta**, **Extraída**, **Verificada** o **Archivada**, se guarda dentro del panel pero no aparece como ficha pública.
 

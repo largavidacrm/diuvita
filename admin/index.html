@@ -495,6 +495,7 @@
     var activeClinicClaimRequest = 0;
     var activeClinicSourceRequest = 0;
     var activeClinicClaimCount = 0;
+    var activeClinicBlockingClaimCount = null;
     var activeClinicSourceCount = 0;
     var dashboardLoading = false;
     var dashboardAutomation = {};
@@ -1762,6 +1763,13 @@
         html(title) + '">Abrir fuente</a>';
     }
 
+    function isBlockingClinicClaim(row, decision) {
+      var status = text(row.verification_status || "").toLowerCase();
+      if (status === "conflict" || status === "rejected") return true;
+      if (!row.source_record_id && decision.action !== "auto_accept") return true;
+      return false;
+    }
+
     function renderClinicClaims(rows, sources) {
       var count = Array.isArray(rows) ? rows.length : 0;
       activeClinicClaimCount = count;
@@ -1770,13 +1778,16 @@
         ? "Últimos claims internos guardados. Vista solo lectura."
         : "Sin claims internos guardados para esta clínica.";
       if (!count) {
+        activeClinicBlockingClaimCount = 0;
         el("clinicClaimsList").innerHTML = '<p class="empty">No hay evidencias internas para esta ficha todavía.</p>';
         updateFinalValidation();
         return;
       }
+      var blockingCount = 0;
       el("clinicClaimsList").innerHTML = rows.map(function (row) {
         var source = sources[row.source_record_id || ""] || null;
         var decision = ruleDecisionForClaim(row);
+        if (isBlockingClinicClaim(row, decision)) blockingCount += 1;
         var sourceHtml = claimSourceLinkHtml(source);
         var locked = row.human_locked ? '<span class="pill danger">Protegido</span>' : "";
         return '<article class="claim-item">' +
@@ -1787,11 +1798,13 @@
           '<span class="pill">' + html(pct(row.confidence)) + '</span>' + locked + sourceHtml + '</div>' +
           '</article>';
       }).join("");
+      activeClinicBlockingClaimCount = blockingCount;
       updateFinalValidation();
     }
 
     async function loadClinicClaims(clinicId) {
       var requestId = ++activeClinicClaimRequest;
+      activeClinicBlockingClaimCount = null;
       el("clinicEvidenceCount").textContent = "Cargando";
       el("clinicEvidenceMeta").textContent = "Consultando claims internos.";
       el("clinicClaimsList").innerHTML = '<p class="empty">Cargando evidencias...</p>';
@@ -1806,6 +1819,7 @@
         el("clinicEvidenceCount").textContent = "No disponible";
         el("clinicEvidenceMeta").textContent = "No se pudieron cargar las evidencias.";
         el("clinicClaimsList").innerHTML = '<p class="empty">No se pudieron leer los claims de esta clínica.</p>';
+        updateFinalValidation();
         return;
       }
       var rows = claimsResult.data || [];
@@ -1946,12 +1960,14 @@
       el("clinicSaveBtn").textContent = labels[trimmed("clinicStatus")] || "Guardar cambios";
     }
 
-    function finalValidationItems() {
+    function finalValidationItems(publicTarget) {
+      var noBlockingClaims = activeClinicBlockingClaimCount !== null && activeClinicBlockingClaimCount === 0;
       return [
         validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry")),
         validationItem("Web oficial revisada", /^https?:\/\//i.test(trimmed("clinicWebsite"))),
         validationItem("Resumen suficiente", trimmed("clinicSummary").length >= 120),
         validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0),
+        validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false),
         validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false)
       ];
@@ -1959,12 +1975,12 @@
 
     function updateFinalValidation() {
       if (!el("clinicValidationList")) return;
-      var items = finalValidationItems();
+      var targetStatus = trimmed("clinicStatus");
+      var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
+      var items = finalValidationItems(publicTarget);
       var missingRequired = items.filter(function (item) {
         return item.required && !item.ok;
       });
-      var targetStatus = trimmed("clinicStatus");
-      var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
       updateClinicSaveButtonLabel();
       el("clinicPublicationHint").textContent = publicVisibilityText(targetStatus);
       el("clinicPublicationHint").className = "publication-hint" + (publicTarget ? " visible-target" : "");
@@ -1987,7 +2003,9 @@
     }
 
     function missingFinalValidationLabels() {
-      return finalValidationItems()
+      var targetStatus = trimmed("clinicStatus");
+      var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
+      return finalValidationItems(publicTarget)
         .filter(function (item) { return item.required && !item.ok; })
         .map(function (item) { return item.label; });
     }
@@ -2611,6 +2629,7 @@
       setInput("clinicVerification", activeClinic.verification_status || "human_curated");
       setInput("clinicNote", "");
       activeClinicClaimCount = 0;
+      activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
       resetProposalPreview();
       updateFinalValidation();
@@ -2672,6 +2691,7 @@
       activeClinic = null;
       activeClinicReview = null;
       activeClinicClaimCount = 0;
+      activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
       setLockInputsDisabled(false);
       show(el("clinicEditor"), false);
