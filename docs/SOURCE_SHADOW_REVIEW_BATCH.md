@@ -3,6 +3,10 @@
 `scripts/submit_source_shadow_reviews.py` runs the existing shadow extraction
 and verification chain against saved clinic sources.
 
+The batch prioritizes visible clinics with more measured public fields pending
+before older or more complete profiles. Existing open cards for the same source
+are still skipped unless `--replace-existing` is used.
+
 It is a bridge toward the autonomous clinic loop:
 
 ```text

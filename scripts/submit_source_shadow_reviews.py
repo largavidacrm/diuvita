@@ -42,13 +42,15 @@ def load_clinic_sources(
     clinic_filter = f"and c.slug = {sql_literal(clinic_slug)}" if clinic_slug else ""
     source_filter = f"and sr.id = {sql_literal(source_id)}::uuid" if source_id else ""
     sql = f"""
-select coalesce(jsonb_agg(to_jsonb(items) order by items.retrieved_at desc), '[]'::jsonb)
+select coalesce(jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.retrieved_at desc), '[]'::jsonb)
 from (
   select
     sr.id as source_record_id,
     sr.source_url,
     sr.source_title,
     sr.retrieved_at,
+    cardinality(candidate.pending_fields) as pending_count,
+    candidate.pending_fields,
     c.id as clinic_id,
     c.slug as clinic_slug,
     c.display_name as clinic_name,
@@ -63,12 +65,48 @@ from (
     ) as has_open_review
   from public.source_records sr
   join public.clinics c on c.id = sr.clinic_id
+  cross join lateral (
+    select array_remove(array[
+      case when length(btrim(coalesce(c.summary, c.current_data ->> 'summary', ''))) < 120 then 'summary' end,
+      case when nullif(btrim(coalesce(c.website, c.current_data ->> 'web', '')), '') is null then 'website' end,
+      case when nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is null then 'address' end,
+      case
+        when nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is null
+          and nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is null
+          then 'contact'
+      end,
+      case
+        when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'services') = 'array' then c.current_data -> 'services' else '[]'::jsonb end), 0) = 0
+          then 'services'
+      end,
+      case
+        when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'specialties') = 'array' then c.current_data -> 'specialties' else '[]'::jsonb end), 0) = 0
+          then 'specialties'
+      end,
+      case
+        when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'unidades') = 'array' then c.current_data -> 'unidades' else '[]'::jsonb end), 0) = 0
+          then 'units'
+      end,
+      case
+        when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'profesionales') = 'array' then c.current_data -> 'profesionales' else '[]'::jsonb end), 0) = 0
+          then 'specialists'
+      end,
+      case
+        when case
+          when jsonb_typeof(c.current_data -> 'tech') = 'array'
+            then coalesce(jsonb_array_length(c.current_data -> 'tech'), 0) > 0
+          else nullif(btrim(coalesce(c.current_data ->> 'tech', '')), '') is not null
+        end is not true
+          then 'technology'
+      end
+    ], null) as pending_fields
+  ) candidate
   where sr.entity_type = 'clinic'
     and sr.source_url ~* '^https?://'
     and c.status <> 'archived'
     {clinic_filter}
     {source_filter}
-  order by sr.retrieved_at desc, sr.created_at desc
+  order by cardinality(candidate.pending_fields) desc, has_open_review asc, sr.retrieved_at desc, sr.created_at desc
   limit {max(1, min(100, int(limit)))}
 ) items;
 """
@@ -108,6 +146,8 @@ def process_source(
         "clinic_slug": clinic_slug,
         "clinic_name": source.get("clinic_name"),
         "source_url": source_url,
+        "pending_count": source.get("pending_count") or 0,
+        "pending_fields": source.get("pending_fields") or [],
     }
 
     if not clinic_slug or not source_url:

@@ -68,7 +68,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/extract_clinic_profile_shadow.py`: extractor inicial de claims de clínica en modo sombra.
 - `scripts/verify_clinic_profile_shadow.py`: verificador inicial de claims extraídos en modo sombra.
 - `scripts/submit_shadow_extraction_review.py`: convierte una extracción verificada en una tarjeta interna revisable.
-- `scripts/submit_source_shadow_reviews.py`: ejecuta extracción/verificación shadow sobre fuentes de clínicas existentes.
+- `scripts/submit_source_shadow_reviews.py`: ejecuta extracción/verificación shadow sobre fuentes de clínicas existentes, priorizando fichas incompletas.
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
 - `scripts/daniel_review_brief.py`: imprime un brief de revisión para Daniel, solo lectura y sin payloads técnicos.
 - `scripts/measure_review_maturity.py`: mide si hay suficiente revisión humana antes de relajar reglas.

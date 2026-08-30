@@ -61,6 +61,8 @@ STEP_ITEM_KEYS = {
         "clinic_name",
         "source_url",
         "status",
+        "pending_count",
+        "pending_fields",
         "proposed_fields",
         "created_review",
     ),

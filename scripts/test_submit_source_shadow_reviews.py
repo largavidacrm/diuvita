@@ -3,7 +3,7 @@
 from argparse import Namespace
 
 from capture_source_snapshot import FetchResult
-from submit_source_shadow_reviews import process_source, summarize_results
+from submit_source_shadow_reviews import load_clinic_sources, process_source, summarize_results
 
 
 def check(condition, message):
@@ -39,6 +39,8 @@ def main():
         "clinic_slug": "example-clinic",
         "clinic_name": "Example Clinic",
         "source_url": "https://exampleclinic.test/longevity",
+        "pending_count": 3,
+        "pending_fields": ["contact", "specialists", "technology"],
         "has_open_review": False,
     }
     args = Namespace(timeout=15, apply=False, replace_existing=False)
@@ -46,6 +48,8 @@ def main():
     check(result["status"] == "ready", "source should produce a ready review payload")
     check("email" in result["proposed_fields"], "email proposal missing")
     check("profesionales" in result["proposed_fields"], "professional proposal missing")
+    check(result["pending_count"] == 3, "pending-count context should be preserved")
+    check("specialists" in result["pending_fields"], "pending-field context should be preserved")
 
     skipped = process_source(
         dict(source, has_open_review=True),
@@ -80,6 +84,25 @@ def main():
     check(summary["ready"] == 2, "summary ready count missing")
     check(summary["skipped"] == 1, "summary skipped count missing")
     check(summary["created_or_updated"] == 1, "summary created count missing")
+
+    captured = {}
+
+    def fake_run_psql(sql, local_env):
+        captured["sql"] = sql
+        return "[]"
+
+    original_run_psql = load_clinic_sources.__globals__["run_psql"]
+    try:
+        load_clinic_sources.__globals__["run_psql"] = fake_run_psql
+        load_clinic_sources(5, None, None, {})
+    finally:
+        load_clinic_sources.__globals__["run_psql"] = original_run_psql
+
+    sql = captured.get("sql", "")
+    check("pending_fields" in sql, "source batch should measure missing public fields")
+    check("jsonb_agg(to_jsonb(items) order by items.pending_count desc" in sql, "source batch output should preserve priority order")
+    check("cardinality(candidate.pending_fields) desc" in sql, "source batch should prioritize incomplete profiles")
+    check("has_open_review asc" in sql, "source batch should prefer sources without open review cards")
     print("OK source shadow reviews: batch is safe")
 
 
