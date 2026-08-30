@@ -25,6 +25,7 @@ def main() -> None:
         "function syncReviewFiltersFromInputs",
         "function filteredReviewRows",
         "function clearReviewFilters",
+        "reviewProfessionalsCount(b) - reviewProfessionalsCount(a)",
         'value="blocking_claim_review"',
         '["blocking_claim_review", "Claims bloqueantes"]',
         "data-review-type",

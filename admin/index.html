@@ -2399,7 +2399,14 @@
     }
 
     function filteredReviewRows() {
-      return reviewCache.filter(reviewMatchesFilters);
+      var rows = reviewCache.filter(reviewMatchesFilters);
+      if (!reviewSpecialistsFilter) return rows;
+      return rows.slice().sort(function (a, b) {
+        return reviewProfessionalsCount(b) - reviewProfessionalsCount(a) ||
+          Number(b.priority || 0) - Number(a.priority || 0) ||
+          (parseDateValue(a.created_at) || new Date(8640000000000000)) -
+          (parseDateValue(b.created_at) || new Date(8640000000000000));
+      });
     }
 
     function clearReviewFilters() {
