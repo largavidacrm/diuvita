@@ -462,6 +462,52 @@ td small {
   padding: 1rem;
 }
 
+.review-rules {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.7);
+}
+
+.review-rules h3 {
+  margin: 0;
+  font-size: 0.96rem;
+}
+
+.review-rules p {
+  margin: 0.12rem 0 0;
+  color: var(--muted);
+}
+
+.rule-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rule-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem 0.8rem;
+  padding: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.rule-item strong,
+.rule-item p {
+  display: block;
+}
+
+.rule-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
 .proposal-preview {
   display: grid;
   gap: 0.9rem;
@@ -733,6 +779,7 @@ td small {
   .diff-cols,
   .version-item,
   .claim-item,
+  .rule-item,
   .edit-form {
     grid-template-columns: 1fr;
   }

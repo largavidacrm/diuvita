@@ -263,6 +263,13 @@
               <dd id="reviewCandidateProfessionals">—</dd>
             </div>
           </dl>
+          <section class="review-rules hidden" id="reviewRulesPanel">
+            <div>
+              <h3>Reglas aplicadas</h3>
+              <p id="reviewRulesMeta">Decisiones internas antes de publicar.</p>
+            </div>
+            <div class="rule-list" id="reviewRulesList"></div>
+          </section>
           <div class="field">
             <label for="reviewResolutionNote">Nota interna</label>
             <textarea id="reviewResolutionNote" rows="2"></textarea>
@@ -571,6 +578,54 @@
       return true;
     }
 
+    function riskLabel(risk) {
+      var labels = {
+        low: "Riesgo bajo",
+        medium: "Riesgo medio",
+        high: "Riesgo alto"
+      };
+      return labels[risk] || "Riesgo sin clasificar";
+    }
+
+    function actionLabel(action) {
+      var labels = {
+        auto_accept: "Autoaceptable",
+        review: "Revisar",
+        reject: "Rechazar"
+      };
+      return labels[action] || action || "Revisar";
+    }
+
+    function actionPill(action) {
+      var tone = action === "reject" ? " danger" : action === "review" ? " warning" : "";
+      return '<span class="pill' + tone + '">' + html(actionLabel(action)) + '</span>';
+    }
+
+    function riskPill(risk) {
+      var tone = risk === "high" ? " danger" : risk === "medium" ? " warning" : "";
+      return '<span class="pill' + tone + '">' + html(riskLabel(risk)) + '</span>';
+    }
+
+    function renderReviewRules(payload) {
+      var decisions = (payload && payload.rule_decisions) || [];
+      var panel = el("reviewRulesPanel");
+      var list = el("reviewRulesList");
+      if (!Array.isArray(decisions) || !decisions.length) {
+        show(panel, false);
+        list.innerHTML = "";
+        return;
+      }
+      show(panel, true);
+      el("reviewRulesMeta").textContent = decisions.length + (decisions.length === 1 ? " decisión interna." : " decisiones internas.");
+      list.innerHTML = decisions.map(function (decision) {
+        var field = fieldPathLabel(decision.field_path || decision.field || "");
+        return '<article class="rule-item">' +
+          '<div><strong>' + html(field) + '</strong><p>' + html(decision.reason || "Sin motivo registrado.") + '</p></div>' +
+          '<div class="rule-tags">' + riskPill(decision.risk) + actionPill(decision.action) + '<span class="pill">' + html(pct(decision.confidence)) + '</span></div>' +
+          '</article>';
+      }).join("");
+    }
+
     function emptyRow(target, columns, text) {
       target.innerHTML = '<tr><td colspan="' + columns + '" class="empty">' + html(text) + '</td></tr>';
     }
@@ -718,6 +773,7 @@
 
     function fieldPathLabel(path) {
       var labels = {
+        "identity.canonical_name": "Nombre",
         "profile.name": "Nombre",
         "contact.website": "Web",
         "location.country": "País",
@@ -727,12 +783,21 @@
         "summary": "Resumen",
         "services.list": "Servicios",
         "specialties.list": "Especialidades",
+        "diagnostics.list": "Diagnósticos",
+        "programs.list": "Programas",
         "units.list": "Unidades",
         "professionals.published": "Especialistas",
+        "team.public_professionals": "Especialistas",
+        "team.credentials": "Credenciales",
         "technologies.list": "Tecnología",
         "contact.email": "Email",
         "contact.phone": "Teléfono",
-        "contact.instagram": "Instagram"
+        "contact.instagram": "Instagram",
+        "prices.list": "Precios",
+        "treatments.list": "Tratamientos",
+        "medical_claims.list": "Claims médicos",
+        "outcomes.list": "Resultados",
+        "evidence.list": "Evidencia clínica"
       };
       return labels[path] || path || "Campo";
     }
@@ -1329,6 +1394,7 @@
         "Fuente revisada: " + date(payload.retrieved_at)
       ] : candidateList(candidate, "services"));
       setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
+      renderReviewRules(payload);
       el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;
       el("reviewCreateDraftBtn").textContent = (isQualityAudit || isEnrichment || isSourceChange) ? "Editar clínica" : blocksDraft ? "Duplicado probable" : "Crear borrador";
       setInput("reviewResolutionNote", "");
