@@ -81,6 +81,11 @@ STEP_ITEM_KEYS = {
         "city",
         "clinic_status",
         "card_count",
+        "blocking_claim_reviews",
+        "enrichment_reviews",
+        "source_change_reviews",
+        "quality_reviews",
+        "candidate_reviews",
         "max_priority",
         "oldest_created_at",
     ),
@@ -179,6 +184,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in duplicate_enrichment[:3]
         ]
         compact.pop("duplicate_enrichment", None)
+    clinic_workgroups = compact.get("clinic_workgroups")
+    if isinstance(clinic_workgroups, list):
+        compact["clinic_workgroups_count"] = len(clinic_workgroups)
+        compact["sample_clinic_workgroups"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in clinic_workgroups[:3]
+        ]
+        compact.pop("clinic_workgroups", None)
     open_reviews = compact.get("open_reviews")
     if isinstance(open_reviews, list):
         compact["open_reviews_count"] = len(open_reviews)

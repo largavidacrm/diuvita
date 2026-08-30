@@ -110,11 +110,32 @@ def main():
                 "cards": [{"id": "large"}],
             }
         ],
+        "clinic_workgroups": [
+            {
+                "clinic_name": "Sensabell",
+                "clinic_slug": "sensabell",
+                "city": "Valencia",
+                "clinic_status": "published",
+                "card_count": 5,
+                "blocking_claim_reviews": 1,
+                "enrichment_reviews": 3,
+                "source_change_reviews": 0,
+                "quality_reviews": 1,
+                "candidate_reviews": 0,
+                "max_priority": 85,
+                "oldest_created_at": "2026-08-30T08:30:00+00:00",
+                "clinic_id": "large",
+            }
+        ],
     })
     check(compact_backlog["duplicate_enrichment_count"] == 1, "duplicate backlog count should be kept")
     check("duplicate_enrichment" not in compact_backlog, "full duplicate backlog list should be removed")
     check("card_count" in compact_backlog["sample_duplicate_enrichment"][0], "duplicate count should be kept")
     check("cards" not in compact_backlog["sample_duplicate_enrichment"][0], "duplicate card details should be omitted")
+    check(compact_backlog["clinic_workgroups_count"] == 1, "clinic workgroup count should be kept")
+    check("clinic_workgroups" not in compact_backlog, "full clinic workgroup list should be removed")
+    check("blocking_claim_reviews" in compact_backlog["sample_clinic_workgroups"][0], "clinic workgroup counts should be kept")
+    check("clinic_id" not in compact_backlog["sample_clinic_workgroups"][0], "large clinic ids should be omitted")
     compact_digest = compact_summary("admin_digest", {
         "admin_email": "admin@example.test",
         "summary": {"reviews": {"open": 2}},

@@ -104,6 +104,50 @@ duplicate_enrichment as (
     limit {capped_limit}
   ) items
 ),
+clinic_workgroups as (
+  select coalesce(
+    jsonb_agg(
+      to_jsonb(items)
+      order by
+        items.blocking_claim_reviews desc,
+        items.card_count desc,
+        items.max_priority desc,
+        items.oldest_created_at asc
+    ),
+    '[]'::jsonb
+  ) as data
+  from (
+    select
+      clinic_id,
+      coalesce(clinic_name, clinic_slug, 'sin clínica') as clinic_name,
+      clinic_slug,
+      city,
+      clinic_status,
+      count(*) as card_count,
+      count(*) filter (
+        where review_type = 'clinic_quality_audit'
+          and payload ->> 'quality_context' = 'blocking_claims'
+      ) as blocking_claim_reviews,
+      count(*) filter (
+        where review_type = 'clinic_quality_audit'
+          and coalesce(payload ->> 'quality_context', '') <> 'blocking_claims'
+      ) as quality_reviews,
+      count(*) filter (where review_type = 'clinic_profile_enrichment') as enrichment_reviews,
+      count(*) filter (where review_type = 'source_change_detected') as source_change_reviews,
+      count(*) filter (where review_type = 'candidate_clinic') as candidate_reviews,
+      max(priority) as max_priority,
+      min(created_at) as oldest_created_at
+    from open_reviews
+    where clinic_id is not null
+    group by clinic_id, clinic_name, clinic_slug, city, clinic_status
+    order by
+      blocking_claim_reviews desc,
+      card_count desc,
+      max_priority desc,
+      oldest_created_at asc
+    limit {capped_limit}
+  ) items
+),
 summary as (
   select jsonb_build_object(
     'open_reviews', (select count(*) from open_reviews),
@@ -117,6 +161,7 @@ summary as (
 select jsonb_build_object(
   'summary', (select data from summary),
   'review_type_summary', (select data from review_type_summary),
+  'clinic_workgroups', (select data from clinic_workgroups),
   'duplicate_enrichment', (select data from duplicate_enrichment),
   'generated_at', now()
 );
@@ -157,6 +202,32 @@ def format_duplicate_group(row: dict[str, Any]) -> str:
     )
 
 
+def format_clinic_workgroup(row: dict[str, Any]) -> str:
+    name = row.get("clinic_name") or row.get("clinic_slug") or "sin clínica"
+    city = row.get("city") or "sin ciudad"
+    status = status_label(row.get("clinic_status"))
+    cards = as_int(row.get("card_count"))
+    priority = as_int(row.get("max_priority"))
+    oldest = parse_timestamp(row.get("oldest_created_at"))
+    parts = []
+    for key, singular, plural_text in [
+        ("blocking_claim_reviews", "claim bloqueante", "claims bloqueantes"),
+        ("enrichment_reviews", "mejora", "mejoras"),
+        ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
+        ("quality_reviews", "auditoría", "auditorías"),
+        ("candidate_reviews", "candidata", "candidatas"),
+    ]:
+        count = as_int(row.get(key))
+        if count:
+            parts.append(f"{count} {plural(count, singular, plural_text)}")
+    detail = " / ".join(parts) if parts else "sin tipo medido"
+    return (
+        f"- {name} · {city} · {status} · "
+        f"{cards} {plural(cards, 'tarjeta', 'tarjetas')} · {detail} · "
+        f"P{priority} · más antigua {oldest}"
+    )
+
+
 def first_backlog_action(report: dict[str, Any]) -> str:
     duplicates = report.get("duplicate_enrichment") or []
     if duplicates:
@@ -174,6 +245,7 @@ def first_backlog_action(report: dict[str, Any]) -> str:
 def format_backlog(report: dict[str, Any]) -> str:
     summary = report.get("summary") or {}
     duplicates = report.get("duplicate_enrichment") or []
+    workgroups = report.get("clinic_workgroups") or []
     output = [
         "# Diuvita: atascos de bandeja",
         "",
@@ -190,8 +262,17 @@ def format_backlog(report: dict[str, Any]) -> str:
         "## Empezar por",
         f"- {first_backlog_action(report)}",
         "",
-        "## Tipos abiertos",
+        "## Trabajar por clínica",
     ]
+    if not workgroups:
+        output.append("- No hay grupos de revisión por clínica.")
+    for row in workgroups:
+        output.append(format_clinic_workgroup(row))
+
+    output.extend([
+        "",
+        "## Tipos abiertos",
+    ])
     for row in report.get("review_type_summary") or []:
         count = as_int(row.get("open_count"))
         open_label = plural(count, "abierta", "abiertas")
