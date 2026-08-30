@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -103,6 +104,20 @@ def run_checks(base_url: str, timeout: int) -> dict[str, Any]:
     }
 
 
+def run_checks_with_retries(base_url: str, timeout: int, retries: int = 0, retry_delay: int = 10) -> dict[str, Any]:
+    attempts = 0
+    report = run_checks(base_url, timeout)
+    attempts += 1
+    while not report["ok"] and attempts <= retries:
+        time.sleep(retry_delay)
+        report = run_checks(base_url, timeout)
+        attempts += 1
+    report["attempts"] = attempts
+    report["retries"] = retries
+    report["retry_delay_seconds"] = retry_delay
+    return report
+
+
 def format_report(report: dict[str, Any]) -> str:
     lines = [
         "# Diuvita production health",
@@ -110,6 +125,7 @@ def format_report(report: dict[str, Any]) -> str:
         f"Base: {report.get('base_url')}",
         f"Estado: {'OK' if report.get('ok') else 'Atención'}",
         "- Writes data: no",
+        f"- Attempts: {report.get('attempts', 1)}",
         "",
         "## Checks",
     ]
@@ -129,6 +145,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--timeout", type=int, default=12)
+    parser.add_argument("--retries", type=int, default=0, help="Retry failed checks this many times.")
+    parser.add_argument("--retry-delay", type=int, default=10, help="Seconds to wait between retries.")
     parser.add_argument("--json", action="store_true", help="Print raw JSON.")
     return parser.parse_args()
 
@@ -137,7 +155,11 @@ def main() -> int:
     args = parse_args()
     if args.timeout < 3 or args.timeout > 60:
         raise SystemExit("--timeout must be between 3 and 60 seconds.")
-    report = run_checks(args.base_url, args.timeout)
+    if args.retries < 0 or args.retries > 5:
+        raise SystemExit("--retries must be between 0 and 5.")
+    if args.retry_delay < 1 or args.retry_delay > 120:
+        raise SystemExit("--retry-delay must be between 1 and 120 seconds.")
+    report = run_checks_with_retries(args.base_url, args.timeout, args.retries, args.retry_delay)
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:

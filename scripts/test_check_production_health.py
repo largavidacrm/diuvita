@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Checks for the read-only production health report."""
 
+import check_production_health as health
 from check_production_health import CHECKS, check_response, clean_base_url, format_report
 
 
@@ -31,6 +32,31 @@ def main():
     check("admin: Atención · 200" in output, "missing-marker line missing")
     check("faltan: Fichas completas" in output, "missing markers should be listed")
     check("profile: Atención · sin respuesta" in output, "error line missing")
+    check("Attempts: 1" in output, "attempt count should be visible")
+    original_run_checks = health.run_checks
+    original_sleep = health.time.sleep
+    calls = []
+
+    def fake_run_checks(base_url, timeout):
+        calls.append((base_url, timeout))
+        return {
+            "base_url": base_url,
+            "ok": len(calls) > 1,
+            "writes_data": False,
+            "checks": [],
+        }
+
+    try:
+        health.run_checks = fake_run_checks
+        health.time.sleep = lambda _seconds: None
+        retry_report = health.run_checks_with_retries("https://example.test", 3, retries=2, retry_delay=1)
+    finally:
+        health.run_checks = original_run_checks
+        health.time.sleep = original_sleep
+
+    check(retry_report["ok"] is True, "retry should allow a later healthy result")
+    check(retry_report["attempts"] == 2, "retry attempts should be counted")
+    check(len(calls) == 2, "health check should stop retrying after success")
     admin_check = [item for item in CHECKS if item["name"] == "admin_shell"][0]
     home_check = [item for item in CHECKS if item["name"] == "home"][0]
     profile_check = [item for item in CHECKS if item["name"] == "public_profile_ux"][0]

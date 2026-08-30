@@ -33,6 +33,13 @@ JSON output:
 python3 scripts/check_production_health.py --json
 ```
 
+After a deploy, Netlify may need a short propagation window. Use bounded
+retries when the goal is to distinguish a slow deploy from a real issue:
+
+```bash
+python3 scripts/check_production_health.py --retries 2 --retry-delay 20
+```
+
 ## CTO cycle
 
 The safe CTO shadow cycle can include this check as an optional final step:
