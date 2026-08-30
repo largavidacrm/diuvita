@@ -32,7 +32,7 @@ from vitalarga_rules import decide_many
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "data" / "extractions"
 EXTRACTION_EXCERPT_CHARS = 5000
-MAX_PROFESSIONALS = 12
+MAX_PROFESSIONALS = 24
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
@@ -65,10 +65,19 @@ PROFESSIONAL_RE = re.compile(
 )
 TITLE_SCAN_RE = re.compile(rf"\b(?P<title>{TITLE_PREFIX})\s+")
 TEAM_MARKERS = (
+    "equipo",
+    "equipo de",
     "nuestro equipo",
+    "nuestros profesionales",
     "equipo medico",
     "equipo médico",
     "equipo profesional",
+    "profesionales medicos",
+    "profesionales médicos",
+    "staff medico",
+    "staff médico",
+    "cuadro medico",
+    "cuadro médico",
 )
 TEAM_END_MARKERS = (
     "contáctanos",
@@ -79,26 +88,45 @@ TEAM_END_MARKERS = (
     "©",
 )
 ROLE_PHRASES = (
+    "Cardiología",
+    "Chequeos de Longevidad",
+    "Coordinación médica",
+    "Coordinacion medica",
+    "Dermatología",
+    "Dermatología Estética",
     "Dirección",
+    "Dirección médica",
+    "Direccion medica",
+    "Endocrinología",
+    "Fisioterapia",
     "Gerente / Nutrición",
     "Gerente/Nutrición",
     "Gerente",
+    "Ginecología",
     "Nutrición",
     "Nutrición funcional",
     "Nutricionista y experta en Microbiota",
     "Nutricionista",
     "Subdirectora",
     "Subdirector",
+    "Medicina Antienvejecimiento",
+    "Medicina de Longevidad",
     "Medicina Estética y Longevidad",
+    "Medicina Funcional",
+    "Medicina General",
     "Medicina Integrativa",
     "Medicina Interna",
+    "Medicina Regenerativa",
     "Ginecología regenerativa y Salud integral de la mujer",
     "Neurofisiólogo clínico",
+    "Oncología Integrativa",
     "Otorrinolaringología",
     "Otorrino",
     "Anestesia",
     "Flebología",
     "Cirugía Plástica",
+    "Psicología",
+    "Psicologia",
     "Atención al Paciente",
     "Atencion al paciente",
     "Técnico Auxiliar",

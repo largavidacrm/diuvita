@@ -134,6 +134,21 @@ def main():
         "Arvila role/context text should not be part of extracted names",
     )
 
+    untitled_team_professionals = extract_professionals(
+        "Equipo médico Jordi Ibañez Chequeos de Longevidad "
+        "Joan Josep Fuertes Medicina General "
+        "Pere Gascón Oncología Integrativa "
+        "Mariana Díaz Dermatología Estética Contacto"
+    )
+    check("Jordi Ibañez" in untitled_team_professionals, "untitled longevity-check doctor should be captured")
+    check("Joan Josep Fuertes" in untitled_team_professionals, "untitled general-medicine doctor should be captured")
+    check("Pere Gascón" in untitled_team_professionals, "untitled integrative oncology doctor should be captured")
+    check("Mariana Díaz" in untitled_team_professionals, "untitled dermatology doctor should be captured")
+    check(
+        all("Medicina" not in item and "Dermatología" not in item and "Chequeos" not in item for item in untitled_team_professionals),
+        "untitled team roles should not be part of extracted names",
+    )
+
     kairos_professionals = extract_professionals(
         "Conoce nuestro equipo Dra. Anna Paola Medicina Estética Regenerativa y Longevidad "
         "Dra. Marieta Ramírez Ginecología regenerativa y Salud integral de la mujer "
