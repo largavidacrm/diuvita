@@ -165,7 +165,7 @@ def specialists_click(digest: dict[str, Any]) -> str:
     total = as_int(status.get("professionals_count"))
     if not count:
         return ""
-    suffix = f" Hay {total} especialistas propuestos." if total else ""
+    suffix = f" En total hay {total} especialistas propuestos en la bandeja." if total else ""
     return f"Pulsa Especialistas y abre primero la tarjeta con más nombres: {review_name(first, 'Especialistas')}.{suffix}"
 
 

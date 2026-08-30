@@ -181,7 +181,7 @@ def main():
     check("Próximos clics" in output, "next-clicks section missing")
     check("No crees trabajos nuevos hasta bajar la bandeja; ahora está cerca del freno: 48/50 abiertas." in output, "near-limit click guard missing")
     check("Pulsa Filtrar grupo y trabaja Sensabell: 5 tarjetas juntas." in output, "clinic-group click missing")
-    check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad. Hay 17 especialistas propuestos." in output, "specialist click missing")
+    check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad. En total hay 17 especialistas propuestos en la bandeja." in output, "specialist click missing")
     check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "Google Maps click missing")
     check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible case missing")
     check("Acción sugerida por el sistema: Revisar claim bloqueante." in output, "next action missing")
