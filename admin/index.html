@@ -59,6 +59,16 @@
 
       <section class="metrics" id="metrics"></section>
 
+      <section class="panel system-panel" id="systemPanel">
+        <div class="panel-head">
+          <h2>Estado del sistema</h2>
+          <span class="pill" id="systemHealthPill">Cargando</span>
+        </div>
+        <div class="system-grid" id="systemStatusList">
+          <p class="empty">Cargando estado operativo.</p>
+        </div>
+      </section>
+
       <section class="panel editor-panel hidden" id="clinicEditor">
         <div class="panel-head">
           <div>
@@ -529,6 +539,13 @@
       return '<article class="metric"><span>' + html(label) + '</span><strong>' + html(value) + '</strong></article>';
     }
 
+    function systemItem(label, value, tone) {
+      return '<article class="system-item">' +
+        '<span>' + html(label) + '</span>' +
+        '<strong class="' + html(tone || "") + '">' + html(value) + '</strong>' +
+        '</article>';
+    }
+
     function pill(status) {
       var tone = "";
       if (["failed", "dead_letter", "rejected", "conflict"].indexOf(status) >= 0) tone = " danger";
@@ -581,6 +598,38 @@
         return item[1] + " " + reviewTypeLabel(item[0]).toLowerCase();
       });
       return parts.length ? parts.join(" · ") : "Sin revisiones abiertas";
+    }
+
+    function renderSystemStatus(summary, recentJobs, recentEvents) {
+      var clinics = summary.clinics || {};
+      var reviews = summary.reviews || {};
+      var jobs = summary.jobs || {};
+      var evidence = summary.evidence || {};
+      var automation = summary.automation || {};
+      var failedJobs = Number(jobs.failed || 0) + Number(jobs.dead_letter || 0);
+      var runningJobs = Number(jobs.running || 0);
+      var healthLabel = failedJobs ? "Atención" : runningJobs ? "Trabajando" : "Sano";
+      var healthTone = failedJobs ? " danger" : runningJobs ? " warning" : "";
+      var latestJob = recentJobs && recentJobs.length ? recentJobs[0] : null;
+      var latestEvent = recentEvents && recentEvents.length ? recentEvents[0] : null;
+      var completed = Number(automation.candidate_reviews_completed || 0);
+      var target = Number(automation.shadow_review_target || 0);
+
+      el("systemHealthPill").className = "pill" + healthTone;
+      el("systemHealthPill").textContent = healthLabel;
+      el("systemStatusList").innerHTML = [
+        systemItem("Agentes", automation.agents_enabled ? "Activos" : "Pausados", automation.agents_enabled ? "" : "warning-text"),
+        systemItem("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada", automation.auto_publish_enabled ? "danger-text" : ""),
+        systemItem("Modo sombra", automation.shadow_mode_active === false ? "Inactivo" : "Activo"),
+        systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
+        systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
+        systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
+        systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
+        systemItem("Fallos", failedJobs, failedJobs ? "danger-text" : ""),
+        systemItem("Último trabajo", latestJob ? latestJob.job_type + " · " + date(latestJob.created_at) : "—"),
+        systemItem("Último movimiento", latestEvent ? eventLabel(latestEvent.event_name) + " · " + date(latestEvent.created_at) : "—"),
+        systemItem("Evidencias", (evidence.sources || 0) + " fuentes · " + (evidence.snapshots || 0) + " capturas")
+      ].join("");
     }
 
     function priorityBand(priority) {
@@ -1106,6 +1155,8 @@
         agent_job_failed: "Trabajo fallido",
         review_item_status_changed: "Revisión cerrada",
         candidate_review_draft_created: "Borrador creado",
+        candidate_draft_status_normalized: "Borrador normalizado",
+        candidate_existing_draft_status_normalized: "Borrador normalizado",
         quality_audit_completed: "Auditoría completada",
         clinic_profile_enrichment_proposals_created: "Propuestas de ficha creadas",
         public_site_rebuild_requested: "Publicación solicitada",
@@ -1860,6 +1911,7 @@
               html(eventDetail(row)) + "</td><td>" + date(row.created_at) + "</td></tr>";
           }).join("");
         }
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || []);
 
         var clinicRows = await client
           .from("clinics")
