@@ -8,6 +8,7 @@ import sys
 from typing import Any
 
 from admin_digest import as_int, load_digest, next_action_label, parse_timestamp
+from check_production_health import run_checks
 from submit_discovery_candidates import get_default_admin_email, load_env_file
 
 
@@ -95,6 +96,17 @@ def profile_completeness_status(digest: dict[str, Any]) -> str:
     return f"{ready}/{visible} fichas sin campos pendientes medidos; {pending} con pendientes"
 
 
+def production_health_status(report: dict[str, Any]) -> str:
+    checks = report.get("checks") or []
+    if report.get("ok"):
+        return f"OK en {len(checks)} comprobaciones públicas"
+    failed = [str(item.get("name") or "comprobación") for item in checks if not item.get("ok")]
+    if failed:
+        label = "comprobación" if len(failed) == 1 else "comprobaciones"
+        return f"atención en {len(failed)} {label}: {', '.join(failed[:3])}"
+    return "atención; no se pudo confirmar el estado público"
+
+
 def first_step(digest: dict[str, Any]) -> list[str]:
     counts = review_counts(digest)
     failed = digest.get("recent_failed_jobs") or []
@@ -131,7 +143,7 @@ def first_step(digest: dict[str, Any]) -> list[str]:
     return ["No hay una acción urgente.", "Puedes revisar el panel o dejar que el sistema siga en modo sombra."]
 
 
-def format_brief(digest: dict[str, Any]) -> str:
+def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | None = None) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
     reviews = summary.get("reviews") or {}
@@ -186,6 +198,10 @@ def format_brief(digest: dict[str, Any]) -> str:
         f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",
+    ])
+    if production_health is not None:
+        output.append(f"- Web pública: {production_health_status(production_health)}.")
+    output.extend([
         "",
         "Panel: https://www.diuvita.com/admin/",
     ])
@@ -198,6 +214,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--admin-email", help="Admin email used to read the protected dashboard summary.")
     parser.add_argument("--limit", type=int, default=30, help="Maximum open reviews and failed jobs to inspect.")
     parser.add_argument("--json", action="store_true", help="Print raw digest JSON instead of the Daniel brief.")
+    parser.add_argument("--production-health", action="store_true", help="Include a read-only public-site health line.")
+    parser.add_argument("--production-base-url", default="https://www.diuvita.com")
+    parser.add_argument("--production-timeout", type=int, default=12)
     return parser.parse_args()
 
 
@@ -205,13 +224,19 @@ def main() -> int:
     args = parse_args()
     if args.limit < 1:
         raise SystemExit("--limit must be at least 1.")
+    if args.production_timeout < 3 or args.production_timeout > 60:
+        raise SystemExit("--production-timeout must be between 3 and 60 seconds.")
     local_env = load_env_file()
     admin_email = args.admin_email or get_default_admin_email(local_env)
     digest = load_digest(admin_email, args.limit, local_env)
+    production_health = run_checks(args.production_base_url, args.production_timeout) if args.production_health else None
     if args.json:
+        if production_health is not None:
+            digest = dict(digest)
+            digest["production_health"] = production_health
         print(json.dumps(digest, ensure_ascii=False, indent=2))
     else:
-        print(format_brief(digest), end="")
+        print(format_brief(digest, production_health), end="")
     return 0
 
 

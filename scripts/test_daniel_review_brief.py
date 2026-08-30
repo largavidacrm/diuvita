@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for Daniel's plain-Spanish review brief."""
 
-from daniel_review_brief import format_brief, first_step, review_counts
+from daniel_review_brief import format_brief, first_step, production_health_status, review_counts
 
 
 def check(condition, message):
@@ -75,6 +75,21 @@ def main():
     check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
+
+    production_report = {
+        "ok": True,
+        "checks": [{"name": "home", "ok": True}, {"name": "admin_shell", "ok": True}],
+    }
+    output_with_health = format_brief(digest, production_report)
+    check("Web pública: OK en 2 comprobaciones públicas" in output_with_health, "production health line missing")
+    attention_report = {
+        "ok": False,
+        "checks": [{"name": "home", "ok": True}, {"name": "sitemap", "ok": False}],
+    }
+    check(
+        production_health_status(attention_report) == "atención en 1 comprobación: sitemap",
+        "production health attention summary missing",
+    )
 
     failed_digest = sample_digest()
     failed_digest["recent_failed_jobs"] = [{"job_type": "QUALITY_AUDIT"}]
