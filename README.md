@@ -34,6 +34,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/HUMAN_FIELD_LOCKS.md`: protecciones para campos corregidos manualmente por Daniel.
 - `docs/ENRICHMENT_CLAIMS_CAPTURE.md`: captura interna de fuentes y claims desde propuestas de mejora.
 - `docs/CANDIDATE_DRAFT_PROMOTION.md`: herramienta conservadora para convertir candidatas en borradores internos.
+- `docs/SOURCE_RECORD_HYDRATION.md`: hidratación de evidencias compactas para fuentes guardadas.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.
@@ -51,6 +52,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
 - `scripts/capture_enrichment_review_claims.py`: convierte propuestas internas en `source_records` y `field_claims`.
 - `scripts/promote_candidate_reviews.py`: simula o crea borradores internos desde candidatas revisables.
+- `scripts/hydrate_source_records.py`: completa `source_records` con título, hash y extracto corto.
 - `scripts/apply_supabase_sql.sh`: aplica un SQL concreto contra Supabase.
 - `scripts/add_supabase_admin.sh`: autoriza un email como administrador del panel.
 - `scripts/create_supabase_auth_user.py`: crea un usuario de acceso en Supabase Auth.

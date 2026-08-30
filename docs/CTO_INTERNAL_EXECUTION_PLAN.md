@@ -38,6 +38,7 @@ Already built:
 - Audit events and entity versions for manual edits.
 - `agent_jobs`, `review_queue`, `source_records`, `field_claims`, `human_overrides` and related foundation tables.
 - Admin visibility for clinic version history, protected fields and internal evidence claims.
+- Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.

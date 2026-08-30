@@ -78,6 +78,7 @@ export PGSSLMODE=require
   -c "select key, value from private.app_settings where key in ('diuvita_agents_enabled', 'diuvita_auto_publish_enabled', 'diuvita_shadow_review_target') order by key;" \
   -c "select status, count(*) from public.clinics group by status order by status;" \
   -c "select count(*) as open_review_items from public.review_queue where status = 'open';" \
+  -c "select count(*) as source_records_missing_hash from public.source_records where content_hash is null and (metadata ->> 'last_hydration_error_at' is null or (metadata ->> 'last_hydration_error_at')::timestamptz < now() - interval '24 hours');" \
   -c "select count(*) as candidate_source_records from public.source_records where entity_type = 'candidate_clinic';" \
   -c "select count(*) as total_field_claims from public.field_claims;" \
   -c "select count(*) as shadow_field_claims from public.field_claims where agent_name = 'diuvita-shadow-discovery';" \
