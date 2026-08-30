@@ -619,6 +619,7 @@
     var reviewDuplicateFilter = false;
     var reviewClinicGroupFilter = "";
     var reviewGoogleLinksFilter = false;
+    var reviewSpecialistsFilter = false;
     var sourceCoverageCache = null;
     var specialistCoverageCache = null;
     var clinicStatusFilter = "";
@@ -1739,6 +1740,7 @@
         el("reviewPriorityFilter").value = "";
         reviewDuplicateFilter = false;
         reviewGoogleLinksFilter = false;
+        reviewSpecialistsFilter = false;
         renderReviews();
       }
       if (globalPlanNextReviewId) {
@@ -1899,6 +1901,7 @@
       el("reviewPriorityFilter").value = "";
       reviewDuplicateFilter = false;
       reviewGoogleLinksFilter = false;
+      reviewSpecialistsFilter = false;
       renderReviews();
       toast("Bandeja filtrada por " + clinicWorkgroupSubject(group) + ".");
     }
@@ -1940,6 +1943,7 @@
       el("reviewPriorityFilter").value = "";
       reviewDuplicateFilter = false;
       reviewGoogleLinksFilter = false;
+      reviewSpecialistsFilter = false;
       renderReviews();
       toast("Bandeja filtrada por " + query + ".");
     }
@@ -1990,6 +1994,7 @@
       reviewDuplicateFilter = false;
       reviewClinicGroupFilter = "";
       reviewGoogleLinksFilter = true;
+      reviewSpecialistsFilter = false;
       renderReviews();
       openReviewEditor(match.id);
     }
@@ -2009,6 +2014,7 @@
       reviewDuplicateFilter = false;
       reviewClinicGroupFilter = "";
       reviewGoogleLinksFilter = false;
+      reviewSpecialistsFilter = true;
       renderReviews();
       toast("Bandeja filtrada por especialistas de " + query + ".");
     }
@@ -2083,6 +2089,10 @@
       return ' <span class="pill">' + html(count + (count === 1 ? " especialista" : " especialistas")) + '</span>';
     }
 
+    function reviewHasSpecialistProposal(row) {
+      return reviewProfessionalsCount(row) > 0 || (row && row.review_type === "specialist_review");
+    }
+
     function reviewTypeCell(row) {
       var extra = isDuplicateEnrichmentReview(row)
         ? ' <span class="pill warning">Varias propuestas</span>'
@@ -2134,13 +2144,15 @@
         return reviewMatchesClinicGroup(row) &&
           reviewMatchesSearch(row) &&
           (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row)) &&
+          (!reviewSpecialistsFilter || reviewHasSpecialistProposal(row)) &&
           (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
       });
       var priorityBase = reviewCache.filter(function (row) {
         return reviewMatchesClinicGroup(row) &&
           reviewMatchesSearch(row) &&
           reviewMatchesType(row, reviewTypeFilter) &&
-          (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row));
+          (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row)) &&
+          (!reviewSpecialistsFilter || reviewHasSpecialistProposal(row));
       });
       var typeChips = REVIEW_TYPE_FILTERS.map(function (filter) {
         var value = filter[0];
@@ -2157,7 +2169,8 @@
           reviewMatchesSearch(row) &&
           reviewMatchesType(row, reviewTypeFilter) &&
           (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter) &&
-          (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row));
+          (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row)) &&
+          (!reviewSpecialistsFilter || reviewHasSpecialistProposal(row));
       });
       var duplicateCount = countWhere(duplicateBase, isDuplicateEnrichmentReview);
       var duplicateChips = duplicateCount || reviewDuplicateFilter
@@ -2173,10 +2186,16 @@
           (!reviewDuplicateFilter || isDuplicateEnrichmentReview(row));
       });
       var googleLinkCount = countWhere(fieldBase, reviewHasGoogleLinkProposal);
-      var fieldChips = googleLinkCount || reviewGoogleLinksFilter
-        ? '<div class="filter-chip-row"><strong>Campo</strong>' +
-          filterChip("Google Maps", googleLinkCount, reviewGoogleLinksFilter, { "data-review-google-links": "true" }) +
-          '</div>'
+      var specialistCount = countWhere(fieldBase, reviewHasSpecialistProposal);
+      var fieldChipItems = [];
+      if (googleLinkCount || reviewGoogleLinksFilter) {
+        fieldChipItems.push(filterChip("Google Maps", googleLinkCount, reviewGoogleLinksFilter, { "data-review-google-links": "true" }));
+      }
+      if (specialistCount || reviewSpecialistsFilter) {
+        fieldChipItems.push(filterChip("Especialistas", specialistCount, reviewSpecialistsFilter, { "data-review-specialists": "true" }));
+      }
+      var fieldChips = fieldChipItems.length
+        ? '<div class="filter-chip-row"><strong>Campo</strong>' + fieldChipItems.join("") + '</div>'
         : "";
       var activeGroup = activeClinicWorkgroup();
       var groupChips = reviewClinicGroupFilter
@@ -2359,7 +2378,7 @@
     }
 
     function activeReviewFilters() {
-      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery || reviewDuplicateFilter || reviewClinicGroupFilter || reviewGoogleLinksFilter);
+      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery || reviewDuplicateFilter || reviewClinicGroupFilter || reviewGoogleLinksFilter || reviewSpecialistsFilter);
     }
 
     function reviewMatchesFilters(row) {
@@ -2368,6 +2387,7 @@
       if (reviewPriorityFilter && priorityBand(row.priority) !== reviewPriorityFilter) return false;
       if (reviewDuplicateFilter && !isDuplicateEnrichmentReview(row)) return false;
       if (reviewGoogleLinksFilter && !reviewHasGoogleLinkProposal(row)) return false;
+      if (reviewSpecialistsFilter && !reviewHasSpecialistProposal(row)) return false;
       if (!reviewMatchesSearch(row)) return false;
       return true;
     }
@@ -2389,6 +2409,7 @@
       reviewDuplicateFilter = false;
       reviewClinicGroupFilter = "";
       reviewGoogleLinksFilter = false;
+      reviewSpecialistsFilter = false;
       renderReviews();
     }
 
@@ -4875,7 +4896,7 @@
         if (button) openReviewEditor(button.getAttribute("data-related-review-id"));
       });
       el("reviewFilterChips").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-group-clear]");
+        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group-clear]");
         if (!button) return;
         if (button.hasAttribute("data-review-type")) {
           el("reviewTypeFilter").value = button.getAttribute("data-review-type");
@@ -4888,6 +4909,9 @@
         }
         if (button.hasAttribute("data-review-google-links")) {
           reviewGoogleLinksFilter = !reviewGoogleLinksFilter;
+        }
+        if (button.hasAttribute("data-review-specialists")) {
+          reviewSpecialistsFilter = !reviewSpecialistsFilter;
         }
         if (button.hasAttribute("data-review-group-clear")) {
           reviewClinicGroupFilter = "";

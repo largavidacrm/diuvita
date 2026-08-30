@@ -31,13 +31,17 @@ def main() -> None:
         "data-review-priority",
         "data-review-duplicate",
         "data-review-google-links",
+        "data-review-specialists",
         "data-review-group-clear",
         "reviewDuplicateFilter",
         "reviewGoogleLinksFilter",
+        "reviewSpecialistsFilter",
         "reviewClinicGroupFilter",
         "function reviewHasGoogleLinkProposal",
+        "function reviewHasSpecialistProposal",
         'filterChip("Google Maps", googleLinkCount, reviewGoogleLinksFilter, { "data-review-google-links": "true" })',
-        "[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-group-clear]",
+        'filterChip("Especialistas", specialistCount, reviewSpecialistsFilter, { "data-review-specialists": "true" })',
+        "[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group-clear]",
     ]:
         check(marker in index, f"missing admin review filter marker: {marker}")
 

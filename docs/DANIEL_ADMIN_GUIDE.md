@@ -80,6 +80,11 @@ El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
 que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
 auditoría, cambio de fuente y mejoras abiertas a la vez.
 
+En los filtros rápidos de **Necesitan revisión**, usa **Especialistas** para ver
+solo tarjetas que traen profesionales publicados o propuestas relacionadas con
+equipo médico. Es la forma más rápida de completar ese apartado sin revisar toda
+la bandeja.
+
 El filtro rápido **Google Maps** muestra las tarjetas que traen un enlace directo
 propuesto a Google Maps o a valoraciones de Google. Ábrelo, comprueba que el
 enlace corresponde al perfil real de la clínica y solo entonces carga la
