@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Basic checks for the shadow clinic profile extractor."""
 from capture_source_snapshot import FetchResult
-from extract_clinic_profile_shadow import extract_from_fetch, extract_professionals
+from extract_clinic_profile_shadow import extract_from_fetch, extract_locations, extract_professionals
 
 
 def check(condition, message):
@@ -23,6 +23,7 @@ def main():
   <p>Dra. Laura García Pérez, nº colegiada 12345.</p>
   <p>Precio consulta: 120 €.</p>
   <p>Pruebas disponibles: DEXA, VO2 max, biomarcadores y test epigenético.</p>
+  <p>Sedes: Calle Serrano 100, 28006 Madrid. Avenida Diagonal 450, 08006 Barcelona.</p>
   <p>{filler}</p>
   <p>Programa con hipoxia intermitente.</p>
   <p>Contacto: info@exampleclinic.test +34 930 111 222 @exampleclinic</p>
@@ -43,6 +44,9 @@ def main():
     check(profile["name"] == "Example Longevity Clinic", "name guess failed")
     check(profile["emails"] == ["info@exampleclinic.test"], "email extraction failed")
     check(profile["instagram"] == ["@exampleclinic"], "instagram extraction failed")
+    check(len(profile["locations"]) == 2, "two locations should be extracted")
+    check(profile["locations"][0]["city"] == "Madrid", "Madrid location city missing")
+    check(profile["locations"][1]["city"] == "Barcelona", "Barcelona location city missing")
     check("VO2 max" in profile["technologies"], "technology detection failed")
     check("Hipoxia intermitente" in profile["technologies"], "later-page technology detection failed")
     check("Medicina preventiva" in profile["services"], "service detection failed")
@@ -53,6 +57,7 @@ def main():
     check(profile["team_credentialing_visible"] == "si", "credentialing visibility detection failed")
     check(profile["public_pricing"] == "si", "public pricing detection failed")
     check("contact.email" in fields, "email claim missing")
+    check("location.locations" in fields, "location claim missing")
     check("units.list" in fields, "unit claim missing")
     check("professionals.published" in fields, "professional claim missing")
     check("transparency.years_in_practice" in fields, "years claim missing")
@@ -60,6 +65,14 @@ def main():
     check("team.credentialing_visible" in fields, "credentialing claim missing")
     check("prices.public_status" in fields, "pricing claim missing")
     check(extraction["rule_decisions"], "rule decisions missing")
+    extracted_locations = extract_locations(
+        "Sedes Calle Serrano 100, 28006 Madrid. Avenida Diagonal 450, 08006 Barcelona. Contacto"
+    )
+    check(len(extracted_locations) == 2, "location extractor should capture clear address patterns")
+    check(
+        all("Sede 1" not in str(item) and "Sede 2" not in str(item) for item in extracted_locations),
+        "extracted locations should not create numbered labels",
+    )
 
     regenera_text = (
         "NUESTRO EQUIPO Te acompañamos desde la ciencia y la empatía "

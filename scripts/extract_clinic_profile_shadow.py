@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "data" / "extractions"
 EXTRACTION_EXCERPT_CHARS = 5000
 MAX_PROFESSIONALS = 24
+MAX_LOCATIONS = 8
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
@@ -57,6 +58,38 @@ PUBLIC_PRICING_RE = re.compile(
     r"(?:precio|tarifa|consulta|programa|bono)[^.]{0,90}(?:€|eur|euros)|"
     r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
     re.I,
+)
+LOCATION_ADDRESS_RE = re.compile(
+    r"\b(?P<address>(?:C/|Calle|Carrer|Paseo|Passeig|Avenida|Avda\.?|Plaza|Ronda|"
+    r"Carretera|Camino|Vía|Via|Gran Vía|Road|Street|Avenue)\s+"
+    r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9][^.;|]{4,120}?"
+    r"(?:\b\d{5}\b\s+[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,40}|"
+    r"Barcelona|Madrid|Valencia|Marbella|Málaga|Malaga|Sevilla|Bilbao|Alicante|"
+    r"Zaragoza|Murcia|Palma|Vigo|Granada|Girona|Tarragona))",
+    re.I,
+)
+ADDRESS_STOP_RE = re.compile(
+    r"\b(?:tel[eé]fono|email|correo|contacto|horario|ver mapa|google maps|"
+    r"c[oó]mo llegar|como llegar|reservar|pedir cita)\b",
+    re.I,
+)
+CITY_HINTS = (
+    "Barcelona",
+    "Madrid",
+    "Valencia",
+    "Marbella",
+    "Málaga",
+    "Malaga",
+    "Sevilla",
+    "Bilbao",
+    "Alicante",
+    "Zaragoza",
+    "Murcia",
+    "Palma",
+    "Vigo",
+    "Granada",
+    "Girona",
+    "Tarragona",
 )
 NAME_WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{2,}"
 TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora|Lic\.?|Licenciado|Licenciada)"
@@ -333,6 +366,52 @@ def unique(items: list[str]) -> list[str]:
     return result
 
 
+def fold(value: str) -> str:
+    return unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii").lower()
+
+
+def canonical_city(value: str) -> str:
+    return "Málaga" if value == "Malaga" else value
+
+
+def city_from_address(address: str) -> str:
+    folded = fold(address)
+    for city in sorted(CITY_HINTS, key=len, reverse=True):
+        if fold(city) in folded:
+            return canonical_city(city)
+    match = re.search(
+        r"\b\d{5}\b\s+([A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ-]+(?:\s+[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ-]+){0,2})",
+        address,
+    )
+    return normalize_space(match.group(1)).strip(" ,.;:") if match else ""
+
+
+def clean_address(raw: str) -> str:
+    first_part = ADDRESS_STOP_RE.split(raw, 1)[0]
+    return normalize_space(first_part).strip(" ,.;:-")
+
+
+def extract_locations(text: str) -> list[dict[str, str]]:
+    locations: list[dict[str, str]] = []
+    seen = set()
+    for match in LOCATION_ADDRESS_RE.finditer(text):
+        address = clean_address(match.group("address"))
+        if len(address) < 10:
+            continue
+        key = fold(address)
+        if key in seen:
+            continue
+        seen.add(key)
+        location: dict[str, str] = {"address": address}
+        city = city_from_address(address)
+        if city:
+            location["city"] = city
+        locations.append(location)
+        if len(locations) >= MAX_LOCATIONS:
+            break
+    return locations
+
+
 def clean_phone(raw: str) -> str:
     return normalize_space(raw).strip(".,;:")
 
@@ -520,6 +599,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
     professionals = extract_professionals(text)
+    locations = extract_locations(text)
     transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
     claims: list[dict[str, Any]] = []
@@ -536,6 +616,8 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         claims.append(claim("contact.phone", contacts["phones"][0], 0.78, source_url))
     if contacts["instagram"]:
         claims.append(claim("contact.instagram", contacts["instagram"][0], 0.80, source_url))
+    if locations:
+        claims.append(claim("location.locations", locations[:MAX_LOCATIONS], 0.66, source_url))
     if professionals:
         claims.append(claim("professionals.published", professionals[:MAX_PROFESSIONALS], 0.64, source_url))
     if transparency.get("years_in_practice"):
@@ -556,6 +638,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
     professionals = extract_professionals(text)
+    locations = extract_locations(text)
     transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
     name = guess_name(snapshot)
@@ -565,6 +648,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
         "emails": contacts["emails"],
         "phones": contacts["phones"],
         "instagram": contacts["instagram"],
+        "locations": locations[:MAX_LOCATIONS],
         "services": keywords.get("services.list", []),
         "specialties": keywords.get("specialties.list", []),
         "units": keywords.get("units.list", []),

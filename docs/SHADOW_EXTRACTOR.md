@@ -16,6 +16,8 @@ It reads one public source page and returns:
 - Field claims.
 - Rules-engine decisions.
 - Publicly listed specialists and clinical units when they are explicit enough.
+- Clear published locations when the address pattern includes a street type and
+  city or postcode.
 - Basic transparency hints when stated clearly: years in practice, public
   specialist count, visible professional credentialing and public pricing
   signals.
@@ -75,6 +77,8 @@ That folder is local/ignored by Git.
   team sections, including pages where the name appears before a clear medical
   role such as medicina general, oncología integrativa, dermatología or
   fisioterapia.
+- It only detects locations from clear address patterns. It does not invent sede
+  names and it does not label locations as `Sede 1` or `Sede 2`.
 - It does not infer years in practice from founding dates yet.
 - It does not fetch or verify Google Maps profiles yet; those links are edited
   manually or proposed later from explicit sources.

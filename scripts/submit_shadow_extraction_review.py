@@ -32,6 +32,7 @@ FIELD_MAP = {
     "contact.email": "email",
     "contact.phone": "telefono",
     "contact.instagram": "instagram",
+    "location.locations": "locations",
     "services.list": "services",
     "specialties.list": "specialties",
     "units.list": "unidades",

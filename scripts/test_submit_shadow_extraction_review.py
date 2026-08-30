@@ -21,6 +21,7 @@ def main():
 <body>
   <p>Medicina preventiva, longevidad and VO2 max.</p>
   <p>Unidad de Longevidad con Dra. Laura García Pérez.</p>
+  <p>Sede principal: Calle Serrano 100, 28006 Madrid.</p>
   <p>Contact: info@exampleclinic.test @exampleclinic</p>
 </body>
 </html>
@@ -40,6 +41,7 @@ def main():
     check(payload["clinic_slug"] == "example-clinic", "clinic slug missing")
     check(fields["email"] == "info@exampleclinic.test", "email field missing")
     check(fields["instagram"] == "@exampleclinic", "instagram field missing")
+    check(fields["locations"][0]["address"].startswith("Calle Serrano"), "location field missing")
     check(fields["unidades"] == ["Unidad de Longevidad"], "units field missing")
     check(fields["profesionales"] == ["Dra. Laura García Pérez"], "professionals field missing")
     check("field_claims" in payload, "claims missing")

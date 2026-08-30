@@ -62,6 +62,27 @@ def value_supported(value: Any, haystack: str) -> tuple[bool, str]:
     return False, "value not found explicitly"
 
 
+def verify_locations(value: Any, haystack: str) -> tuple[str, float, str]:
+    if not isinstance(value, list):
+        return "review", 0.50, "location value is not a list"
+    addresses = []
+    for item in value:
+        if isinstance(item, dict):
+            address = normalized_text(item.get("address") or item.get("direccion") or item.get("dirección"))
+        else:
+            address = normalized_text(item)
+        if address:
+            addresses.append(address)
+    if not addresses:
+        return "review", 0.50, "empty location list"
+    supported = [address for address in addresses if address in haystack]
+    if len(supported) == len(addresses):
+        return "accepted", 0.90, "all location addresses found explicitly"
+    if supported:
+        return "review", 0.72, f"partial location support: {len(supported)} of {len(addresses)} addresses"
+    return "review", 0.60, "location addresses need manual review"
+
+
 def verify_contact_phone(value: Any, haystack: str) -> tuple[str, float, str]:
     claim_digits = digits(value)
     if len(claim_digits) < 7:
@@ -97,6 +118,8 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"
         confidence = 0.66 if supported else 0.45
+    elif field_path.startswith("location."):
+        verdict, confidence, reason = verify_locations(value, haystack)
     elif field_path.startswith(("services.", "specialties.", "units.", "diagnostics.", "programs.", "technologies.", "professionals.")):
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"
