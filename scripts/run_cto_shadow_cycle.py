@@ -89,6 +89,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ["admin_digest.py", "--limit", str(args.digest_limit)],
             45,
         ),
+        (
+            "evaluate_claim_rules",
+            ["evaluate_claim_rules.py", "--limit", str(args.claim_limit), "--json"],
+            45,
+        ),
     ]
 
 
@@ -99,13 +104,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-limit", type=int, default=40)
     parser.add_argument("--monitor-limit", type=int, default=40)
     parser.add_argument("--digest-limit", type=int, default=8)
+    parser.add_argument("--claim-limit", type=int, default=100)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if min(args.review_limit, args.source_limit, args.monitor_limit, args.digest_limit) < 1:
+    if min(args.review_limit, args.source_limit, args.monitor_limit, args.digest_limit, args.claim_limit) < 1:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:
         raise SystemExit("--fetch-timeout must be between 3 and 60 seconds.")

@@ -5,7 +5,8 @@
 1. capture enrichment review claims;
 2. hydrate pending source records;
 3. monitor source changes;
-4. print the admin digest.
+4. print the admin digest;
+5. evaluate stored claims against publication rules.
 
 Default mode is dry-run:
 
@@ -21,6 +22,7 @@ python3 scripts/run_cto_shadow_cycle.py --apply-safe
 
 Safe apply still does not publish, edit public clinic data or promote candidate
 reviews into draft clinics. It only writes internal evidence/review state.
+The claim-rule evaluation step is read-only in both modes.
 
 This script is intended for future scheduled CTO runs once Daniel chooses the
 cadence and notification channel.
