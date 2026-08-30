@@ -125,6 +125,14 @@ costs as (
     'all_time_cents', coalesce(sum(cost_cents), 0)
   ) as data
   from public.agent_jobs
+),
+claim_quality as (
+  select jsonb_build_object(
+    'conflict', count(*) filter (where verification_status = 'conflict'),
+    'rejected', count(*) filter (where verification_status = 'rejected'),
+    'without_source', count(*) filter (where source_record_id is null)
+  ) as data
+  from public.field_claims
 )
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
@@ -134,6 +142,7 @@ select jsonb_build_object(
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
   'costs', (select data from costs),
+  'claim_quality', (select data from claim_quality),
   'generated_at', now()
 );
 """
@@ -152,6 +161,31 @@ def format_review_type(review_type: str) -> str:
         "source_change_detected": "cambios de fuente",
     }
     return labels.get(review_type, review_type.replace("_", " "))
+
+
+def maturity_blockers(digest: dict[str, Any]) -> list[str]:
+    summary = digest.get("summary") or {}
+    automation = summary.get("automation") or {}
+    jobs = summary.get("jobs") or {}
+    claim_quality = digest.get("claim_quality") or {}
+    completed = as_int(automation.get("candidate_reviews_completed"))
+    target = as_int(automation.get("shadow_review_target")) or 200
+    failed_jobs = as_int(jobs.get("failed")) + as_int(jobs.get("dead_letter"))
+    conflicts = as_int(claim_quality.get("conflict"))
+    rejected = as_int(claim_quality.get("rejected"))
+    without_source = as_int(claim_quality.get("without_source"))
+    blockers = []
+    if completed < target:
+        blockers.append(f"muestra humana insuficiente: {completed}/{target} candidatas")
+    if failed_jobs:
+        blockers.append(f"{failed_jobs} trabajos fallidos")
+    if conflicts:
+        blockers.append(f"{conflicts} claims en conflicto")
+    if rejected:
+        blockers.append(f"{rejected} claims rechazados")
+    if without_source:
+        blockers.append(f"{without_source} claims sin fuente")
+    return blockers
 
 
 def format_digest(digest: dict[str, Any]) -> str:
@@ -188,6 +222,13 @@ def format_digest(digest: dict[str, Any]) -> str:
         completed = as_int(automation.get("candidate_reviews_completed"))
         target = as_int(automation.get("shadow_review_target"))
         output.append(line("Revision humana inicial", f"{completed}/{target} candidatas"))
+    output.append("")
+
+    output.append("## Madurez para auto-publicacion")
+    blockers = maturity_blockers(digest)
+    output.append(line("Bajo riesgo", "lista" if not blockers else "no lista"))
+    if blockers:
+        output.append(line("Motivo principal", blockers[0]))
     output.append("")
 
     output.append("## Trabajo abierto")

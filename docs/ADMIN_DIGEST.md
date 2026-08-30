@@ -7,6 +7,7 @@ It answers:
 - how many clinics are public or preliminary;
 - how many internal review cards are open;
 - whether agents are in shadow mode;
+- whether low-risk auto-publish is mature enough to discuss;
 - whether any jobs failed;
 - how much agent cost is recorded in the database.
 

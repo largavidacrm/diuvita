@@ -46,6 +46,11 @@ def main():
             }
         ],
         "recent_failed_jobs": [],
+        "claim_quality": {
+            "conflict": 0,
+            "rejected": 0,
+            "without_source": 0,
+        },
         "costs": {
             "last_24h_cents": 125,
             "last_7d_cents": 456,
@@ -56,6 +61,8 @@ def main():
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
+    check("Bajo riesgo: no lista" in output, "maturity signal missing")
+    check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")
     check("mejoras de ficha: 11 abiertas" in output, "review type summary missing")
     check("cambios de fuente: 1 abierta" in output, "source change label missing")
     check("Monarka Clinic" in output, "priority item missing")
