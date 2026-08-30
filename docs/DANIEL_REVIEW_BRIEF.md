@@ -6,6 +6,7 @@ Daniel.
 It is designed for future morning or weekly automations. It answers:
 
 - what Daniel should review first;
+- which next clicks Daniel should use in the panel;
 - which visible review card is the best starting point;
 - a fallback example by review type when the first priority list is limited;
 - how many open cards exist by type;

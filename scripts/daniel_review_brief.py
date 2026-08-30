@@ -139,6 +139,53 @@ def review_case_line(item: dict[str, Any] | None, fallback_filter: str) -> str:
     return f"Caso visible: {review_name(item, fallback_filter)}." + review_professionals_note(item)
 
 
+def clinic_workgroup_click(digest: dict[str, Any]) -> str:
+    group = digest.get("review_first_clinic_workgroup") or {}
+    name = str(group.get("clinic_name") or group.get("clinic_slug") or "").strip()
+    count = as_int(group.get("open_count"))
+    if not name or not count:
+        return ""
+    return f"Pulsa Filtrar grupo y trabaja {name}: {count} tarjetas juntas."
+
+
+def google_maps_click(digest: dict[str, Any]) -> str:
+    status = digest.get("google_link_reviews") or {}
+    count = as_int(status.get("open_count"))
+    first = status.get("first_review") or {}
+    if not count:
+        return ""
+    first_label = review_name(first, "Google Maps")
+    return f"Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: {first_label}."
+
+
+def specialists_click(digest: dict[str, Any]) -> str:
+    status = digest.get("specialist_reviews") or {}
+    count = as_int(status.get("open_count"))
+    first = status.get("first_review") or {}
+    total = as_int(status.get("professionals_count"))
+    if not count:
+        return ""
+    suffix = f" Hay {total} especialistas propuestos." if total else ""
+    return f"Pulsa Especialistas y abre primero la tarjeta con más nombres: {review_name(first, 'Especialistas')}.{suffix}"
+
+
+def next_clicks(digest: dict[str, Any]) -> list[str]:
+    clicks: list[str] = []
+    guard = review_backlog_guard_status(digest)
+    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+        clicks.append(f"No crees trabajos nuevos hasta bajar la bandeja; ahora está {guard}.")
+    for candidate in (
+        clinic_workgroup_click(digest),
+        specialists_click(digest),
+        google_maps_click(digest),
+    ):
+        if candidate and candidate not in clicks:
+            clicks.append(candidate)
+    if not clicks:
+        clicks.append("Abre el panel y usa Abrir prioridad.")
+    return clicks[:4]
+
+
 def production_health_status(report: dict[str, Any]) -> str:
     checks = report.get("checks") or []
     if report.get("ok"):
@@ -206,6 +253,9 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- {first_lines[0]}",
         f"- {first_lines[1]}",
         f"- Acción sugerida por el sistema: {next_action}.",
+        "",
+        "## Próximos clics",
+        *[f"- {item}" for item in next_clicks(digest)],
         "",
         "## Bandeja actual",
         f"- {as_int(reviews.get('open'))} revisiones abiertas.",

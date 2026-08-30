@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for Daniel's plain-Spanish review brief."""
 
-from daniel_review_brief import format_brief, first_step, production_health_status, review_counts
+from daniel_review_brief import format_brief, first_step, next_clicks, production_health_status, review_counts
 
 
 def check(condition, message):
@@ -178,6 +178,11 @@ def main():
     check(first_step(digest)[0] == "Primero revisa claims bloqueantes.", "blocking claims should be first")
     check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")
+    check("Próximos clics" in output, "next-clicks section missing")
+    check("No crees trabajos nuevos hasta bajar la bandeja; ahora está cerca del freno: 48/50 abiertas." in output, "near-limit click guard missing")
+    check("Pulsa Filtrar grupo y trabaja Sensabell: 5 tarjetas juntas." in output, "clinic-group click missing")
+    check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad. Hay 17 especialistas propuestos." in output, "specialist click missing")
+    check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "Google Maps click missing")
     check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible case missing")
     check("Acción sugerida por el sistema: Revisar claim bloqueante." in output, "next action missing")
     check("48 revisiones abiertas" in output, "open review count missing")
@@ -201,6 +206,7 @@ def main():
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
+    check(len(next_clicks(digest)) == 4, "next clicks should stay short")
 
     production_report = {
         "ok": True,
