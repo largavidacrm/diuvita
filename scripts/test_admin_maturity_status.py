@@ -26,7 +26,7 @@ def main() -> None:
         "claims en conflicto",
         "claims rechazados",
         "claims sin fuente",
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, reviewCache);",
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, reviewCache);",
     ]:
         check(marker in index, f"missing admin maturity marker: {marker}")
 

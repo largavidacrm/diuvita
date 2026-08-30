@@ -533,6 +533,12 @@
     var MAX_MONITOR_CADENCE_DAYS = 90;
     var SNAPSHOT_RETENTION_DAYS = 180;
     var SNAPSHOT_KEEP_LATEST = 3;
+    var PUBLIC_HEALTH_CHECKS = [
+      { label: "Inicio", path: "/", markers: ["Diuvita", "Buscar clínica"] },
+      { label: "Ficha", path: "/clinica/the-long-game/", markers: ["profile-jump", "Especialistas publicados por la clínica"] },
+      { label: "Sitemap", path: "/sitemap.xml", markers: ["/clinica/"] },
+      { label: "Icono", path: "/favicon.svg", markers: ["<svg", "#1e7a5a"] }
+    ];
 
     function el(id) {
       return document.getElementById(id);
@@ -697,6 +703,15 @@
         pendingUnits: 0,
         pendingSpecialists: 0,
         pendingTechnology: 0,
+        unavailable: false
+      };
+    }
+
+    function emptyPublicHealth() {
+      return {
+        checks: 0,
+        ok: 0,
+        failed: 0,
         unavailable: false
       };
     }
@@ -932,6 +947,26 @@
       return coverage;
     }
 
+    async function loadPublicHealth() {
+      var health = emptyPublicHealth();
+      for (var i = 0; i < PUBLIC_HEALTH_CHECKS.length; i += 1) {
+        var check = PUBLIC_HEALTH_CHECKS[i];
+        try {
+          var response = await fetch(check.path, { cache: "no-store" });
+          var body = await response.text();
+          var markersOk = check.markers.every(function (marker) { return body.indexOf(marker) >= 0; });
+          health.checks += 1;
+          if (response.ok && markersOk) health.ok += 1;
+          else health.failed += 1;
+        } catch (error) {
+          health.checks += 1;
+          health.failed += 1;
+        }
+      }
+      if (!health.checks) health.unavailable = true;
+      return health;
+    }
+
     function pill(status) {
       var tone = "";
       if (["failed", "dead_letter", "rejected", "conflict"].indexOf(status) >= 0) tone = " danger";
@@ -1064,7 +1099,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, openReviews) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, openReviews) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -1110,6 +1145,15 @@
       var completenessPendingLabel = completeness.unavailable
         ? "—"
         : completeness.withPendingFields + " con pendientes";
+      var publicSite = publicHealth || emptyPublicHealth();
+      var publicSiteLabel = publicSite.unavailable
+        ? "No disponible"
+        : publicSite.failed
+          ? publicSite.failed + (publicSite.failed === 1 ? " alerta" : " alertas")
+          : "OK";
+      var publicSiteDetail = publicSite.unavailable
+        ? "—"
+        : publicSite.ok + "/" + publicSite.checks + " comprobaciones";
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -1131,6 +1175,8 @@
         systemItem("Pendientes especialistas", specialistMissingLabel, specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Fichas completas", completenessLabel, completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
+        systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
+        systemItem("Checks web", publicSiteDetail, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
         systemItem("Fallos", failedJobs, failedJobs ? "danger-text" : ""),
         systemItem("Último trabajo", latestJob ? latestJob.job_type + " · " + date(latestJob.created_at) : "—"),
@@ -2601,7 +2647,8 @@
         var sourceMonitoring = await loadSourceMonitoring();
         var specialistCoverage = await loadSpecialistCoverage();
         var profileCompleteness = await loadProfileCompleteness();
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, reviewCache);
+        var publicHealth = await loadPublicHealth();
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
 
         var clinicRows = await client
           .from("clinics")

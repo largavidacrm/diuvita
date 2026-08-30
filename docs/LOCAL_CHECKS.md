@@ -13,7 +13,7 @@ The full pass currently covers:
 6. Admin review UX checks: filters, actions, publication flow, clinic diffs,
    blocking-claim labels, next-action guidance, claim-rule context, maturity
    status, source monitoring status, snapshot-retention status and specialist
-   coverage/profile-completeness status.
+   coverage/profile-completeness/public-health status.
 7. Public clinic profile UX and basic site asset checks.
 8. Admin digest, Daniel review brief, review-maturity, specialist-coverage and
    profile-completeness checks.

@@ -32,6 +32,10 @@ En **Estado del sistema**, mira especialmente:
 - **Inventario capturas**: resume cuántas capturas antiguas y totales tiene guardadas el sistema.
 - **Especialistas**: muestra cuántas fichas visibles ya tienen especialistas publicados por la clínica.
 - **Pendientes especialistas**: indica cuántas fichas visibles siguen sin ese apartado.
+- **Fichas completas**: muestra cuántas fichas visibles no tienen campos importantes pendientes.
+- **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
+- **Web pública**: confirma si la web visible responde correctamente desde el panel.
+- **Checks web**: muestra cuántas comprobaciones públicas han pasado.
 
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 

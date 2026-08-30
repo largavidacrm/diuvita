@@ -73,6 +73,7 @@ Already built:
 - Public clinic pages display richer fields with clearer navigation, section counts and more scannable lists.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle can optionally include the read-only production health check.
+- Admin system status shows public website health from lightweight public checks.
 
 Not yet mature:
 
