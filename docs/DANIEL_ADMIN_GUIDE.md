@@ -78,6 +78,12 @@ El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
 que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
 auditoría, cambio de fuente y mejoras abiertas a la vez.
 
+El filtro rápido **Google Maps** muestra las tarjetas que traen un enlace directo
+propuesto a Google Maps o a valoraciones de Google. Ábrelo, comprueba que el
+enlace corresponde al perfil real de la clínica y solo entonces carga la
+propuesta en la ficha. Si el enlace abre una búsqueda genérica, una dirección
+suelta o un perfil dudoso, no lo guardes.
+
 Dentro de una tarjeta con varias revisiones relacionadas verás **Orden
 recomendado**. Empieza por lo que marque ahí: normalmente claims bloqueantes o
 fuentes cambiadas antes de guardar la ficha final.
@@ -109,6 +115,11 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 6. Revisa el contenido, elige el estado de la ficha y guarda solo si te encaja.
 
 Hasta que no guardes, la web pública no cambia.
+
+En las tarjetas de mejora puede aparecer **Enlaces propuestos**. Ahí se muestran
+clicables los enlaces que el sistema cree relevantes: Google Maps, valoraciones
+de Google, página de precios o web propuesta. Es una ayuda de revisión, no una
+aprobación automática.
 
 Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
 
