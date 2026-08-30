@@ -280,6 +280,7 @@ Next 10 technical steps:
 16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py` and surfaced in `/admin/`; no cleanup/deletion path is enabled.
 17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/`.
 18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with section counts, a clear "En esta ficha" jump area and lighter profile lists.
+19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
 
 ## Daniel decision checkpoints
 

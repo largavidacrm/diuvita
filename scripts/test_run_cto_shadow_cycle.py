@@ -51,6 +51,34 @@ def main():
     check("top_sources" not in compact_top_sources, "full top source list should be removed")
     check("source_url" in compact_top_sources["sample_top_sources"][0], "source url should distinguish compact top sources")
     check("source_record_id" not in compact_top_sources["sample_top_sources"][0], "large source ids should be omitted")
+    compact_profiles = compact_summary("measure_profile_completeness", {
+        "summary": {"visible_clinics": 2},
+        "pending_profiles": [
+            {
+                "clinic_name": "A",
+                "slug": "a",
+                "status": "published",
+                "pending_count": 3,
+                "pending_fields": ["Email o teléfono"],
+                "raw": {"large": True},
+            }
+        ],
+    })
+    check(compact_profiles["pending_profiles_count"] == 1, "pending profile count should be kept")
+    check("pending_profiles" not in compact_profiles, "full pending profile list should be removed")
+    check("pending_fields" in compact_profiles["sample_pending_profiles"][0], "pending fields should be kept")
+    check("raw" not in compact_profiles["sample_pending_profiles"][0], "large profile details should be omitted")
+    compact_digest = compact_summary("admin_digest", {
+        "admin_email": "admin@example.test",
+        "summary": {"reviews": {"open": 2}},
+        "open_reviews": [
+            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "payload": {"large": True}},
+            {"title": "B", "review_type": "clinic_quality_audit", "priority": 80, "payload": {"large": True}},
+        ],
+    })
+    check("admin_email" not in compact_digest, "admin email should be removed from cycle output")
+    check(compact_digest["open_reviews_count"] == 2, "open review count should be kept")
+    check("payload" not in compact_digest["sample_open_reviews"][0], "review payload should be omitted")
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {
@@ -80,6 +108,7 @@ def main():
         snapshot_retention_days=180,
         snapshot_keep_latest=3,
         snapshot_retention_limit=7,
+        profile_completeness_limit=11,
         fetch_timeout=7,
     ))
     names = [step[0] for step in steps]
@@ -95,6 +124,11 @@ def main():
     retention_step = [step for step in steps if step[0] == "measure_source_snapshot_retention"][0]
     check("--json" in retention_step[1], "retention report should be machine readable")
     check("180" in retention_step[1] and "3" in retention_step[1] and "7" in retention_step[1], "retention settings should pass through")
+    profile_step = [step for step in steps if step[0] == "measure_profile_completeness"][0]
+    check("--json" in profile_step[1], "profile completeness should be machine readable")
+    check("11" in profile_step[1], "profile completeness limit should pass through")
+    digest_step = [step for step in steps if step[0] == "admin_digest"][0]
+    check("--json" in digest_step[1], "admin digest should be machine readable")
     claim_step = [step for step in steps if step[0] == "evaluate_claim_rules"][0]
     check("--json" in claim_step[1], "claim rule evaluation should be machine readable")
     check("6" in claim_step[1], "claim limit should be passed through")
@@ -113,6 +147,7 @@ def main():
         snapshot_retention_days=180,
         snapshot_keep_latest=3,
         snapshot_retention_limit=7,
+        profile_completeness_limit=11,
         fetch_timeout=7,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]

@@ -47,6 +47,15 @@ STEP_ITEM_KEYS = {
     ),
     "submit_blocking_claim_reviews": ("clinic_slug", "clinic_name", "status", "claims"),
     "measure_source_snapshot_retention": ("clinic_name", "source_url", "snapshots", "prunable"),
+    "measure_profile_completeness": (
+        "clinic_name",
+        "slug",
+        "status",
+        "pending_count",
+        "pending_fields",
+        "open_quality_reviews",
+    ),
+    "admin_digest": ("title", "review_type", "priority", "clinic_name", "clinic_slug"),
     "submit_source_shadow_reviews": (
         "clinic_slug",
         "clinic_name",
@@ -68,6 +77,7 @@ def compact_summary(name: str, summary: Any) -> Any:
     if not isinstance(summary, dict):
         return summary
     compact = dict(summary)
+    compact.pop("admin_email", None)
     items = compact.get("items")
     if isinstance(items, list):
         compact["items_count"] = len(items)
@@ -88,6 +98,22 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in top_sources[:3]
         ]
         compact.pop("top_sources", None)
+    pending_profiles = compact.get("pending_profiles")
+    if isinstance(pending_profiles, list):
+        compact["pending_profiles_count"] = len(pending_profiles)
+        compact["sample_pending_profiles"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in pending_profiles[:3]
+        ]
+        compact.pop("pending_profiles", None)
+    open_reviews = compact.get("open_reviews")
+    if isinstance(open_reviews, list):
+        compact["open_reviews_count"] = len(open_reviews)
+        compact["sample_open_reviews"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in open_reviews[:3]
+        ]
+        compact.pop("open_reviews", None)
     return compact
 
 
@@ -203,8 +229,13 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
         (
+            "measure_profile_completeness",
+            ["measure_profile_completeness.py", "--limit", str(args.profile_completeness_limit), "--json"],
+            45,
+        ),
+        (
             "admin_digest",
-            ["admin_digest.py", "--limit", str(args.digest_limit)],
+            ["admin_digest.py", "--limit", str(args.digest_limit), "--json"],
             45,
         ),
         (
@@ -232,6 +263,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot-retention-days", type=int, default=180)
     parser.add_argument("--snapshot-keep-latest", type=int, default=3)
     parser.add_argument("--snapshot-retention-limit", type=int, default=8)
+    parser.add_argument("--profile-completeness-limit", type=int, default=12)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     return parser.parse_args()
 
@@ -250,6 +282,7 @@ def main() -> int:
         args.snapshot_retention_days,
         args.snapshot_keep_latest,
         args.snapshot_retention_limit,
+        args.profile_completeness_limit,
     ) < 0:
         raise SystemExit("limits must be zero or greater.")
     if min(
@@ -263,6 +296,7 @@ def main() -> int:
         args.snapshot_retention_days,
         args.snapshot_keep_latest,
         args.snapshot_retention_limit,
+        args.profile_completeness_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:
