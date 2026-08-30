@@ -32,6 +32,7 @@ Code:
 - `scripts/discover_clinic_team_sources.py`
 - `scripts/discover_clinic_location_sources.py`
 - `scripts/hydrate_source_records.py`
+- `scripts/capture_source_shadow_claims.py`
 - `scripts/test_capture_source_snapshot.py`
 
 The admin evidence panel now shows a compact trace for each internal claim:
@@ -44,6 +45,9 @@ can store them as internal source records without changing profile fields.
 `scripts/discover_clinic_location_sources.py` does the same for contact/location
 pages. `scripts/hydrate_source_records.py --compact` keeps hydration runs
 readable when many internal sources are updated at once.
+`scripts/capture_source_shadow_claims.py` converts hydrated source excerpts into
+internal `field_claims` only. It does not edit profiles, create review cards or
+publish public pages.
 
 Examples:
 
@@ -53,6 +57,7 @@ python3 scripts/test_measure_source_coverage.py
 python3 scripts/discover_clinic_team_sources.py --clinic-slug arvila-magna
 python3 scripts/discover_clinic_location_sources.py --clinic-slug clinicas-ume
 python3 scripts/hydrate_source_records.py --limit 20 --compact
+python3 scripts/capture_source_shadow_claims.py --limit 20 --compact
 python3 scripts/capture_source_snapshot.py https://www.vitalarga.com/sobre/ --dry-run
 python3 scripts/capture_source_snapshot.py https://www.vitalarga.com/sobre/
 ```

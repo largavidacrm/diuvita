@@ -86,8 +86,9 @@ Already built:
 - Public clinic pages and the admin editor now allow multi-location clinic
   profiles, Google Maps profile links, Google review links and basic
   transparency fields without forcing a schema migration for every existing
-  clinic. Public Google Maps fallbacks search by clinic name, city and country,
-  not by street address.
+  clinic. Public Google Maps buttons are shown only when we have a direct clinic
+  profile link; generic searches, directions and street-address links stay
+  pending.
 - Official clinic websites can now be scanned for direct Google Maps profile
   links and Google review links, creating internal review cards only.
 - Google Maps discovery can also scan a small number of same-site contact,
@@ -363,6 +364,14 @@ Next 10 technical steps:
 59. De-duplicate near-identical extracted locations. Done locally in `scripts/extract_clinic_profile_shadow.py`: repeated city suffixes and punctuation variants no longer create duplicate sede proposals.
 60. Add compact source hydration output. Done locally in `scripts/hydrate_source_records.py`: large internal source-update runs can be summarized without dumping full snapshot payloads.
 61. Stop rehydrating known-empty source excerpts. Done locally in `scripts/hydrate_source_records.py`: pages already marked as having no readable text no longer appear as pending forever.
+62. Lock the public Google Maps rule into the project reference. Done locally:
+    public pages, admin validation and documentation now treat Google Maps as a
+    direct clinic-profile link only; if the profile link is unknown, the button
+    remains absent/pending instead of using a street address.
+63. Capture verified claims from hydrated official sources. Done locally in
+    `scripts/capture_source_shadow_claims.py`: source excerpts can become
+    internal `field_claims` without creating review cards, editing profile data
+    or publishing public pages.
 
 ## Daniel decision checkpoints
 

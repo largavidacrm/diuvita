@@ -88,6 +88,7 @@ def main() -> None:
         "profile-nav-count",
         "section-count",
         "Sede {index + 1}",
+        "google_maps_search_url",
     ]:
         check(removed_marker not in source, f"public profile should not render decorative counters: {removed_marker}")
 
@@ -96,6 +97,7 @@ def main() -> None:
     check("google_maps_search_url" not in source, "public profiles should not generate generic Google Maps searches")
     check("location_address" not in maps_body, "Google Maps fallback should use clinic name, not street address")
     check("location_search_name" not in maps_body, "Google Maps fallback should not use location labels")
+    check('return direct if is_google_maps_profile_url(direct) else ""' in maps_body, "public Google Maps buttons should disappear unless a direct profile link exists")
 
     print("OK public profile UX: navigation and richer search wired")
 
