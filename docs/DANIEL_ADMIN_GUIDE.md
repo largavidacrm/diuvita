@@ -46,6 +46,10 @@ En **Estado del sistema**, mira especialmente:
 - **Web pública**: confirma si la web visible responde correctamente desde el panel.
 - **Checks web**: muestra cuántas comprobaciones públicas han pasado.
 
+En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta del
+grupo repetido más importante cuando hay varias mejoras abiertas para la misma
+clínica.
+
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.

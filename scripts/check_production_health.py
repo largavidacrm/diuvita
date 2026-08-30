@@ -38,6 +38,7 @@ CHECKS = [
             "openPriorityReviewBtn",
             "reviewFlowPanel",
             "data-review-duplicate",
+            "openDuplicateReviewBtn",
             "relatedReviewsPanel",
             "claimTraceText",
             "Sin claims bloqueantes pendientes",

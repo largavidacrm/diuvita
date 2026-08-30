@@ -354,6 +354,7 @@
                 <option value="low">Baja</option>
               </select>
               <button class="btn secondary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
+              <button class="btn secondary hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
               <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
               <span class="pill" id="reviewCount">0 abiertas</span>
             </div>
@@ -1231,7 +1232,7 @@
       return match || null;
     }
 
-    function reviewBacklogQuality(rows) {
+    function enrichmentReviewGroups(rows) {
       var grouped = {};
       (rows || []).forEach(function (row) {
         if (row.review_type !== "clinic_profile_enrichment" || !row.clinic_id) return;
@@ -1241,18 +1242,24 @@
             label: reviewPrimarySubject(row),
             count: 0,
             maxPriority: 0,
-            oldestCreatedAt: row.created_at || null
+            oldestCreatedAt: row.created_at || null,
+            rows: []
           };
         }
         grouped[row.clinic_id].count += 1;
+        grouped[row.clinic_id].rows.push(row);
         grouped[row.clinic_id].maxPriority = Math.max(grouped[row.clinic_id].maxPriority, Number(row.priority || 0));
         var currentOldest = parseDateValue(grouped[row.clinic_id].oldestCreatedAt);
         var rowDate = parseDateValue(row.created_at);
         if (rowDate && (!currentOldest || rowDate < currentOldest)) grouped[row.clinic_id].oldestCreatedAt = row.created_at;
       });
-      var duplicates = Object.keys(grouped).map(function (key) {
+      return Object.keys(grouped).map(function (key) {
         return grouped[key];
-      }).filter(function (group) {
+      });
+    }
+
+    function duplicateEnrichmentGroups(rows) {
+      return enrichmentReviewGroups(rows).filter(function (group) {
         return group.count > 1;
       }).sort(function (a, b) {
         return Number(b.count || 0) - Number(a.count || 0) ||
@@ -1261,6 +1268,10 @@
           (parseDateValue(b.oldestCreatedAt) || new Date(8640000000000000)) ||
           text(a.label).localeCompare(text(b.label));
       });
+    }
+
+    function reviewBacklogQuality(rows) {
+      var duplicates = duplicateEnrichmentGroups(rows);
       return duplicates.reduce(function (quality, group, index) {
         if (group.count > 1) {
           quality.duplicateClinics += 1;
@@ -1269,6 +1280,16 @@
         }
         return quality;
       }, { duplicateClinics: 0, duplicateReviews: 0, firstDuplicateTarget: null });
+    }
+
+    function firstDuplicateReview(rows) {
+      var group = duplicateEnrichmentGroups(rows)[0];
+      if (!group || !group.rows || !group.rows.length) return null;
+      return group.rows.slice().sort(function (a, b) {
+        return Number(b.priority || 0) - Number(a.priority || 0) ||
+          (parseDateValue(a.created_at) || new Date(8640000000000000)) -
+          (parseDateValue(b.created_at) || new Date(8640000000000000));
+      })[0];
     }
 
     function duplicateBacklogTargetLabel(target) {
@@ -2788,9 +2809,12 @@
       var rows = reviewCache.filter(reviewMatchesFilters);
       var hasFilters = activeReviewFilters();
       var nextReview = firstActionReview(reviewCache, 0);
+      var duplicateReview = firstDuplicateReview(reviewCache);
       renderReviewFilterChips();
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
       el("openPriorityReviewBtn").textContent = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "Abrir prioridad";
+      show(el("openDuplicateReviewBtn"), Boolean(duplicateReview));
+      el("openDuplicateReviewBtn").textContent = duplicateReview ? "Abrir atasco: " + reviewPrimarySubject(duplicateReview) : "Abrir atasco";
       el("reviewCount").textContent = hasFilters
         ? rows.length + " visibles"
         : reviewCache.length + " abiertas";
@@ -3370,6 +3394,10 @@
       el("openPriorityReviewBtn").addEventListener("click", function () {
         var nextReview = firstActionReview(reviewCache, 0);
         if (nextReview) openReviewEditor(nextReview.id);
+      });
+      el("openDuplicateReviewBtn").addEventListener("click", function () {
+        var duplicateReview = firstDuplicateReview(reviewCache);
+        if (duplicateReview) openReviewEditor(duplicateReview.id);
       });
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");

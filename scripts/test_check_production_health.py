@@ -73,6 +73,7 @@ def main():
     check("openPriorityReviewBtn" in admin_check["markers"], "admin deployment should include priority button marker")
     check("reviewFlowPanel" in admin_check["markers"], "admin deployment should include publication-flow marker")
     check("data-review-duplicate" in admin_check["markers"], "admin deployment should include duplicate filter marker")
+    check("openDuplicateReviewBtn" in admin_check["markers"], "admin deployment should include duplicate open button marker")
     check("relatedReviewsPanel" in admin_check["markers"], "admin deployment should include related-review marker")
     check("claimTraceText" in admin_check["markers"], "admin deployment should include claim traceability marker")
     check("Sin claims bloqueantes pendientes" in admin_check["markers"], "admin deployment should include blocking-claim validation marker")
