@@ -24,6 +24,7 @@ LOW_RISK_PREFIXES = (
 
 MEDIUM_RISK_PREFIXES = (
     "services.",
+    "specialties.",
     "diagnostics.",
     "programs.",
     "technologies.",
