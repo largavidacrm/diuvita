@@ -985,6 +985,51 @@ td small {
   color: var(--muted);
 }
 
+.pending-specialists {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7fbf5;
+}
+
+.pending-specialists-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pending-specialists h3,
+.pending-specialists p {
+  margin: 0;
+}
+
+.pending-specialists h3 {
+  font-size: 0.98rem;
+}
+
+.pending-specialists p,
+.pending-specialists-source {
+  color: var(--muted);
+}
+
+.pending-specialists-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.pending-specialists-source {
+  overflow-wrap: anywhere;
+}
+
+.pending-specialists-source a {
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
 .version-history,
 .evidence-panel,
 .source-panel,

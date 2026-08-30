@@ -245,6 +245,18 @@
             <label for="clinicProfessionals">Especialistas publicados por la clínica</label>
             <textarea id="clinicProfessionals" name="clinicProfessionals" rows="6"></textarea>
           </div>
+          <section class="field-wide pending-specialists hidden" id="clinicPendingSpecialistsPanel">
+            <div class="pending-specialists-head">
+              <div>
+                <h3>Detectados en revisión interna</h3>
+                <p id="clinicPendingSpecialistsMeta">Están recogidos como propuesta, pendientes de revisar.</p>
+              </div>
+              <span class="pill warning" id="clinicPendingSpecialistsCount">0 pendientes</span>
+            </div>
+            <ul class="compact-list" id="clinicPendingSpecialistsList"></ul>
+            <div class="pending-specialists-actions" id="clinicPendingSpecialistsActions"></div>
+            <p class="pending-specialists-source" id="clinicPendingSpecialistsSource"></p>
+          </section>
           <div class="field">
             <label for="clinicYearsInPractice">Años en ejercicio</label>
             <input id="clinicYearsInPractice" name="clinicYearsInPractice">
@@ -3336,6 +3348,87 @@
       return candidateList(fields, "profesionales", "professionals");
     }
 
+    function normalizedPersonKey(value) {
+      var clean = text(value).split("—")[0].split(" - ")[0].trim().toLowerCase();
+      if (clean.normalize) {
+        clean = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      }
+      return clean.replace(/[^a-z0-9.\s]/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    function currentProfessionalKeys() {
+      var keys = {};
+      var field = el("clinicProfessionals");
+      linesToArray(field ? field.value : "").forEach(function (item) {
+        var key = normalizedPersonKey(item);
+        if (key) keys[key] = true;
+      });
+      return keys;
+    }
+
+    function pendingSpecialistsForClinic(clinic) {
+      if (!clinic || !clinic.id) return [];
+      var publishedKeys = currentProfessionalKeys();
+      var pendingByKey = {};
+      reviewCache.forEach(function (row) {
+        if (row.clinic_id !== clinic.id) return;
+        if (row.status !== "open") return;
+        if (row.review_type !== "clinic_profile_enrichment") return;
+        var payload = row.payload || {};
+        proposalProfessionals(payload).forEach(function (person) {
+          var key = normalizedPersonKey(person);
+          if (!key || publishedKeys[key] || pendingByKey[key]) return;
+          pendingByKey[key] = {
+            name: text(person).trim(),
+            reviewId: row.id,
+            reviewTitle: row.title || "Propuesta interna",
+            sources: sourceList(payload)
+          };
+        });
+      });
+      return Object.keys(pendingByKey).map(function (key) { return pendingByKey[key]; });
+    }
+
+    function renderPendingSpecialistsForClinic() {
+      var panel = el("clinicPendingSpecialistsPanel");
+      if (!panel) return;
+      var pending = pendingSpecialistsForClinic(activeClinic);
+      if (!pending.length) {
+        show(panel, false);
+        return;
+      }
+      var shown = pending.slice(0, 12);
+      el("clinicPendingSpecialistsCount").textContent = pending.length + (pending.length === 1 ? " pendiente" : " pendientes");
+      el("clinicPendingSpecialistsMeta").textContent = "Están recogidos como propuesta. Solo aparecerán en la web si abres la propuesta, revisas y guardas la ficha.";
+      el("clinicPendingSpecialistsList").innerHTML = shown.map(function (item) {
+        return "<li>" + html(item.name) + "</li>";
+      }).join("") + (pending.length > shown.length ? "<li>" + html("+" + (pending.length - shown.length) + " más") + "</li>" : "");
+
+      var actionReviews = [];
+      var actionSeen = {};
+      pending.forEach(function (item) {
+        if (!item.reviewId || actionSeen[item.reviewId]) return;
+        actionSeen[item.reviewId] = true;
+        actionReviews.push(item);
+      });
+      el("clinicPendingSpecialistsActions").innerHTML = actionReviews.slice(0, 3).map(function (item) {
+        return '<button class="link-btn" type="button" data-review-id="' + html(item.reviewId) + '">Abrir propuesta</button>';
+      }).join("");
+
+      var source = "";
+      pending.some(function (item) {
+        if (item.sources && item.sources.length) {
+          source = item.sources[0];
+          return true;
+        }
+        return false;
+      });
+      el("clinicPendingSpecialistsSource").innerHTML = source
+        ? 'Fuente detectada: <a href="' + html(source) + '" rel="nofollow noopener" target="_blank">' + html(source) + "</a>"
+        : "";
+      show(panel, true);
+    }
+
     function proposalLabel(key) {
       var labels = {
         display_name: "Nombre",
@@ -3837,6 +3930,7 @@
       activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
       resetProposalPreview();
+      renderPendingSpecialistsForClinic();
       updateFinalValidation();
       loadClinicVersions(activeClinic.id);
       loadClinicFieldLocks(activeClinic.id);
@@ -3883,6 +3977,7 @@
       if (hasOwn(fields, "unidades")) setInput("clinicUnits", arrayLines(fields.unidades));
       if (hasOwn(fields, "profesionales")) setInput("clinicProfessionals", arrayLines(fields.profesionales));
       if (hasOwn(fields, "locations")) setInput("clinicLocations", locationsToLines(fields.locations));
+      renderPendingSpecialistsForClinic();
       updateFinalValidation();
 
       var note = ["Propuesta interna cargada. Revisa antes de guardar."];
@@ -4368,6 +4463,11 @@
       el("clinicForm").addEventListener("submit", saveClinic);
       el("clinicForm").addEventListener("input", updateFinalValidation);
       el("clinicForm").addEventListener("change", updateFinalValidation);
+      el("clinicProfessionals").addEventListener("input", renderPendingSpecialistsForClinic);
+      el("clinicPendingSpecialistsPanel").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-review-id]");
+        if (button) openReviewEditor(button.getAttribute("data-review-id"));
+      });
       el("clinicCancelBtn").addEventListener("click", closeClinicEditor);
       el("clinicCancelTop").addEventListener("click", closeClinicEditor);
       el("reviewCloseBtn").addEventListener("click", closeReviewEditor);
