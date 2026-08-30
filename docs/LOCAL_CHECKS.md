@@ -12,13 +12,14 @@ The full pass currently covers:
 5. Shadow extraction, verification and review-card creation.
 6. Admin review UX checks: filters, actions, publication flow, clinic diffs
    and claim-rule context.
-7. Admin digest and review-maturity checks.
-8. Enrichment, candidate promotion, source hydration and source monitoring.
-9. Changed-source processing and the safe CTO shadow cycle.
-10. Clinic data validation.
-11. Static site build.
-12. Admin JavaScript syntax.
-13. Whitespace and conflict-marker check.
+7. Public clinic profile UX checks: ficha navigation and richer search.
+8. Admin digest and review-maturity checks.
+9. Enrichment, candidate promotion, source hydration and source monitoring.
+10. Changed-source processing and the safe CTO shadow cycle.
+11. Clinic data validation.
+12. Static site build.
+13. Admin JavaScript syntax.
+14. Whitespace and conflict-marker check.
 
 Run:
 

@@ -281,6 +281,10 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .clinic-main h1,.ficha>h1{font-family:'Fraunces',Georgia,serif;font-size:3.05rem;font-weight:500;line-height:1.04;text-wrap:balance}
 .ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0}
 .ficha .summary{max-width:720px;margin-top:1rem;font-size:1.18rem;color:var(--ink)}
+.profile-nav{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1rem}
+.profile-nav a{display:inline-flex;align-items:center;gap:.35rem;min-height:1.85rem;padding:.26rem .42rem .26rem .62rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--green-deep);font-size:.84rem;font-weight:800}
+.profile-nav a:hover{background:var(--wash);text-decoration:none}
+.profile-nav span{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;min-height:1.35rem;border-radius:8px;background:var(--wash);font-size:.75rem;color:var(--green-deep)}
 .clinic-side{display:grid;gap:1rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .clinic-side .profile-block{margin-top:0;padding:0;border-top:0;background:transparent}
 .clinic-side h2{margin-top:0}
@@ -335,7 +339,20 @@ FOOTER = """<footer><p><strong>Diuvita</strong> — {tag}. Guía informativa e i
 def attrs(c):
     extra = c.get("cities_extra", [])
     all_cities = "|".join([c["city"]] + extra)
-    search_text = f'{c["name"].lower()} {c["city"].lower()} {c["country"].lower()} {" ".join(c["specialties"]).lower()} {" ".join(c["services"]).lower()}'
+    search_parts = [
+        c["name"],
+        c["city"],
+        c["country"],
+        c.get("region", ""),
+        c.get("address", ""),
+        c.get("summary", ""),
+        c.get("tech", ""),
+        " ".join(c["specialties"]),
+        " ".join(c["services"]),
+        " ".join(c.get("unidades", [])),
+        " ".join(c.get("profesionales", [])),
+    ]
+    search_text = " ".join(str(part).lower() for part in search_parts if part)
     return f'data-city="{h(all_cities)}" data-country="{h(c["country"])}" data-spec="{h("|".join(c["specialties"]))}" data-text="{h(search_text)}"'
 
 def logo_img(c, ficha=False):
@@ -481,21 +498,22 @@ def facts_block(c):
     if not facts:
         return ""
     rows = "".join(f"<div><dt>{h(label)}</dt><dd>{value}</dd></div>" for label, value in facts)
-    return f'<section class="profile-block"><h2>Datos clave</h2><dl class="facts">{rows}</dl></section>'
+    return f'<section class="profile-block" id="datos-clave"><h2>Datos clave</h2><dl class="facts">{rows}</dl></section>'
 
-def list_section(title, items, list_class="info-list"):
+def list_section(title, items, list_class="info-list", section_id=""):
     items = visible_values(items)
     if not items:
         return ""
-    return f'<section class="profile-block"><h2>{h(title)}</h2><ul class="{h(list_class)}">' + "".join(f"<li>{h(item)}</li>" for item in items) + "</ul></section>"
+    id_attr = f' id="{h(section_id)}"' if section_id else ""
+    return f'<section class="profile-block"{id_attr}><h2>{h(title)}</h2><ul class="{h(list_class)}">' + "".join(f"<li>{h(item)}</li>" for item in items) + "</ul></section>"
 
 def tech_block(c):
     items = split_text_list(c.get("tech"))
     if not items:
         return ""
     if len(items) == 1:
-        return f'<section class="profile-block"><h2>Tecnología destacada</h2><p class="muted-copy">{h(items[0])}</p></section>'
-    return list_section("Tecnología destacada", items, "pill-list")
+        return f'<section class="profile-block" id="tecnologia"><h2>Tecnología destacada</h2><p class="muted-copy">{h(items[0])}</p></section>'
+    return list_section("Tecnología destacada", items, "pill-list", "tecnologia")
 
 def contacto_block(c):
     """Bloque de contacto: solo campos verificados presentes en la ficha."""
@@ -512,17 +530,44 @@ def contacto_block(c):
         items.append(f'<li><b>Instagram:</b> <a href="{h(url)}" rel="nofollow noopener" target="_blank">{h(handle)}</a></li>')
     if not items:
         return ""
-    return '<section class="profile-block"><h2>Contacto publicado</h2><ul class="contacto info-list">' + "".join(items) + "</ul></section>"
+    return '<section class="profile-block" id="contacto"><h2>Contacto publicado</h2><ul class="contacto info-list">' + "".join(items) + "</ul></section>"
+
+def profile_nav_item(label, count, target):
+    return f'<a href="{h(target)}">{h(label)}<span>{h(count)}</span></a>'
+
+def profile_nav(c, has_contact, has_tech):
+    items = []
+    specs = visible_values(c.get("specialties"))
+    services = visible_values(c.get("services"))
+    units = visible_values(c.get("unidades"))
+    professionals = visible_values(c.get("profesionales"))
+    if specs:
+        items.append(profile_nav_item("Especialidades", len(specs), "#especialidades"))
+    if services:
+        items.append(profile_nav_item("Servicios", len(services), "#servicios"))
+    if units:
+        items.append(profile_nav_item("Unidades", len(units), "#unidades"))
+    if has_tech:
+        items.append(profile_nav_item("Tecnología", len(split_text_list(c.get("tech"))), "#tecnologia"))
+    if professionals:
+        items.append(profile_nav_item("Especialistas", len(professionals), "#especialistas"))
+    if has_contact:
+        contact_count = sum(1 for key in ("email", "telefono", "instagram") if c.get(key))
+        items.append(profile_nav_item("Contacto", contact_count, "#contacto"))
+    if not items:
+        return ""
+    return '<nav class="profile-nav" aria-label="Contenido de la ficha">' + "".join(items) + "</nav>"
 
 def ficha(c):
     tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
     datos = facts_block(c)
     contacto = contacto_block(c)
-    areas = list_section("Áreas de especialidad", c["specialties"])
-    servicios = list_section("Servicios", c["services"])
-    unidades = list_section("Unidades y áreas clínicas", c.get("unidades"))
+    areas = list_section("Áreas de especialidad", c["specialties"], section_id="especialidades")
+    servicios = list_section("Servicios", c["services"], section_id="servicios")
+    unidades = list_section("Unidades y áreas clínicas", c.get("unidades"), section_id="unidades")
     tech = tech_block(c)
-    equipo = list_section("Especialistas publicados por la clínica", c.get("profesionales"))
+    equipo = list_section("Especialistas publicados por la clínica", c.get("profesionales"), section_id="especialistas")
+    nav = profile_nav(c, bool(contacto), bool(tech))
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     city_label = c["city"] + extra
@@ -552,6 +597,7 @@ def ficha(c):
 <section class="clinic-intro"><div class="clinic-main">{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
 <div class="tags">{tags}</div>
 <p class="summary">{h(c["summary"])}</p>
+{nav}
 </div>{sidebar_html}</section>
 <div class="profile-sections">
 {areas}
