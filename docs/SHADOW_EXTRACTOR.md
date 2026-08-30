@@ -36,6 +36,11 @@ validation before a draft is created.
 batch. It looks for same-site links that clearly point to team/about pages and
 updates only existing candidate review cards. Its default mode is a dry run.
 
+`scripts/submit_source_shadow_reviews.py` prioritizes existing source records
+against the same completeness gaps used by the admin dashboard, including
+locations, specialists, years in practice, public specialist count, visible
+credentialing and public pricing.
+
 For extraction, it reads a larger compact excerpt than the provenance snapshot
 and also captures useful hidden contact links such as `mailto:`, `tel:` and
 Instagram profile URLs. This improves internal proposals without storing or

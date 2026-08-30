@@ -157,6 +157,11 @@ def main():
 
     sql = captured.get("sql", "")
     check("pending_fields" in sql, "source batch should measure missing public fields")
+    check("years_in_practice" in sql, "source batch should include years-in-practice gaps")
+    check("specialists_count" in sql, "source batch should include public specialist-count gaps")
+    check("team_credentialing_visible" in sql, "source batch should include visible credentialing gaps")
+    check("public_pricing" in sql, "source batch should include public-pricing gaps")
+    check("prices,public_status" in sql, "source batch should understand nested pricing status")
     check("jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.team_source_priority desc" in sql, "source batch output should preserve priority order")
     check("cardinality(candidate.pending_fields) desc" in sql, "source batch should prioritize incomplete profiles")
     check("has_open_review asc" in sql, "source batch should prefer sources without open review cards")
@@ -165,8 +170,9 @@ def main():
     check("team_source_priority" in sql, "source batch should rank team sources")
     check("official_team_page" in sql, "source batch should recognize official team pages")
     check("team_source_priority desc" in sql, "source batch should prefer team pages when specialists are pending")
-    check("medical" not in sql.lower(), "source batch should not treat generic medical wording as a team page")
-    check("|medic|" not in sql.lower(), "source batch should not treat generic medic roots as a team page")
+    team_priority_sql = sql[sql.index("sr.source_type = 'official_team_page'"):sql.index("then 1", sql.index("sr.source_type = 'official_team_page'"))]
+    check("medical" not in team_priority_sql.lower(), "source batch should not treat generic medical wording as a team page")
+    check("|medic|" not in team_priority_sql.lower(), "source batch should not treat generic medic roots as a team page")
     check("open_review" in sql, "source batch should return existing source review context")
     check("open_clinic_review" in sql, "source batch should return existing clinic review context")
     print("OK source shadow reviews: batch is safe")

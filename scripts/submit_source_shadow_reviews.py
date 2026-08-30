@@ -125,6 +125,47 @@ from (
           then 'contact'
       end,
       case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'years_in_practice',
+          c.current_data ->> 'years_active',
+          c.current_data ->> 'founded_year',
+          c.current_data #>> '{{transparency,years_in_practice}}',
+          c.current_data #>> '{{transparency,years_active}}',
+          ''
+        )), '') is null
+          then 'years_in_practice'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'specialists_count',
+          c.current_data ->> 'num_specialists',
+          c.current_data ->> 'specialists_public_count',
+          c.current_data #>> '{{transparency,specialists_count}}',
+          ''
+        )), '') is null
+          then 'specialists_count'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'team_credentialing_visible',
+          c.current_data ->> 'medical_license_visible',
+          c.current_data ->> 'colegiacion_visible',
+          c.current_data #>> '{{team,credentialing_visible}}',
+          ''
+        )), '') is null
+          then 'team_credentialing_visible'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'public_pricing',
+          c.current_data ->> 'prices_public',
+          c.current_data ->> 'price_public',
+          c.current_data #>> '{{prices,public_status}}',
+          ''
+        )), '') is null
+          then 'public_pricing'
+      end,
+      case
         when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'services') = 'array' then c.current_data -> 'services' else '[]'::jsonb end), 0) = 0
           then 'services'
       end,
