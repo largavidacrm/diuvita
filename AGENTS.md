@@ -36,3 +36,17 @@ Codex should stop and ask Daniel only for:
 - Ambiguous choices where the wrong decision would create meaningful rework or public risk.
 
 When blocked, Codex should say exactly what is needed, why it is needed, and what will happen immediately after Daniel provides it.
+
+## Unattended CTO runs
+
+When Daniel asks Codex to keep advancing the general Diuvita plan without staying present, use this operating pattern:
+
+- Start from `docs/CTO_ROADMAP.md`, `docs/AGENT_WORKFLOWS.md`, recent git history and current Supabase state.
+- Pick the highest-impact safe task that moves the roadmap forward.
+- Prefer work that can be completed end to end without Daniel: admin UX, scripts, validation, review queues, documentation, data audits and internal proposals.
+- Keep public medical/contact/team data in review proposals unless Daniel explicitly approves publication.
+- Never expose secrets, credentials, local private files or detailed unpublished enrichment payloads in GitHub.
+- Run checks before committing.
+- Commit cohesive changes with clear messages.
+- Push only when the change is low-risk for production and contains no private/proposed clinic payloads; otherwise leave the commit local and explain the approval needed.
+- End with a concise Spanish summary: completed work, verification, open risks, and the next best step.
