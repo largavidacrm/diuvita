@@ -26,6 +26,7 @@ CHECKS = [
             "Centro de control",
             "loadProfileCompleteness",
             "Fichas completas",
+            "Campo más pendiente",
             "Duplicados mejoras",
             "Web pública",
             "Caso prioritario",

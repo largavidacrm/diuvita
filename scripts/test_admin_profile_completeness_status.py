@@ -16,11 +16,14 @@ def main() -> None:
 
     for marker in [
         "function emptyProfileCompleteness",
+        "function profileCompletenessFields",
+        "function topPendingProfileField",
         "function profilePendingFields",
         "function loadProfileCompleteness",
         "var profileCompleteness = await loadProfileCompleteness();",
         "Fichas completas",
         "Fichas con pendientes",
+        "Campo más pendiente",
         "withoutPendingFields",
         "withPendingFields",
         "pendingTechnology",

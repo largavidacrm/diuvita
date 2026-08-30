@@ -716,6 +716,33 @@
       };
     }
 
+    function profileCompletenessFields() {
+      return [
+        ["pendingSummary", "Resumen"],
+        ["pendingWebsite", "Web oficial"],
+        ["pendingAddress", "Dirección"],
+        ["pendingContact", "Contacto"],
+        ["pendingServices", "Servicios"],
+        ["pendingSpecialties", "Especialidades"],
+        ["pendingUnits", "Unidades"],
+        ["pendingSpecialists", "Especialistas"],
+        ["pendingTechnology", "Tecnología"]
+      ];
+    }
+
+    function topPendingProfileField(completeness) {
+      if (!completeness || completeness.unavailable) return "—";
+      var fields = profileCompletenessFields().map(function (field) {
+        return { key: field[0], label: field[1], count: Number(completeness[field[0]] || 0) };
+      }).filter(function (field) {
+        return field.count > 0;
+      }).sort(function (a, b) {
+        return b.count - a.count || a.label.localeCompare(b.label);
+      });
+      if (!fields.length) return "Sin campo pendiente";
+      return fields[0].label + " · " + fields[0].count + " fichas";
+    }
+
     function emptyPublicHealth() {
       return {
         checks: 0,
@@ -1269,6 +1296,7 @@
         systemItem("Pendientes especialistas", specialistMissingLabel, specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Fichas completas", completenessLabel, completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
+        systemItem("Campo más pendiente", topPendingProfileField(completeness), completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Duplicados mejoras", duplicateReviewLabel, backlogQuality.duplicateClinics ? "warning-text" : ""),
         systemItem("Tarjetas duplicadas", duplicateReviewDetail, backlogQuality.duplicateReviews ? "warning-text" : ""),
         systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),

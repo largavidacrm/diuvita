@@ -36,6 +36,7 @@ En **Estado del sistema**, mira especialmente:
 - **Pendientes especialistas**: indica cuántas fichas visibles siguen sin ese apartado.
 - **Fichas completas**: muestra cuántas fichas visibles no tienen campos importantes pendientes.
 - **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
+- **Campo más pendiente**: resume qué tipo de dato falta en más fichas visibles.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.
 - **Tarjetas duplicadas**: muestra cuántas tarjetas forman parte de esas repeticiones.
 - **Web pública**: confirma si la web visible responde correctamente desde el panel.
