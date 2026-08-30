@@ -27,6 +27,8 @@ def main() -> None:
         '["blocking_claim_review", "Claims bloqueantes"]',
         "data-review-type",
         "data-review-priority",
+        "data-review-duplicate",
+        "reviewDuplicateFilter",
     ]:
         check(marker in index, f"missing admin review filter marker: {marker}")
 

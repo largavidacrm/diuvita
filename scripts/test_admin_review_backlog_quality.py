@@ -16,8 +16,15 @@ def main() -> None:
 
     for marker in [
         "function reviewBacklogQuality",
+        "function duplicateEnrichmentClinicIds",
+        "function isDuplicateEnrichmentReview",
+        "function reviewTypeCell",
         "duplicateClinics",
         "duplicateReviews",
+        "reviewDuplicateFilter",
+        "data-review-duplicate",
+        "Atascos",
+        "Varias propuestas",
         "Duplicados mejoras",
         "Tarjetas duplicadas",
         "Sin duplicados",

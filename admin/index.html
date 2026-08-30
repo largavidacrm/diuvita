@@ -483,6 +483,7 @@
     var reviewTypeFilter = "";
     var reviewPriorityFilter = "";
     var reviewSearchQuery = "";
+    var reviewDuplicateFilter = false;
     var clinicStatusFilter = "";
     var activeClinic = null;
     var activeReview = null;
@@ -1059,6 +1060,30 @@
       }, { duplicateClinics: 0, duplicateReviews: 0 });
     }
 
+    function duplicateEnrichmentClinicIds(rows) {
+      var grouped = {};
+      (rows || []).forEach(function (row) {
+        if (row.review_type !== "clinic_profile_enrichment" || !row.clinic_id) return;
+        grouped[row.clinic_id] = (grouped[row.clinic_id] || 0) + 1;
+      });
+      return Object.keys(grouped).reduce(function (ids, key) {
+        if (grouped[key] > 1) ids[key] = grouped[key];
+        return ids;
+      }, {});
+    }
+
+    function isDuplicateEnrichmentReview(row) {
+      if (!row || row.review_type !== "clinic_profile_enrichment" || !row.clinic_id) return false;
+      return Boolean(duplicateEnrichmentClinicIds(reviewCache)[row.clinic_id]);
+    }
+
+    function reviewTypeCell(row) {
+      var extra = isDuplicateEnrichmentReview(row)
+        ? ' <span class="pill warning">Varias propuestas</span>'
+        : "";
+      return html(reviewVisibleLabel(row)) + extra;
+    }
+
     function reviewSummary(rows) {
       var parts = [
         ["Clínica nueva", countWhere(rows, function (row) { return row.review_type === "candidate_clinic"; })],
@@ -1115,9 +1140,21 @@
         var count = value ? countWhere(priorityBase, function (row) { return priorityBand(row.priority) === value; }) : priorityBase.length;
         return filterChip(filter[1], count, reviewPriorityFilter === value, { "data-review-priority": value });
       }).join("");
+      var duplicateBase = reviewCache.filter(function (row) {
+        return reviewMatchesSearch(row) &&
+          reviewMatchesType(row, reviewTypeFilter) &&
+          (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
+      });
+      var duplicateCount = countWhere(duplicateBase, isDuplicateEnrichmentReview);
+      var duplicateChips = duplicateCount || reviewDuplicateFilter
+        ? '<div class="filter-chip-row"><strong>Atascos</strong>' +
+          filterChip("Varias propuestas", duplicateCount, reviewDuplicateFilter, { "data-review-duplicate": "true" }) +
+          '</div>'
+        : "";
 
       container.innerHTML = '<div class="filter-chip-row"><strong>Tipo</strong>' + typeChips + '</div>' +
-        '<div class="filter-chip-row"><strong>Prioridad</strong>' + priorityChips + '</div>';
+        '<div class="filter-chip-row"><strong>Prioridad</strong>' + priorityChips + '</div>' +
+        duplicateChips;
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
@@ -1257,12 +1294,13 @@
     }
 
     function activeReviewFilters() {
-      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery);
+      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery || reviewDuplicateFilter);
     }
 
     function reviewMatchesFilters(row) {
       if (!reviewMatchesType(row, reviewTypeFilter)) return false;
       if (reviewPriorityFilter && priorityBand(row.priority) !== reviewPriorityFilter) return false;
+      if (reviewDuplicateFilter && !isDuplicateEnrichmentReview(row)) return false;
       if (!reviewMatchesSearch(row)) return false;
       return true;
     }
@@ -1271,6 +1309,7 @@
       setInput("reviewSearch", "");
       el("reviewTypeFilter").value = "";
       el("reviewPriorityFilter").value = "";
+      reviewDuplicateFilter = false;
       renderReviews();
     }
 
@@ -2384,7 +2423,7 @@
         return;
       }
       reviewsBody.innerHTML = rows.map(function (row) {
-        return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewVisibleLabel(row)) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
+        return "<tr><td>" + html(row.title) + "</td><td>" + reviewTypeCell(row) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
           date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
           html(row.id) + '">Revisar</button></td></tr>';
       }).join("");
@@ -2934,6 +2973,9 @@
         }
         if (button.hasAttribute("data-review-priority")) {
           el("reviewPriorityFilter").value = button.getAttribute("data-review-priority");
+        }
+        if (button.hasAttribute("data-review-duplicate")) {
+          reviewDuplicateFilter = !reviewDuplicateFilter;
         }
         renderReviews();
       });
