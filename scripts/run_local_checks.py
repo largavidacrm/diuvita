@@ -60,6 +60,7 @@ TEST_STEPS = [
     ("test: source coverage", "scripts/test_measure_source_coverage.py"),
     ("test: visible source seeding", "scripts/test_seed_visible_clinic_sources.py"),
     ("test: team source discovery", "scripts/test_discover_clinic_team_sources.py"),
+    ("test: Google link discovery", "scripts/test_discover_clinic_google_links.py"),
     ("test: enrichment claims", "scripts/test_capture_enrichment_review_claims.py"),
     ("test: blocking claim reviews", "scripts/test_submit_blocking_claim_reviews.py"),
     ("test: candidate promotion gate", "scripts/test_promote_candidate_reviews.py"),

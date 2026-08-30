@@ -10,19 +10,20 @@ for Daniel instead of implementing, softening or silently discarding the change.
 1. capture enrichment review claims;
 2. seed official website source records for visible clinics;
 3. optionally discover official team/about pages for visible clinics;
-4. hydrate pending source records;
-5. monitor source changes;
-6. process changed-source cards into profile-enrichment proposals;
-7. optionally run saved-source shadow extraction batches;
-8. turn blocking claims into internal quality-review cards;
-9. measure source snapshot retention without deleting evidence;
-10. measure visible source coverage without writing evidence;
-11. measure visible-profile completeness without editing clinics;
-12. measure review-inbox bottlenecks without resolving cards;
-13. print the admin digest;
-14. evaluate stored claims against publication rules.
-15. optionally run strict editorial limit checks;
-16. optionally check public production URLs without logging in or writing data.
+4. optionally discover official Google Maps/review links from clinic websites;
+5. hydrate pending source records;
+6. monitor source changes;
+7. process changed-source cards into profile-enrichment proposals;
+8. optionally run saved-source shadow extraction batches;
+9. turn blocking claims into internal quality-review cards;
+10. measure source snapshot retention without deleting evidence;
+11. measure visible source coverage without writing evidence;
+12. measure visible-profile completeness without editing clinics;
+13. measure review-inbox bottlenecks without resolving cards;
+14. print the admin digest;
+15. evaluate stored claims against publication rules.
+16. optionally run strict editorial limit checks;
+17. optionally check public production URLs without logging in or writing data.
 
 Default mode is dry-run:
 
@@ -42,6 +43,9 @@ Official website seeding only stores already-known clinic websites as internal
 source records when the same website host is missing.
 Team-source discovery is off by default; when enabled, it only stores
 same-domain team/about pages as internal source records.
+Google-link discovery is off by default; when enabled, it only creates internal
+review cards for Google Maps profile links and Google review links found on the
+clinic's own website.
 The claim-rule evaluation step is read-only in both modes. Blocking-claim cards
 are internal review items only. Source snapshot retention is measured only; no
 cleanup/deletion path is enabled. Profile completeness is also measured only;
@@ -79,6 +83,23 @@ To focus one clinic:
 ```bash
 python3 scripts/run_cto_shadow_cycle.py --team-source-limit 1 --team-source-clinic-slug arvila-magna
 ```
+
+Google-link discovery is also off by default. To search a small visible-clinic
+batch for direct Google Maps and Google review links:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --google-link-limit 5
+```
+
+To focus one clinic:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --google-link-limit 1 --google-link-clinic-slug monarka-clinic
+```
+
+In safe apply mode, this creates review cards only. Daniel still confirms that
+the link opens the correct clinic before saving it into the public profile.
+
 The cycle output is compact by default: it keeps counters and small examples,
 but avoids printing full evidence payloads, long text digests or large claim lists.
 Source monitoring respects cadence by default, so a healthy run may report zero

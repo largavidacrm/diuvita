@@ -87,6 +87,22 @@ def main():
     check(compact_team_sources["items_count"] == 1, "team source count should be kept")
     check("metadata" not in compact_team_sources["sample_items"][0], "large team source metadata should be omitted")
     check("url" in compact_team_sources["sample_items"][0], "team source URL should be kept")
+    compact_google_links = compact_summary("discover_clinic_google_links", {
+        "mode": "dry_run",
+        "items": [
+            {
+                "clinic_slug": "clinic-a",
+                "clinic_name": "Clinic A",
+                "website": "https://clinic-a.example/",
+                "status": "ready",
+                "proposed_fields": {"maps_url": "https://www.google.com/maps/place/Clinic+A"},
+                "google_link_candidates": [{"large": True}],
+            }
+        ],
+    })
+    check(compact_google_links["items_count"] == 1, "Google-link discovery count should be kept")
+    check("google_link_candidates" not in compact_google_links["sample_items"][0], "large Google-link candidates should be omitted")
+    check("proposed_fields" in compact_google_links["sample_items"][0], "Google-link proposals should be kept")
     compact_top_sources = compact_summary("measure_source_snapshot_retention", {
         "summary": {"total_snapshots": 2},
         "top_sources": [
@@ -308,6 +324,10 @@ def main():
         team_source_limit=0,
         team_source_clinic_slug=None,
         team_source_max_links=3,
+        google_link_limit=0,
+        google_link_clinic_slug=None,
+        google_link_replace_existing=False,
+        google_link_allow_multiple_open_clinic_reviews=False,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,
@@ -333,6 +353,7 @@ def main():
     names = [step[0] for step in steps]
     check("seed_visible_clinic_sources" in names, "official source seeding step missing")
     check("discover_clinic_team_sources" not in names, "team source discovery should be off by default")
+    check("discover_clinic_google_links" not in names, "Google-link discovery should be off by default")
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
@@ -358,6 +379,44 @@ def main():
     profile_step = [step for step in steps if step[0] == "measure_profile_completeness"][0]
     check("--json" in profile_step[1], "profile completeness should be machine readable")
     check("11" in profile_step[1], "profile completeness limit should pass through")
+    google_steps = build_steps(Namespace(
+        apply_safe=True,
+        review_limit=2,
+        seed_source_limit=12,
+        team_source_limit=0,
+        team_source_clinic_slug=None,
+        team_source_max_links=3,
+        google_link_limit=2,
+        google_link_clinic_slug="clinic-a",
+        google_link_replace_existing=True,
+        google_link_allow_multiple_open_clinic_reviews=True,
+        source_limit=3,
+        monitor_limit=4,
+        source_change_limit=8,
+        source_shadow_limit=0,
+        source_shadow_clinic_slug=None,
+        source_shadow_replace_existing=False,
+        digest_limit=5,
+        claim_limit=6,
+        blocking_claim_limit=9,
+        snapshot_retention_days=180,
+        snapshot_keep_latest=3,
+        snapshot_retention_limit=7,
+        source_coverage_limit=10,
+        profile_completeness_limit=11,
+        backlog_brief_limit=4,
+        fetch_timeout=7,
+        strict_editorial=False,
+        plain_brief=False,
+        production_health=False,
+        production_base_url="https://www.vitalarga.com",
+        production_timeout=7,
+    ))
+    google_step = [step for step in google_steps if step[0] == "discover_clinic_google_links"][0]
+    check("--apply" in google_step[1], "Google-link discovery should honor safe apply")
+    check("--clinic-slug" in google_step[1] and "clinic-a" in google_step[1], "Google-link clinic slug should pass through")
+    check("--replace-existing" in google_step[1], "Google-link replace flag should pass through")
+    check("--allow-multiple-open-clinic-reviews" in google_step[1], "Google-link multiple-review flag should pass through")
     backlog_step = [step for step in steps if step[0] == "review_backlog_brief"][0]
     check("--json" in backlog_step[1], "review backlog brief should be machine readable")
     check("4" in backlog_step[1], "review backlog brief limit should pass through")
@@ -373,6 +432,10 @@ def main():
         team_source_limit=2,
         team_source_clinic_slug="arvila-magna",
         team_source_max_links=5,
+        google_link_limit=0,
+        google_link_clinic_slug=None,
+        google_link_replace_existing=False,
+        google_link_allow_multiple_open_clinic_reviews=False,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,

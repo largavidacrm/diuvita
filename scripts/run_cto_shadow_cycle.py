@@ -65,6 +65,14 @@ STEP_ITEM_KEYS = {
         "already_stored",
         "source_type",
     ),
+    "discover_clinic_google_links": (
+        "clinic_slug",
+        "clinic_name",
+        "website",
+        "status",
+        "proposed_fields",
+        "created_review",
+    ),
     "hydrate_source_records": ("source_url", "status"),
     "monitor_source_changes": ("source_url", "clinic_name", "status", "hash"),
     "process_source_change_reviews": (
@@ -127,6 +135,7 @@ STEP_LABELS = {
     "capture_enrichment_review_claims": "captura de claims desde propuestas",
     "seed_visible_clinic_sources": "siembra de webs oficiales como fuentes",
     "discover_clinic_team_sources": "descubrimiento de paginas de equipo",
+    "discover_clinic_google_links": "descubrimiento de Google Maps y valoraciones",
     "hydrate_source_records": "hidratacion de fuentes",
     "monitor_source_changes": "vigilancia de cambios de fuentes",
     "process_source_change_reviews": "conversion de cambios en propuestas",
@@ -145,6 +154,7 @@ STEP_LABELS = {
 REVIEW_CARD_CREATING_STEPS = {
     "monitor_source_changes",
     "process_source_change_reviews",
+    "discover_clinic_google_links",
     "submit_source_shadow_reviews",
     "submit_blocking_claim_reviews",
 }
@@ -470,6 +480,28 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
                 max(90, args.team_source_limit * args.fetch_timeout + 30),
             )
         )
+    if args.google_link_limit:
+        google_link_args = [
+            "discover_clinic_google_links.py",
+            "--limit",
+            str(args.google_link_limit),
+            "--timeout",
+            str(args.fetch_timeout),
+            *apply_flag,
+        ]
+        if args.google_link_clinic_slug:
+            google_link_args.extend(["--clinic-slug", args.google_link_clinic_slug])
+        if args.google_link_replace_existing:
+            google_link_args.append("--replace-existing")
+        if args.google_link_allow_multiple_open_clinic_reviews:
+            google_link_args.append("--allow-multiple-open-clinic-reviews")
+        steps.append(
+            (
+                "discover_clinic_google_links",
+                google_link_args,
+                max(90, args.google_link_limit * args.fetch_timeout + 30),
+            )
+        )
     steps.extend([
         (
             "hydrate_source_records",
@@ -608,6 +640,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--team-source-limit", type=int, default=0, help="Optional discovery of official team/about source pages.")
     parser.add_argument("--team-source-clinic-slug", help="Limit optional team-source discovery to one clinic.")
     parser.add_argument("--team-source-max-links", type=int, default=3)
+    parser.add_argument("--google-link-limit", type=int, default=0, help="Optional discovery of official Google Maps/review links.")
+    parser.add_argument("--google-link-clinic-slug", help="Limit optional Google-link discovery to one clinic.")
+    parser.add_argument("--google-link-replace-existing", action="store_true", help="Refresh matching open review cards.")
+    parser.add_argument(
+        "--google-link-allow-multiple-open-clinic-reviews",
+        action="store_true",
+        help="Allow Google-link proposals even when another enrichment card is open for the same clinic.",
+    )
     parser.add_argument("--source-limit", type=int, default=40)
     parser.add_argument("--monitor-limit", type=int, default=40)
     parser.add_argument("--source-change-limit", type=int, default=10)
@@ -656,6 +696,7 @@ def main() -> int:
         args.review_limit,
         args.seed_source_limit,
         args.team_source_limit,
+        args.google_link_limit,
         args.source_limit,
         args.monitor_limit,
         args.source_change_limit,

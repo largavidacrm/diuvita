@@ -70,7 +70,7 @@ Already built:
 - Daniel-facing review brief exists in `scripts/daniel_review_brief.py`, read-only and suitable for future notifications.
 - Review maturity can be measured read-only before considering low-risk auto-publish expansion.
 - Published specialist coverage can be measured read-only before creating more team-detail workflows.
-- Visible profile completeness can be measured read-only across summary, contact, services, units, specialists and technology, including a next-profile suggestion.
+- Visible profile completeness can be measured read-only across summary, contact, Google Maps links, Google review links, services, units, specialists and technology, including a next-profile suggestion.
 - Stored field claims can be evaluated read-only against publication rules before any policy change.
 - Blocking field claims can be routed into internal quality-review cards without editing clinic data.
 - Blocking field claims have a read-only Daniel brief so the first manual review target is clearer.
@@ -88,6 +88,8 @@ Already built:
   transparency fields without forcing a schema migration for every existing
   clinic. Public Google Maps fallbacks search by clinic name, city and country,
   not by street address.
+- Official clinic websites can now be scanned for direct Google Maps profile
+  links and Google review links, creating internal review cards only.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle now includes a Daniel-facing brief in its JSON output and can optionally print only that brief for unattended logs.
 - Safe CTO shadow cycle has a backlog guard so safe-apply runs do not keep adding review cards when the inbox is already full.
@@ -310,7 +312,7 @@ Next 10 technical steps:
 14. Show source-monitoring freshness in the admin control center. Done locally in `/admin/`, using source records and latest snapshots.
 15. Turn conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle; `scripts/blocking_claim_brief.py` summarizes those blockers for Daniel without writing data. Rejected claims remain quality signals, but do not create Daniel-facing blocker cards by default.
 16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py` and surfaced in `/admin/`; no cleanup/deletion path is enabled.
-17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/` with a next-profile suggestion.
+17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/` with a next-profile suggestion. Google Maps profile links and Google review links are measured as separate gaps.
 18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with card-level field signals, a clear "En esta ficha" jump area, lighter profile lists and no decorative count badges.
 19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
 20. Add a production smoke check. Done locally in `scripts/check_production_health.py`; it reads public URLs only and is separate from local checks.
@@ -319,6 +321,7 @@ Next 10 technical steps:
 23. Add clinic-workgroup shortcuts and status. Done locally in `/admin/`, `scripts/review_backlog_brief.py`, the Daniel brief and global status so clustered review cards can be handled together.
 24. Clarify blocking-claim next steps. Done locally in `scripts/blocking_claim_brief.py`; it stays read-only and tells Daniel whether to compare evidence or find an official source.
 25. Seed official website sources for visible clinics. Done locally in `scripts/seed_visible_clinic_sources.py` and wired into the safe CTO cycle before source hydration.
+26. Add safe Google-link discovery for clinic websites. Done locally in `scripts/discover_clinic_google_links.py`; it can create review cards for direct Google Maps/profile links without editing or publishing clinic data.
 
 ## Daniel decision checkpoints
 
