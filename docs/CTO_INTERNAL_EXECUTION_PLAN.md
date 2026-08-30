@@ -233,7 +233,7 @@ Next 10 technical steps:
 6. Convert enrichment proposals into `field_claims`, not only review payloads.
 7. Add a deterministic rules module for field risk. Done locally in `scripts/diuvita_rules.py`; next step is integrating it with extraction and verification jobs.
 8. Build a shadow `EXTRACT_CLINIC_PROFILE` script for one clinic URL. Done locally in `scripts/extract_clinic_profile_shadow.py`; next step is adding an independent verifier.
-9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; next step is wiring extraction and verification into review cards or field claims.
+9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; review-card wiring exists in `scripts/submit_shadow_extraction_review.py`.
 10. Add a daily digest card/report for open reviews, failed jobs and costs.
 
 ## Daniel decision checkpoints
