@@ -205,8 +205,15 @@
             <input id="clinicGoogleReviewsUrl" name="clinicGoogleReviewsUrl" type="url" placeholder="https://">
           </div>
           <div class="field field-wide">
-            <label for="clinicLocations">Sedes</label>
-            <textarea id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones"></textarea>
+            <label>Sedes</label>
+            <div class="location-editor" id="clinicLocationEditor">
+              <div class="location-editor-head">
+                <span id="clinicLocationCount">Sin sedes adicionales</span>
+                <button class="btn secondary" id="clinicAddLocationBtn" type="button">Añadir sede</button>
+              </div>
+              <div class="location-rows" id="clinicLocationRows"></div>
+              <textarea class="hidden" id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones"></textarea>
+            </div>
           </div>
           <div class="field">
             <label for="clinicStatus">Estado</label>
@@ -2834,6 +2841,95 @@
       return linesToArray(value).map(parseLocationLine).filter(Boolean);
     }
 
+    function locationFieldValue(location, keys) {
+      if (!location || typeof location !== "object") return "";
+      for (var i = 0; i < keys.length; i += 1) {
+        var value = text(location[keys[i]]).trim();
+        if (value) return value;
+      }
+      return "";
+    }
+
+    function normalizedLocation(location) {
+      if (typeof location === "string") return parseLocationLine(location);
+      if (!location || typeof location !== "object") return null;
+      var item = {
+        name: locationFieldValue(location, ["name", "label", "sede"]),
+        city: locationFieldValue(location, ["city", "ciudad"]),
+        address: locationFieldValue(location, ["address", "direccion", "dirección"]),
+        maps_url: locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]),
+        google_reviews_url: locationFieldValue(location, ["google_reviews_url", "reviews_url", "valoraciones_url"])
+      };
+      Object.keys(item).forEach(function (key) {
+        if (!item[key]) delete item[key];
+      });
+      return Object.keys(item).length ? item : null;
+    }
+
+    function normalizedLocations(value) {
+      if (Array.isArray(value)) return value.map(normalizedLocation).filter(Boolean);
+      return linesToLocations(value);
+    }
+
+    function locationRowHtml(location, index) {
+      location = normalizedLocation(location) || {};
+      return '<article class="location-row" data-location-row>' +
+        '<div class="location-row-head">' +
+          '<strong>Sede ' + html(index + 1) + '</strong>' +
+          '<button class="link-btn" type="button" data-remove-location>Quitar</button>' +
+        '</div>' +
+        '<div class="location-row-grid">' +
+          '<label>Nombre<input data-location-field="name" value="' + html(location.name || "") + '" placeholder="Sede principal"></label>' +
+          '<label>Ciudad<input data-location-field="city" value="' + html(location.city || "") + '" placeholder="Barcelona"></label>' +
+          '<label>Dirección<input data-location-field="address" value="' + html(location.address || "") + '" placeholder="Calle y número"></label>' +
+          '<label>Google Maps<input data-location-field="maps_url" type="url" value="' + html(location.maps_url || "") + '" placeholder="https://"></label>' +
+          '<label>Valoraciones Google<input data-location-field="google_reviews_url" type="url" value="' + html(location.google_reviews_url || "") + '" placeholder="https://"></label>' +
+        '</div>' +
+      '</article>';
+    }
+
+    function readLocationEditorRows() {
+      return Array.prototype.slice.call(el("clinicLocationRows").querySelectorAll("[data-location-row]")).map(function (row) {
+        var item = {};
+        Array.prototype.slice.call(row.querySelectorAll("[data-location-field]")).forEach(function (field) {
+          var key = field.getAttribute("data-location-field");
+          var value = text(field.value).trim();
+          if (key && value) item[key] = value;
+        });
+        return Object.keys(item).length ? item : null;
+      }).filter(Boolean);
+    }
+
+    function syncLocationEditorTextarea() {
+      var rowCount = el("clinicLocationRows").querySelectorAll("[data-location-row]").length;
+      var locations = readLocationEditorRows();
+      setInput("clinicLocations", locations.map(locationLine).join("\n"));
+      var count = Math.max(rowCount, locations.length);
+      el("clinicLocationCount").textContent = count
+        ? count + (count === 1 ? " sede en edición" : " sedes en edición")
+        : "Sin sedes adicionales";
+    }
+
+    function renderLocationEditor(value) {
+      var locations = normalizedLocations(value);
+      el("clinicLocationRows").innerHTML = locations.length
+        ? locations.map(locationRowHtml).join("")
+        : '<p class="empty">Sin sedes adicionales.</p>';
+      syncLocationEditorTextarea();
+    }
+
+    function addClinicLocation(location) {
+      var locations = readLocationEditorRows();
+      locations.push(normalizedLocation(location) || {});
+      el("clinicLocationRows").innerHTML = locations.map(locationRowHtml).join("");
+      syncLocationEditorTextarea();
+    }
+
+    function currentClinicLocations() {
+      syncLocationEditorTextarea();
+      return linesToLocations(el("clinicLocations").value);
+    }
+
     function locationsHaveAddress(value) {
       if (!Array.isArray(value)) return false;
       return value.some(function (location) {
@@ -2895,7 +2991,7 @@
     }
 
     function setJsonLocations(data, key, value) {
-      var items = linesToLocations(value);
+      var items = normalizedLocations(value);
       if (items.length) {
         data[key] = items;
       } else {
@@ -2936,7 +3032,7 @@
         "location.city": trimmed("clinicCity"),
         "location.region": trimmed("clinicRegion"),
         "location.address": trimmed("clinicAddress"),
-        "location.locations": linesToLocations(el("clinicLocations").value),
+        "location.locations": currentClinicLocations(),
         "location.maps_url": trimmed("clinicMapsUrl"),
         "location.google_reviews_url": trimmed("clinicGoogleReviewsUrl"),
         "summary": trimmed("clinicSummary"),
@@ -3271,7 +3367,7 @@
 
     function finalValidationItems(publicTarget) {
       var noBlockingClaims = activeClinicBlockingClaimCount !== null && activeClinicBlockingClaimCount === 0;
-      var hasLocation = trimmed("clinicAddress") || locationsHaveAddress(linesToLocations(el("clinicLocations").value));
+      var hasLocation = trimmed("clinicAddress") || locationsHaveAddress(currentClinicLocations());
       var hasMapAccess = trimmed("clinicMapsUrl") || hasLocation;
       return [
         validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry")),
@@ -3749,7 +3845,7 @@
         city: trimmed("clinicCity"),
         region: trimmed("clinicRegion"),
         address: trimmed("clinicAddress"),
-        locations: linesToLocations(el("clinicLocations").value),
+        locations: currentClinicLocations(),
         maps_url: trimmed("clinicMapsUrl"),
         google_reviews_url: trimmed("clinicGoogleReviewsUrl"),
         status: trimmed("clinicStatus"),
@@ -4167,7 +4263,7 @@
       setInput("clinicAddress", activeClinic.address || data.address);
       setInput("clinicMapsUrl", data.maps_url || data.google_maps_url);
       setInput("clinicGoogleReviewsUrl", data.google_reviews_url || data.reviews_url);
-      setInput("clinicLocations", locationsToLines(data.locations));
+      renderLocationEditor(data.locations);
       setInput("clinicStatus", activeClinic.status || "review");
       setInput("clinicConfidence", activeClinic.profile_confidence == null ? "" : Math.round(Number(activeClinic.profile_confidence) * 100));
       setInput("clinicSummary", activeClinic.summary || data.summary);
@@ -4236,7 +4332,7 @@
       if (hasOwn(fields, "specialties")) setInput("clinicSpecialties", arrayLines(fields.specialties));
       if (hasOwn(fields, "unidades")) setInput("clinicUnits", arrayLines(fields.unidades));
       if (hasOwn(fields, "profesionales")) setInput("clinicProfessionals", arrayLines(fields.profesionales));
-      if (hasOwn(fields, "locations")) setInput("clinicLocations", locationsToLines(fields.locations));
+      if (hasOwn(fields, "locations")) renderLocationEditor(fields.locations);
       renderPendingSpecialistsForClinic();
       updateFinalValidation();
 
@@ -4373,7 +4469,7 @@
       setJsonArray(currentData, "specialties", el("clinicSpecialties").value);
       setJsonArray(currentData, "unidades", el("clinicUnits").value);
       setJsonArray(currentData, "profesionales", el("clinicProfessionals").value);
-      setJsonLocations(currentData, "locations", el("clinicLocations").value);
+      setJsonLocations(currentData, "locations", currentClinicLocations());
 
       var clinicId = activeClinic.id;
       el("clinicSaveBtn").disabled = true;
@@ -4726,6 +4822,24 @@
       el("clinicForm").addEventListener("submit", saveClinic);
       el("clinicForm").addEventListener("input", updateFinalValidation);
       el("clinicForm").addEventListener("change", updateFinalValidation);
+      el("clinicAddLocationBtn").addEventListener("click", function () {
+        addClinicLocation({});
+        updateFinalValidation();
+        var fields = el("clinicLocationRows").querySelectorAll("[data-location-field]");
+        var firstNewField = fields[Math.max(0, fields.length - 5)];
+        if (firstNewField) firstNewField.focus();
+      });
+      el("clinicLocationRows").addEventListener("input", function (event) {
+        if (event.target.closest("[data-location-field]")) syncLocationEditorTextarea();
+      });
+      el("clinicLocationRows").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-remove-location]");
+        if (!button) return;
+        var row = button.closest("[data-location-row]");
+        if (row) row.remove();
+        renderLocationEditor(readLocationEditorRows());
+        updateFinalValidation();
+      });
       el("clinicProfessionals").addEventListener("input", renderPendingSpecialistsForClinic);
       el("clinicPendingSpecialistsPanel").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");

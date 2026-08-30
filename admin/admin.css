@@ -1317,6 +1317,72 @@ td small {
   overflow-wrap: anywhere;
 }
 
+.location-editor {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.location-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.location-editor-head span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.location-rows {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.location-row {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.location-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.location-row-head strong {
+  font-size: 0.94rem;
+}
+
+.location-row-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.location-row-grid label {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.location-row-grid label:nth-child(3),
+.location-row-grid label:nth-child(4),
+.location-row-grid label:nth-child(5) {
+  grid-column: 1 / -1;
+}
+
 .edit-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1397,6 +1463,7 @@ td small {
   .claim-item,
   .source-item,
   .rule-item,
+  .location-row-grid,
   .edit-form {
     grid-template-columns: 1fr;
   }

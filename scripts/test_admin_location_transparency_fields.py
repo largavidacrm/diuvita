@@ -17,6 +17,9 @@ def main() -> None:
     for marker in [
         'id="clinicMapsUrl"',
         'id="clinicGoogleReviewsUrl"',
+        'id="clinicLocationEditor"',
+        'id="clinicLocationRows"',
+        'id="clinicAddLocationBtn"',
         'id="clinicLocations"',
         'id="clinicYearsInPractice"',
         'id="clinicSpecialistsCount"',
@@ -25,10 +28,14 @@ def main() -> None:
         'id="clinicPricingUrl"',
         "function locationsToLines",
         "function linesToLocations",
+        "function renderLocationEditor",
+        "function readLocationEditorRows",
+        "function currentClinicLocations",
+        "function addClinicLocation",
         "function locationsHaveAddress",
         "setJsonLocations(currentData, \"locations\"",
         "setJsonInteger(currentData, \"specialists_count\"",
-        "\"location.locations\": linesToLocations",
+        "\"location.locations\": currentClinicLocations()",
         "\"location.maps_url\": trimmed(\"clinicMapsUrl\")",
         "\"location.google_reviews_url\": trimmed(\"clinicGoogleReviewsUrl\")",
         "\"transparency.years_in_practice\": trimmed(\"clinicYearsInPractice\")",
@@ -39,8 +46,19 @@ def main() -> None:
         "Dirección o sede completa",
         "Dirección preparada para Google Maps",
         "Transparencia revisada si existe en la web",
+        "Añadir sede",
+        "Quitar",
     ]:
         check(marker in index, f"missing admin location/transparency marker: {marker}")
+
+    css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
+    for marker in [
+        ".location-editor",
+        ".location-editor-head",
+        ".location-row",
+        ".location-row-grid",
+    ]:
+        check(marker in css, f"missing admin location editor style: {marker}")
 
     print("OK admin location transparency: fields wired")
 
