@@ -61,6 +61,8 @@ def main():
     home_check = [item for item in CHECKS if item["name"] == "home"][0]
     profile_check = [item for item in CHECKS if item["name"] == "public_profile_ux"][0]
     check("card-signals" in home_check["markers"], "home deployment should include card signal marker")
+    check("Plan global" in admin_check["markers"], "admin deployment should include global plan title marker")
+    check("globalPlanPanel" in admin_check["markers"], "admin deployment should include global plan panel marker")
     check("profile-snapshot" in profile_check["markers"], "profile deployment should include summary stats marker")
     check("Duplicados mejoras" in admin_check["markers"], "admin deployment should include review-backlog marker")
     check("Grupo por clínica" in admin_check["markers"], "admin deployment should include clinic workgroup marker")
@@ -71,6 +73,8 @@ def main():
     check("Fichas sin fuente" in admin_check["markers"], "admin deployment should include source gap marker")
     check("Siguiente fuente" in admin_check["markers"], "admin deployment should include next source marker")
     check("openSourceTargetBtn" in admin_check["markers"], "admin deployment should include next source button marker")
+    check("reviewGuidancePanel" in admin_check["markers"], "admin deployment should include review guidance panel marker")
+    check("Paso recomendado" in admin_check["markers"], "admin deployment should include recommended step marker")
     check("Campo más pendiente" in admin_check["markers"], "admin deployment should include top pending field marker")
     check("Siguiente ficha" in admin_check["markers"], "admin deployment should include next profile marker")
     check("Siguiente especialistas" in admin_check["markers"], "admin deployment should include specialist next action marker")

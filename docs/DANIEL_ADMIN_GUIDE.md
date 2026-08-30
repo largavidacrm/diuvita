@@ -18,6 +18,12 @@ https://www.diuvita.com/admin/
 
 Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma. El botón de publicar aparece después, al editar esa ficha, dentro de **Validación final**.
 
+## Ver el plan global
+
+Arriba del panel verás **Plan global**. Ese bloque resume dónde estamos: fase
+actual, estado de la web pública, presión de la bandeja, automatización,
+fuentes, especialistas y el siguiente trabajo recomendado.
+
 ## Entender el estado del sistema
 
 En **Estado del sistema**, mira especialmente:
@@ -80,6 +86,10 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 Hasta que no guardes, la web pública no cambia.
 
 Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia rechazada, en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión.
+
+En esas tarjetas verás **Paso recomendado**. No es una decisión automática: te
+orienta sobre si conviene comparar evidencias, buscar una fuente oficial o dejar
+ese dato fuera de publicación.
 
 En **Evidencias propuestas**, cada claim muestra el motivo de la regla, cuándo
 se guardó y un enlace a la fuente cuando existe. Eso te permite ver de dónde

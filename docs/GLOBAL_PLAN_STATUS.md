@@ -15,6 +15,9 @@ It combines the protected admin digest with the roadmap lanes:
 The "Siguiente trabajo recomendado" section also includes the first clinic
 workgroup, so Daniel can clear several related review cards in one session.
 
+The same executive view is surfaced in `/admin/` as **Plan global**, above the
+detailed system status.
+
 It does not publish clinics, edit Supabase, resolve review cards or create new
 work. It is meant for quick answers to "where are we in the plan?"
 

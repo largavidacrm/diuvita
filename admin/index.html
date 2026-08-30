@@ -59,6 +59,26 @@
 
       <section class="metrics" id="metrics"></section>
 
+      <section class="panel global-plan-panel" id="globalPlanPanel">
+        <div class="panel-head">
+          <div>
+            <h2>Plan global</h2>
+            <span class="muted" id="globalPlanUpdated">Estado vivo del proyecto.</span>
+          </div>
+          <span class="pill" id="globalPlanPhase">Cargando</span>
+        </div>
+        <div class="global-plan-body">
+          <div class="global-plan-grid" id="globalPlanGrid">
+            <p class="empty">Cargando estado del plan.</p>
+          </div>
+          <div class="global-next-box">
+            <span>Siguiente trabajo recomendado</span>
+            <strong id="globalPlanNextAction">Cargando</strong>
+            <p id="globalPlanNextDetail">Todavía estamos leyendo el estado del proyecto.</p>
+          </div>
+        </div>
+      </section>
+
       <section class="panel system-panel" id="systemPanel">
         <div class="panel-head">
           <h2>Estado del sistema</h2>
@@ -302,6 +322,12 @@
               <p id="reviewFlowMeta">La candidata no se publica directamente.</p>
             </div>
             <div class="review-flow-steps" id="reviewFlowSteps"></div>
+          </section>
+          <section class="review-rules hidden" id="reviewGuidancePanel">
+            <div>
+              <h3>Paso recomendado</h3>
+              <p id="reviewGuidanceText">Revisa la evidencia antes de guardar.</p>
+            </div>
           </section>
           <section class="review-rules hidden" id="reviewRulesPanel">
             <div>
@@ -1352,6 +1378,83 @@
       return "Sin acción urgente";
     }
 
+    function globalPlanPhase(summary, openReviews, failedJobs) {
+      var reviews = summary.reviews || {};
+      var count = Number(reviews.open || (openReviews || []).length || 0);
+      if (Number(failedJobs || 0)) return "Estabilización técnica";
+      if (count >= 45) return "Reducir bandeja de revisión";
+      return "Trazabilidad y ciclo sombra";
+    }
+
+    function automationPlanLabel(automation) {
+      var shadow = automation.shadow_mode_active === false ? "sombra apagada" : "sombra activa";
+      var publish = automation.auto_publish_enabled ? "auto-publicación activa" : "auto-publicación apagada";
+      return shadow + " · " + publish;
+    }
+
+    function publicWebsiteLabel(summary) {
+      var clinics = summary.clinics || {};
+      return (clinics.published || 0) + " publicadas · " + (clinics.preliminary || 0) + " preliminares";
+    }
+
+    function sourcePlanLabel(sourceCoverage) {
+      var status = sourceCoverage || emptySourceCoverage();
+      if (status.unavailable) return "No disponible";
+      return status.withHydratedSources + "/" + status.visibleClinics + " con fuente";
+    }
+
+    function specialistPlanLabel(specialistCoverage) {
+      var status = specialistCoverage || emptySpecialistCoverage();
+      if (status.unavailable) return "No disponible";
+      return status.withSpecialists + "/" + status.visibleClinics + " con especialistas";
+    }
+
+    function globalPlanItem(label, value, detail, tone) {
+      return '<article class="global-plan-item">' +
+        '<span>' + html(label) + '</span>' +
+        '<strong class="' + html(tone || "") + '">' + html(value) + '</strong>' +
+        '<p>' + html(detail || "") + '</p>' +
+        '</article>';
+    }
+
+    function renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, openReviews) {
+      if (!el("globalPlanPanel")) return;
+      var reviews = summary.reviews || {};
+      var jobs = summary.jobs || {};
+      var automation = summary.automation || {};
+      var failedJobs = Number(jobs.failed || 0) + Number(jobs.dead_letter || 0);
+      var openCount = Number(reviews.open || (openReviews || []).length || 0);
+      var blockers = adminReadinessBlockers(summary, claimQuality || emptyClaimQuality());
+      var phase = globalPlanPhase(summary, openReviews || [], failedJobs);
+      var backlogGuard = reviewBacklogGuardStatus(openCount);
+      var sources = sourceCoverage || emptySourceCoverage();
+      var specialists = specialistCoverage || emptySpecialistCoverage();
+      var completeness = profileCompleteness || emptyProfileCompleteness();
+      var site = publicHealth || emptyPublicHealth();
+      var group = firstClinicWorkgroup(openReviews || []);
+      var sourceTarget = sourceCoverageTargetLabel(sources.nextTarget);
+      var profileTarget = profileNextTargetLabel(completeness.nextTarget);
+      var next = nextActionLabel(openReviews || [], failedJobs);
+
+      el("globalPlanPhase").textContent = phase;
+      el("globalPlanPhase").className = "pill" + (failedJobs || openCount >= 45 ? " warning" : "");
+      el("globalPlanUpdated").textContent = "Lo que deberías mirar primero al entrar.";
+      el("globalPlanGrid").innerHTML = [
+        globalPlanItem("Web pública", publicWebsiteLabel(summary), site.failed ? "Hay alertas en la web publicada." : "La web visible se controla aparte de las revisiones internas.", site.failed ? "warning-text" : ""),
+        globalPlanItem("Bandeja", openCount + " abiertas", backlogGuard.label, backlogGuard.tone),
+        globalPlanItem("Automatización", automationPlanLabel(automation), blockers.length ? blockers[0] : "Sin bloqueos medidos; Daniel decide el siguiente nivel.", blockers.length ? "warning-text" : ""),
+        globalPlanItem("Fuentes", sourcePlanLabel(sources), sourceTarget, sources.nextTarget ? "warning-text" : ""),
+        globalPlanItem("Especialistas", specialistPlanLabel(specialists), specialistNextTargetLabel(specialists.nextTarget), specialists.nextTarget ? "warning-text" : ""),
+        globalPlanItem("Fichas", topPendingProfileField(completeness), profileTarget, completeness.nextTarget ? "warning-text" : "")
+      ].join("");
+      el("globalPlanNextAction").textContent = next;
+      el("globalPlanNextDetail").textContent = group
+        ? "Trabajar por grupo: " + clinicWorkgroupLabel(group) + "."
+        : sourceTarget !== "—"
+          ? "Siguiente fuente: " + sourceTarget + "."
+          : "Siguiente ficha: " + profileTarget + ".";
+    }
+
     function reviewPrimarySubject(row) {
       var payload = (row && row.payload) || {};
       var candidate = candidateFromReview(row || {});
@@ -2008,6 +2111,41 @@
         return '<div class="review-flow-step"><span>' + html(step[0]) + '</span><strong>' +
           html(step[1]) + '</strong><p>' + html(step[2]) + '</p></div>';
       }).join("");
+      show(panel, true);
+    }
+
+    function blockingClaimStatuses(payload) {
+      var claims = Array.isArray(payload.blocked_claims) ? payload.blocked_claims : [];
+      var issues = Array.isArray(payload.issues) ? payload.issues : [];
+      return claims.concat(issues).map(function (item) {
+        return text(item.blocker_status || item.verification_status || "").toLowerCase();
+      }).filter(Boolean);
+    }
+
+    function reviewRecommendedStep(payload) {
+      var statuses = blockingClaimStatuses(payload || {});
+      if (statuses.indexOf("conflict") >= 0) {
+        return "Compara las evidencias y elige el dato correcto antes de publicar.";
+      }
+      if (statuses.indexOf("rejected") >= 0) {
+        return "Mantén ese dato fuera de publicación o corrígelo con una fuente mejor.";
+      }
+      if (statuses.indexOf("without_source") >= 0) {
+        return "Busca una fuente oficial o quita el dato propuesto antes de publicar.";
+      }
+      if (statuses.indexOf("stale") >= 0) {
+        return "Actualiza la fuente antes de aceptar el dato.";
+      }
+      return "Revisa Evidencias propuestas antes de guardar.";
+    }
+
+    function renderReviewGuidance(row, payload) {
+      var panel = el("reviewGuidancePanel");
+      if (!isBlockingClaimReview(row)) {
+        show(panel, false);
+        return;
+      }
+      el("reviewGuidanceText").textContent = reviewRecommendedStep(payload || {});
       show(panel, true);
     }
 
@@ -3263,6 +3401,7 @@
         "Fuente revisada: " + date(payload.retrieved_at)
       ].concat(materialChangeItems(payload)) : candidateList(candidate, "services"));
       setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
+      renderReviewGuidance(activeReview, payload);
       renderReviewRules(payload);
       renderReviewFlow(activeReview.review_type, blocksDraft);
       renderRelatedReviews(activeReview);
@@ -3481,6 +3620,7 @@
         var specialistCoverage = await loadSpecialistCoverage(reviewCache);
         var profileCompleteness = await loadProfileCompleteness(reviewCache);
         var publicHealth = await loadPublicHealth();
+        renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
         renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
         renderReviews();
 

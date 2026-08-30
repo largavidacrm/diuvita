@@ -1,7 +1,7 @@
 # Diuvita — la guía de las clínicas de longevidad
 
 Sitio estático: `data/clinics.json` o Supabase + `data/posts/*.md` → `python3 build.py` → `dist/`.
-Deploy: Netlify (build automatico en cada push, ver `netlify.toml`).
+Deploy: Netlify (build automatico solo cuando el cambio afecta la web/admin, ver `netlify.toml` y `docs/NETLIFY_DEPLOY_CONTROL.md`).
 Las fichas nuevas esperan validación humana en `pendientes/` antes de entrar en `data/clinics.json`.
 
 ## Comandos locales
@@ -36,6 +36,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/ADMIN_DIGEST.md`: resumen interno de CTO para revisiones, jobs y costes registrados.
 - `docs/DANIEL_REVIEW_BRIEF.md`: resumen accionable en lenguaje simple para que Daniel sepa qué revisar primero.
 - `docs/GLOBAL_PLAN_STATUS.md`: resumen ejecutivo de dónde está Diuvita dentro del plan global.
+- `docs/NETLIFY_DEPLOY_CONTROL.md`: reglas para agrupar publicaciones y evitar builds de Netlify innecesarios.
 - `docs/REVIEW_MATURITY.md`: medición de madurez antes de plantear auto-publicación de bajo riesgo.
 - `docs/HUMAN_FIELD_LOCKS.md`: protecciones para campos corregidos manualmente por Daniel.
 - `docs/SPECIALIST_COVERAGE.md`: medición solo lectura de cobertura de especialistas publicados.
@@ -55,6 +56,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `supabase/migrations/0015_candidate_draft_validation_flow.sql`: flujo claro candidata -> borrador -> validación final.
 - `supabase/migrations/0016_normalize_existing_candidate_drafts.sql`: normaliza candidatas internas antiguas a borrador.
 - `supabase/migrations/0017_admin_restore_clinic_version.sql`: restauración auditada de fichas desde el historial.
+- `supabase/migrations/0018_batch_public_site_rebuilds.sql`: prepara ventanas de publicacion agrupada para reducir rebuilds de Netlify desde Supabase.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.

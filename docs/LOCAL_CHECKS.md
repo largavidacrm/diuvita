@@ -7,24 +7,25 @@ The full pass currently covers:
 
 1. Python syntax across local scripts.
 2. Source snapshot, durable evidence, retention-report and production-health helpers.
-3. Operational-limit red flags in source content and generated public pages.
-4. Publication rules and stored-claim rule evaluation.
-5. Shadow extraction, verification, saved-source batches and review-card creation.
-6. Admin review UX checks: filters, actions, publication flow, clinic diffs,
+3. Netlify deploy guard rules, to avoid paid production builds for internal-only changes.
+4. Operational-limit red flags in source content and generated public pages.
+5. Publication rules and stored-claim rule evaluation.
+6. Shadow extraction, verification, saved-source batches and review-card creation.
+7. Admin review UX checks: filters, actions, publication flow, clinic diffs,
    blocking-claim labels, next-action guidance, claim-rule context, maturity
    status, source monitoring status, source-coverage status,
    snapshot-retention status and specialist
    coverage/profile-completeness/public-health/review-backlog status.
-7. Public clinic profile UX and basic site asset checks.
-8. Admin digest, Daniel review brief, blocking-claim brief, review-backlog brief,
+8. Public clinic profile UX and basic site asset checks.
+9. Admin digest, Daniel review brief, blocking-claim brief, review-backlog brief,
    review-maturity, specialist-coverage, profile-completeness and source-coverage checks.
-9. Enrichment, candidate promotion, source hydration and source monitoring.
-10. Changed-source processing, blocking-claim review routing and the safe CTO
+10. Enrichment, candidate promotion, source hydration and source monitoring.
+11. Changed-source processing, blocking-claim review routing and the safe CTO
     shadow cycle.
-11. Clinic data validation.
-12. Static site build.
-13. Admin JavaScript syntax.
-14. Whitespace and conflict-marker check.
+12. Clinic data validation.
+13. Static site build.
+14. Admin JavaScript syntax.
+15. Whitespace and conflict-marker check.
 
 Run:
 

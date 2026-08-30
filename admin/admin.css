@@ -304,6 +304,58 @@ button:disabled {
   line-height: 1;
 }
 
+.global-plan-body {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.global-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.7rem;
+}
+
+.global-plan-item {
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.72);
+}
+
+.global-plan-item span,
+.global-next-box span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.global-plan-item strong,
+.global-next-box strong {
+  display: block;
+  margin-top: 0.18rem;
+  overflow-wrap: anywhere;
+  line-height: 1.18;
+}
+
+.global-plan-item p,
+.global-next-box p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  line-height: 1.32;
+}
+
+.global-next-box {
+  padding: 0.9rem;
+  border: 1px solid rgba(30, 122, 90, 0.22);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
 .system-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

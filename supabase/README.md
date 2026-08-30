@@ -124,6 +124,8 @@ Daniel's non-technical panel guide lives in `docs/DANIEL_ADMIN_GUIDE.md`.
 
 `supabase/migrations/0005_private_rebuild_hook.sql` adds a private Supabase setting and trigger. Once the build hook URL is stored in `private.app_settings`, public clinic changes ask Netlify to rebuild the static site. The hook URL is not committed to Git and is not exposed to the browser.
 
+`supabase/migrations/0018_batch_public_site_rebuilds.sql` updates that rebuild request so public-site rebuilds can be batched. The default window is 30 minutes and can be adjusted through `private.app_settings` with the key `diuvita_rebuild_batch_minutes`.
+
 ## Shadow discovery review
 
 `supabase/migrations/0006_shadow_discovery_queue.sql` adds the first safe workflow surface for `DISCOVER_CLINIC`. A discovery job can be picked, completed with candidate clinics and converted into `review_queue` cards. Review cards can then be dismissed or turned into draft clinic records. Drafts are not published on Diuvita until an admin manually edits their status to `published` or `preliminary`.
