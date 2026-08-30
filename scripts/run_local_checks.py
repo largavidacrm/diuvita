@@ -47,6 +47,7 @@ TEST_STEPS = [
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: specialist coverage", "scripts/test_measure_specialist_coverage.py"),
     ("test: profile completeness", "scripts/test_measure_profile_completeness.py"),
+    ("test: source coverage", "scripts/test_measure_source_coverage.py"),
     ("test: enrichment claims", "scripts/test_capture_enrichment_review_claims.py"),
     ("test: blocking claim reviews", "scripts/test_submit_blocking_claim_reviews.py"),
     ("test: candidate promotion gate", "scripts/test_promote_candidate_reviews.py"),

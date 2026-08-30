@@ -55,6 +55,16 @@ STEP_ITEM_KEYS = {
     ),
     "submit_blocking_claim_reviews": ("clinic_slug", "clinic_name", "status", "claims"),
     "measure_source_snapshot_retention": ("clinic_name", "source_url", "snapshots", "prunable"),
+    "measure_source_coverage": (
+        "clinic_name",
+        "slug",
+        "status",
+        "source_records",
+        "hydrated_source_records",
+        "total_claims",
+        "claims_without_source",
+        "blocking_claims",
+    ),
     "measure_profile_completeness": (
         "clinic_name",
         "slug",
@@ -95,6 +105,7 @@ STEP_LABELS = {
     "submit_source_shadow_reviews": "extraccion shadow desde fuentes guardadas",
     "submit_blocking_claim_reviews": "claims bloqueantes",
     "measure_source_snapshot_retention": "retencion de evidencias",
+    "measure_source_coverage": "cobertura de fuentes",
     "measure_profile_completeness": "completitud de fichas",
     "review_backlog_brief": "atascos de bandeja",
     "admin_digest": "resumen interno",
@@ -150,6 +161,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in pending_profiles[:3]
         ]
         compact.pop("pending_profiles", None)
+    source_work = compact.get("needs_source_work")
+    if isinstance(source_work, list):
+        compact["needs_source_work_count"] = len(source_work)
+        compact["sample_needs_source_work"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in source_work[:3]
+        ]
+        compact.pop("needs_source_work", None)
     duplicate_enrichment = compact.get("duplicate_enrichment")
     if isinstance(duplicate_enrichment, list):
         compact["duplicate_enrichment_count"] = len(duplicate_enrichment)
@@ -457,6 +476,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
         (
+            "measure_source_coverage",
+            ["measure_source_coverage.py", "--limit", str(args.source_coverage_limit), "--json"],
+            45,
+        ),
+        (
             "measure_profile_completeness",
             ["measure_profile_completeness.py", "--limit", str(args.profile_completeness_limit), "--json"],
             45,
@@ -519,6 +543,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot-retention-days", type=int, default=180)
     parser.add_argument("--snapshot-keep-latest", type=int, default=3)
     parser.add_argument("--snapshot-retention-limit", type=int, default=8)
+    parser.add_argument("--source-coverage-limit", type=int, default=12)
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
     parser.add_argument("--backlog-brief-limit", type=int, default=8)
     parser.add_argument("--fetch-timeout", type=int, default=12)

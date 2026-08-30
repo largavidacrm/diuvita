@@ -16,7 +16,7 @@ The full pass currently covers:
    coverage/profile-completeness/public-health/review-backlog status.
 7. Public clinic profile UX and basic site asset checks.
 8. Admin digest, Daniel review brief, blocking-claim brief, review-backlog brief,
-   review-maturity, specialist-coverage and profile-completeness checks.
+   review-maturity, specialist-coverage, profile-completeness and source-coverage checks.
 9. Enrichment, candidate promotion, source hydration and source monitoring.
 10. Changed-source processing, blocking-claim review routing and the safe CTO
     shadow cycle.

@@ -54,6 +54,7 @@ Already built:
 - Admin system status shows specialist coverage for visible clinic profiles.
 - Admin system status shows visible-profile completeness without editing clinic data.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
+- Source coverage can be measured per visible clinic before expanding automation, and the safe CTO cycle includes that measurement.
 - Compact source snapshot history is stored in `source_snapshots`.
 - Source snapshot retention can be measured read-only before any cleanup policy.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.

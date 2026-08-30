@@ -28,16 +28,20 @@ Code:
 
 - `scripts/capture_source_snapshot.py`
 - `scripts/source_snapshot_records.py`
+- `scripts/measure_source_coverage.py`
 - `scripts/test_capture_source_snapshot.py`
 
 The admin evidence panel now shows a compact trace for each internal claim:
 rule reason, saved date and linked source title/URL when available. This keeps
 Daniel's review view readable without exposing full extraction payloads.
+`scripts/measure_source_coverage.py` adds a read-only per-clinic view of source
+coverage so weak evidence trails can be prioritized before expanding automation.
 
 Examples:
 
 ```bash
 python3 scripts/test_capture_source_snapshot.py
+python3 scripts/test_measure_source_coverage.py
 python3 scripts/capture_source_snapshot.py https://www.diuvita.com/sobre/ --dry-run
 python3 scripts/capture_source_snapshot.py https://www.diuvita.com/sobre/
 ```

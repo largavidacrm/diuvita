@@ -59,6 +59,26 @@ def main():
     check("top_sources" not in compact_top_sources, "full top source list should be removed")
     check("source_url" in compact_top_sources["sample_top_sources"][0], "source url should distinguish compact top sources")
     check("source_record_id" not in compact_top_sources["sample_top_sources"][0], "large source ids should be omitted")
+    compact_source_coverage = compact_summary("measure_source_coverage", {
+        "summary": {"visible_clinics": 2},
+        "needs_source_work": [
+            {
+                "clinic_name": "A",
+                "slug": "a",
+                "status": "published",
+                "source_records": 1,
+                "hydrated_source_records": 1,
+                "total_claims": 4,
+                "claims_without_source": 0,
+                "blocking_claims": 2,
+                "raw": {"large": True},
+            }
+        ],
+    })
+    check(compact_source_coverage["needs_source_work_count"] == 1, "source coverage count should be kept")
+    check("needs_source_work" not in compact_source_coverage, "full source coverage list should be removed")
+    check("blocking_claims" in compact_source_coverage["sample_needs_source_work"][0], "source blockers should be kept")
+    check("raw" not in compact_source_coverage["sample_needs_source_work"][0], "large source coverage details should be omitted")
     compact_profiles = compact_summary("measure_profile_completeness", {
         "summary": {"visible_clinics": 2},
         "pending_profiles": [
@@ -215,6 +235,7 @@ def main():
         snapshot_retention_days=180,
         snapshot_keep_latest=3,
         snapshot_retention_limit=7,
+        source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
         fetch_timeout=7,
@@ -239,6 +260,9 @@ def main():
     retention_step = [step for step in steps if step[0] == "measure_source_snapshot_retention"][0]
     check("--json" in retention_step[1], "retention report should be machine readable")
     check("180" in retention_step[1] and "3" in retention_step[1] and "7" in retention_step[1], "retention settings should pass through")
+    source_coverage_step = [step for step in steps if step[0] == "measure_source_coverage"][0]
+    check("--json" in source_coverage_step[1], "source coverage should be machine readable")
+    check("10" in source_coverage_step[1], "source coverage limit should pass through")
     profile_step = [step for step in steps if step[0] == "measure_profile_completeness"][0]
     check("--json" in profile_step[1], "profile completeness should be machine readable")
     check("11" in profile_step[1], "profile completeness limit should pass through")
@@ -265,6 +289,7 @@ def main():
         snapshot_retention_days=180,
         snapshot_keep_latest=3,
         snapshot_retention_limit=7,
+        source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
         fetch_timeout=7,

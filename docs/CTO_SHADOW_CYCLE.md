@@ -14,12 +14,13 @@ for Daniel instead of implementing, softening or silently discarding the change.
 5. optionally run saved-source shadow extraction batches;
 6. turn blocking claims into internal quality-review cards;
 7. measure source snapshot retention without deleting evidence;
-8. measure visible-profile completeness without editing clinics;
-9. measure review-inbox bottlenecks without resolving cards;
-10. print the admin digest;
-11. evaluate stored claims against publication rules.
-12. optionally run strict editorial limit checks;
-13. optionally check public production URLs without logging in or writing data.
+8. measure visible source coverage without writing evidence;
+9. measure visible-profile completeness without editing clinics;
+10. measure review-inbox bottlenecks without resolving cards;
+11. print the admin digest;
+12. evaluate stored claims against publication rules.
+13. optionally run strict editorial limit checks;
+14. optionally check public production URLs without logging in or writing data.
 
 Default mode is dry-run:
 
@@ -65,6 +66,8 @@ Source monitoring respects cadence by default, so a healthy run may report zero
 checked sources when all sources were recently observed.
 Review-backlog measurement is read-only and helps identify duplicate
 profile-enrichment pressure before adding more cards.
+Source-coverage measurement is read-only and highlights visible clinics whose
+source trail is weak before expanding automation.
 The JSON output also includes a `daniel_brief` block with the simple status,
 next action, review backlog, top missing clinic field, next incomplete profile
 to review and publication guard.
