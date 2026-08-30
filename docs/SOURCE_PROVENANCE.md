@@ -30,6 +30,8 @@ Code:
 - `scripts/source_snapshot_records.py`
 - `scripts/measure_source_coverage.py`
 - `scripts/discover_clinic_team_sources.py`
+- `scripts/discover_clinic_location_sources.py`
+- `scripts/hydrate_source_records.py`
 - `scripts/test_capture_source_snapshot.py`
 
 The admin evidence panel now shows a compact trace for each internal claim:
@@ -39,6 +41,9 @@ Daniel's review view readable without exposing full extraction payloads.
 coverage so weak evidence trails can be prioritized before expanding automation.
 `scripts/discover_clinic_team_sources.py` finds same-domain team/about pages and
 can store them as internal source records without changing profile fields.
+`scripts/discover_clinic_location_sources.py` does the same for contact/location
+pages. `scripts/hydrate_source_records.py --compact` keeps hydration runs
+readable when many internal sources are updated at once.
 
 Examples:
 
@@ -46,6 +51,8 @@ Examples:
 python3 scripts/test_capture_source_snapshot.py
 python3 scripts/test_measure_source_coverage.py
 python3 scripts/discover_clinic_team_sources.py --clinic-slug arvila-magna
+python3 scripts/discover_clinic_location_sources.py --clinic-slug clinicas-ume
+python3 scripts/hydrate_source_records.py --limit 20 --compact
 python3 scripts/capture_source_snapshot.py https://www.vitalarga.com/sobre/ --dry-run
 python3 scripts/capture_source_snapshot.py https://www.vitalarga.com/sobre/
 ```

@@ -361,6 +361,7 @@ Next 10 technical steps:
 57. Add official location-page source discovery. Done locally in `scripts/discover_clinic_location_sources.py`: contact/location/sedes pages can be stored as internal sources without editing profiles or publishing.
 58. Preserve file-like source URLs. Done locally in the source discoverers: `.html` pages keep their real URL instead of receiving a trailing slash that can create false 404s.
 59. De-duplicate near-identical extracted locations. Done locally in `scripts/extract_clinic_profile_shadow.py`: repeated city suffixes and punctuation variants no longer create duplicate sede proposals.
+60. Add compact source hydration output. Done locally in `scripts/hydrate_source_records.py`: large internal source-update runs can be summarized without dumping full snapshot payloads.
 
 ## Daniel decision checkpoints
 

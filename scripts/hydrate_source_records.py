@@ -177,6 +177,31 @@ def hydrate_record(record: dict[str, Any], args: argparse.Namespace, local_env: 
     }
 
 
+def compact_item(item: dict[str, Any]) -> dict[str, Any]:
+    updated = item.get("updated") if isinstance(item.get("updated"), dict) else {}
+    return {
+        "id": item.get("id"),
+        "source_url": item.get("source_url"),
+        "status": item.get("status"),
+        "title": item.get("title"),
+        "excerpt_chars": item.get("excerpt_chars"),
+        "has_excerpt": updated.get("has_excerpt"),
+        "error": item.get("error"),
+    }
+
+
+def compact_output(output: dict[str, Any]) -> dict[str, Any]:
+    items = output.get("items") if isinstance(output.get("items"), list) else []
+    compact_items = [compact_item(item) for item in items if isinstance(item, dict)]
+    return {
+        "mode": output.get("mode"),
+        "sources_seen": output.get("sources_seen"),
+        "ready_or_updated": output.get("ready_or_updated"),
+        "failed": output.get("failed"),
+        "items": compact_items,
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=20)
@@ -185,6 +210,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--refresh", action="store_true", help="Refresh already hydrated records too.")
     parser.add_argument("--retry-errors", action="store_true", help="Retry sources that failed hydration recently.")
     parser.add_argument("--apply", action="store_true", help="Update Supabase source_records.")
+    parser.add_argument("--compact", action="store_true", help="Print compact output without snapshot details.")
     return parser.parse_args()
 
 
@@ -200,19 +226,16 @@ def main() -> int:
     local_env = load_env_file()
     records = fetch_pending_sources(args.limit, args.refresh, args.retry_errors, local_env)
     results = [hydrate_record(record, args, local_env) for record in records]
-    print(
-        json.dumps(
-            {
-                "mode": "apply" if args.apply else "dry_run",
-                "sources_seen": len(records),
-                "ready_or_updated": sum(1 for item in results if item["status"] in {"ready", "updated"}),
-                "failed": sum(1 for item in results if item["status"] == "failed"),
-                "items": results,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-    )
+    output = {
+        "mode": "apply" if args.apply else "dry_run",
+        "sources_seen": len(records),
+        "ready_or_updated": sum(1 for item in results if item["status"] in {"ready", "updated"}),
+        "failed": sum(1 for item in results if item["status"] == "failed"),
+        "items": results,
+    }
+    if args.compact:
+        output = compact_output(output)
+    print(json.dumps(output, ensure_ascii=False, indent=2))
     return 0
 
 
