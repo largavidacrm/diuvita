@@ -14,7 +14,7 @@ def sample_digest():
         "generated_at": "2026-08-30T15:10:00+00:00",
         "summary": {
             "clinics": {"published": 11, "preliminary": 8},
-            "reviews": {"open": 41},
+            "reviews": {"open": 48},
             "jobs": {"failed": 0, "dead_letter": 0},
             "automation": {
                 "auto_publish_enabled": False,
@@ -87,7 +87,7 @@ def main():
     check("Qué mirar primero" in output, "first action section missing")
     check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible case missing")
     check("Acción sugerida por el sistema: Revisar claim bloqueante." in output, "next action missing")
-    check("41 revisiones abiertas" in output, "open review count missing")
+    check("48 revisiones abiertas" in output, "open review count missing")
     check("1 claims bloqueantes pendiente" in output, "blocking count missing")
     check("8 clínicas nuevas pendientes" in output, "candidate count missing")
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
@@ -98,6 +98,7 @@ def main():
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
+    check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
 
     production_report = {
         "ok": True,

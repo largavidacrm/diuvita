@@ -19,6 +19,8 @@ from submit_discovery_candidates import (
     sql_literal,
 )
 
+SAFE_WRITE_REVIEW_BACKLOG_LIMIT = 50
+
 
 def as_int(value: Any) -> int:
     try:
@@ -471,6 +473,20 @@ def next_action_label(digest: dict[str, Any]) -> str:
     return "Sin accion urgente"
 
 
+def review_backlog_guard_status(digest: dict[str, Any], limit: int = SAFE_WRITE_REVIEW_BACKLOG_LIMIT) -> str:
+    summary = digest.get("summary") or {}
+    reviews = summary.get("reviews") or {}
+    open_reviews = as_int(reviews.get("open"))
+    if limit <= 0:
+        return "sin freno configurado"
+    if open_reviews >= limit:
+        return f"freno activo: {open_reviews}/{limit} revisiones abiertas"
+    remaining = limit - open_reviews
+    if remaining <= 5:
+        return f"cerca del freno: {open_reviews}/{limit} abiertas"
+    return f"normal: {open_reviews}/{limit} abiertas"
+
+
 def format_digest(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
@@ -535,6 +551,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Coste registrado 24h", as_money(costs.get("last_24h_cents"))))
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
     output.append(line("Siguiente accion", next_action_label(digest)))
+    output.append(line("Freno bandeja", review_backlog_guard_status(digest)))
     output.append(
         line(
             "Duplicados mejoras",

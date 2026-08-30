@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Checks for the internal CTO digest formatter."""
 
-from admin_digest import format_digest, next_action_label, top_pending_profile_field
+from admin_digest import (
+    format_digest,
+    next_action_label,
+    review_backlog_guard_status,
+    top_pending_profile_field,
+)
 
 
 def check(condition, message):
@@ -14,7 +19,7 @@ def main():
         "generated_at": "2026-08-30T10:20:00+00:00",
         "summary": {
             "clinics": {"total": 19, "published": 11, "preliminary": 8},
-            "reviews": {"open": 12},
+            "reviews": {"open": 48},
             "jobs": {"queued": 2, "running": 1, "failed": 0, "dead_letter": 0},
             "evidence": {"sources": 7, "snapshots": 3, "claims": 31},
             "automation": {
@@ -115,6 +120,7 @@ def main():
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
+    check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
     check(top_pending_profile_field(digest) == "Especialistas · 17 fichas", "top pending profile field missing")
     limited_digest = dict(digest)
     limited_digest["open_reviews"] = [
@@ -145,6 +151,7 @@ def main():
     check("review_examples_by_type" not in output, "raw example key should not appear in formatted digest")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
+    check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")
     check("Fuentes vigilables: 39" in output, "monitorable source count missing")

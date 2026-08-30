@@ -7,7 +7,14 @@ import json
 import sys
 from typing import Any
 
-from admin_digest import as_int, load_digest, next_action_label, parse_timestamp, top_pending_profile_field
+from admin_digest import (
+    as_int,
+    load_digest,
+    next_action_label,
+    parse_timestamp,
+    review_backlog_guard_status,
+    top_pending_profile_field,
+)
 from check_production_health import run_checks
 from submit_discovery_candidates import get_default_admin_email, load_env_file
 
@@ -212,6 +219,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Bandeja: {review_backlog_status(digest)}.",
+        f"- Freno de bandeja: {review_backlog_guard_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",
     ])
     if production_health is not None:

@@ -14,6 +14,7 @@ It is designed for future morning or weekly automations. It answers:
 - which measured public field is missing from the most visible profiles;
 - how many visible profiles include published specialists;
 - whether the review inbox has repeated improvement cards for the same clinic;
+- whether the review inbox is close to the safe-write backlog guard;
 - whether source monitoring is fresh or pending;
 - whether there are open technical failures;
 - optionally, whether the live public website responds correctly.

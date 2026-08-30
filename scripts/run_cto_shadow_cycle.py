@@ -14,7 +14,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-from admin_digest import as_int, next_action_label, top_pending_profile_field
+from admin_digest import (
+    SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
+    as_int,
+    next_action_label,
+    top_pending_profile_field,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -505,7 +510,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-open-reviews-for-safe-writes",
         type=int,
-        default=50,
+        default=SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
         help="In apply-safe mode, skip review-card writing steps once open reviews reach this count. Use 0 to disable.",
     )
     parser.add_argument("--production-base-url", default="https://www.diuvita.com")
