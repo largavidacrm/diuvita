@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for the read-only specialist coverage report."""
 
-from measure_specialist_coverage import format_coverage, next_specialist_action, pct
+from measure_specialist_coverage import format_coverage, next_specialist_action, pct, prioritized_missing_rows
 
 
 def check(condition, message):
@@ -28,6 +28,14 @@ def main():
                 "status": "published",
                 "specialist_claims": 2,
                 "open_review_count": 1,
+            },
+            {
+                "slug": "clinic-c",
+                "clinic_name": "Clinic C",
+                "city": "Valencia",
+                "status": "published",
+                "specialist_claims": 1,
+                "open_review_count": 3,
             }
         ],
         "covered_specialists": [
@@ -52,10 +60,12 @@ def main():
     check("Entradas de especialistas publicadas: 5" in output, "specialist entry count missing")
     check("Clínicas con claims internos de especialistas: 2" in output, "claim coverage missing")
     check("Clínicas con revisión abierta sobre especialistas: 1" in output, "review coverage missing")
-    check(next_specialist_action(report) == "Revisar Clinic A: ya tiene 1 revisión abierta.", "next specialist action missing")
-    check("Siguiente acción: Revisar Clinic A: ya tiene 1 revisión abierta." in output, "next specialist action line missing")
+    check(prioritized_missing_rows(report)[0]["clinic_name"] == "Clinic C", "missing rows should prioritize open reviews")
+    check(next_specialist_action(report) == "Revisar Clinic C: ya tiene 3 revisiones abiertas.", "next specialist action missing")
+    check("Siguiente acción: Revisar Clinic C: ya tiene 3 revisiones abiertas." in output, "next specialist action line missing")
     check("Writes data: no" in output, "read-only signal missing")
     check("Clinic A · Madrid · publicada · 2 claims · 1 revisión abierta" in output, "missing clinic line missing")
+    check(output.index("Clinic C") < output.index("Clinic A"), "higher-review missing clinic should be listed first")
     check("Clinic B · Barcelona · preliminar · 5 especialistas" in output, "covered clinic line missing")
     print("OK specialist coverage: report is read-only")
 

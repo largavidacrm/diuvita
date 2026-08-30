@@ -4,6 +4,7 @@
 from admin_digest import (
     format_digest,
     next_action_label,
+    next_specialist_action,
     review_backlog_guard_status,
     top_pending_profile_field,
 )
@@ -102,6 +103,16 @@ def main():
             "with_specialists": 2,
             "without_specialists": 17,
             "total_specialist_entries": 3,
+            "clinics_with_specialist_claims": 11,
+            "clinics_with_open_specialist_reviews": 18,
+        },
+        "specialist_next_target": {
+            "slug": "age-reversal",
+            "clinic_name": "Age Reversal",
+            "city": "Barcelona",
+            "status": "published",
+            "specialist_claims": 1,
+            "open_review_count": 2,
         },
         "profile_completeness": {
             "visible_clinics": 19,
@@ -120,6 +131,7 @@ def main():
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
+    check(next_specialist_action(digest) == "Revisar Age Reversal: ya tiene 2 revisiones abiertas", "next specialist action missing")
     check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
     check(top_pending_profile_field(digest) == "Especialistas · 17 fichas", "top pending profile field missing")
     limited_digest = dict(digest)
@@ -139,6 +151,7 @@ def main():
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Fichas con especialistas: 2/19" in output, "specialist coverage missing")
+    check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist line missing")
     check("Fichas sin campos pendientes medidos: 1/19" in output, "profile completeness missing")
     check("Campo mas pendiente: Especialistas · 17 fichas" in output, "top pending profile field line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")

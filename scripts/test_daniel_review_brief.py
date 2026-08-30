@@ -59,6 +59,14 @@ def sample_digest():
             "without_specialists": 17,
             "total_specialist_entries": 3,
         },
+        "specialist_next_target": {
+            "slug": "age-reversal",
+            "clinic_name": "Age Reversal",
+            "city": "Barcelona",
+            "status": "published",
+            "specialist_claims": 1,
+            "open_review_count": 2,
+        },
         "profile_completeness": {
             "visible_clinics": 19,
             "without_pending_fields": 1,
@@ -96,6 +104,7 @@ def main():
     check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
     check("Campo más pendiente: Especialistas · 17 fichas" in output, "top pending profile field missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
+    check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")

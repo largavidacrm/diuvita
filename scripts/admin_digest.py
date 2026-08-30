@@ -269,12 +269,36 @@ source_monitoring as (
 visible_specialist_rows as (
   select
     c.id,
+    c.slug,
+    c.display_name as clinic_name,
+    c.city,
+    c.status,
     case
       when jsonb_typeof(c.current_data -> 'profesionales') = 'array'
         then jsonb_array_length(c.current_data -> 'profesionales')
       else 0
-    end as specialist_entries
+    end as specialist_entries,
+    coalesce(claims.claim_count, 0) as specialist_claims,
+    coalesce(reviews.open_review_count, 0) as open_review_count
   from public.clinics c
+  left join lateral (
+    select count(*) as claim_count
+    from public.field_claims fc
+    where fc.clinic_id = c.id
+      and fc.field_path in ('professionals.published', 'team.public_professionals')
+  ) claims on true
+  left join lateral (
+    select count(*) as open_review_count
+    from public.review_queue rq
+    where rq.clinic_id = c.id
+      and rq.status = 'open'
+      and (
+        rq.payload ->> 'quality_context' = 'blocking_claims'
+        or rq.payload::text ilike '%missing_professionals%'
+        or rq.payload::text ilike '%profesionales%'
+        or rq.payload::text ilike '%professionals%'
+      )
+  ) reviews on true
   where c.status in ('published', 'preliminary')
 ),
 specialist_coverage as (
@@ -282,9 +306,26 @@ specialist_coverage as (
     'visible_clinics', count(*),
     'with_specialists', count(*) filter (where specialist_entries > 0),
     'without_specialists', count(*) filter (where specialist_entries = 0),
-    'total_specialist_entries', coalesce(sum(specialist_entries), 0)
+    'total_specialist_entries', coalesce(sum(specialist_entries), 0),
+    'clinics_with_specialist_claims', count(*) filter (where specialist_claims > 0),
+    'clinics_with_open_specialist_reviews', count(*) filter (where open_review_count > 0)
   ) as data
   from visible_specialist_rows
+),
+specialist_next_target as (
+  select coalesce(
+    (
+      select to_jsonb(items)
+      from (
+        select slug, clinic_name, city, status, specialist_claims, open_review_count
+        from visible_specialist_rows
+        where specialist_entries = 0
+        order by open_review_count desc, specialist_claims desc, status, clinic_name
+        limit 1
+      ) items
+    ),
+    '{{}}'::jsonb
+  ) as data
 ),
 visible_profile_checks as (
   select
@@ -375,6 +416,7 @@ select jsonb_build_object(
   'claim_quality', (select data from claim_quality),
   'source_monitoring', (select data from source_monitoring),
   'specialist_coverage', (select data from specialist_coverage),
+  'specialist_next_target', (select data from specialist_next_target),
   'profile_completeness', (select data from profile_completeness),
   'generated_at', now()
 );
@@ -448,6 +490,24 @@ def top_pending_profile_field(digest: dict[str, Any]) -> str:
     return f"{label} · {count} fichas"
 
 
+def plural(value: int, singular: str, plural_text: str) -> str:
+    return singular if value == 1 else plural_text
+
+
+def next_specialist_action(digest: dict[str, Any]) -> str:
+    target = digest.get("specialist_next_target") or {}
+    if not isinstance(target, dict) or not target:
+        return "sin ficha pendiente medida"
+    name = str(target.get("clinic_name") or target.get("slug") or "la primera ficha pendiente")
+    reviews = as_int(target.get("open_review_count"))
+    claims = as_int(target.get("specialist_claims"))
+    if reviews:
+        return f"Revisar {name}: ya tiene {reviews} {plural(reviews, 'revision abierta', 'revisiones abiertas')}"
+    if claims:
+        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'claim interno', 'claims internos')}"
+    return f"Buscar especialistas publicados para {name} solo en fuentes oficiales"
+
+
 def next_action_label(digest: dict[str, Any]) -> str:
     failed = digest.get("recent_failed_jobs") or []
     open_reviews = digest.get("open_reviews") or []
@@ -518,6 +578,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     specialist_with = as_int(specialist_coverage.get("with_specialists"))
     if specialist_visible:
         output.append(line("Fichas con especialistas", f"{specialist_with}/{specialist_visible}"))
+        output.append(line("Siguiente especialistas", next_specialist_action(digest)))
     completeness_visible = as_int(profile_completeness.get("visible_clinics"))
     completeness_ready = as_int(profile_completeness.get("without_pending_fields"))
     if completeness_visible:

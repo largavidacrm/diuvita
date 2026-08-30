@@ -63,7 +63,13 @@ summary as (
   from clinic_rows
 ),
 missing as (
-  select coalesce(jsonb_agg(to_jsonb(items) order by items.status, items.clinic_name), '[]'::jsonb) as data
+  select coalesce(
+    jsonb_agg(
+      to_jsonb(items)
+      order by items.open_review_count desc, items.specialist_claims desc, items.status, items.clinic_name
+    ),
+    '[]'::jsonb
+  ) as data
   from (
     select slug, clinic_name, city, status, specialist_claims, open_review_count
     from clinic_rows
@@ -127,8 +133,21 @@ def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> st
     return "- " + " · ".join(parts)
 
 
+def prioritized_missing_rows(report: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = [row for row in report.get("missing_specialists") or [] if isinstance(row, dict)]
+    return sorted(
+        rows,
+        key=lambda row: (
+            -as_int(row.get("open_review_count")),
+            -as_int(row.get("specialist_claims")),
+            str(row.get("status") or ""),
+            str(row.get("clinic_name") or row.get("slug") or ""),
+        ),
+    )
+
+
 def next_specialist_action(report: dict[str, Any]) -> str:
-    missing_rows = report.get("missing_specialists") or []
+    missing_rows = prioritized_missing_rows(report)
     if not missing_rows:
         return "No hay fichas visibles pendientes de especialistas."
     row = missing_rows[0]
@@ -164,7 +183,7 @@ def format_coverage(report: dict[str, Any]) -> str:
         "",
         "## Sin especialistas publicados",
     ]
-    missing_rows = report.get("missing_specialists") or []
+    missing_rows = prioritized_missing_rows(report)
     if not missing_rows:
         lines.append("- Todas las clínicas visibles tienen especialistas publicados.")
     for row in missing_rows:
