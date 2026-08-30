@@ -22,12 +22,14 @@ Crear borrador no publica la clínica. Solo crea una ficha interna para editarla
 
 Arriba del panel verás **Plan global**. Léelo de arriba abajo:
 
-1. **Ahora estás aquí**: te dice en qué fase real estamos, sin obligarte a
+1. **Estamos aquí**: te dice en qué fase real estamos, sin obligarte a
    interpretar números.
-2. **Siguiente clic recomendado**: es el botón que conviene usar primero.
-3. **Ya funciona / Cuello de botella / No activar aún**: separa lo que está
-   resuelto, lo que bloquea avanzar y lo que todavía no conviene automatizar.
-4. **Ruta global**: muestra el camino completo por etapas.
+2. **Tu próximo clic**: es el botón que conviene usar primero.
+3. **Tú ahora / Yo puedo seguir con / Datos pendientes / No activar todavía**:
+   separa tu revisión humana, mi trabajo técnico seguro y lo que todavía no
+   conviene automatizar.
+4. **Mapa simple del plan**: muestra el camino completo sin numeritos
+   decorativos.
 
 Puedes pulsar **Filtrar grupo** o **Abrir siguiente** para ir directamente al
 grupo o tarjeta que el panel considera más importante. Si ves “control interno”,

@@ -70,13 +70,13 @@
         <div class="global-plan-body">
           <div class="global-plan-orientation">
             <article class="global-plan-focus">
-              <span>Punto actual</span>
+              <span>Estamos aquí</span>
               <strong id="globalPlanFocus">Cargando estado del proyecto.</strong>
               <p id="globalPlanWhy">Estoy ordenando la información para enseñarte el siguiente paso con claridad.</p>
             </article>
             <div class="global-next-box">
               <div>
-                <span>Qué mirar primero</span>
+                <span>Tu próximo clic</span>
                 <strong id="globalPlanNextAction">Cargando</strong>
                 <p id="globalPlanNextDetail">Todavía estamos leyendo el estado del proyecto.</p>
               </div>
@@ -87,7 +87,7 @@
             <p class="empty">Cargando estado del plan.</p>
           </div>
           <div>
-            <div class="global-plan-section-title">Ruta completa</div>
+            <div class="global-plan-section-title">Mapa simple del plan</div>
             <div class="global-plan-roadmap" id="globalPlanRoadmap">
               <p class="empty">Cargando desglose del plan.</p>
             </div>
@@ -1586,9 +1586,8 @@
       }).length;
     }
 
-    function globalPlanLane(number, label, status, next, tone, state) {
+    function globalPlanLane(label, status, next, tone, state) {
       return '<article class="global-plan-lane ' + html(state || "") + '">' +
-        '<span class="global-plan-step">' + html(number) + '</span>' +
         '<div>' +
           '<span>' + html(label) + '</span>' +
           '<strong class="' + html(tone || "") + '">' + html(status) + '</strong>' +
@@ -1607,8 +1606,8 @@
       if (openCount) {
         var groupText = group ? " Empieza por " + clinicWorkgroupLabel(group) + "." : "";
         return {
-          title: "Estamos en control interno: convertir propuestas en fichas fiables.",
-          detail: "La web ya funciona. Ahora toca revisar datos antes de que cambien fichas visibles." + groupText
+          title: "Estamos en control interno.",
+          detail: "La web ya funciona. Tu parte ahora es validar tarjetas; mi parte es mejorar herramientas sin publicar ni llenar la bandeja." + groupText
         };
       }
       if (specialists && specialists.withoutSpecialists) {
@@ -1665,6 +1664,15 @@
       return base + " Crear borrador no publica.";
     }
 
+    function globalPlanCodexWorkDetail(openCount, failedJobs, sources, specialists, completeness) {
+      if (Number(failedJobs || 0)) return "Resolver fallos técnicos y volver a medir antes de tocar fichas.";
+      if (Number(openCount || 0) >= 45) return "Seguir mejorando el panel, extractores y checks sin crear más tarjetas.";
+      if (sources && sources.needingSourceWork) return "Completar trazabilidad de fuentes y preparar mejores propuestas internas.";
+      if (specialists && specialists.withoutSpecialists) return "Priorizar páginas de equipo para capturar especialistas publicados.";
+      if (completeness && completeness.incompleteProfiles) return "Completar huecos de fichas visibles sin publicar automáticamente.";
+      return "Preparar el siguiente bloque técnico sin activar auto-publicación.";
+    }
+
     function renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews) {
       if (!el("globalPlanPanel")) return;
       var reviews = summary.reviews || {};
@@ -1699,23 +1707,23 @@
 
       el("globalPlanPhase").textContent = phase;
       el("globalPlanPhase").className = "pill" + (failedJobs || openCount >= 45 ? " warning" : "");
-      el("globalPlanUpdated").textContent = "Dónde estamos, qué mirar primero y qué queda después.";
+      el("globalPlanUpdated").textContent = "Lo esencial: estado actual, tu próximo clic y lo que queda después.";
       el("globalPlanFocus").textContent = focus.title;
       el("globalPlanWhy").textContent = focus.detail;
       el("globalPlanGrid").innerHTML = [
-        globalPlanItem("1 · Ahora", failedJobs ? "Estabilidad técnica" : "Control interno", failedJobs ? "Hay trabajos fallidos: se resuelven antes de crear más propuestas." : globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck), failedJobs || openCount ? "warning-text" : ""),
-        globalPlanItem("2 · Datos", "Fuentes + fichas", globalPlanDataDetail(sourcePlanLabel(sources), specialistPlanLabel(specialists), sourceTarget, profileTarget), sources.nextTarget || specialists.nextTarget ? "warning-text" : ""),
-        globalPlanItem("3 · Decisión humana", "Validación final", globalPlanHumanDecisionDetail(candidateOpenCount, publication), candidateOpenCount ? "warning-text" : ""),
-        globalPlanItem("4 · Después", "Autonomía / Growth", blockers.length ? blockers[0] + ". No se activa todavía." : "Cuando tú lo decidas, subimos autonomía y crecimiento.", blockers.length ? "warning-text" : "")
+        globalPlanItem("Tú ahora", nextClick, globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount), openCount ? "warning-text" : ""),
+        globalPlanItem("Yo puedo seguir con", failedJobs ? "Estabilidad técnica" : "Trabajo seguro", globalPlanCodexWorkDetail(openCount, failedJobs, sources, specialists, completeness), failedJobs ? "danger-text" : ""),
+        globalPlanItem("Datos pendientes", "Fuentes + fichas", globalPlanDataDetail(sourcePlanLabel(sources), specialistPlanLabel(specialists), sourceTarget, profileTarget), sources.nextTarget || specialists.nextTarget ? "warning-text" : ""),
+        globalPlanItem("No activar todavía", "Autonomía / Growth", blockers.length ? blockers[0] + ". Primero cerramos revisión humana y claims." : "Se deja parado hasta que tú lo decidas.", blockers.length ? "warning-text" : "")
       ].join("");
       el("globalPlanRoadmap").innerHTML = [
-        globalPlanLane("1", "Base técnica", "Hecho", "Supabase, admin, GitHub y web pública conectados.", "", "is-done"),
-        globalPlanLane("2", "Control interno", openCount ? "Ahora" : "Hecho", openCount ? openCount + " tarjetas abiertas. " + backlogGuard.label + "." : "Bandeja limpia.", backlogGuard.tone, openCount ? "is-current" : "is-done"),
-        globalPlanLane("3", "Fuentes verificables", sources.needingSourceWork ? "En curso" : "Hecho", sourcePlanLabel(sources) + ". " + sourceTarget + ".", sources.nextTarget ? "warning-text" : "", sources.needingSourceWork ? "is-waiting" : "is-done"),
-        globalPlanLane("4", "Fichas completas", specialists.withoutSpecialists || enrichmentOpenCount ? "En curso" : "Sin urgencia", "Sedes, especialistas, precios y datos de contacto. " + profileTarget + ".", enrichmentOpenCount || specialists.nextTarget ? "warning-text" : "", specialists.withoutSpecialists || enrichmentOpenCount ? "is-waiting" : "is-later"),
-        globalPlanLane("5", "Candidatas nuevas", candidateOpenCount ? "En revisión" : "Sin urgencia", candidateOpenCount ? candidateOpenCount + " candidatas abiertas. Crear borrador no publica." : "No hay candidatas prioritarias.", candidateOpenCount ? "warning-text" : "", candidateOpenCount ? "is-waiting" : "is-later"),
-        globalPlanLane("6", "Autonomía", "Todavía no", blockers[0] || "Modo sombra hasta medir precisión suficiente.", blockers.length ? "warning-text" : "", blockers.length ? "is-later" : "is-waiting"),
-        globalPlanLane("7", "Growth", "Después", blockingOpenCount ? "Primero resolver claims bloqueantes y bandeja." : "SEO y páginas por ciudad/tratamiento cuando los datos estén maduros.", blockingOpenCount ? "warning-text" : "", "is-later")
+        globalPlanLane("Base técnica", "Hecho", "Supabase, admin, GitHub y web pública conectados.", "", "is-done"),
+        globalPlanLane("Control interno", openCount ? "Ahora" : "Hecho", openCount ? openCount + " tarjetas abiertas. " + backlogGuard.label + "." : "Bandeja limpia.", backlogGuard.tone, openCount ? "is-current" : "is-done"),
+        globalPlanLane("Fuentes verificables", sources.needingSourceWork ? "En curso" : "Hecho", sourcePlanLabel(sources) + ". " + sourceTarget + ".", sources.nextTarget ? "warning-text" : "", sources.needingSourceWork ? "is-waiting" : "is-done"),
+        globalPlanLane("Fichas completas", specialists.withoutSpecialists || enrichmentOpenCount ? "En curso" : "Sin urgencia", "Sedes, especialistas, precios y datos de contacto. " + profileTarget + ".", enrichmentOpenCount || specialists.nextTarget ? "warning-text" : "", specialists.withoutSpecialists || enrichmentOpenCount ? "is-waiting" : "is-later"),
+        globalPlanLane("Candidatas nuevas", candidateOpenCount ? "En revisión" : "Sin urgencia", candidateOpenCount ? candidateOpenCount + " candidatas abiertas. Crear borrador no publica." : "No hay candidatas prioritarias.", candidateOpenCount ? "warning-text" : "", candidateOpenCount ? "is-waiting" : "is-later"),
+        globalPlanLane("Autonomía", "Todavía no", blockers[0] || "Modo sombra hasta medir precisión suficiente.", blockers.length ? "warning-text" : "", blockers.length ? "is-later" : "is-waiting"),
+        globalPlanLane("Growth", "Después", blockingOpenCount ? "Primero resolver claims bloqueantes y bandeja." : "SEO y páginas por ciudad/tratamiento cuando los datos estén maduros.", blockingOpenCount ? "warning-text" : "", "is-later")
       ].join("");
       el("globalPlanNextAction").textContent = nextClick;
       el("globalPlanNextDetail").textContent = globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount);

@@ -34,6 +34,7 @@ def main() -> None:
         "function globalPlanFocusCopy",
         "function globalPlanBottleneckText",
         "function globalPlanNextDetailText",
+        "function globalPlanCodexWorkDetail",
         "function countOpenReviewsByType",
         "function openGlobalPlanNext",
         "function googleLinkReviewRows",
@@ -45,17 +46,17 @@ def main() -> None:
         "Abrir prioridad",
         "Abrir Google Maps",
         "Plan global",
-        "Punto actual",
-        "Qué mirar primero",
-        "Dónde estamos, qué mirar primero y qué queda después.",
-        "Estamos en control interno: convertir propuestas en fichas fiables.",
-        "1 · Ahora",
-        "2 · Datos",
-        "3 · Decisión humana",
-        "4 · Después",
+        "Estamos aquí",
+        "Tu próximo clic",
+        "Lo esencial: estado actual, tu próximo clic y lo que queda después.",
+        "Estamos en control interno.",
+        "Tú ahora",
+        "Yo puedo seguir con",
+        "Datos pendientes",
+        "No activar todavía",
         "Validación final",
         "Autonomía / Growth",
-        "Ruta completa",
+        "Mapa simple del plan",
         "Base técnica",
         "Control interno",
         "Fuentes verificables",
@@ -79,6 +80,8 @@ def main() -> None:
         'el("openGoogleLinksBtn").addEventListener("click", openGoogleLinksTarget);',
     ]:
         check(marker in index, f"missing next-action marker: {marker}")
+
+    check("global-plan-step" not in index, "global plan should not render decorative step numbers")
 
     print("OK admin next action: review priority visible")
 
