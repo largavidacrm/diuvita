@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+"""Basic checks for the shadow claim verifier."""
+from capture_source_snapshot import FetchResult
+from extract_clinic_profile_shadow import extract_from_fetch
+from verify_clinic_profile_shadow import verify_extraction
+
+
+def check(condition, message):
+    if not condition:
+        raise AssertionError(message)
+
+
+def main():
+    html = """
+<!doctype html>
+<html>
+<head><title>Example Longevity Clinic | Barcelona</title></head>
+<body>
+  <p>Example Longevity Clinic offers medicina preventiva and VO2 max.</p>
+  <p>Email info@exampleclinic.test and phone +34 930 111 222.</p>
+</body>
+</html>
+""".encode("utf-8")
+    extraction = extract_from_fetch(
+        FetchResult(
+            source_url="https://exampleclinic.test/longevity",
+            final_url="https://exampleclinic.test/longevity",
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=html,
+        )
+    )
+    extraction["field_claims"].append({
+        "field_path": "contact.email",
+        "value": "wrong@exampleclinic.test",
+        "confidence": 0.88,
+        "source_count": 1,
+        "verifier_verdict": "unknown",
+    })
+    result = verify_extraction(extraction)
+    verdicts = {
+        (claim["field_path"], str(claim.get("value"))): claim["verifier_verdict"]
+        for claim in result["verified_claims"]
+    }
+    check(result["summary"]["claims"] >= 4, "expected verified claims")
+    check(verdicts[("contact.website", "https://exampleclinic.test")] == "accepted", "website should verify")
+    check(verdicts[("contact.email", "info@exampleclinic.test")] == "accepted", "email should verify")
+    check(verdicts[("contact.email", "wrong@exampleclinic.test")] == "rejected", "wrong email should reject")
+    check(result["summary"]["actions"].get("review", 0) >= 1, "auto-publish off should keep review actions")
+    print("OK verification: shadow clinic claims")
+
+
+if __name__ == "__main__":
+    main()

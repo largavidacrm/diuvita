@@ -28,6 +28,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/RULES_ENGINE.md`: reglas deterministas para decidir si un dato se rechaza, se revisa o puede autoaceptarse en el futuro.
 - `docs/SOURCE_PROVENANCE.md`: estrategia de evidencias compactas para saber de dónde sale cada dato.
 - `docs/SHADOW_EXTRACTOR.md`: primer extractor local en modo sombra para convertir una fuente en claims estructurados.
+- `docs/SHADOW_VERIFIER.md`: primer verificador local que desafía claims extraídos antes de reglas/publicación.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.
@@ -39,6 +40,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/capture_source_snapshot.py`: captura metadatos, hash y extracto corto de una fuente publica.
 - `scripts/diuvita_rules.py`: motor local de reglas por riesgo de campo.
 - `scripts/extract_clinic_profile_shadow.py`: extractor inicial de claims de clínica en modo sombra.
+- `scripts/verify_clinic_profile_shadow.py`: verificador inicial de claims extraídos en modo sombra.
 - `scripts/apply_supabase_sql.sh`: aplica un SQL concreto contra Supabase.
 - `scripts/add_supabase_admin.sh`: autoriza un email como administrador del panel.
 - `scripts/create_supabase_auth_user.py`: crea un usuario de acceso en Supabase Auth.

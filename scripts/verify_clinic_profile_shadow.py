@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""Independent shadow verifier for extracted clinic profile claims."""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlparse
+
+from capture_source_snapshot import normalize_space
+from diuvita_rules import decide_many
+
+
+def normalized_text(value: Any) -> str:
+    return normalize_space(str(value or "")).lower()
+
+
+def digits(value: Any) -> str:
+    return re.sub(r"\D+", "", str(value or ""))
+
+
+def host(value: Any) -> str:
+    parsed = urlparse(str(value or ""))
+    return parsed.netloc.lower().removeprefix("www.")
+
+
+def source_text(extraction: dict[str, Any]) -> str:
+    source = extraction.get("source") or {}
+    return normalized_text(
+        " ".join([
+            str(source.get("source_title") or ""),
+            str(source.get("text_excerpt") or ""),
+        ])
+    )
+
+
+def source_host(extraction: dict[str, Any]) -> str:
+    source = extraction.get("source") or {}
+    return host(source.get("final_url") or source.get("source_url") or "")
+
+
+def value_supported(value: Any, haystack: str) -> tuple[bool, str]:
+    if isinstance(value, list):
+        values = [normalized_text(item) for item in value if normalized_text(item)]
+        if not values:
+            return False, "empty list"
+        supported = [item for item in values if item in haystack]
+        if len(supported) == len(values):
+            return True, "all values found explicitly"
+        if supported:
+            return False, f"partial support: {len(supported)} of {len(values)} values"
+        return False, "values not found explicitly"
+
+    clean = normalized_text(value)
+    if not clean:
+        return False, "empty value"
+    if clean in haystack:
+        return True, "value found explicitly"
+    return False, "value not found explicitly"
+
+
+def verify_contact_phone(value: Any, haystack: str) -> tuple[str, float, str]:
+    claim_digits = digits(value)
+    if len(claim_digits) < 7:
+        return "review", 0.40, "phone value is too short"
+    text_digits = digits(haystack)
+    if claim_digits in text_digits:
+        return "accepted", 0.94, "phone digits found explicitly"
+    return "rejected", 0.88, "phone digits not found"
+
+
+def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str, Any]:
+    field_path = str(claim.get("field_path") or "")
+    value = claim.get("value")
+    haystack = source_text(extraction)
+    clean_source_host = source_host(extraction)
+
+    verdict = "review"
+    confidence = 0.50
+    reason = "no verifier rule matched"
+
+    if field_path == "contact.website":
+        if host(value) and host(value) == clean_source_host:
+            verdict, confidence, reason = "accepted", 0.96, "website host matches source host"
+        else:
+            verdict, confidence, reason = "review", 0.65, "website host does not match source host"
+    elif field_path == "contact.phone":
+        verdict, confidence, reason = verify_contact_phone(value, haystack)
+    elif field_path.startswith("contact."):
+        supported, reason = value_supported(value, haystack)
+        verdict = "accepted" if supported else "rejected"
+        confidence = 0.94 if supported else 0.86
+    elif field_path.startswith("identity."):
+        supported, reason = value_supported(value, haystack)
+        verdict = "accepted" if supported else "review"
+        confidence = 0.66 if supported else 0.45
+    elif field_path.startswith(("services.", "specialties.", "diagnostics.", "programs.", "technologies.")):
+        supported, reason = value_supported(value, haystack)
+        verdict = "accepted" if supported else "review"
+        confidence = 0.90 if supported else 0.62
+    elif field_path.startswith(("prices.", "treatments.", "medical_claims.", "outcomes.", "evidence.")):
+        supported, reason = value_supported(value, haystack)
+        verdict = "accepted" if supported else "review"
+        confidence = 0.88 if supported else 0.58
+
+    verified = dict(claim)
+    verified["verifier_verdict"] = verdict
+    verified["verifier_confidence"] = confidence
+    verified["verifier_reason"] = reason
+    return verified
+
+
+def verify_extraction(extraction: dict[str, Any]) -> dict[str, Any]:
+    claims = extraction.get("field_claims") or []
+    if not isinstance(claims, list):
+        claims = []
+    verified_claims = [
+        verify_claim(claim, extraction)
+        for claim in claims
+        if isinstance(claim, dict)
+    ]
+    decisions = decide_many(verified_claims)
+    counts: dict[str, int] = {}
+    for claim in verified_claims:
+        verdict = str(claim.get("verifier_verdict") or "review")
+        counts[verdict] = counts.get(verdict, 0) + 1
+    return {
+        "workflow": "VERIFY_CLINIC_PROFILE",
+        "mode": "shadow",
+        "source_url": (extraction.get("source") or {}).get("source_url"),
+        "verified_claims": verified_claims,
+        "rule_decisions": decisions,
+        "summary": {
+            "claims": len(verified_claims),
+            "verdicts": counts,
+            "actions": action_counts(decisions),
+        },
+    }
+
+
+def action_counts(decisions: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for decision in decisions:
+        action = str(decision.get("action") or "review")
+        counts[action] = counts.get(action, 0) + 1
+    return counts
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("extraction_json", type=Path, help="JSON output from extract_clinic_profile_shadow.py.")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    with args.extraction_json.open(encoding="utf-8") as handle:
+        extraction = json.load(handle)
+    if not isinstance(extraction, dict):
+        raise SystemExit("extraction_json must contain an object")
+    print(json.dumps(verify_extraction(extraction), ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
