@@ -7,6 +7,7 @@ from run_cto_shadow_cycle import (
     build_cycle_brief,
     build_steps,
     compact_summary,
+    cycle_next_clicks,
     format_cycle_brief,
     open_review_count_from_digest,
     skipped_step,
@@ -280,6 +281,19 @@ def main():
             "claims_without_source": 0,
             "blocking_claims": 2,
         },
+        "review_first_clinic_workgroup": {
+            "clinic_name": "Sensabell",
+            "open_count": 5,
+        },
+        "google_link_reviews": {
+            "open_count": 4,
+            "first_review": {"title": "Completar enlaces Google: Sensabell"},
+        },
+        "specialist_reviews": {
+            "open_count": 2,
+            "professionals_count": 17,
+            "first_review": {"title": "Regenera Clinic Medicina de la Longevidad", "professionals_count": 11},
+        },
     }
     cycle_brief = build_cycle_brief({
         "mode": "dry_run",
@@ -293,9 +307,14 @@ def main():
     check("11/19 fichas con fuente" in cycle_brief["source_gap"], "Daniel brief should keep source coverage")
     check("Kairos Longevity Clinic" in cycle_brief["source_next"], "Daniel brief should keep next source target")
     check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
+    next_click_text = " ".join(cycle_next_clicks(cycle_digest))
+    check("No crear trabajos nuevos" in next_click_text, "cycle brief should show the backlog guard next click")
+    check("Abrir Especialistas" in next_click_text, "cycle brief should show specialist next click")
+    check("Abrir Google Maps" in next_click_text, "cycle brief should show Google Maps next click")
     brief_text = format_cycle_brief(cycle_brief)
     check("# Vitalarga: resumen CTO automatico" in brief_text, "plain brief title missing")
     check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
+    check("Proximos clics: No crear trabajos nuevos" in brief_text, "plain brief next clicks missing")
     check("Siguiente ficha: Revisar Sensabell" in brief_text, "plain brief next profile missing")
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")

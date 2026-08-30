@@ -17,10 +17,13 @@ from typing import Any
 from admin_digest import (
     SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
     as_int,
+    google_link_review_status,
     next_action_label,
     next_profile_action,
     next_source_action,
+    review_backlog_guard_status,
     source_coverage_status,
+    specialist_review_status,
     top_pending_profile_field,
 )
 
@@ -302,6 +305,34 @@ def open_review_count_from_digest(digest: dict[str, Any]) -> int:
     return as_int(reviews.get("open"))
 
 
+def clinic_workgroup_click_from_digest(digest: dict[str, Any]) -> str:
+    group = digest.get("review_first_clinic_workgroup") or {}
+    name = str(group.get("clinic_name") or group.get("clinic_slug") or "").strip()
+    count = as_int(group.get("open_count"))
+    if not name or not count:
+        return ""
+    return f"Filtrar grupo: {name}, {count} tarjetas juntas."
+
+
+def cycle_next_clicks(digest: dict[str, Any]) -> list[str]:
+    if not digest:
+        return ["Abrir el panel y usar Abrir prioridad."]
+    clicks: list[str] = []
+    guard = review_backlog_guard_status(digest)
+    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+        clicks.append(f"No crear trabajos nuevos: {guard}.")
+    workgroup = clinic_workgroup_click_from_digest(digest)
+    if workgroup:
+        clicks.append(workgroup)
+    specialists = specialist_review_status(digest)
+    if not specialists.startswith("sin tarjetas"):
+        clicks.append(f"Abrir Especialistas: {specialists}.")
+    google_links = google_link_review_status(digest)
+    if not google_links.startswith("sin tarjetas"):
+        clicks.append(f"Abrir Google Maps: {google_links}.")
+    return clicks[:4] or ["Abrir el panel y usar Abrir prioridad."]
+
+
 def step_label(name: str) -> str:
     return STEP_LABELS.get(name, name.replace("_", " "))
 
@@ -382,18 +413,21 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         profile_next = next_profile_action(admin_digest)
         source_gap = source_coverage_status(admin_digest)
         source_next = next_source_action(admin_digest)
+        next_clicks = cycle_next_clicks(admin_digest)
     elif failed_step:
         next_action = "Revisar el paso detenido"
         profile_gap = "no medido"
         profile_next = "no medida"
         source_gap = "no medida"
         source_next = "no medida"
+        next_clicks = ["Revisar el paso detenido antes de aceptar nuevas fichas."]
     else:
         next_action = "Sin accion urgente"
         profile_gap = "no medido"
         profile_next = "no medida"
         source_gap = "no medida"
         source_next = "no medida"
+        next_clicks = ["Abrir el panel y usar Abrir prioridad."]
 
     auto_publish = bool(automation.get("auto_publish_enabled"))
     shadow_mode = bool(automation.get("shadow_mode_active"))
@@ -416,6 +450,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "profile_next": profile_next,
         "source_gap": source_gap,
         "source_next": source_next,
+        "next_clicks": next_clicks,
         "publication_guard": publication_guard,
         "shadow_mode": "activo" if shadow_mode else "inactivo",
         "production_health": production_health,
@@ -430,6 +465,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Estado: {brief.get('headline')}",
         f"- Pasos: {brief.get('steps')}",
         f"- Que mirar primero: {brief.get('next_action')}.",
+        "- Proximos clics: " + " / ".join(str(item) for item in (brief.get("next_clicks") or []) if item),
         f"- Revisiones abiertas: {brief.get('open_reviews')}",
         f"- Campo mas pendiente: {brief.get('profile_gap')}.",
         f"- Siguiente ficha: {brief.get('profile_next')}.",
