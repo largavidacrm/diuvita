@@ -2045,14 +2045,15 @@
       var remaining = SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount;
       var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
       var near = !full && remaining <= 5;
+      var paused = full || near;
       var node = el("jobBacklogHint");
       node.className = "job-backlog-hint" + (full ? " danger" : near ? " warning" : "");
       node.textContent = full
         ? "Freno activo: limpia revisiones antes de crear más trabajos."
         : near
-          ? "Casi lleno: crear trabajos puede añadir más tarjetas de revisión."
+          ? "Pausa preventiva: limpia revisiones antes de crear más trabajos."
           : "Bandeja con margen: puedes crear trabajos si aportan valor.";
-      el("jobBtn").disabled = full;
+      el("jobBtn").disabled = paused;
     }
 
     function duplicateEnrichmentClinicIds(rows) {
@@ -4793,11 +4794,9 @@
         return;
       }
       if (SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount <= 5) {
-        var shouldContinue = window.confirm(
-          "La bandeja está casi llena (" + dashboardOpenReviewCount + "/" + SAFE_WRITE_REVIEW_BACKLOG_LIMIT + ").\n\n" +
-          "Crear un trabajo puede añadir más tarjetas para revisar. ¿Crear igualmente?"
-        );
-        if (!shouldContinue) return;
+        updateJobBacklogHint(dashboardOpenReviewCount);
+        toast("Pausa preventiva: limpia revisiones antes de crear más trabajos.");
+        return;
       }
       el("jobBtn").disabled = true;
       var payload = {

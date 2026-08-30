@@ -109,7 +109,9 @@ Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. S
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
 
 En **Crear trabajo**, el panel avisa cuando la bandeja está casi llena. Si el
-freno llega al límite, bloquea crear más trabajos hasta limpiar revisiones.
+freno está cerca del límite, pausa crear más trabajos hasta limpiar revisiones.
+Así evitamos llenar la bandeja con más tarjetas antes de cerrar las que ya
+existen.
 
 ## Revisar mejoras de una ficha existente
 
