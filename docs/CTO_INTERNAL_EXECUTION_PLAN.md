@@ -359,6 +359,8 @@ Next 10 technical steps:
 55. Require clinic context for ambiguous short Maps links. Done locally in `scripts/discover_clinic_google_links.py`: generic `maps.app.goo.gl` links stay pending unless the clinic name is visible around the link.
 56. Split adjacent phone numbers. Done locally in `scripts/extract_clinic_profile_shadow.py`: two Spanish phone numbers written together are separated before review.
 57. Add official location-page source discovery. Done locally in `scripts/discover_clinic_location_sources.py`: contact/location/sedes pages can be stored as internal sources without editing profiles or publishing.
+58. Preserve file-like source URLs. Done locally in the source discoverers: `.html` pages keep their real URL instead of receiving a trailing slash that can create false 404s.
+59. De-duplicate near-identical extracted locations. Done locally in `scripts/extract_clinic_profile_shadow.py`: repeated city suffixes and punctuation variants no longer create duplicate sede proposals.
 
 ## Daniel decision checkpoints
 

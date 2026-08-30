@@ -54,6 +54,10 @@ def main():
         extract_contacts("Contacto 919703393 646039428")["phones"] == ["919703393", "646039428"],
         "adjacent Spanish phone numbers should be split",
     )
+    check(
+        extract_contacts("Contacto +34965130120 965210687")["phones"] == ["+34965130120", "965210687"],
+        "adjacent +34 and Spanish phone numbers should be split",
+    )
     check(len(profile["locations"]) == 2, "two locations should be extracted")
     check(profile["locations"][0]["city"] == "Madrid", "Madrid location city missing")
     check(profile["locations"][1]["city"] == "Barcelona", "Barcelona location city missing")
@@ -91,6 +95,11 @@ def main():
         all("Sede 1" not in str(item) and "Sede 2" not in str(item) for item in extracted_locations),
         "extracted locations should not create numbered labels",
     )
+    duplicate_location = extract_locations(
+        "Dirección: Avda. Blasco Ibáñez 14 46010 Valencia. "
+        "Hospital Quirónsalud Valencia Avda. Blasco Ibáñez, 14 46010 Valencia Valencia."
+    )
+    check(len(duplicate_location) == 1, "near-duplicate location addresses should be collapsed")
 
     regenera_text = (
         "NUESTRO EQUIPO Te acompañamos desde la ciencia y la empatía "

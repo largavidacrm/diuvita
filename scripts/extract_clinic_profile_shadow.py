@@ -481,19 +481,33 @@ def clean_address(raw: str) -> str:
     return normalize_space(first_part).strip(" ,.;:-")
 
 
+def compact_address_key(raw: str) -> str:
+    return normalize_space(re.sub(r"[^a-z0-9]+", " ", fold(raw)))
+
+
+def trim_repeated_trailing_city(address: str, city: str) -> str:
+    if not city:
+        return address
+    pattern = re.compile(rf"(\b{re.escape(city)}\b)(?:[,\s]+{re.escape(city)}\b)+$", re.I)
+    return normalize_space(pattern.sub(r"\1", address)).strip(" ,.;:-")
+
+
 def extract_locations(text: str) -> list[dict[str, str]]:
     locations: list[dict[str, str]] = []
-    seen = set()
+    seen: set[str] = set()
     for match in LOCATION_ADDRESS_RE.finditer(text):
         address = clean_address(match.group("address"))
         if len(address) < 10:
             continue
-        key = fold(address)
+        city = city_from_address(address)
+        address = trim_repeated_trailing_city(address, city)
+        key = compact_address_key(address)
         if key in seen:
+            continue
+        if any(key.startswith(existing + " ") or existing.startswith(key + " ") for existing in seen):
             continue
         seen.add(key)
         location: dict[str, str] = {"address": address}
-        city = city_from_address(address)
         if city:
             location["city"] = city
         locations.append(location)
@@ -511,7 +525,13 @@ def split_phone_candidate(raw: str) -> list[str]:
     digits = re.sub(r"\D", "", clean)
     if not digits:
         return []
-    if clean.startswith("+") or len(digits) <= 15:
+    if clean.startswith("+") and len(digits) <= 15:
+        return [clean]
+    if clean.startswith("+34") and len(digits) > 11 and (len(digits) - 2) % 9 == 0:
+        phones = ["+" + digits[:11]]
+        phones.extend(digits[index : index + 9] for index in range(11, len(digits), 9))
+        return phones
+    if len(digits) <= 15:
         return [clean]
     if len(digits) % 9 == 0:
         return [digits[index : index + 9] for index in range(0, len(digits), 9)]
