@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Create internal review cards for blocking field claims.
 
-The tool is safe by default. It reads rejected/conflict/source-less claims and
-can create or refresh clinic_quality_audit review cards. It never edits clinic
-profiles and never publishes public pages.
+The tool is safe by default. It reads conflict/source-less claims and can create
+or refresh clinic_quality_audit review cards. Rejected claims stay as quality
+signals, but they do not need Daniel's review because they are already excluded.
+It never edits clinic profiles and never publishes public pages.
 """
 from __future__ import annotations
 
@@ -116,7 +117,7 @@ with blocked as (
     fc.field_path,
     fc.verification_status,
     case
-      when fc.verification_status in ('conflict', 'rejected') then fc.verification_status
+      when fc.verification_status = 'conflict' then fc.verification_status
       when fc.source_record_id is null then 'without_source'
       else fc.verification_status
     end as blocker_status,
@@ -140,7 +141,7 @@ with blocked as (
   join public.clinics c on c.id = fc.clinic_id
   left join public.source_records sr on sr.id = fc.source_record_id
   where (
-      fc.verification_status in ('conflict', 'rejected')
+      fc.verification_status = 'conflict'
       or fc.source_record_id is null
     )
     and {NON_NOISY_BLOCKING_CLAIM_SQL}

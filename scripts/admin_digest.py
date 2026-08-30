@@ -404,7 +404,7 @@ visible_source_rows as (
       count(*) filter (where fc.source_record_id is null) as claims_without_source,
       count(*) filter (
         where (
-          fc.verification_status in ('conflict', 'rejected')
+          fc.verification_status = 'conflict'
           or fc.source_record_id is null
         )
         and {NON_NOISY_BLOCKING_CLAIM_SQL}

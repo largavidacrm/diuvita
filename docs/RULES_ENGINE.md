@@ -73,3 +73,8 @@ The first useful integration point is `EXTRACT_CLINIC_PROFILE` and `VERIFY_CLINI
 Stored `field_claims` can now be evaluated read-only with
 `scripts/evaluate_claim_rules.py`. That report does not write to Supabase or
 publish anything.
+
+Operational blockers are narrower than quality signals. A rejected claim means
+"do not publish this proposal" and remains useful for accuracy measurement.
+Only conflicts or source-less claims should create blocking review cards for
+Daniel.

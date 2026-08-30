@@ -102,7 +102,7 @@ blocked_claims as (
     left join public.clinics c on c.id = fc.clinic_id
     left join public.source_records sr on sr.id = fc.source_record_id
     where (
-        fc.verification_status in ('conflict', 'rejected')
+        fc.verification_status = 'conflict'
         or fc.source_record_id is null
       )
       and {NON_NOISY_BLOCKING_CLAIM_SQL}

@@ -103,7 +103,7 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 
 Hasta que no guardes, la web pública no cambia.
 
-Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia rechazada, en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión.
+Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
 
 En esas tarjetas verás **Paso recomendado**. No es una decisión automática: te
 orienta sobre si conviene comparar evidencias, buscar una fuente oficial o dejar
