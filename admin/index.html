@@ -355,6 +355,7 @@
               </select>
               <button class="btn secondary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
               <button class="btn secondary hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
+              <button class="btn secondary hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
               <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
               <span class="pill" id="reviewCount">0 abiertas</span>
             </div>
@@ -493,6 +494,7 @@
     var reviewPriorityFilter = "";
     var reviewSearchQuery = "";
     var reviewDuplicateFilter = false;
+    var sourceCoverageCache = null;
     var clinicStatusFilter = "";
     var activeClinic = null;
     var activeReview = null;
@@ -1431,6 +1433,46 @@
           (parseDateValue(a.created_at) || new Date(8640000000000000)) -
           (parseDateValue(b.created_at) || new Date(8640000000000000));
       })[0];
+    }
+
+    function sourceTargetSubject(target) {
+      if (!target) return "fuente";
+      return target.clinicName || target.slug || "fuente";
+    }
+
+    function sourceTargetReviewRows(rows) {
+      var target = sourceCoverageCache && sourceCoverageCache.nextTarget;
+      if (!target || !target.clinicId) return [];
+      return (rows || []).filter(function (row) {
+        return row.clinic_id === target.clinicId;
+      });
+    }
+
+    function firstSourceTargetReview(rows) {
+      var matches = sourceTargetReviewRows(rows);
+      if (!matches.length) return null;
+      return firstActionReview(matches, 0) || matches.slice().sort(function (a, b) {
+        return Number(b.priority || 0) - Number(a.priority || 0) ||
+          (parseDateValue(a.created_at) || new Date(8640000000000000)) -
+          (parseDateValue(b.created_at) || new Date(8640000000000000));
+      })[0];
+    }
+
+    function openSourceTarget() {
+      var target = sourceCoverageCache && sourceCoverageCache.nextTarget;
+      if (!target) return;
+      var match = firstSourceTargetReview(reviewCache);
+      if (match) {
+        openReviewEditor(match.id);
+        return;
+      }
+      var query = sourceTargetSubject(target);
+      setInput("reviewSearch", query);
+      el("reviewTypeFilter").value = "";
+      el("reviewPriorityFilter").value = "";
+      reviewDuplicateFilter = false;
+      renderReviews();
+      toast("Bandeja filtrada por " + query + ".");
     }
 
     function duplicateBacklogTargetLabel(target) {
@@ -2964,11 +3006,17 @@
       var hasFilters = activeReviewFilters();
       var nextReview = firstActionReview(reviewCache, 0);
       var duplicateReview = firstDuplicateReview(reviewCache);
+      var sourceReview = firstSourceTargetReview(reviewCache);
+      var sourceTarget = sourceCoverageCache && sourceCoverageCache.nextTarget;
       renderReviewFilterChips();
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
       el("openPriorityReviewBtn").textContent = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "Abrir prioridad";
       show(el("openDuplicateReviewBtn"), Boolean(duplicateReview));
       el("openDuplicateReviewBtn").textContent = duplicateReview ? "Abrir atasco: " + reviewPrimarySubject(duplicateReview) : "Abrir atasco";
+      show(el("openSourceTargetBtn"), Boolean(sourceTarget));
+      el("openSourceTargetBtn").textContent = sourceTarget
+        ? (sourceReview ? "Abrir fuente: " : "Filtrar fuente: ") + sourceTargetSubject(sourceTarget)
+        : "Abrir fuente";
       el("reviewCount").textContent = hasFilters
         ? rows.length + " visibles"
         : reviewCache.length + " abiertas";
@@ -3332,10 +3380,12 @@
         var claimQuality = await loadClaimQuality();
         var sourceMonitoring = await loadSourceMonitoring();
         var sourceCoverage = await loadSourceCoverage();
+        sourceCoverageCache = sourceCoverage;
         var specialistCoverage = await loadSpecialistCoverage(reviewCache);
         var profileCompleteness = await loadProfileCompleteness(reviewCache);
         var publicHealth = await loadPublicHealth();
         renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
+        renderReviews();
 
         var clinicRows = await client
           .from("clinics")
@@ -3554,6 +3604,7 @@
         var duplicateReview = firstDuplicateReview(reviewCache);
         if (duplicateReview) openReviewEditor(duplicateReview.id);
       });
+      el("openSourceTargetBtn").addEventListener("click", openSourceTarget);
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));

@@ -33,6 +33,7 @@ CHECKS = [
             "Fuentes por ficha",
             "Fichas sin fuente",
             "Siguiente fuente",
+            "openSourceTargetBtn",
             "Siguiente especialistas",
             "Duplicados mejoras",
             "Primer atasco",

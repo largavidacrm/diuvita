@@ -53,6 +53,10 @@ En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta d
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
 clínica.
 
+El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
+marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la
+bandeja por esa clínica.
+
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.

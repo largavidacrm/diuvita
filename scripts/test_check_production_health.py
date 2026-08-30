@@ -69,6 +69,7 @@ def main():
     check("Fuentes por ficha" in admin_check["markers"], "admin deployment should include source coverage marker")
     check("Fichas sin fuente" in admin_check["markers"], "admin deployment should include source gap marker")
     check("Siguiente fuente" in admin_check["markers"], "admin deployment should include next source marker")
+    check("openSourceTargetBtn" in admin_check["markers"], "admin deployment should include next source button marker")
     check("Campo más pendiente" in admin_check["markers"], "admin deployment should include top pending field marker")
     check("Siguiente ficha" in admin_check["markers"], "admin deployment should include next profile marker")
     check("Siguiente especialistas" in admin_check["markers"], "admin deployment should include specialist next action marker")
