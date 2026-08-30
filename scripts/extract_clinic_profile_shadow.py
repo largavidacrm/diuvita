@@ -506,6 +506,18 @@ def clean_phone(raw: str) -> str:
     return normalize_space(raw).strip(".,;:")
 
 
+def split_phone_candidate(raw: str) -> list[str]:
+    clean = clean_phone(raw)
+    digits = re.sub(r"\D", "", clean)
+    if not digits:
+        return []
+    if clean.startswith("+") or len(digits) <= 15:
+        return [clean]
+    if len(digits) % 9 == 0:
+        return [digits[index : index + 9] for index in range(0, len(digits), 9)]
+    return [clean]
+
+
 def professional_team_window(text: str) -> str:
     lower = text.lower()
     floor = 0
@@ -626,7 +638,11 @@ def dedupe_professionals(names: list[str]) -> list[str]:
 
 def extract_contacts(text: str) -> dict[str, list[str]]:
     emails = unique(EMAIL_RE.findall(text))
-    phones = unique([clean_phone(match.group(0)) for match in PHONE_RE.finditer(text)])
+    phones = unique([
+        phone
+        for match in PHONE_RE.finditer(text)
+        for phone in split_phone_candidate(match.group(0))
+    ])
     instagram = unique(
         ["@" + match.group(1).strip("/").lower() for match in INSTAGRAM_URL_RE.finditer(text)]
         + ["@" + match.group(1).strip("/").lower() for match in INSTAGRAM_HANDLE_RE.finditer(text)]

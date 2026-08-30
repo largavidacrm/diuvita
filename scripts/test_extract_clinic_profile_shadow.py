@@ -2,6 +2,7 @@
 """Basic checks for the shadow clinic profile extractor."""
 from capture_source_snapshot import FetchResult
 from extract_clinic_profile_shadow import (
+    extract_contacts,
     extract_from_fetch,
     extract_locations,
     extract_professionals,
@@ -49,6 +50,10 @@ def main():
     check(profile["name"] == "Example Longevity Clinic", "name guess failed")
     check(profile["emails"] == ["info@exampleclinic.test"], "email extraction failed")
     check(profile["instagram"] == ["@exampleclinic"], "instagram extraction failed")
+    check(
+        extract_contacts("Contacto 919703393 646039428")["phones"] == ["919703393", "646039428"],
+        "adjacent Spanish phone numbers should be split",
+    )
     check(len(profile["locations"]) == 2, "two locations should be extracted")
     check(profile["locations"][0]["city"] == "Madrid", "Madrid location city missing")
     check(profile["locations"][1]["city"] == "Barcelona", "Barcelona location city missing")
