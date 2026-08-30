@@ -101,6 +101,18 @@
             <p class="empty">Abre una clínica para ver sus evidencias.</p>
           </div>
         </section>
+        <section class="source-panel" id="clinicSourcePanel">
+          <div class="source-head">
+            <div>
+              <h3>Fuentes vigiladas</h3>
+              <p id="clinicSourceMeta">Fuentes y capturas internas de esta clínica.</p>
+            </div>
+            <span class="pill" id="clinicSourceCount">0 fuentes</span>
+          </div>
+          <div class="source-list" id="clinicSourceList">
+            <p class="empty">Abre una clínica para ver sus fuentes.</p>
+          </div>
+        </section>
         <form class="edit-form" id="clinicForm">
           <input id="clinicId" name="clinicId" type="hidden">
           <div class="field">
@@ -436,6 +448,7 @@
     var activeClinicVersionRequest = 0;
     var activeClinicLockRequest = 0;
     var activeClinicClaimRequest = 0;
+    var activeClinicSourceRequest = 0;
     var dashboardLoading = false;
 
     function el(id) {
@@ -868,6 +881,85 @@
         }
       }
       renderClinicClaims(rows, sourceMap);
+    }
+
+    function renderClinicSources(sources, snapshots) {
+      var count = Array.isArray(sources) ? sources.length : 0;
+      el("clinicSourceCount").textContent = count + (count === 1 ? " fuente" : " fuentes");
+      el("clinicSourceMeta").textContent = count
+        ? "Fuentes guardadas con sus últimas capturas compactas."
+        : "Sin fuentes guardadas para esta clínica.";
+      if (!count) {
+        el("clinicSourceList").innerHTML = '<p class="empty">No hay fuentes internas para esta ficha todavía.</p>';
+        return;
+      }
+
+      var snapshotsBySource = {};
+      (snapshots || []).forEach(function (snapshot) {
+        var key = snapshot.source_record_id || "";
+        snapshotsBySource[key] = snapshotsBySource[key] || [];
+        snapshotsBySource[key].push(snapshot);
+      });
+
+      el("clinicSourceList").innerHTML = sources.map(function (source) {
+        var rows = snapshotsBySource[source.id] || [];
+        var latest = rows[0] || {};
+        var title = source.source_title || latest.source_title || source.source_url;
+        var metadata = source.metadata && typeof source.metadata === "object" ? source.metadata : {};
+        var hash = latest.text_hash || metadata.text_sha256 || source.content_hash || "";
+        var excerpt = latest.text_excerpt || source.raw_excerpt || "";
+        return '<article class="source-item">' +
+          '<div class="source-main"><strong>' + html(title || "Fuente") + '</strong>' +
+          '<a href="' + html(source.source_url) + '" rel="nofollow noopener" target="_blank">' + html(source.source_url) + '</a>' +
+          '<p>' + html(compactText(excerpt, 220)) + '</p></div>' +
+          '<div class="source-tags">' +
+          '<span class="pill">' + html(sourceSnapshotLabel(rows.length)) + '</span>' +
+          '<span class="pill">' + html(date(latest.retrieved_at || source.retrieved_at)) + '</span>' +
+          '<span class="pill">' + html(text(hash).slice(0, 12) || "sin hash") + '</span>' +
+          '</div>' +
+          '</article>';
+      }).join("");
+    }
+
+    function sourceSnapshotLabel(count) {
+      if (!count) return "sin historial";
+      return count + (count === 1 ? " captura" : " capturas");
+    }
+
+    async function loadClinicSources(clinicId) {
+      var requestId = ++activeClinicSourceRequest;
+      el("clinicSourceCount").textContent = "Cargando";
+      el("clinicSourceMeta").textContent = "Consultando fuentes guardadas.";
+      el("clinicSourceList").innerHTML = '<p class="empty">Cargando fuentes...</p>';
+      var sourceResult = await client
+        .from("source_records")
+        .select("id, source_url, source_title, retrieved_at, content_hash, raw_excerpt, metadata")
+        .eq("clinic_id", clinicId)
+        .order("retrieved_at", { ascending: false })
+        .limit(12);
+      if (requestId !== activeClinicSourceRequest) return;
+      if (sourceResult.error) {
+        el("clinicSourceCount").textContent = "No disponible";
+        el("clinicSourceMeta").textContent = "No se pudieron cargar las fuentes.";
+        el("clinicSourceList").innerHTML = '<p class="empty">No se pudieron leer las fuentes de esta clínica.</p>';
+        return;
+      }
+      var sources = sourceResult.data || [];
+      var sourceIds = sources.map(function (source) { return source.id; }).filter(Boolean);
+      var snapshots = [];
+      if (sourceIds.length) {
+        var snapshotResult = await client
+          .from("source_snapshots")
+          .select("id, source_record_id, source_title, retrieved_at, content_hash, text_hash, text_excerpt, snapshot_storage_path")
+          .in("source_record_id", sourceIds)
+          .order("retrieved_at", { ascending: false })
+          .limit(30);
+        if (requestId !== activeClinicSourceRequest) return;
+        if (!snapshotResult.error) {
+          snapshots = snapshotResult.data || [];
+        }
+      }
+      renderClinicSources(sources, snapshots);
     }
 
     function publicStatus(status) {
@@ -1303,6 +1395,7 @@
       loadClinicVersions(activeClinic.id);
       loadClinicFieldLocks(activeClinic.id);
       loadClinicClaims(activeClinic.id);
+      loadClinicSources(activeClinic.id);
       show(el("clinicEditor"), true);
       el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
       el("clinicName").focus();
@@ -1352,6 +1445,7 @@
       activeClinicVersionRequest++;
       activeClinicLockRequest++;
       activeClinicClaimRequest++;
+      activeClinicSourceRequest++;
       activeClinic = null;
       activeClinicReview = null;
       setLockInputsDisabled(false);

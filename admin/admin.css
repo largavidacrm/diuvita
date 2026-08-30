@@ -518,7 +518,8 @@ td small {
 
 .proposal-preview-head,
 .version-history-head,
-.evidence-head {
+.evidence-head,
+.source-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -528,6 +529,7 @@ td small {
 .proposal-preview h3,
 .version-history h3,
 .evidence-panel h3,
+.source-panel h3,
 .diff-item h4 {
   margin: 0;
   font-size: 0.96rem;
@@ -535,13 +537,15 @@ td small {
 
 .proposal-preview p,
 .version-history p,
-.evidence-panel p {
+.evidence-panel p,
+.source-panel p {
   margin: 0.15rem 0 0;
   color: var(--muted);
 }
 
 .version-history,
-.evidence-panel {
+.evidence-panel,
+.source-panel {
   display: grid;
   gap: 0.8rem;
   padding: 1rem;
@@ -550,13 +554,15 @@ td small {
 }
 
 .version-list,
-.claim-list {
+.claim-list,
+.source-list {
   display: grid;
   gap: 0.65rem;
 }
 
 .version-item,
-.claim-item {
+.claim-item,
+.source-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.45rem 0.8rem;
@@ -596,12 +602,31 @@ td small {
   min-width: 0;
 }
 
-.claim-main p {
+.source-main {
+  min-width: 0;
+}
+
+.source-main strong,
+.source-main a {
+  display: block;
+}
+
+.source-main a {
+  margin-top: 0.12rem;
+  color: var(--green-deep);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.claim-main p,
+.source-main p {
   color: var(--ink);
   line-height: 1.35;
 }
 
-.claim-meta {
+.claim-meta,
+.source-tags {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -779,6 +804,7 @@ td small {
   .diff-cols,
   .version-item,
   .claim-item,
+  .source-item,
   .rule-item,
   .edit-form {
     grid-template-columns: 1fr;
