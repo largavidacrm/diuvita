@@ -25,6 +25,7 @@ def main() -> None:
         "def location_reviews_url(",
         "def location_detail(",
         "def transparency_items(",
+        'f\'<p>{h(detail or address or location_city(loc, c))}</p>\'',
         "def card_signal_html(",
         "def stat_items(",
         "def contact_count(",

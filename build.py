@@ -875,7 +875,7 @@ def locations_block(c):
         rows.append(
             '<article class="location-item">'
             f'<h3>{h(name)}</h3>'
-            f'<p>{h(detail or address or city)}</p>'
+            f'<p>{h(detail or address or location_city(loc, c))}</p>'
             f'<div class="location-actions">{"".join(actions)}</div>'
             '</article>'
         )
