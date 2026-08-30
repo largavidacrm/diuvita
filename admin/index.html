@@ -1045,6 +1045,31 @@
       return "Sin acción urgente";
     }
 
+    function reviewPrimarySubject(row) {
+      var payload = (row && row.payload) || {};
+      var candidate = candidateFromReview(row || {});
+      return payload.clinic_name ||
+        candidate.name ||
+        candidate.clinic_name ||
+        row.title ||
+        "Revisión abierta";
+    }
+
+    function firstActionReview(rows, failedJobs) {
+      rows = Array.isArray(rows) ? rows : [];
+      if (Number(failedJobs || 0) || !rows.length) return null;
+      var match = rows.find(isBlockingClaimReview);
+      if (match) return match;
+      match = rows.find(function (row) { return row.review_type === "candidate_clinic" && Number(row.priority || 0) >= 90; });
+      if (match) return match;
+      match = rows.find(function (row) { return row.review_type === "source_change_detected"; });
+      if (match) return match;
+      match = rows.find(function (row) { return row.review_type === "clinic_profile_enrichment"; });
+      if (match) return match;
+      match = rows.find(function (row) { return row.review_type === "clinic_quality_audit"; });
+      return match || null;
+    }
+
     function reviewBacklogQuality(rows) {
       var grouped = {};
       (rows || []).forEach(function (row) {
@@ -1220,6 +1245,7 @@
       var publicSiteDetail = publicSite.unavailable
         ? "—"
         : publicSite.ok + "/" + publicSite.checks + " comprobaciones";
+      var nextReview = firstActionReview(openReviews, failedJobs);
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -1228,6 +1254,7 @@
         systemItem("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada", automation.auto_publish_enabled ? "danger-text" : ""),
         systemItem("Modo sombra", automation.shadow_mode_active === false ? "Inactivo" : "Activo"),
         systemItem("Siguiente acción", nextActionLabel(openReviews, failedJobs), failedJobs ? "danger-text" : ""),
+        systemItem("Caso prioritario", nextReview ? reviewPrimarySubject(nextReview) : "—", nextReview && isBlockingClaimReview(nextReview) ? "danger-text" : ""),
         systemItem("Madurez auto-publicación", blockers.length ? "No lista" : "Lista para Daniel", blockers.length ? "warning-text" : ""),
         systemItem("Motivo principal", blockers[0] || "Sin bloqueos medidos", blockers.length ? "warning-text" : ""),
         systemItem("Vigilancia fuentes", sourceMonitorLabel, monitoring.unavailable || monitoring.dueSources ? "warning-text" : ""),

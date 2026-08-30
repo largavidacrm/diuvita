@@ -16,7 +16,10 @@ def main() -> None:
 
     for marker in [
         "function nextActionLabel",
+        "function reviewPrimarySubject",
+        "function firstActionReview",
         "Siguiente acción",
+        "Caso prioritario",
         "Revisar claim bloqueante",
         "Validar candidatas",
         "Revisar cambios de fuente",
