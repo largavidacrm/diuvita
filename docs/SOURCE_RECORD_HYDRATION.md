@@ -6,6 +6,7 @@ evidence:
 - source title;
 - retrieval timestamp;
 - content hash;
+- readable-text hash;
 - short readable excerpt;
 - HTTP metadata.
 

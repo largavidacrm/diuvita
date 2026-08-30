@@ -38,6 +38,7 @@ def main():
     check("VO2 max" in snapshot["text_excerpt"], "readable text missing")
     check("window.secret" not in snapshot["text_excerpt"], "script text should be ignored")
     check(len(snapshot["content_sha256"]) == 64, "hash should be sha256")
+    check(len(snapshot["text_sha256"]) == 64, "text hash should be sha256")
     check(safe_host("https://Clinic.Example/a") == "clinic.example", "host normalization failed")
     path = snapshot_path(snapshot)
     check(str(path).endswith(".json"), "snapshot path should be json")

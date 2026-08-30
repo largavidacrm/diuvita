@@ -124,6 +124,7 @@ def snapshot_from_fetch(result: FetchResult, excerpt_chars: int = DEFAULT_EXCERP
     html_text = decode_body(result.body, result.content_type)
     title, readable_text = parse_html(html_text)
     digest = hashlib.sha256(result.body).hexdigest()
+    text_digest = hashlib.sha256(readable_text.encode("utf-8")).hexdigest() if readable_text else None
     return {
         "source_url": result.source_url,
         "final_url": result.final_url,
@@ -133,6 +134,7 @@ def snapshot_from_fetch(result: FetchResult, excerpt_chars: int = DEFAULT_EXCERP
         "http_status": result.status_code,
         "content_type": result.content_type or None,
         "content_sha256": digest,
+        "text_sha256": text_digest,
         "content_length": len(result.body),
         "text_excerpt": readable_text[:excerpt_chars] or None,
     }

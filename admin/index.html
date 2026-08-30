@@ -288,6 +288,7 @@
                 <option value="candidate_clinic">Clínicas nuevas</option>
                 <option value="clinic_profile_enrichment">Mejoras de ficha</option>
                 <option value="clinic_quality_audit">Auditorías</option>
+                <option value="source_change_detected">Cambios de fuente</option>
               </select>
               <span class="pill" id="reviewCount">0 abiertas</span>
             </div>
@@ -488,7 +489,8 @@
       var labels = {
         candidate_clinic: "Clínica nueva",
         clinic_quality_audit: "Auditoría de calidad",
-        clinic_profile_enrichment: "Mejora de ficha"
+        clinic_profile_enrichment: "Mejora de ficha",
+        source_change_detected: "Cambio de fuente"
       };
       return labels[type] || type || "Revisión";
     }
@@ -501,7 +503,8 @@
       var parts = [
         ["candidate_clinic", counts.candidate_clinic],
         ["clinic_profile_enrichment", counts.clinic_profile_enrichment],
-        ["clinic_quality_audit", counts.clinic_quality_audit]
+        ["clinic_quality_audit", counts.clinic_quality_audit],
+        ["source_change_detected", counts.source_change_detected]
       ].filter(function (item) { return Number(item[1] || 0) > 0; }).map(function (item) {
         return item[1] + " " + reviewTypeLabel(item[0]).toLowerCase();
       });
@@ -768,7 +771,8 @@
         clinic_profile_enrichment_proposals_created: "Propuestas de ficha creadas",
         public_site_rebuild_requested: "Publicación solicitada",
         public_site_rebuild_skipped: "Publicación agrupada",
-        clinic_field_locks_updated: "Campos protegidos"
+        clinic_field_locks_updated: "Campos protegidos",
+        source_change_detected: "Cambio de fuente detectado"
       };
       return labels[name] || name || "Movimiento";
     }
@@ -800,6 +804,9 @@
       }
       if (row.event_name === "clinic_field_locks_updated") {
         return (payload.active_locked_fields || 0) + " campos protegidos";
+      }
+      if (row.event_name === "source_change_detected") {
+        return payload.source_url || "Fuente modificada";
       }
       if (row.event_name === "agent_job_failed") {
         return payload.error || "Revisar trabajo fallido";
@@ -1230,6 +1237,7 @@
       var payload = activeReview.payload || {};
       var isQualityAudit = activeReview.review_type === "clinic_quality_audit";
       var isEnrichment = activeReview.review_type === "clinic_profile_enrichment";
+      var isSourceChange = activeReview.review_type === "source_change_detected";
       var website = candidate.website || candidate.web;
       var source = candidate.source_url || payload.candidate_source_url || website;
       var confidence = candidate.discovery_confidence || candidate.confidence;
@@ -1238,21 +1246,27 @@
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
       el("reviewEditorMeta").textContent = reviewTypeLabel(activeReview.review_type) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
-      setText("reviewCandidateName", (isQualityAudit || isEnrichment) ? payload.clinic_name : candidate.name || candidate.clinic_name);
-      setText("reviewCandidateCity", (isQualityAudit || isEnrichment) ? payload.clinic_city : candidate.city);
-      setText("reviewCandidateCountry", (isQualityAudit || isEnrichment) ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
+      setText("reviewCandidateName", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_name : candidate.name || candidate.clinic_name);
+      setText("reviewCandidateCity", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_city : candidate.city);
+      setText("reviewCandidateCountry", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
       setText("reviewCandidateConfidence", confidence == null ? "" : pct(confidence));
-      setLink("reviewCandidateWebsite", (isQualityAudit || isEnrichment) ? payload.website : website);
+      setLink("reviewCandidateWebsite", (isQualityAudit || isEnrichment || isSourceChange) ? payload.website || payload.source_url : website);
       if (isEnrichment) {
         setLinks("reviewCandidateSource", sourceList(payload));
+      } else if (isSourceChange) {
+        setLinks("reviewCandidateSource", [payload.source_url].filter(Boolean));
       } else {
         setLink("reviewCandidateSource", source);
       }
       setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
-      setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : candidateList(candidate, "services"));
-      setInlineList("reviewCandidateProfessionals", isQualityAudit ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
-      el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && blocksDraft;
-      el("reviewCreateDraftBtn").textContent = (isQualityAudit || isEnrichment) ? "Editar clínica" : blocksDraft ? "Duplicado probable" : "Crear borrador";
+      setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : isSourceChange ? [
+        "Hash anterior: " + text(payload.previous_hash || "").slice(0, 12),
+        "Hash actual: " + text(payload.current_hash || "").slice(0, 12),
+        "Fuente revisada: " + date(payload.retrieved_at)
+      ] : candidateList(candidate, "services"));
+      setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
+      el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;
+      el("reviewCreateDraftBtn").textContent = (isQualityAudit || isEnrichment || isSourceChange) ? "Editar clínica" : blocksDraft ? "Duplicado probable" : "Crear borrador";
       setInput("reviewResolutionNote", "");
       show(el("reviewEditor"), true);
       el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1501,7 +1515,7 @@
 
     async function createClinicDraftFromReview() {
       if (!activeReview) return;
-      if ((activeReview.review_type === "clinic_quality_audit" || activeReview.review_type === "clinic_profile_enrichment") && activeReview.clinic_id) {
+      if ((activeReview.review_type === "clinic_quality_audit" || activeReview.review_type === "clinic_profile_enrichment" || activeReview.review_type === "source_change_detected") && activeReview.clinic_id) {
         var clinicId = activeReview.clinic_id;
         activeClinicReview = activeReview;
         var payload = activeReview.payload || {};
