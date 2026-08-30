@@ -21,7 +21,10 @@ def main() -> None:
         "REVIEW_TYPE_FILTERS",
         "REVIEW_PRIORITY_FILTERS",
         "function renderReviewFilterChips",
+        "function reviewMatchesType",
         "function clearReviewFilters",
+        'value="blocking_claim_review"',
+        '["blocking_claim_review", "Claims bloqueantes"]',
         "data-review-type",
         "data-review-priority",
     ]:

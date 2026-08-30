@@ -328,6 +328,7 @@
                 <option value="">Todas</option>
                 <option value="candidate_clinic">Clínicas nuevas</option>
                 <option value="clinic_profile_enrichment">Mejoras de ficha</option>
+                <option value="blocking_claim_review">Claims bloqueantes</option>
                 <option value="clinic_quality_audit">Auditorías</option>
                 <option value="source_change_detected">Cambios de fuente</option>
               </select>
@@ -490,6 +491,7 @@
       ["", "Todas"],
       ["candidate_clinic", "Clínicas nuevas"],
       ["clinic_profile_enrichment", "Mejoras"],
+      ["blocking_claim_review", "Claims bloqueantes"],
       ["clinic_quality_audit", "Auditorías"],
       ["source_change_detected", "Fuentes"]
     ];
@@ -808,6 +810,15 @@
       return reviewTypeLabel(row && row.review_type);
     }
 
+    function reviewMatchesType(row, value) {
+      if (!value) return true;
+      if (value === "blocking_claim_review") return isBlockingClaimReview(row);
+      if (value === "clinic_quality_audit") {
+        return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row);
+      }
+      return row.review_type === value;
+    }
+
     function nextActionLabel(rows, failedJobs) {
       rows = Array.isArray(rows) ? rows : [];
       if (Number(failedJobs || 0)) return "Revisar fallos";
@@ -865,11 +876,11 @@
         return reviewMatchesSearch(row) && (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
       });
       var priorityBase = reviewCache.filter(function (row) {
-        return reviewMatchesSearch(row) && (!reviewTypeFilter || row.review_type === reviewTypeFilter);
+        return reviewMatchesSearch(row) && reviewMatchesType(row, reviewTypeFilter);
       });
       var typeChips = REVIEW_TYPE_FILTERS.map(function (filter) {
         var value = filter[0];
-        var count = value ? countWhere(typeBase, function (row) { return row.review_type === value; }) : typeBase.length;
+        var count = value ? countWhere(typeBase, function (row) { return reviewMatchesType(row, value); }) : typeBase.length;
         return filterChip(filter[1], count, reviewTypeFilter === value, { "data-review-type": value });
       }).join("");
       var priorityChips = REVIEW_PRIORITY_FILTERS.map(function (filter) {
@@ -974,7 +985,7 @@
     }
 
     function reviewMatchesFilters(row) {
-      if (reviewTypeFilter && row.review_type !== reviewTypeFilter) return false;
+      if (!reviewMatchesType(row, reviewTypeFilter)) return false;
       if (reviewPriorityFilter && priorityBand(row.priority) !== reviewPriorityFilter) return false;
       if (!reviewMatchesSearch(row)) return false;
       return true;

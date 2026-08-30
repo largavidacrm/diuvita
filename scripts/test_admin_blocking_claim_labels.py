@@ -17,8 +17,11 @@ def main() -> None:
     for marker in [
         "function isBlockingClaimReview",
         "function reviewVisibleLabel",
+        "function reviewMatchesType",
         "Claim bloqueante",
+        "Claims bloqueantes",
         'payload.quality_context === "blocking_claims"',
+        'value === "blocking_claim_review"',
         "reviewVisibleLabel(row)",
         "reviewVisibleLabel(activeReview)",
     ]:
