@@ -77,6 +77,7 @@ Already built:
 - Safe CTO shadow cycle can optionally include the read-only production health check.
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.
+- Admin system status shows duplicated profile-enrichment review pressure.
 
 Not yet mature:
 

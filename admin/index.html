@@ -1037,6 +1037,21 @@
       return "Sin acción urgente";
     }
 
+    function reviewBacklogQuality(rows) {
+      var grouped = {};
+      (rows || []).forEach(function (row) {
+        if (row.review_type !== "clinic_profile_enrichment" || !row.clinic_id) return;
+        grouped[row.clinic_id] = (grouped[row.clinic_id] || 0) + 1;
+      });
+      return Object.keys(grouped).reduce(function (quality, key) {
+        if (grouped[key] > 1) {
+          quality.duplicateClinics += 1;
+          quality.duplicateReviews += grouped[key];
+        }
+        return quality;
+      }, { duplicateClinics: 0, duplicateReviews: 0 });
+    }
+
     function reviewSummary(rows) {
       var parts = [
         ["Clínica nueva", countWhere(rows, function (row) { return row.review_type === "candidate_clinic"; })],
@@ -1145,6 +1160,13 @@
       var completenessPendingLabel = completeness.unavailable
         ? "—"
         : completeness.withPendingFields + " con pendientes";
+      var backlogQuality = reviewBacklogQuality(openReviews || []);
+      var duplicateReviewLabel = backlogQuality.duplicateClinics
+        ? backlogQuality.duplicateClinics + " clínicas"
+        : "Sin duplicados";
+      var duplicateReviewDetail = backlogQuality.duplicateReviews
+        ? backlogQuality.duplicateReviews + " tarjetas"
+        : "—";
       var publicSite = publicHealth || emptyPublicHealth();
       var publicSiteLabel = publicSite.unavailable
         ? "No disponible"
@@ -1175,6 +1197,8 @@
         systemItem("Pendientes especialistas", specialistMissingLabel, specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Fichas completas", completenessLabel, completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
+        systemItem("Duplicados mejoras", duplicateReviewLabel, backlogQuality.duplicateClinics ? "warning-text" : ""),
+        systemItem("Tarjetas duplicadas", duplicateReviewDetail, backlogQuality.duplicateReviews ? "warning-text" : ""),
         systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Checks web", publicSiteDetail, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
