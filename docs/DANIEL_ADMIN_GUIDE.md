@@ -138,6 +138,23 @@ especialistas publicados o profesionales detectados.
 En la tarjeta de revisión verás **Camino de publicación**. Ese bloque recuerda el flujo:
 crear borrador interno, completar datos y publicar solo desde el editor de clínica.
 
+## Editar sedes de una clínica
+
+En el editor de clínica, el apartado **Sedes** permite añadir varias ubicaciones
+sin escribir formatos técnicos.
+
+Cada sede puede tener:
+
+- Nombre de la sede.
+- Ciudad.
+- Dirección.
+- Enlace directo al perfil de Google Maps.
+- Enlace directo a valoraciones de Google.
+
+Usa **Añadir sede** para crear otra ubicación y **Quitar** para eliminar una
+sede que no quieras guardar. Si existe un enlace de Google Maps, debe ser el
+perfil real de la clínica, no solo una búsqueda por dirección.
+
 ## Duplicados
 
 Si el sistema detecta que una propuesta se parece mucho a una clínica existente, verás **Coincidencias en Vitalarga**.
