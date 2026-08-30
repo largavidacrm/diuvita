@@ -46,7 +46,9 @@ Already built:
 - Admin evidence cards show field risk and the current rule decision for each claim.
 - Admin rollback control from clinic version history, with every restore audited as a new version.
 - Candidate reviews now create internal drafts and route Daniel to final validation before publication.
+- Candidate reviews now show a three-step publication path so Daniel sees that draft creation is not publication.
 - Admin system status shows why auto-publication is or is not mature enough to discuss.
+- Admin system status shows the concrete priority review case, not only the generic next-action category.
 - Admin system status shows whether source monitoring is fresh or pending.
 - Admin system status shows source snapshot retention without enabling cleanup.
 - Admin system status shows specialist coverage for visible clinic profiles.
@@ -72,12 +74,12 @@ Already built:
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
 - Internal profile-enrichment review cards for existing clinics.
-- Public clinic pages display richer fields with clearer navigation, section counts and more scannable lists.
+- Public clinic pages display richer fields with clearer navigation, section counts, fast profile stats, contact-aware search and more scannable lists.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle can optionally include the read-only production health check.
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.
-- Admin system status shows duplicated profile-enrichment review pressure.
+- Admin system status and review inbox show duplicated profile-enrichment review pressure.
 
 Not yet mature:
 
@@ -269,7 +271,7 @@ Avoid:
 
 Next 10 technical steps:
 
-1. Add review inbox filters and clearer counts in `/admin/`. Done locally with quick filters by type and priority, visible counts and a clear-filters control.
+1. Add review inbox filters and clearer counts in `/admin/`. Done locally with quick filters by type, priority and repeated enrichment proposals, visible counts and a clear-filters control.
 2. Add a proposal diff view before saving clinic changes. Done locally with a live before/after panel for manual edits and loaded proposals.
 3. Add rollback view using `entity_versions`. Done as a read-only version history in `/admin/`; restoring an old version remains intentionally gated.
 4. Add human-lock controls for fields Daniel corrects manually. Done locally in `supabase/migrations/0012_human_field_locks.sql` and `/admin/`.
@@ -286,7 +288,7 @@ Next 10 technical steps:
 15. Turn rejected/conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle.
 16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py` and surfaced in `/admin/`; no cleanup/deletion path is enabled.
 17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/`.
-18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with section counts, a clear "En esta ficha" jump area and lighter profile lists.
+18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with card-level field signals, top-of-profile stats, section counts, a clear "En esta ficha" jump area and lighter profile lists.
 19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
 20. Add a production smoke check. Done locally in `scripts/check_production_health.py`; it reads public URLs only and is separate from local checks.
 

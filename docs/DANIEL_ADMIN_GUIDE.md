@@ -24,6 +24,7 @@ En **Estado del sistema**, mira especialmente:
 - **Auto-publicación**: debe seguir **Apagada** hasta que tú decidas lo contrario.
 - **Modo sombra**: significa que los agentes proponen y crean tareas internas, pero no publican solos.
 - **Siguiente acción**: te dice qué bloque conviene revisar primero.
+- **Caso prioritario**: te dice la clínica o revisión concreta que conviene abrir primero.
 - **Madurez auto-publicación**: si aparece **No lista**, todavía no conviene automatizar publicaciones.
 - **Motivo principal**: explica en lenguaje corto qué falta, por ejemplo más revisiones humanas o claims con conflicto.
 - **Vigilancia fuentes**: te dice si las webs fuente están recientes o si toca revisarlas.
@@ -60,11 +61,16 @@ Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encont
 
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
 
+En la tarjeta de revisión verás **Camino de publicación**. Ese bloque recuerda el flujo:
+crear borrador interno, completar datos y publicar solo desde el editor de clínica.
+
 ## Duplicados
 
 Si el sistema detecta que una propuesta se parece mucho a una clínica existente, verás **Coincidencias en Diuvita**.
 
 Cuando sea un duplicado probable, el botón de crear borrador queda bloqueado. En ese caso, lo normal es descartarlo o revisarlo manualmente más adelante.
+
+Si varias tarjetas abiertas intentan mejorar la misma ficha, la tabla muestra **Varias propuestas**. Puedes usar el filtro rápido **Atascos** para ver solo esas repeticiones.
 
 ## Editar una clínica
 
