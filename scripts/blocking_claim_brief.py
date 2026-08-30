@@ -129,6 +129,18 @@ def format_status_counts(statuses: dict[str, int]) -> str:
     return " · ".join(parts) if parts else "sin detalle"
 
 
+def recommended_step(statuses: dict[str, int]) -> str:
+    if int(statuses.get("conflict") or 0):
+        return "comparar la evidencia y elegir el dato correcto antes de publicar"
+    if int(statuses.get("rejected") or 0):
+        return "mantener el dato fuera de publicación o corregirlo con fuente mejor"
+    if int(statuses.get("without_source") or 0):
+        return "buscar una fuente oficial o quitar el dato propuesto"
+    if int(statuses.get("stale") or 0):
+        return "actualizar la fuente antes de aceptar el dato"
+    return "revisar Evidencias propuestas antes de guardar"
+
+
 def plural_claims(count: int) -> str:
     return f"{count} claim" if count == 1 else f"{count} claims"
 
@@ -185,6 +197,7 @@ def format_brief(groups: list[dict[str, Any]]) -> str:
         output.append("")
         output.append(f"- {heading}")
         output.append(f"  Prioridad: P{item['priority']} · {plural_claims(int(item['claims']))} · {format_status_counts(item['statuses'])}")
+        output.append(f"  Paso recomendado: {recommended_step(item['statuses'])}")
         if item.get("website"):
             output.append(f"  Web: {item['website']}")
         field_rows = compact_field_rows(item["fields"])

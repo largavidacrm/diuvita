@@ -5,6 +5,7 @@ from blocking_claim_brief import (
     compact_field_rows,
     field_label,
     format_brief,
+    recommended_step,
     source_host,
     summarize_group,
 )
@@ -53,6 +54,14 @@ def main():
     check(source_host("https://www.clinic.example/evidence") == "clinic.example", "source host should be compact")
     check(summary["priority"] == 95, "conflict should make the case highest priority")
     check(summary["statuses"]["conflict"] == 1, "conflict count missing")
+    check(
+        recommended_step(summary["statuses"]) == "comparar la evidencia y elegir el dato correcto antes de publicar",
+        "recommended conflict step missing",
+    )
+    check(
+        recommended_step({"without_source": 1}) == "buscar una fuente oficial o quitar el dato propuesto",
+        "recommended source step missing",
+    )
     duplicated_fields = compact_field_rows([summary["fields"][0], summary["fields"][0]])
     check(duplicated_fields[0]["count"] == 2, "repeated claim fields should be compacted")
     check("# Diuvita: claims bloqueantes" in output, "title missing")
@@ -60,6 +69,7 @@ def main():
     check("Claims a revisar: 2" in output, "claim count missing")
     check("Clinic · Barcelona, España" in output, "clinic heading missing")
     check("Prioridad: P95 · 2 claims · 1 en conflicto · 1 sin fuente" in output, "status summary missing")
+    check("Paso recomendado: comparar la evidencia" in output, "recommended step line missing")
     check("Campo: Claims médicos · en conflicto · confianza 95% · fuente clinic.example" in output, "field line missing")
     check("Seguridad: este brief no publica" in output, "safety line missing")
     print("OK blocking claim brief: Daniel summary is readable")
