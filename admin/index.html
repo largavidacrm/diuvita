@@ -2228,12 +2228,14 @@
 
     async function dismissReview() {
       if (!activeReview) return;
+      var reviewType = activeReview.review_type;
+      var note = trimmed("reviewResolutionNote") || defaultDismissNote(reviewType);
       el("reviewCreateDraftBtn").disabled = true;
       el("reviewDismissBtn").disabled = true;
       var result = await client.rpc("admin_resolve_review_item", {
         p_review_id: activeReview.id,
         p_status: "dismissed",
-        p_note: trimmed("reviewResolutionNote") || defaultDismissNote(activeReview.review_type)
+        p_note: note
       });
       el("reviewCreateDraftBtn").disabled = false;
       el("reviewDismissBtn").disabled = false;
@@ -2245,7 +2247,7 @@
 
       closeReviewEditor();
       await loadDashboard();
-      toast(defaultDismissNote(activeReview.review_type));
+      toast(defaultDismissNote(reviewType));
     }
 
     async function createJob(event) {
