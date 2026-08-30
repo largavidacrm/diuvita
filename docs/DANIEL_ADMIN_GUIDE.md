@@ -23,6 +23,7 @@ En **Estado del sistema**, mira especialmente:
 
 - **Auto-publicación**: debe seguir **Apagada** hasta que tú decidas lo contrario.
 - **Modo sombra**: significa que los agentes proponen y crean tareas internas, pero no publican solos.
+- **Siguiente acción**: te dice qué bloque conviene revisar primero.
 - **Madurez auto-publicación**: si aparece **No lista**, todavía no conviene automatizar publicaciones.
 - **Motivo principal**: explica en lenguaje corto qué falta, por ejemplo más revisiones humanas o claims con conflicto.
 - **Vigilancia fuentes**: te dice si las webs fuente están recientes o si toca revisarlas.

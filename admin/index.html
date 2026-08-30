@@ -808,6 +808,19 @@
       return reviewTypeLabel(row && row.review_type);
     }
 
+    function nextActionLabel(rows, failedJobs) {
+      rows = Array.isArray(rows) ? rows : [];
+      if (Number(failedJobs || 0)) return "Revisar fallos";
+      if (rows.some(isBlockingClaimReview)) return "Revisar claim bloqueante";
+      if (rows.some(function (row) { return row.review_type === "candidate_clinic" && Number(row.priority || 0) >= 90; })) {
+        return "Validar candidatas";
+      }
+      if (rows.some(function (row) { return row.review_type === "source_change_detected"; })) return "Revisar cambios de fuente";
+      if (rows.some(function (row) { return row.review_type === "clinic_profile_enrichment"; })) return "Mejorar fichas existentes";
+      if (rows.some(function (row) { return row.review_type === "clinic_quality_audit"; })) return "Completar fichas";
+      return "Sin acción urgente";
+    }
+
     function reviewSummary(rows) {
       var parts = [
         ["Clínica nueva", countWhere(rows, function (row) { return row.review_type === "candidate_clinic"; })],
@@ -870,7 +883,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, openReviews) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -900,6 +913,7 @@
         systemItem("Agentes", automation.agents_enabled ? "Activos" : "Pausados", automation.agents_enabled ? "" : "warning-text"),
         systemItem("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada", automation.auto_publish_enabled ? "danger-text" : ""),
         systemItem("Modo sombra", automation.shadow_mode_active === false ? "Inactivo" : "Activo"),
+        systemItem("Siguiente acción", nextActionLabel(openReviews, failedJobs), failedJobs ? "danger-text" : ""),
         systemItem("Madurez auto-publicación", blockers.length ? "No lista" : "Lista para Daniel", blockers.length ? "warning-text" : ""),
         systemItem("Motivo principal", blockers[0] || "Sin bloqueos medidos", blockers.length ? "warning-text" : ""),
         systemItem("Vigilancia fuentes", sourceMonitorLabel, monitoring.unavailable || monitoring.dueSources ? "warning-text" : ""),
@@ -2360,7 +2374,7 @@
         }
         var claimQuality = await loadClaimQuality();
         var sourceMonitoring = await loadSourceMonitoring();
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring);
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, reviewCache);
 
         var clinicRows = await client
           .from("clinics")
