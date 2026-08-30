@@ -52,6 +52,43 @@ def main():
     path = snapshot_path(snapshot)
     check(str(path).endswith(".json"), "snapshot path should be json")
 
+    boilerplate_body = """
+<!doctype html>
+<html>
+<head><title>Navigation Heavy Clinic</title></head>
+<body>
+  <div class="site-header">
+    <nav class="elementor-nav-menu">
+      <a href="/tratamientos-hombre">Tratamientos para hombre</a>
+      <a href="/microbiota">Microbiota</a>
+      <a href="/tratamientos-hombre">Tratamientos para hombre</a>
+      <a href="/microbiota">Microbiota</a>
+    </nav>
+    <a href="tel:+34 911 111 111">Llamar</a>
+  </div>
+  <main>
+    <h1>Clínica Clara</h1>
+    <p>Dirección Calle Serrano 99, 28006 Madrid.</p>
+    <p>Equipo médico identificado y tarifas públicas.</p>
+  </main>
+</body>
+</html>
+""".encode("utf-8")
+    boilerplate_snapshot = snapshot_from_fetch(
+        FetchResult(
+            source_url="https://clinic.example/",
+            final_url="https://clinic.example/",
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=boilerplate_body,
+        ),
+        excerpt_chars=260,
+    )
+    boilerplate_excerpt = boilerplate_snapshot["text_excerpt"]
+    check("+34 911 111 111" in boilerplate_excerpt, "useful contact links should be kept")
+    check("Dirección Calle Serrano" in boilerplate_excerpt, "main clinic content should remain visible")
+    check("Tratamientos para hombre" not in boilerplate_excerpt, "navigation text should be suppressed")
+
     calls = []
     original_open_url = capture_source_snapshot.open_url
 
