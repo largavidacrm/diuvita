@@ -179,11 +179,11 @@ def main():
         "admin_email": "admin@example.test",
         "summary": {"reviews": {"open": 2}},
         "open_reviews": [
-            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "payload": {"large": True}},
+            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "professionals_count": 11, "payload": {"large": True}},
             {"title": "B", "review_type": "clinic_quality_audit", "priority": 80, "payload": {"large": True}},
         ],
         "review_examples_by_type": [
-            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "payload": {"large": True}},
+            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "professionals_count": 11, "payload": {"large": True}},
             {"title": "B", "review_type": "blocking_claim_review", "priority": 85, "payload": {"large": True}},
         ],
         "review_backlog_quality": {
@@ -195,6 +195,7 @@ def main():
     check("admin_email" not in compact_digest, "admin email should be removed from cycle output")
     check(compact_digest["open_reviews_count"] == 2, "open review count should be kept")
     check("payload" not in compact_digest["sample_open_reviews"][0], "review payload should be omitted")
+    check(compact_digest["sample_open_reviews"][0]["professionals_count"] == 11, "review professional count should be kept")
     check(compact_digest["review_backlog_quality"]["duplicate_enrichment_clinics"] == 1, "review backlog quality should be kept")
     check("raw" not in compact_digest["review_backlog_quality"], "large review backlog payloads should be omitted")
     check(compact_digest["review_examples_by_type_count"] == 2, "review example count should be kept")

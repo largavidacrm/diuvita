@@ -210,6 +210,12 @@ def google_maps_search_url(*parts):
         return ""
     return "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(query)
 
+def location_search_name(loc):
+    name = first_text(loc.get("name"), loc.get("label"), loc.get("sede"))
+    if re.match(r"^sede( principal|\s+\d+)?$", name, flags=re.I):
+        return ""
+    return name
+
 def location_from_dict(value):
     loc = {
         "name": first_text(value.get("name"), value.get("label"), value.get("sede")),
@@ -310,10 +316,8 @@ def location_maps_url(loc, c):
     ))
     if direct:
         return direct
-    address = location_address(loc)
     city = location_city(loc, c)
-    city_part = "" if city and city.lower() in address.lower() else city
-    return google_maps_search_url(address, city_part, c.get("country")) if address else ""
+    return google_maps_search_url(c.get("name"), location_search_name(loc), city, c.get("country"))
 
 def location_reviews_url(loc, c):
     return external_url(first_text(
@@ -533,16 +537,11 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .clinic-main h1,.ficha>h1{font-family:'Newsreader',Georgia,serif;font-size:3.05rem;font-weight:300;line-height:1.04;text-wrap:balance}
 .ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0;overflow-wrap:anywhere}
 .ficha .summary{max-width:720px;margin-top:1rem;font-size:1.18rem;color:var(--ink)}
-.profile-snapshot{max-width:760px;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:.55rem;margin-top:1rem}
-.profile-snapshot div{min-width:0;border:1px solid var(--line);border-radius:8px;background:rgba(247,244,238,.88);padding:.55rem .65rem}
-.profile-snapshot dt{color:var(--muted);font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.profile-snapshot dd{margin:.12rem 0 0;color:var(--green-deep);font-size:1.25rem;font-weight:800;line-height:1}
 .profile-jump{display:grid;gap:.45rem;margin-top:1rem}
 .profile-jump-label{color:var(--muted);font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
 .profile-nav{display:flex;flex-wrap:wrap;gap:.45rem}
-.profile-nav a{display:inline-flex;align-items:center;gap:.35rem;min-height:1.85rem;padding:.26rem .42rem .26rem .62rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--green-deep);font-size:.84rem;font-weight:800}
+.profile-nav a{display:inline-flex;align-items:center;min-height:1.85rem;padding:.32rem .62rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--green-deep);font-size:.84rem;font-weight:800}
 .profile-nav a:hover{background:var(--wash);text-decoration:none}
-.profile-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;min-height:1.35rem;border-radius:8px;background:var(--wash);font-size:.75rem;color:var(--green-deep)}
 .clinic-side{display:grid;gap:1rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .clinic-side .profile-block{margin-top:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .clinic-side h2{margin-top:0}
@@ -550,7 +549,6 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .profile-block{min-width:0;padding:1.05rem 1.1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .profile-section-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.6rem}
 .ficha h2{font-family:'Newsreader',Georgia,serif;font-weight:500;font-size:1.22rem;margin:0}
-.section-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.6rem;height:1.6rem;border-radius:8px;background:var(--wash);color:var(--green-deep);font-size:.78rem;font-weight:800}
 .ficha ul{padding-left:1.1rem;color:var(--muted)}
 .profile-block li{margin:.24rem 0}
 .profile-list{list-style:none;padding-left:0!important;display:grid;gap:.52rem;color:var(--muted)}
@@ -593,7 +591,7 @@ footer p{margin:0}
 .legal-copy h2{margin-top:.4rem}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 @media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
-@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;justify-content:space-between;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -808,10 +806,7 @@ def status_label(c):
     return str(c.get("status") or "").capitalize()
 
 def section_heading(title, count=None):
-    count_html = ""
-    if count is not None:
-        count_html = f'<span class="section-count" aria-label="{h(count)} elementos">{h(count)}</span>'
-    return f'<div class="profile-section-head"><h2>{h(title)}</h2>{count_html}</div>'
+    return f'<div class="profile-section-head"><h2>{h(title)}</h2></div>'
 
 def facts_block(c):
     facts = []
@@ -879,7 +874,7 @@ def locations_block(c):
             f'<div class="location-actions">{"".join(actions)}</div>'
             '</article>'
         )
-    return '<section class="profile-block" id="sedes">' + section_heading("Sedes y acceso", len(locations)) + '<div class="location-list">' + "".join(rows) + "</div></section>"
+    return '<section class="profile-block" id="sedes">' + section_heading("Sedes y acceso") + '<div class="location-list">' + "".join(rows) + "</div></section>"
 
 def transparency_block(c):
     items = transparency_items(c)
@@ -913,21 +908,11 @@ def contacto_block(c):
         return ""
     return '<section class="profile-block" id="contacto">' + section_heading("Contacto publicado", len(items)) + '<ul class="contacto info-list">' + "".join(items) + "</ul></section>"
 
-def profile_nav_item(label, count, target):
+def profile_nav_item(label, target):
     return (
-        f'<a href="{h(target)}" aria-label="{h(label)}: {h(count)}">'
-        f'<span class="profile-nav-label">{h(label)}</span>'
-        f'<span class="profile-nav-count" aria-hidden="true">{h(count)}</span></a>'
+        f'<a href="{h(target)}" aria-label="{h(label)}">'
+        f'<span class="profile-nav-label">{h(label)}</span></a>'
     )
-
-def profile_snapshot(c):
-    items = stat_items(c)
-    if not items:
-        return ""
-    return '<dl class="profile-snapshot" aria-label="Resumen rápido de la ficha">' + "".join(
-        f"<div><dt>{h(label)}</dt><dd>{h(count)}</dd></div>"
-        for label, count in items
-    ) + "</dl>"
 
 def profile_nav(c, has_contact, has_tech, has_locations, has_transparency):
     items = []
@@ -936,21 +921,21 @@ def profile_nav(c, has_contact, has_tech, has_locations, has_transparency):
     units = visible_values(c.get("unidades"))
     professionals = visible_values(c.get("profesionales"))
     if specs:
-        items.append(profile_nav_item("Especialidades", len(specs), "#especialidades"))
+        items.append(profile_nav_item("Especialidades", "#especialidades"))
     if services:
-        items.append(profile_nav_item("Servicios", len(services), "#servicios"))
+        items.append(profile_nav_item("Servicios", "#servicios"))
     if has_locations:
-        items.append(profile_nav_item("Sedes", len(clinic_locations(c)), "#sedes"))
+        items.append(profile_nav_item("Sedes", "#sedes"))
     if units:
-        items.append(profile_nav_item("Unidades", len(units), "#unidades"))
+        items.append(profile_nav_item("Unidades", "#unidades"))
     if has_tech:
-        items.append(profile_nav_item("Tecnología", len(split_text_list(c.get("tech"))), "#tecnologia"))
+        items.append(profile_nav_item("Tecnología", "#tecnologia"))
     if professionals:
-        items.append(profile_nav_item("Especialistas", len(professionals), "#especialistas"))
+        items.append(profile_nav_item("Especialistas", "#especialistas"))
     if has_transparency:
-        items.append(profile_nav_item("Transparencia", len(transparency_items(c)), "#transparencia"))
+        items.append(profile_nav_item("Transparencia", "#transparencia"))
     if has_contact:
-        items.append(profile_nav_item("Contacto", contact_count(c), "#contacto"))
+        items.append(profile_nav_item("Contacto", "#contacto"))
     if not items:
         return ""
     return '<div class="profile-jump"><span class="profile-jump-label">En esta ficha</span><nav class="profile-nav" aria-label="Contenido de la ficha">' + "".join(items) + "</nav></div>"
@@ -967,7 +952,6 @@ def ficha(c):
     equipo = list_section("Especialistas publicados por la clínica", c.get("profesionales"), section_id="especialistas")
     transparencia = transparency_block(c)
     nav = profile_nav(c, bool(contacto), bool(tech), bool(sedes), bool(transparencia))
-    snapshot = profile_snapshot(c)
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     city_label = c["city"] + extra
@@ -997,7 +981,6 @@ def ficha(c):
 <section class="clinic-intro"><div class="clinic-main">{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
 <div class="tags">{tags}</div>
 <p class="summary">{h(c["summary"])}</p>
-{snapshot}
 {nav}
 </div>{sidebar_html}</section>
 <div class="profile-sections">

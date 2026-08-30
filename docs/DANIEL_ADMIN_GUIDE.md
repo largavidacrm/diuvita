@@ -155,9 +155,11 @@ Si eliges **Preliminar** o **Publicada** y todavía hay claims bloqueantes,
 recordará antes de mandar la ficha a la web.
 
 Si una clínica tiene varias ubicaciones, usa **Sedes**. La **Dirección** sigue
-sirviendo como sede principal para fichas simples. En la web pública, la
-dirección se abre en Google Maps; si guardamos el perfil exacto de Google Maps
-o el enlace directo a valoraciones, se usa ese enlace directo.
+sirviendo como sede principal para fichas simples. En la web pública,
+**Google Maps** debe abrir la ficha de la clínica en Google Maps cuando tengamos
+ese enlace directo guardado. Si todavía falta, la web busca por nombre de
+clínica, ciudad y país; no por la dirección suelta. El enlace directo a
+valoraciones de Google se guarda aparte cuando exista.
 
 Los campos de transparencia —años en ejercicio, número de especialistas,
 colegiación visible y precio público— solo deben rellenarse cuando salgan de una

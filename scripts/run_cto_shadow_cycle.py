@@ -108,7 +108,7 @@ STEP_ITEM_KEYS = {
         "max_priority",
         "oldest_created_at",
     ),
-    "admin_digest": ("title", "review_type", "priority", "clinic_name", "clinic_slug"),
+    "admin_digest": ("title", "review_type", "priority", "clinic_name", "clinic_slug", "professionals_count"),
     "submit_source_shadow_reviews": (
         "clinic_slug",
         "clinic_name",

@@ -65,7 +65,14 @@ def main():
                 "priority": 85,
                 "clinic_name": "Sensabell",
                 "title": "Revisar claims bloqueantes: Sensabell",
-            }
+            },
+            {
+                "review_type": "candidate_clinic",
+                "priority": 90,
+                "clinic_name": "",
+                "title": "Regenera Clinic Medicina de la Longevidad",
+                "professionals_count": 11,
+            },
         ],
         "review_examples_by_type": [
             {
@@ -80,6 +87,7 @@ def main():
                 "priority": 90,
                 "clinic_name": "",
                 "title": "Candidata visible",
+                "professionals_count": 11,
             },
         ],
         "review_backlog_quality": {
@@ -250,6 +258,7 @@ def main():
     check("cambios de fuente: 1 abierta" in output, "source change label missing")
     check("claims bloqueantes: 1 abierta" in output, "blocking claim label missing")
     check("Sensabell" in output, "priority item missing")
+    check("Regenera Clinic Medicina de la Longevidad · 11 especialistas" in output, "professional-count note missing")
     check("review_examples_by_type" not in output, "raw example key should not appear in formatted digest")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")

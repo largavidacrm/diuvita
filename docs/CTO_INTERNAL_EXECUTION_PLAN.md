@@ -82,10 +82,12 @@ Already built:
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
 - Internal profile-enrichment review cards for existing clinics.
-- Public clinic pages display richer fields with clearer navigation, section counts, fast profile stats, contact-aware search and more scannable lists.
+- Public clinic pages display richer fields with clearer navigation, no decorative count badges, contact-aware search and more scannable lists.
 - Public clinic pages and the admin editor now allow multi-location clinic
-  profiles, Google Maps links, Google review links and basic transparency
-  fields without forcing a schema migration for every existing clinic.
+  profiles, Google Maps profile links, Google review links and basic
+  transparency fields without forcing a schema migration for every existing
+  clinic. Public Google Maps fallbacks search by clinic name, city and country,
+  not by street address.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle now includes a Daniel-facing brief in its JSON output and can optionally print only that brief for unattended logs.
 - Safe CTO shadow cycle has a backlog guard so safe-apply runs do not keep adding review cards when the inbox is already full.
@@ -309,7 +311,7 @@ Next 10 technical steps:
 15. Turn conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle; `scripts/blocking_claim_brief.py` summarizes those blockers for Daniel without writing data. Rejected claims remain quality signals, but do not create Daniel-facing blocker cards by default.
 16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py` and surfaced in `/admin/`; no cleanup/deletion path is enabled.
 17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/` with a next-profile suggestion.
-18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with card-level field signals, top-of-profile stats, section counts, a clear "En esta ficha" jump area and lighter profile lists.
+18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with card-level field signals, a clear "En esta ficha" jump area, lighter profile lists and no decorative count badges.
 19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
 20. Add a production smoke check. Done locally in `scripts/check_production_health.py`; it reads public URLs only and is separate from local checks.
 21. Surface visible source coverage in the admin control center. Done locally in `/admin/`, showing source coverage, profiles without sources and the next source-support target.

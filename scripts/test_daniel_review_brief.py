@@ -211,6 +211,23 @@ def main():
         first_step(example_digest)[1] == "Caso visible: Revisar claims bloqueantes: Sensabell.",
         "type-level review example should guide Daniel when priority list is limited",
     )
+    candidate_digest = sample_digest()
+    candidate_digest["reviews_by_type"] = [{"review_type": "candidate_clinic", "open_count": 1}]
+    candidate_digest["open_reviews"] = [
+        {
+            "review_type": "candidate_clinic",
+            "priority": 90,
+            "clinic_name": "",
+            "title": "Regenera Clinic Medicina de la Longevidad",
+            "professionals_count": 11,
+        }
+    ]
+    candidate_digest["review_examples_by_type"] = []
+    check(
+        first_step(candidate_digest)[1]
+        == "Caso visible: Regenera Clinic Medicina de la Longevidad. Trae 11 especialistas recogidos.",
+        "candidate reviews should show collected professionals",
+    )
     print("OK Daniel brief: review guidance is readable")
 
 

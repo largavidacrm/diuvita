@@ -17,9 +17,9 @@ def main() -> None:
     for marker in [
         "def profile_nav(",
         "def profile_nav_item(",
-        "def profile_snapshot(",
         "def clinic_locations(",
         "def locations_block(",
+        "def location_search_name(",
         "def transparency_block(",
         "def location_maps_url(",
         "def location_reviews_url(",
@@ -32,13 +32,10 @@ def main() -> None:
         "def section_heading(",
         'class="card-signals"',
         'aria-label="Datos visibles de la ficha"',
-        'class="profile-snapshot"',
-        'aria-label="Resumen rápido de la ficha"',
         'class="profile-jump"',
         'class="profile-jump-label"',
         'class="profile-nav"',
-        'aria-label="{h(label)}: {h(count)}"',
-        'class="profile-nav-count" aria-hidden="true"',
+        'aria-label="{h(label)}"',
         'id="sedes"',
         'class="location-list"',
         'class="location-actions"',
@@ -50,7 +47,6 @@ def main() -> None:
         'Colegiación visible',
         'Precio público',
         'class="profile-section-head"',
-        'class="section-count"',
         'class="profile-list"',
         'id="servicios"',
         'id="unidades"',
@@ -63,12 +59,11 @@ def main() -> None:
         ".mini-action{display:inline-flex;align-items:center;justify-content:center;min-height:1.9rem",
         ".transparency-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}",
         ".card-signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.85rem}",
-        ".profile-snapshot{max-width:760px;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:.55rem;margin-top:1rem}",
         ".clinic-side .visit{width:100%}",
         ".clinic-main{min-width:0}",
         ".ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0;overflow-wrap:anywhere}",
-        ".profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}",
         ".profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}",
+        'return google_maps_search_url(c.get("name"), location_search_name(loc), city, c.get("country"))',
         'c.get("web", "")',
         'c.get("email", "")',
         'c.get("telefono", "")',
@@ -83,6 +78,17 @@ def main() -> None:
         'c.get("tech", "")',
     ]:
         check(marker in source, f"missing public profile UX marker: {marker}")
+
+    for removed_marker in [
+        "def profile_snapshot(",
+        "profile-snapshot",
+        "profile-nav-count",
+        "section-count",
+    ]:
+        check(removed_marker not in source, f"public profile should not render decorative counters: {removed_marker}")
+
+    maps_body = source[source.index("def location_maps_url("):source.index("def location_reviews_url(")]
+    check("location_address" not in maps_body, "Google Maps fallback should use clinic name, not street address")
 
     print("OK public profile UX: navigation and richer search wired")
 

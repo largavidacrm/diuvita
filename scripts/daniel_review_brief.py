@@ -125,6 +125,18 @@ def review_backlog_status(digest: dict[str, Any]) -> str:
     return f"{duplicate_clinics} {clinic_label} con varias mejoras abiertas; {duplicate_reviews} tarjetas"
 
 
+def review_professionals_note(item: dict[str, Any] | None) -> str:
+    count = as_int((item or {}).get("professionals_count"))
+    if not count:
+        return ""
+    word = "especialista recogido" if count == 1 else "especialistas recogidos"
+    return f" Trae {count} {word}."
+
+
+def review_case_line(item: dict[str, Any] | None, fallback_filter: str) -> str:
+    return f"Caso visible: {review_name(item, fallback_filter)}." + review_professionals_note(item)
+
+
 def production_health_status(report: dict[str, Any]) -> str:
     checks = report.get("checks") or []
     if report.get("ok"):
@@ -147,27 +159,27 @@ def first_step(digest: dict[str, Any]) -> list[str]:
     if counts.get("blocking_claim_review"):
         return [
             "Primero revisa claims bloqueantes.",
-            f"Caso visible: {review_name(first_review(digest, 'blocking_claim_review'), 'Claims bloqueantes')}.",
+            review_case_line(first_review(digest, "blocking_claim_review"), "Claims bloqueantes"),
         ]
     if counts.get("candidate_clinic"):
         return [
             "Primero valida clínicas nuevas.",
-            f"Caso visible: {review_name(first_review(digest, 'candidate_clinic'), 'Clínicas nuevas')}.",
+            review_case_line(first_review(digest, "candidate_clinic"), "Clínicas nuevas"),
         ]
     if counts.get("source_change_detected"):
         return [
             "Primero revisa cambios de fuente.",
-            f"Caso visible: {review_name(first_review(digest, 'source_change_detected'), 'Cambios de fuente')}.",
+            review_case_line(first_review(digest, "source_change_detected"), "Cambios de fuente"),
         ]
     if counts.get("clinic_profile_enrichment"):
         return [
             "Primero revisa mejoras de fichas existentes.",
-            f"Caso visible: {review_name(first_review(digest, 'clinic_profile_enrichment'), 'Mejoras de ficha')}.",
+            review_case_line(first_review(digest, "clinic_profile_enrichment"), "Mejoras de ficha"),
         ]
     if counts.get("clinic_quality_audit"):
         return [
             "Primero completa fichas incompletas.",
-            f"Caso visible: {review_name(first_review(digest, 'clinic_quality_audit'), 'Auditorías')}.",
+            review_case_line(first_review(digest, "clinic_quality_audit"), "Auditorías"),
         ]
     return ["No hay una acción urgente.", "Puedes revisar el panel o dejar que el sistema siga en modo sombra."]
 

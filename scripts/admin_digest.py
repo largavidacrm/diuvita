@@ -103,7 +103,28 @@ open_reviews as (
       rq.created_at,
       rq.updated_at,
       c.slug as clinic_slug,
-      c.display_name as clinic_name
+      c.display_name as clinic_name,
+      case
+        when rq.review_type = 'candidate_clinic' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{candidate,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{candidate,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,professionals}}') end,
+          case when jsonb_typeof(rq.payload -> 'profesionales') = 'array'
+            then jsonb_array_length(rq.payload -> 'profesionales') end,
+          0
+        )
+        when rq.review_type = 'clinic_profile_enrichment' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{proposed_fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_fields,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{proposed_current_data,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_current_data,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{fields,profesionales}}') end,
+          0
+        )
+        else 0
+      end as professionals_count
     from public.review_queue rq
     left join public.clinics c on c.id = rq.clinic_id
     where rq.status = 'open'
@@ -227,7 +248,8 @@ review_examples_by_type as (
       created_at,
       updated_at,
       clinic_slug,
-      clinic_name
+      clinic_name,
+      professionals_count
     from (
       select
         rq.id,
@@ -244,6 +266,27 @@ review_examples_by_type as (
         rq.updated_at,
         c.slug as clinic_slug,
         c.display_name as clinic_name,
+        case
+          when rq.review_type = 'candidate_clinic' then coalesce(
+            case when jsonb_typeof(rq.payload #> '{{candidate,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{candidate,profesionales}}') end,
+            case when jsonb_typeof(rq.payload #> '{{candidate,professionals}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{candidate,professionals}}') end,
+            case when jsonb_typeof(rq.payload -> 'profesionales') = 'array'
+              then jsonb_array_length(rq.payload -> 'profesionales') end,
+            0
+          )
+          when rq.review_type = 'clinic_profile_enrichment' then coalesce(
+            case when jsonb_typeof(rq.payload #> '{{proposed_fields,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{proposed_fields,profesionales}}') end,
+            case when jsonb_typeof(rq.payload #> '{{proposed_current_data,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{proposed_current_data,profesionales}}') end,
+            case when jsonb_typeof(rq.payload #> '{{fields,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{fields,profesionales}}') end,
+            0
+          )
+          else 0
+        end as professionals_count,
         row_number() over (
           partition by case
             when rq.review_type = 'clinic_quality_audit'
@@ -732,6 +775,14 @@ def format_review_type(review_type: str) -> str:
     return labels.get(review_type, review_type.replace("_", " "))
 
 
+def review_professionals_note(item: dict[str, Any]) -> str:
+    count = as_int(item.get("professionals_count"))
+    if not count:
+        return ""
+    word = "especialista" if count == 1 else "especialistas"
+    return f" · {count} {word}"
+
+
 def maturity_blockers(digest: dict[str, Any]) -> list[str]:
     summary = digest.get("summary") or {}
     automation = summary.get("automation") or {}
@@ -1077,7 +1128,7 @@ def format_digest(digest: dict[str, Any]) -> str:
             clinic = item.get("clinic_name") or item.get("clinic_slug") or "sin clinica"
             output.append(
                 f"- P{as_int(item.get('priority'))} | {format_review_type(str(item.get('review_type') or ''))} | "
-                f"{clinic}: {item.get('title') or '-'}"
+                f"{clinic}: {item.get('title') or '-'}{review_professionals_note(item)}"
             )
     else:
         output.append("- No hay tarjetas abiertas.")
