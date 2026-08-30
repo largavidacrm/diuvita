@@ -104,6 +104,11 @@ El botón **Abrir especialistas** abre la primera tarjeta relacionada con la
 ficha marcada en **Siguiente especialistas**. Si no hay tarjeta exacta, filtra
 la bandeja por esa clínica y por revisiones de especialistas.
 
+Al editar una clínica, si aparecen **Detectados en revisión interna**, puedes
+pulsar **Cargar al formulario** para pasar esos nombres al campo de
+especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
+revises antes de guardar.
+
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.

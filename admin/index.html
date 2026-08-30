@@ -3783,7 +3783,8 @@
         actionSeen[item.reviewId] = true;
         actionReviews.push(item);
       });
-      el("clinicPendingSpecialistsActions").innerHTML = actionReviews.slice(0, 3).map(function (item) {
+      el("clinicPendingSpecialistsActions").innerHTML = '<button class="btn secondary" type="button" data-add-pending-specialists>Cargar al formulario</button>' +
+        actionReviews.slice(0, 3).map(function (item) {
         return '<button class="link-btn" type="button" data-review-id="' + html(item.reviewId) + '">Abrir propuesta</button>';
       }).join("");
 
@@ -3799,6 +3800,38 @@
         ? 'Fuente detectada: <a href="' + html(source) + '" rel="nofollow noopener" target="_blank">' + html(source) + "</a>"
         : "";
       show(panel, true);
+    }
+
+    function addPendingSpecialistsToForm() {
+      var pending = pendingSpecialistsForClinic(activeClinic);
+      if (!pending.length) {
+        toast("No hay especialistas pendientes para cargar.");
+        return;
+      }
+      var field = el("clinicProfessionals");
+      var existing = linesToArray(field.value);
+      var seen = {};
+      existing.forEach(function (person) {
+        var key = normalizedPersonKey(person);
+        if (key) seen[key] = true;
+      });
+      var added = [];
+      pending.forEach(function (item) {
+        var key = normalizedPersonKey(item.name);
+        if (!key || seen[key]) return;
+        seen[key] = true;
+        added.push(item.name);
+      });
+      if (!added.length) {
+        toast("Los especialistas detectados ya están en el formulario.");
+        renderPendingSpecialistsForClinic();
+        return;
+      }
+      field.value = existing.concat(added).join("\n");
+      renderPendingSpecialistsForClinic();
+      renderUnsavedChanges();
+      updateFinalValidation();
+      toast(added.length + (added.length === 1 ? " especialista cargado. Revisa y guarda." : " especialistas cargados. Revisa y guarda."));
     }
 
     function proposalLabel(key) {
@@ -4877,6 +4910,11 @@
       });
       el("clinicProfessionals").addEventListener("input", renderPendingSpecialistsForClinic);
       el("clinicPendingSpecialistsPanel").addEventListener("click", function (event) {
+        var addButton = event.target.closest("[data-add-pending-specialists]");
+        if (addButton) {
+          addPendingSpecialistsToForm();
+          return;
+        }
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));
       });
