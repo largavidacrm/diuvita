@@ -6,8 +6,10 @@ from admin_digest import (
     format_digest,
     next_action_label,
     next_profile_action,
+    next_source_action,
     next_specialist_action,
     review_backlog_guard_status,
+    source_coverage_status,
     top_pending_profile_field,
 )
 
@@ -109,6 +111,32 @@ def main():
             "oldest_due_at": None,
             "next_due_at": "2026-09-05T10:00:00+00:00",
         },
+        "source_coverage": {
+            "visible_clinics": 19,
+            "clinics_with_sources": 11,
+            "clinics_without_sources": 8,
+            "clinics_with_hydrated_sources": 10,
+            "clinics_without_hydrated_sources": 9,
+            "clinics_with_claims": 11,
+            "clinics_without_claims": 8,
+            "clinics_needing_source_work": 11,
+            "claims_with_source": 109,
+            "claims_without_source": 0,
+            "blocking_claims": 5,
+        },
+        "source_next_target": {
+            "slug": "kairos-longevity-clinic",
+            "clinic_name": "Kairos Longevity Clinic",
+            "city": "Madrid",
+            "status": "published",
+            "source_records": 2,
+            "hydrated_source_records": 2,
+            "source_snapshots": 2,
+            "total_claims": 8,
+            "claims_with_source": 8,
+            "claims_without_source": 0,
+            "blocking_claims": 2,
+        },
         "specialist_coverage": {
             "visible_clinics": 19,
             "with_specialists": 2,
@@ -160,6 +188,11 @@ def main():
         next_profile_action(digest) == "Revisar Kairos Longevity Clinic: ya tiene 4 revisiones abiertas relacionadas. Primer campo: Especialistas publicados",
         "next profile action missing",
     )
+    check(next_source_action(digest) == "Revisar 2 claims bloqueantes de Kairos Longevity Clinic", "next source action missing")
+    check(
+        source_coverage_status(digest) == "11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente",
+        "source coverage status missing",
+    )
     check(first_backlog_bottleneck(digest) == "Ordenar Sensabell: 2 mejoras abiertas", "first backlog bottleneck missing")
     check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
     check(top_pending_profile_field(digest) == "Especialistas · 17 fichas", "top pending profile field missing")
@@ -200,6 +233,8 @@ def main():
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")
     check("Fuentes vigilables: 39" in output, "monitorable source count missing")
     check("Fuentes vencidas ahora: todo reciente" in output, "fresh source status missing")
+    check("Cobertura fuentes: 11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente" in output, "source coverage line missing")
+    check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source line missing")
     check("Proxima revision prevista: 2026-09-05 10:00" in output, "next due date missing")
     check("Cadencia: 4 semanal / 32 estandar / 3 lenta" in output, "cadence mix missing")
     print("OK digest: internal CTO summary")

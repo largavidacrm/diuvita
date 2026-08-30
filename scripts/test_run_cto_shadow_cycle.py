@@ -185,6 +185,22 @@ def main():
             "next_pending_field": "Email o teléfono",
             "open_relevant_reviews": 5,
         },
+        "source_coverage": {
+            "visible_clinics": 19,
+            "clinics_with_sources": 11,
+            "clinics_without_sources": 8,
+            "clinics_with_hydrated_sources": 10,
+            "clinics_without_hydrated_sources": 9,
+            "clinics_needing_source_work": 11,
+        },
+        "source_next_target": {
+            "clinic_name": "Kairos Longevity Clinic",
+            "source_records": 2,
+            "hydrated_source_records": 2,
+            "total_claims": 8,
+            "claims_without_source": 0,
+            "blocking_claims": 2,
+        },
     }
     cycle_brief = build_cycle_brief({
         "mode": "dry_run",
@@ -195,11 +211,15 @@ def main():
     check(cycle_brief["next_action"] == "Revisar claim bloqueante", "Daniel brief should keep next action")
     check(cycle_brief["profile_gap"] == "Especialistas · 17 fichas", "Daniel brief should keep top profile gap")
     check("Sensabell" in cycle_brief["profile_next"], "Daniel brief should keep next profile target")
+    check("11/19 fichas con fuente" in cycle_brief["source_gap"], "Daniel brief should keep source coverage")
+    check("Kairos Longevity Clinic" in cycle_brief["source_next"], "Daniel brief should keep next source target")
     check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
     brief_text = format_cycle_brief(cycle_brief)
     check("# Diuvita: resumen CTO automatico" in brief_text, "plain brief title missing")
     check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
     check("Siguiente ficha: Revisar Sensabell" in brief_text, "plain brief next profile missing")
+    check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
+    check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",

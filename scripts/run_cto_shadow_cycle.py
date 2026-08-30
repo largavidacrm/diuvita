@@ -19,6 +19,8 @@ from admin_digest import (
     as_int,
     next_action_label,
     next_profile_action,
+    next_source_action,
+    source_coverage_status,
     top_pending_profile_field,
 )
 
@@ -333,14 +335,20 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         next_action = next_action_label(admin_digest)
         profile_gap = top_pending_profile_field(admin_digest)
         profile_next = next_profile_action(admin_digest)
+        source_gap = source_coverage_status(admin_digest)
+        source_next = next_source_action(admin_digest)
     elif failed_step:
         next_action = "Revisar el paso detenido"
         profile_gap = "no medido"
         profile_next = "no medida"
+        source_gap = "no medida"
+        source_next = "no medida"
     else:
         next_action = "Sin accion urgente"
         profile_gap = "no medido"
         profile_next = "no medida"
+        source_gap = "no medida"
+        source_next = "no medida"
 
     auto_publish = bool(automation.get("auto_publish_enabled"))
     shadow_mode = bool(automation.get("shadow_mode_active"))
@@ -361,6 +369,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "failed_jobs": failed_jobs,
         "profile_gap": profile_gap,
         "profile_next": profile_next,
+        "source_gap": source_gap,
+        "source_next": source_next,
         "publication_guard": publication_guard,
         "shadow_mode": "activo" if shadow_mode else "inactivo",
         "production_health": production_health,
@@ -378,6 +388,8 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Revisiones abiertas: {brief.get('open_reviews')}",
         f"- Campo mas pendiente: {brief.get('profile_gap')}.",
         f"- Siguiente ficha: {brief.get('profile_next')}.",
+        f"- Cobertura fuentes: {brief.get('source_gap')}.",
+        f"- Siguiente fuente: {brief.get('source_next')}.",
         f"- Publicacion: {brief.get('publication_guard')}",
         f"- Modo sombra: {brief.get('shadow_mode')}.",
         f"- Web publica: {brief.get('production_health')}.",

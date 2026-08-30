@@ -62,6 +62,32 @@ def sample_digest():
             "due_sources": 0,
             "next_due_at": "2026-09-29T09:58:00+00:00",
         },
+        "source_coverage": {
+            "visible_clinics": 19,
+            "clinics_with_sources": 11,
+            "clinics_without_sources": 8,
+            "clinics_with_hydrated_sources": 10,
+            "clinics_without_hydrated_sources": 9,
+            "clinics_with_claims": 11,
+            "clinics_without_claims": 8,
+            "clinics_needing_source_work": 11,
+            "claims_with_source": 109,
+            "claims_without_source": 0,
+            "blocking_claims": 5,
+        },
+        "source_next_target": {
+            "slug": "kairos-longevity-clinic",
+            "clinic_name": "Kairos Longevity Clinic",
+            "city": "Madrid",
+            "status": "published",
+            "source_records": 2,
+            "hydrated_source_records": 2,
+            "source_snapshots": 2,
+            "total_claims": 8,
+            "claims_with_source": 8,
+            "claims_without_source": 0,
+            "blocking_claims": 2,
+        },
         "specialist_coverage": {
             "visible_clinics": 19,
             "with_specialists": 2,
@@ -129,6 +155,8 @@ def main():
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
+    check("Cobertura fuentes: 11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente" in output, "source coverage missing")
+    check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")

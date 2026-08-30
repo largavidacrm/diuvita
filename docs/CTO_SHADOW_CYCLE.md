@@ -70,7 +70,8 @@ Source-coverage measurement is read-only and highlights visible clinics whose
 source trail is weak before expanding automation.
 The JSON output also includes a `daniel_brief` block with the simple status,
 next action, review backlog, top missing clinic field, next incomplete profile
-to review and publication guard.
+to review, source-support coverage, next source-support target and publication
+guard.
 
 For a Daniel-readable run log:
 

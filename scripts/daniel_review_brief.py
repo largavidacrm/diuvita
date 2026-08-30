@@ -13,9 +13,11 @@ from admin_digest import (
     load_digest,
     next_action_label,
     next_profile_action,
+    next_source_action,
     next_specialist_action,
     parse_timestamp,
     review_backlog_guard_status,
+    source_coverage_status,
     top_pending_profile_field,
 )
 from check_production_health import run_checks
@@ -223,6 +225,8 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
+        f"- Cobertura fuentes: {source_coverage_status(digest)}.",
+        f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Bandeja: {review_backlog_status(digest)}.",
         f"- Primer atasco: {first_backlog_bottleneck(digest)}.",
         f"- Freno de bandeja: {review_backlog_guard_status(digest)}.",

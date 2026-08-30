@@ -297,6 +297,105 @@ source_monitoring as (
   ) as data
   from source_cadences
 ),
+visible_source_rows as (
+  select
+    c.id,
+    c.slug,
+    c.display_name as clinic_name,
+    c.city,
+    c.status,
+    coalesce(sources.source_records, 0) as source_records,
+    coalesce(sources.hydrated_source_records, 0) as hydrated_source_records,
+    coalesce(sources.source_snapshots, 0) as source_snapshots,
+    sources.last_source_at,
+    coalesce(claims.total_claims, 0) as total_claims,
+    coalesce(claims.claims_with_source, 0) as claims_with_source,
+    coalesce(claims.claims_without_source, 0) as claims_without_source,
+    coalesce(claims.blocking_claims, 0) as blocking_claims,
+    (
+      coalesce(sources.source_records, 0) = 0
+      or coalesce(sources.hydrated_source_records, 0) = 0
+      or coalesce(claims.total_claims, 0) = 0
+      or coalesce(claims.claims_without_source, 0) > 0
+      or coalesce(claims.blocking_claims, 0) > 0
+    ) as needs_source_work
+  from public.clinics c
+  left join lateral (
+    select
+      count(distinct sr.id) as source_records,
+      count(distinct sr.id) filter (where sr.content_hash is not null) as hydrated_source_records,
+      count(ss.id) as source_snapshots,
+      max(coalesce(ss.retrieved_at, sr.retrieved_at)) as last_source_at
+    from public.source_records sr
+    left join public.source_snapshots ss on ss.source_record_id = sr.id
+    where sr.clinic_id = c.id
+      and sr.entity_type = 'clinic'
+  ) sources on true
+  left join lateral (
+    select
+      count(*) as total_claims,
+      count(*) filter (where fc.source_record_id is not null) as claims_with_source,
+      count(*) filter (where fc.source_record_id is null) as claims_without_source,
+      count(*) filter (
+        where fc.verification_status in ('conflict', 'rejected')
+           or fc.source_record_id is null
+      ) as blocking_claims
+    from public.field_claims fc
+    where fc.clinic_id = c.id
+      and fc.entity_type = 'clinic'
+  ) claims on true
+  where c.status in ('published', 'preliminary')
+),
+source_coverage as (
+  select jsonb_build_object(
+    'visible_clinics', count(*),
+    'clinics_with_sources', count(*) filter (where source_records > 0),
+    'clinics_without_sources', count(*) filter (where source_records = 0),
+    'clinics_with_hydrated_sources', count(*) filter (where hydrated_source_records > 0),
+    'clinics_without_hydrated_sources', count(*) filter (where hydrated_source_records = 0),
+    'clinics_with_claims', count(*) filter (where total_claims > 0),
+    'clinics_without_claims', count(*) filter (where total_claims = 0),
+    'clinics_needing_source_work', count(*) filter (where needs_source_work),
+    'claims_with_source', coalesce(sum(claims_with_source), 0),
+    'claims_without_source', coalesce(sum(claims_without_source), 0),
+    'blocking_claims', coalesce(sum(blocking_claims), 0)
+  ) as data
+  from visible_source_rows
+),
+source_next_target as (
+  select coalesce(
+    (
+      select to_jsonb(items)
+      from (
+        select
+          slug,
+          clinic_name,
+          city,
+          status,
+          source_records,
+          hydrated_source_records,
+          source_snapshots,
+          last_source_at,
+          total_claims,
+          claims_with_source,
+          claims_without_source,
+          blocking_claims
+        from visible_source_rows
+        where needs_source_work
+        order by
+          blocking_claims desc,
+          case when source_records = 0 then 0 else 1 end,
+          case when hydrated_source_records = 0 then 0 else 1 end,
+          claims_without_source desc,
+          total_claims asc,
+          case when status = 'published' then 0 else 1 end,
+          clinic_name
+        limit 1
+      ) items
+    ),
+    '{{}}'::jsonb
+  ) as data
+),
 visible_specialist_rows as (
   select
     c.id,
@@ -513,6 +612,8 @@ select jsonb_build_object(
   'costs', (select data from costs),
   'claim_quality', (select data from claim_quality),
   'source_monitoring', (select data from source_monitoring),
+  'source_coverage', (select data from source_coverage),
+  'source_next_target', (select data from source_next_target),
   'specialist_coverage', (select data from specialist_coverage),
   'specialist_next_target', (select data from specialist_next_target),
   'profile_completeness', (select data from profile_completeness),
@@ -626,6 +727,46 @@ def next_profile_action(digest: dict[str, Any]) -> str:
     return f"Revisar {name}: {reason}"
 
 
+def next_source_action(digest: dict[str, Any]) -> str:
+    target = digest.get("source_next_target") or {}
+    if not isinstance(target, dict) or not target:
+        return "sin hueco de fuentes medido"
+    name = str(target.get("clinic_name") or target.get("slug") or "la primera ficha")
+    source_records = as_int(target.get("source_records"))
+    hydrated = as_int(target.get("hydrated_source_records"))
+    total_claims = as_int(target.get("total_claims"))
+    without_source = as_int(target.get("claims_without_source"))
+    blocking = as_int(target.get("blocking_claims"))
+    if not source_records:
+        return f"Añadir fuente oficial para {name}"
+    if not hydrated:
+        return f"Hidratar {source_records} {plural(source_records, 'fuente guardada', 'fuentes guardadas')} de {name}"
+    if blocking:
+        return f"Revisar {blocking} {plural(blocking, 'claim bloqueante', 'claims bloqueantes')} de {name}"
+    if without_source:
+        return f"Vincular fuente a {without_source} {plural(without_source, 'claim', 'claims')} de {name}"
+    if not total_claims:
+        return f"Crear claims internos desde fuentes guardadas para {name}"
+    return f"Revisar soporte de fuentes de {name}"
+
+
+def source_coverage_status(digest: dict[str, Any]) -> str:
+    coverage = digest.get("source_coverage") or {}
+    visible = as_int(coverage.get("visible_clinics"))
+    if not visible:
+        return "sin fichas visibles medidas"
+    with_sources = as_int(coverage.get("clinics_with_sources"))
+    hydrated = as_int(coverage.get("clinics_with_hydrated_sources"))
+    without_sources = as_int(coverage.get("clinics_without_sources"))
+    needing = as_int(coverage.get("clinics_needing_source_work"))
+    return (
+        f"{with_sources}/{visible} fichas con fuente; "
+        f"{hydrated}/{visible} hidratadas; "
+        f"{without_sources} sin fuente; "
+        f"{needing} con trabajo pendiente"
+    )
+
+
 def next_action_label(digest: dict[str, Any]) -> str:
     failed = digest.get("recent_failed_jobs") or []
     open_reviews = digest.get("open_reviews") or []
@@ -685,6 +826,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     automation = summary.get("automation") or {}
     costs = digest.get("costs") or {}
     source_monitoring = digest.get("source_monitoring") or {}
+    source_coverage = digest.get("source_coverage") or {}
     specialist_coverage = digest.get("specialist_coverage") or {}
     profile_completeness = digest.get("profile_completeness") or {}
     backlog_quality = digest.get("review_backlog_quality") or {}
@@ -760,6 +902,10 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Fuentes vigilables", as_int(source_monitoring.get("candidate_sources"))))
     due_label = "todo reciente" if due_sources == 0 else f"{due_sources} pendientes"
     output.append(line("Fuentes vencidas ahora", due_label))
+    source_visible = as_int(source_coverage.get("visible_clinics"))
+    if source_visible:
+        output.append(line("Cobertura fuentes", source_coverage_status(digest)))
+        output.append(line("Siguiente fuente", next_source_action(digest)))
     if due_sources:
         output.append(line("Mas antigua pendiente", parse_timestamp(source_monitoring.get("oldest_due_at"))))
     else:

@@ -15,6 +15,8 @@ It is designed for future morning or weekly automations. It answers:
 - which incomplete visible profile should be reviewed next;
 - how many visible profiles include published specialists;
 - which missing-specialist profile is the best first review target;
+- how many visible profiles have stored and hydrated source support;
+- which visible profile is the best first source-support target;
 - whether the review inbox has repeated improvement cards for the same clinic;
 - which repeated-improvement bottleneck should be sorted first;
 - whether the review inbox is close to the safe-write backlog guard;

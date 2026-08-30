@@ -15,6 +15,8 @@ It answers:
 - whether low-risk auto-publish is mature enough to discuss;
 - whether any jobs failed;
 - whether clinic source monitoring is fresh or due;
+- how many visible profiles have stored source support and hydrated sources;
+- which visible profile is the best first source-support target;
 - how many visible profiles include published specialists;
 - which missing-specialist visible profile is the best first review target;
 - how many visible profiles have all measured public fields present;
@@ -49,6 +51,8 @@ The digest includes a read-only "Vigilancia de fuentes" block:
 
 - `Fuentes vigilables`: hydrated clinic sources with a stored content hash and a public URL.
 - `Fuentes vencidas ahora`: sources that are due for a fresh check based on their cadence.
+- `Cobertura fuentes`: how many visible clinic profiles have stored and hydrated source support.
+- `Siguiente fuente`: the first visible profile to review for source support, source hydration or blocking claims.
 - `Proxima revision prevista`: the next scheduled source check when everything is fresh.
 - `Cadencia`: how many sources are checked weekly, standard monthly, slow quarterly, or with a custom cadence.
 
