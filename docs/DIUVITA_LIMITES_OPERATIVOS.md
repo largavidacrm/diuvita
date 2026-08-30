@@ -156,6 +156,21 @@ Estas tareas se pueden avanzar sin necesidad de preguntar:
   estilo o erratas que no alteren el sentido.
 - Crear filtros y ordenaciones neutras: ciudad, país, especialidad o alfabético.
 
+## Herramientas internas
+
+El escáner `scripts/check_operational_limits.py` detecta señales públicas obvias
+de estos límites. El modo normal se usa en las comprobaciones locales.
+
+Para una revisión editorial más estricta de rankings, premios o lenguaje de
+calidad/precio:
+
+```bash
+python3 scripts/check_operational_limits.py --strict-editorial
+```
+
+Ese modo es deliberadamente más sensible y sirve para preparar decisiones de
+Daniel; no cambia contenido ni publica nada.
+
 ## Criterio residual
 
 Ante cualquier situación no prevista con posible dimensión legal, médica o
