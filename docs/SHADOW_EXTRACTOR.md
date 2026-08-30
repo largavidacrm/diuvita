@@ -45,6 +45,9 @@ When it prepares a review card, it filters proposed form fields against the
 clinic's current gaps, so repeated services or specialties do not become noisy
 review work if those fields are already complete.
 
+Source-shadow batches skip profiles with no measured gaps, which keeps the
+review inbox focused on incomplete records.
+
 Use `--compact` for real read-only checks when the full verification payload
 would be too noisy.
 

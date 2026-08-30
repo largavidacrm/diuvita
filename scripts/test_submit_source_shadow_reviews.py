@@ -165,6 +165,10 @@ def main():
         ) == {"email": "a@example.test", "public_pricing": "si"},
         "source review should keep only fields tied to current gaps",
     )
+    check(
+        filter_proposed_fields_for_pending({"email": "a@example.test"}, []) == {},
+        "source review should not propose fields for complete profiles",
+    )
 
     captured = {}
 
@@ -187,6 +191,7 @@ def main():
     check("public_pricing" in sql, "source batch should include public-pricing gaps")
     check("prices,public_status" in sql, "source batch should understand nested pricing status")
     check("jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.team_source_priority desc" in sql, "source batch output should preserve priority order")
+    check("cardinality(candidate.pending_fields) > 0" in sql, "source batch should skip complete profiles")
     check("cardinality(candidate.pending_fields) desc" in sql, "source batch should prioritize incomplete profiles")
     check("has_open_review asc" in sql, "source batch should prefer sources without open review cards")
     check("source_type" in sql, "source batch should return source type context")

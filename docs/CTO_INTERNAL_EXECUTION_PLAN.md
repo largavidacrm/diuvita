@@ -350,6 +350,7 @@ Next 10 technical steps:
 46. Add compact output for source shadow reviews. Done locally in `scripts/submit_source_shadow_reviews.py`: read-only extraction checks can now show useful ready/skipped/failed summaries without exposing large verification payloads.
 47. Reduce noisy source-shadow proposals. Done locally in `scripts/submit_shadow_extraction_review.py` and `scripts/submit_source_shadow_reviews.py`: transparency claims now map into editable fields, and source-based review cards only propose fields tied to current clinic gaps.
 48. Verify transparency signals before review. Done locally in `scripts/verify_clinic_profile_shadow.py`: years/counts must be supported in source text, while credentialing and pricing need explicit registration-number or price signals before they are proposed.
+49. Skip source-shadow work for already complete profiles. Done locally in `scripts/submit_source_shadow_reviews.py`: source batches now ignore clinics with no measured gaps before creating any review proposal.
 
 ## Daniel decision checkpoints
 

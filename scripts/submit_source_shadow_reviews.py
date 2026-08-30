@@ -208,6 +208,7 @@ from (
   where sr.entity_type = 'clinic'
     and sr.source_url ~* '^https?://'
     and c.status <> 'archived'
+    and cardinality(candidate.pending_fields) > 0
     {clinic_filter}
     {source_filter}
   order by cardinality(candidate.pending_fields) desc, has_open_review asc, team_source_priority desc, sr.retrieved_at desc, sr.created_at desc
@@ -255,7 +256,7 @@ def filter_proposed_fields_for_pending(
     for field in pending_fields:
         allowed.update(PENDING_FIELD_TARGETS.get(str(field), set()))
     if not allowed:
-        return proposed_fields
+        return {}
     return {
         key: value
         for key, value in proposed_fields.items()
