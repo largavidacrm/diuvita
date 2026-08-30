@@ -37,6 +37,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SOURCE_RECORD_HYDRATION.md`: hidratación de evidencias compactas para fuentes guardadas.
 - `docs/SOURCE_CHANGE_MONITORING.md`: primer watcher para detectar cambios en fuentes ya guardadas.
 - `docs/CTO_SHADOW_CYCLE.md`: ciclo seguro para encadenar tareas internas repetibles.
+- `docs/LOCAL_CHECKS.md`: comprobaciones locales antes de guardar y subir cambios.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.
@@ -57,6 +58,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/hydrate_source_records.py`: completa `source_records` con título, hash y extracto corto.
 - `scripts/monitor_source_changes.py`: compara hashes de fuentes y crea revisiones internas si cambian.
 - `scripts/run_cto_shadow_cycle.py`: ejecuta el ciclo sombra seguro de CTO.
+- `scripts/run_local_checks.py`: ejecuta pruebas, validación, build y revisión básica del admin.
 - `scripts/apply_supabase_sql.sh`: aplica un SQL concreto contra Supabase.
 - `scripts/add_supabase_admin.sh`: autoriza un email como administrador del panel.
 - `scripts/create_supabase_auth_user.py`: crea un usuario de acceso en Supabase Auth.
