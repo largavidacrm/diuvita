@@ -38,6 +38,7 @@ Already built:
 - Audit events and entity versions for manual edits.
 - `agent_jobs`, `review_queue`, `source_records`, `field_claims`, `human_overrides` and related foundation tables.
 - Admin visibility for clinic version history, protected fields and internal evidence claims.
+- Admin rollback control from clinic version history, with every restore audited as a new version.
 - Candidate reviews now create internal drafts and route Daniel to final validation before publication.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
@@ -58,7 +59,7 @@ Not yet mature:
 - Deterministic rules engine for field-level publication.
 - Doctor, pricing, treatment and SEO workflows.
 - Daily/weekly digest.
-- Rollback controls in the admin UI.
+- Rollback controls in the admin UI need operational usage, but the restore path now exists.
 - Accuracy measurement across 100-200 reviewed items.
 
 ## Execution lanes
@@ -72,7 +73,7 @@ Build next:
 1. Review inbox filters by type and risk.
 2. Clear proposal diff before saving a clinic.
 3. One-click dismiss/resolve notes that are understandable.
-4. Rollback view from `entity_versions`.
+4. Rollback view and restore control from `entity_versions`.
 5. Human-lock controls for sensitive fields.
 6. Automation status panel: auto-publish off/on, shadow mode, last run, failed jobs.
 

@@ -1111,7 +1111,8 @@
         public_site_rebuild_requested: "Publicación solicitada",
         public_site_rebuild_skipped: "Publicación agrupada",
         clinic_field_locks_updated: "Campos protegidos",
-        source_change_detected: "Cambio de fuente detectado"
+        source_change_detected: "Cambio de fuente detectado",
+        clinic_version_restored: "Versión restaurada"
       };
       return labels[name] || name || "Movimiento";
     }
@@ -1146,6 +1147,9 @@
       }
       if (row.event_name === "source_change_detected") {
         return payload.source_url || "Fuente modificada";
+      }
+      if (row.event_name === "clinic_version_restored") {
+        return "Restaurada v" + (payload.restored_version_number || "?");
       }
       if (row.event_name === "agent_job_failed") {
         return payload.error || "Revisar trabajo fallido";
@@ -1330,22 +1334,55 @@
       var count = Array.isArray(rows) ? rows.length : 0;
       el("clinicVersionCount").textContent = count + (count === 1 ? " version" : " versiones");
       el("clinicVersionMeta").textContent = count
-        ? "Últimas versiones guardadas. Vista solo lectura."
+        ? "Últimas versiones guardadas. Puedes restaurar una versión anterior."
         : "Todavía no hay versiones guardadas para esta ficha.";
       if (!count) {
         list.innerHTML = '<p class="empty">El historial aparecerá después del primer guardado auditado.</p>';
         return;
       }
+      var latestVersion = rows[0] && rows[0].version_number;
       list.innerHTML = rows.map(function (row) {
         var data = versionClinicData(row);
         var place = [data.city, data.country].filter(Boolean).join(" · ");
+        var isCurrent = row.version_number === latestVersion;
+        var action = isCurrent
+          ? '<span class="pill">Actual</span>'
+          : '<button class="link-btn" type="button" data-restore-version="' + html(row.id) + '" data-restore-version-number="' + html(row.version_number || "?") + '">Restaurar</button>';
         return '<article class="version-item">' +
           '<div class="version-main"><strong>v' + html(row.version_number || "?") + " · " + html(data.name) + '</strong>' +
           '<span>' + html(date(row.created_at)) + (place ? " · " + html(place) : "") + '</span></div>' +
-          '<div class="version-tags">' + pill(data.status) + '<span class="pill">' + html(pct(data.confidence)) + '</span></div>' +
+          '<div class="version-tags">' + clinicStatusPill(data.status) + '<span class="pill">' + html(pct(data.confidence)) + '</span>' + action + '</div>' +
           '<p>' + html(compactText(data.summary, 180)) + '</p>' +
           '</article>';
       }).join("");
+    }
+
+    async function restoreClinicVersion(versionId, versionNumber) {
+      if (!activeClinic || !versionId) return;
+      var shouldRestore = window.confirm(
+        "Vas a restaurar la versión v" + versionNumber + " de esta clínica.\n\nEsto sobrescribirá la ficha actual, quedará registrado en el historial y podrás volver a cambiarla después. ¿Restaurar?"
+      );
+      if (!shouldRestore) return;
+
+      var buttons = document.querySelectorAll("[data-restore-version]");
+      buttons.forEach(function (button) { button.disabled = true; });
+      var result = await client.rpc("admin_restore_clinic_version", {
+        p_clinic_id: activeClinic.id,
+        p_version_id: versionId,
+        p_note: "Restauración manual desde historial v" + versionNumber + "."
+      });
+      buttons.forEach(function (button) { button.disabled = false; });
+
+      if (result.error) {
+        toast("No se pudo restaurar esa versión.");
+        return;
+      }
+
+      await loadDashboard();
+      if (result.data && result.data.id) {
+        openClinicEditor(result.data.id);
+      }
+      toast("Versión v" + versionNumber + " restaurada.");
     }
 
     async function loadClinicVersions(clinicId) {
@@ -2004,6 +2041,11 @@
       el("reviewDismissBtn").addEventListener("click", dismissReview);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);
+      el("clinicVersionList").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-restore-version]");
+        if (!button) return;
+        restoreClinicVersion(button.dataset.restoreVersion, button.dataset.restoreVersionNumber);
+      });
       el("reviewSearch").addEventListener("input", renderReviews);
       el("reviewTypeFilter").addEventListener("change", renderReviews);
       el("reviewPriorityFilter").addEventListener("change", renderReviews);

@@ -69,6 +69,7 @@ export PGSSLMODE=require
   -c "select count(*) as allowed_admin_emails from public.admin_users where active = true;" \
   -c "select lower(u.email) as admin_email, u.email_confirmed_at is not null as email_confirmed from auth.users u join public.admin_users au on lower(au.email) = lower(u.email) where au.active = true order by admin_email;" \
   -c "select count(*) as admin_clinic_edit_function from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_update_clinic';" \
+  -c "select count(*) as admin_clinic_restore_function from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_restore_clinic_version';" \
   -c "select count(*) as public_site_feed_function from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'public_clinics_for_site';" \
   -c "select count(*) as discovery_shadow_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('admin_pick_agent_job', 'admin_complete_discovery_job', 'admin_create_draft_clinic_from_review', 'admin_create_draft_clinic_from_review_v2', 'admin_resolve_review_item', 'admin_fail_agent_job');" \
   -c "select count(*) as candidate_dedupe_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('normalized_url_host', 'admin_candidate_duplicate_matches');" \
