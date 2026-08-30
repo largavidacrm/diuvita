@@ -336,6 +336,7 @@ Next 10 technical steps:
 32. Remove numbered labels from the internal location editor. Done locally in `/admin/`: locations are shown as principal/adicional instead of "Sede 1" or "Sede 2".
 33. Tighten Google Maps discovery against address-like proposals. Done locally in `scripts/discover_clinic_google_links.py`: generic-label street-address links are not proposed as clinic profiles unless they carry a strong place identifier.
 34. Add next-click guidance to Daniel's review brief. Done locally in `scripts/daniel_review_brief.py`: the brief now tells Daniel which panel buttons to use first, including the no-new-jobs guard near the review limit.
+35. Align Google Maps completeness with the direct-clinic-link rule. Done locally in `/admin/`, `scripts/admin_digest.py` and `scripts/measure_profile_completeness.py`: generic searches, directions links and street-address place URLs stay pending instead of counting as complete.
 
 ## Daniel decision checkpoints
 

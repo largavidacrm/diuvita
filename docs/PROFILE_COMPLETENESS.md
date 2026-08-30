@@ -9,6 +9,8 @@ the current quality audit expects:
 - sufficient summary;
 - official website;
 - address or at least one complete public location;
+- Google Maps clinic profile link, not a generic search, directions link or
+  street-address-only place URL;
 - email or phone;
 - services;
 - specialties;
@@ -50,3 +52,9 @@ The top-line signal is also shown in `/admin/` as:
 Multi-location clinics are treated as one clinic profile with one or more
 locations. A complete location can satisfy the address check even when the
 legacy top-level address field is empty.
+
+The Google Maps check intentionally stays stricter than "any map link". It only
+counts a direct-looking clinic profile link, for example a Google place URL,
+`place_id`, `cid`, `query_place_id` or official Google short place link. Generic
+searches, directions links and street-address-only place URLs remain pending for
+manual review.

@@ -1252,7 +1252,7 @@
       if (text(row.summary || data.summary).trim().length < 120) fields.push("pendingSummary");
       if (!hasVisibleText(row.website, data.web)) fields.push("pendingWebsite");
       if (!hasVisibleText(row.address, data.address) && !locationsHaveAddress(data.locations)) fields.push("pendingAddress");
-      if (!hasVisibleText(data.maps_url, data.google_maps_url) && !locationsHaveMapsUrl(data.locations)) fields.push("pendingGoogleMaps");
+      if (!hasReviewedGoogleMapsUrl(data.maps_url, data.google_maps_url, data.map_url) && !locationsHaveReviewedMapsUrl(data.locations)) fields.push("pendingGoogleMaps");
       if (!hasVisibleText(data.google_reviews_url, data.reviews_url) && !locationsHaveGoogleReviewsUrl(data.locations)) fields.push("pendingGoogleReviews");
       if (!hasVisibleText(data.email, data.telefono, data.phone, data.telephone)) fields.push("pendingContact");
       if (!countVisibleArray(data.services)) fields.push("pendingServices");
@@ -2936,7 +2936,9 @@
       var lower = decodedLowerUrl(value);
       return Boolean(
         lower.indexOf("/maps/place/") >= 0 ||
+        lower.indexOf("place_id:") >= 0 ||
         lower.indexOf("place_id=") >= 0 ||
+        lower.indexOf("placeid=") >= 0 ||
         lower.indexOf("query_place_id=") >= 0 ||
         lower.indexOf("cid=") >= 0 ||
         lower.indexOf("ftid=") >= 0 ||
@@ -2946,16 +2948,33 @@
       );
     }
 
+    function googleMapsUrlLooksStreetAddress(value) {
+      var lower = decodedLowerUrl(value).replace(/\+/g, " ");
+      return /\/maps\/place\/(calle|c\/|avenida|av\.|avda\.?|paseo|passeig|plaza|ronda|carretera|road|street|carrer|camino|via)([\s,./-]|$)/.test(lower);
+    }
+
     function googleMapsUrlNeedsManualReview(value) {
       var lower = decodedLowerUrl(value);
       if (!isGoogleMapsLikeUrl(lower)) return false;
-      if (googleMapsUrlHasPlaceSignal(lower)) return false;
-      return Boolean(
+      if (
         lower.indexOf("/maps/search") >= 0 ||
         lower.indexOf("/maps/dir") >= 0 ||
         lower.indexOf("google.com/search") >= 0 ||
-        /[?&](q|query)=/.test(lower)
-      );
+        (/[?&](q|query)=/.test(lower) && lower.indexOf("place_id:") < 0)
+      ) return true;
+      if (googleMapsUrlLooksStreetAddress(lower)) return true;
+      return !googleMapsUrlHasPlaceSignal(lower);
+    }
+
+    function isReviewedGoogleMapsProfileUrl(value) {
+      return isGoogleMapsLikeUrl(value) && googleMapsUrlHasPlaceSignal(value) && !googleMapsUrlNeedsManualReview(value);
+    }
+
+    function hasReviewedGoogleMapsUrl() {
+      for (var i = 0; i < arguments.length; i += 1) {
+        if (isReviewedGoogleMapsProfileUrl(arguments[i])) return true;
+      }
+      return false;
     }
 
     function currentClinicMapsUrls() {
@@ -2968,9 +2987,7 @@
     }
 
     function hasReviewedClinicMapsProfile() {
-      return currentClinicMapsUrls().some(function (url) {
-        return isGoogleMapsLikeUrl(url) && googleMapsUrlHasPlaceSignal(url) && !googleMapsUrlNeedsManualReview(url);
-      });
+      return currentClinicMapsUrls().some(isReviewedGoogleMapsProfileUrl);
     }
 
     function hasGenericClinicMapsCandidate() {
@@ -3045,11 +3062,11 @@
       });
     }
 
-    function locationsHaveMapsUrl(value) {
+    function locationsHaveReviewedMapsUrl(value) {
       if (!Array.isArray(value)) return false;
       return value.some(function (location) {
         if (!location || typeof location === "string") return false;
-        return Boolean(text(location.maps_url || location.google_maps_url || location.map_url).trim());
+        return hasReviewedGoogleMapsUrl(location.maps_url, location.google_maps_url, location.map_url);
       });
     }
 

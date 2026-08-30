@@ -8,6 +8,7 @@ import sys
 from typing import Any
 
 from admin_digest import as_int, parse_timestamp
+from google_maps_url_rules import google_maps_profile_link_predicate
 from submit_discovery_candidates import load_env_file, run_psql
 
 
@@ -20,6 +21,7 @@ def safe_limit(value: int) -> int:
 
 def load_completeness(limit: int, local_env: dict[str, str]) -> dict[str, Any]:
     capped_limit = safe_limit(limit)
+    has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
     sql = f"""
 with clinic_rows as (
   select
@@ -53,25 +55,7 @@ with clinic_rows as (
         )), '') is not null
       )
     ) as has_address,
-    (
-      nullif(btrim(coalesce(c.current_data ->> 'maps_url', c.current_data ->> 'google_maps_url', '')), '') is not null
-      or exists (
-        select 1
-        from jsonb_array_elements(
-          case
-            when jsonb_typeof(c.current_data -> 'locations') = 'array'
-              then c.current_data -> 'locations'
-            else '[]'::jsonb
-          end
-        ) as location(value)
-        where nullif(btrim(coalesce(
-          location.value ->> 'maps_url',
-          location.value ->> 'google_maps_url',
-          location.value ->> 'map_url',
-          ''
-        )), '') is not null
-      )
-    ) as has_google_maps,
+    {has_google_maps} as has_google_maps,
     (
       nullif(btrim(coalesce(c.current_data ->> 'google_reviews_url', c.current_data ->> 'reviews_url', '')), '') is not null
       or exists (
