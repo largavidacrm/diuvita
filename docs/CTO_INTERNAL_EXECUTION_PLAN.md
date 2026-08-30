@@ -229,8 +229,8 @@ Next 10 technical steps:
 2. Add a proposal diff view before saving clinic changes.
 3. Add rollback view using `entity_versions`. Done as a read-only version history in `/admin/`; restoring an old version remains intentionally gated.
 4. Add human-lock controls for fields Daniel corrects manually. Done locally in `supabase/migrations/0012_human_field_locks.sql` and `/admin/`.
-5. Add source snapshot capture for reviewed proposals. Done locally in `scripts/capture_source_snapshot.py`; next step is linking snapshots to Supabase `source_records`.
-6. Convert enrichment proposals into `field_claims`, not only review payloads.
+5. Add source snapshot capture for reviewed proposals. Done locally in `scripts/capture_source_snapshot.py`; enrichment review URLs can now be linked into Supabase `source_records` with `scripts/capture_enrichment_review_claims.py`.
+6. Convert enrichment proposals into `field_claims`, not only review payloads. Done for existing review payloads with `scripts/capture_enrichment_review_claims.py`.
 7. Add a deterministic rules module for field risk. Done locally in `scripts/diuvita_rules.py`; next step is integrating it with extraction and verification jobs.
 8. Build a shadow `EXTRACT_CLINIC_PROFILE` script for one clinic URL. Done locally in `scripts/extract_clinic_profile_shadow.py`; next step is adding an independent verifier.
 9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; review-card wiring exists in `scripts/submit_shadow_extraction_review.py`.
