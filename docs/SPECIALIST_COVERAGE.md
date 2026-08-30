@@ -9,6 +9,7 @@ It answers:
 - how many visible clinics do not;
 - whether there are internal specialist claims waiting in the evidence layer;
 - whether open review cards already mention specialists.
+- which missing-specialist clinic is the best first review target.
 
 It does not validate credentials, publish names, edit clinics or rank clinics.
 
@@ -26,6 +27,9 @@ python3 scripts/measure_specialist_coverage.py --json
 
 The same top-line coverage signal is included in `/admin/`,
 `scripts/admin_digest.py` and `scripts/daniel_review_brief.py`.
+
+Missing-specialist rows are ordered by easiest review path first: open review
+cards, then internal specialist claims, then the remaining visible profiles.
 
 This report supports the safe rule in `docs/DIUVITA_LIMITES_OPERATIVOS.md`: only
 public professional information can be used, and any publication still goes

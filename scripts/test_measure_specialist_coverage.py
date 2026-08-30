@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for the read-only specialist coverage report."""
 
-from measure_specialist_coverage import format_coverage, pct
+from measure_specialist_coverage import format_coverage, next_specialist_action, pct
 
 
 def check(condition, message):
@@ -52,6 +52,8 @@ def main():
     check("Entradas de especialistas publicadas: 5" in output, "specialist entry count missing")
     check("Clínicas con claims internos de especialistas: 2" in output, "claim coverage missing")
     check("Clínicas con revisión abierta sobre especialistas: 1" in output, "review coverage missing")
+    check(next_specialist_action(report) == "Revisar Clinic A: ya tiene 1 revisión abierta.", "next specialist action missing")
+    check("Siguiente acción: Revisar Clinic A: ya tiene 1 revisión abierta." in output, "next specialist action line missing")
     check("Writes data: no" in output, "read-only signal missing")
     check("Clinic A · Madrid · publicada · 2 claims · 1 revisión abierta" in output, "missing clinic line missing")
     check("Clinic B · Barcelona · preliminar · 5 especialistas" in output, "covered clinic line missing")

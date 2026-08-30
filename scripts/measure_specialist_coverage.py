@@ -68,7 +68,7 @@ missing as (
     select slug, clinic_name, city, status, specialist_claims, open_review_count
     from clinic_rows
     where specialist_entries = 0
-    order by status, clinic_name
+    order by open_review_count desc, specialist_claims desc, status, clinic_name
     limit {max(1, min(100, int(limit)))}
   ) items
 ),
@@ -127,6 +127,21 @@ def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> st
     return "- " + " · ".join(parts)
 
 
+def next_specialist_action(report: dict[str, Any]) -> str:
+    missing_rows = report.get("missing_specialists") or []
+    if not missing_rows:
+        return "No hay fichas visibles pendientes de especialistas."
+    row = missing_rows[0]
+    name = row.get("clinic_name") or row.get("slug") or "la primera ficha pendiente"
+    reviews = as_int(row.get("open_review_count"))
+    claims = as_int(row.get("specialist_claims"))
+    if reviews:
+        return f"Revisar {name}: ya tiene {reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}."
+    if claims:
+        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'claim interno', 'claims internos')}."
+    return f"Buscar especialistas publicados para {name} solo en fuentes oficiales."
+
+
 def format_coverage(report: dict[str, Any]) -> str:
     summary = report.get("summary") or {}
     visible = as_int(summary.get("visible_clinics"))
@@ -144,6 +159,7 @@ def format_coverage(report: dict[str, Any]) -> str:
         f"- Entradas de especialistas publicadas: {as_int(summary.get('total_specialist_entries'))}",
         f"- Clínicas con claims internos de especialistas: {as_int(summary.get('clinics_with_specialist_claims'))}",
         f"- Clínicas con revisión abierta sobre especialistas: {as_int(summary.get('clinics_with_open_specialist_reviews'))}",
+        f"- Siguiente acción: {next_specialist_action(report)}",
         "- Writes data: no",
         "",
         "## Sin especialistas publicados",
