@@ -2,7 +2,13 @@
 """Checks for the CTO shadow cycle orchestrator."""
 from argparse import Namespace
 
-from run_cto_shadow_cycle import build_steps, compact_summary, try_parse_json
+from run_cto_shadow_cycle import (
+    build_cycle_brief,
+    build_steps,
+    compact_summary,
+    format_cycle_brief,
+    try_parse_json,
+)
 
 
 def check(condition, message):
@@ -123,6 +129,35 @@ def main():
     })
     check(compact_source_shadow["items_count"] == 1, "source shadow count should be kept")
     check("verification_summary" not in compact_source_shadow["sample_items"][0], "large source shadow details should be omitted")
+    cycle_digest = {
+        "summary": {
+            "reviews": {"open": 45},
+            "jobs": {"failed": 0, "dead_letter": 0},
+            "automation": {"auto_publish_enabled": False, "shadow_mode_active": True},
+        },
+        "reviews_by_type": [{"review_type": "blocking_claim_review", "open_count": 1}],
+        "open_reviews": [{"review_type": "blocking_claim_review", "priority": 95}],
+        "profile_completeness": {"pending_specialists": 17, "pending_contact": 6},
+    }
+    cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [{"name": "admin_digest", "ok": True, "summary": cycle_digest}],
+    })
+    check(cycle_brief["status"] == "ok", "clean cycle should be OK")
+    check(cycle_brief["next_action"] == "Revisar claim bloqueante", "Daniel brief should keep next action")
+    check(cycle_brief["profile_gap"] == "Especialistas · 17 fichas", "Daniel brief should keep top profile gap")
+    check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
+    brief_text = format_cycle_brief(cycle_brief)
+    check("# Diuvita: resumen CTO automatico" in brief_text, "plain brief title missing")
+    check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
+    failed_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": False,
+        "steps": [{"name": "check_operational_limits_strict", "ok": False, "summary": None}],
+    })
+    check(failed_cycle_brief["status"] == "needs_daniel", "strict limit failures should ask Daniel")
+    check("limites operativos" in failed_cycle_brief["attention"], "strict limit attention should be clear")
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -141,6 +176,7 @@ def main():
         profile_completeness_limit=11,
         fetch_timeout=7,
         strict_editorial=False,
+        plain_brief=False,
         production_health=False,
         production_base_url="https://www.diuvita.com",
         production_timeout=7,
@@ -186,6 +222,7 @@ def main():
         profile_completeness_limit=11,
         fetch_timeout=7,
         strict_editorial=True,
+        plain_brief=True,
         production_health=True,
         production_base_url="https://www.diuvita.com",
         production_timeout=7,

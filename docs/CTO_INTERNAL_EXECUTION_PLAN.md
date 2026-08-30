@@ -76,6 +76,7 @@ Already built:
 - Internal profile-enrichment review cards for existing clinics.
 - Public clinic pages display richer fields with clearer navigation, section counts, fast profile stats, contact-aware search and more scannable lists.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
+- Safe CTO shadow cycle now includes a Daniel-facing brief in its JSON output and can optionally print only that brief for unattended logs.
 - Safe CTO shadow cycle can optionally include the read-only production health check.
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.
@@ -280,7 +281,7 @@ Next 10 technical steps:
 7. Add a deterministic rules module for field risk. Done locally in `scripts/diuvita_rules.py`; stored claims can now be evaluated read-only with `scripts/evaluate_claim_rules.py`.
 8. Build a shadow `EXTRACT_CLINIC_PROFILE` script for one clinic URL. Done locally in `scripts/extract_clinic_profile_shadow.py`; next step is adding an independent verifier.
 9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; review-card wiring exists in `scripts/submit_shadow_extraction_review.py`.
-10. Add a daily digest card/report for open reviews, failed jobs and costs. Done locally in `scripts/admin_digest.py`; a simpler Daniel-facing brief exists in `scripts/daniel_review_brief.py`. Next step is turning it into a scheduled notification when Daniel chooses the channel.
+10. Add a daily digest card/report for open reviews, failed jobs and costs. Done locally in `scripts/admin_digest.py`; a simpler Daniel-facing brief exists in `scripts/daniel_review_brief.py`, and the safe CTO cycle now embeds a Daniel-facing summary. Next step is turning it into a scheduled notification when Daniel chooses the channel.
 11. Add a read-only review maturity measurement before any auto-publish expansion. Done locally in `scripts/measure_review_maturity.py`; the signal now appears in the admin status and digest.
 12. Process source-change review cards into profile-enrichment proposals. Done locally in `scripts/process_source_change_reviews.py`; it never edits or publishes clinic data.
 13. Add source-monitoring cadence so the watcher checks due sources instead of repeatedly scanning the same fresh sources. Done locally in `scripts/monitor_source_changes.py`; use `--force` for manual spot checks.

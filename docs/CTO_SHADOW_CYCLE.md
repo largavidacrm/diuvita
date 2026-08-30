@@ -50,6 +50,17 @@ The cycle output is compact by default: it keeps counters and small examples,
 but avoids printing full evidence payloads, long text digests or large claim lists.
 Source monitoring respects cadence by default, so a healthy run may report zero
 checked sources when all sources were recently observed.
+The JSON output also includes a `daniel_brief` block with the simple status,
+next action, review backlog, top missing clinic field and publication guard.
+
+For a Daniel-readable run log:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --plain-brief
+```
+
+That brief is still generated from the same safe cycle. It does not publish,
+edit clinic data, resolve review cards or hide a failed technical step.
 
 The production health check is off by default because it reads the live website
 over the network. To include it at the end of a cycle:
