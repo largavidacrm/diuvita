@@ -77,6 +77,18 @@
           </div>
           <div class="proposal-diff" id="clinicProposalChanges"></div>
         </section>
+        <section class="version-history" id="clinicVersionHistory">
+          <div class="version-history-head">
+            <div>
+              <h3>Historial de cambios</h3>
+              <p id="clinicVersionMeta">Carga las últimas versiones guardadas.</p>
+            </div>
+            <span class="pill" id="clinicVersionCount">0 versiones</span>
+          </div>
+          <div class="version-list" id="clinicVersionList">
+            <p class="empty">Abre una clinica para ver su historial.</p>
+          </div>
+        </section>
         <form class="edit-form" id="clinicForm">
           <input id="clinicId" name="clinicId" type="hidden">
           <div class="field">
@@ -371,6 +383,7 @@
     var activeClinic = null;
     var activeReview = null;
     var activeClinicReview = null;
+    var activeClinicVersionRequest = 0;
     var dashboardLoading = false;
 
     function el(id) {
@@ -736,6 +749,71 @@
       return clean || "—";
     }
 
+    function compactText(value, maxLength) {
+      var clean = text(value).replace(/\s+/g, " ").trim();
+      if (!clean) return "—";
+      if (clean.length <= maxLength) return clean;
+      return clean.slice(0, Math.max(0, maxLength - 1)).trim() + "…";
+    }
+
+    function versionClinicData(row) {
+      var data = (row && row.data) || {};
+      var current = data.current_data || {};
+      return {
+        name: data.display_name || current.name || "Clínica",
+        status: data.status || current.status || "—",
+        city: data.city || current.city || "",
+        country: data.country || current.country || "",
+        summary: data.summary || current.summary || "",
+        confidence: data.profile_confidence
+      };
+    }
+
+    function renderClinicVersions(rows) {
+      var list = el("clinicVersionList");
+      var count = Array.isArray(rows) ? rows.length : 0;
+      el("clinicVersionCount").textContent = count + (count === 1 ? " version" : " versiones");
+      el("clinicVersionMeta").textContent = count
+        ? "Últimas versiones guardadas. Vista solo lectura."
+        : "Todavía no hay versiones guardadas para esta ficha.";
+      if (!count) {
+        list.innerHTML = '<p class="empty">El historial aparecerá después del primer guardado auditado.</p>';
+        return;
+      }
+      list.innerHTML = rows.map(function (row) {
+        var data = versionClinicData(row);
+        var place = [data.city, data.country].filter(Boolean).join(" · ");
+        return '<article class="version-item">' +
+          '<div class="version-main"><strong>v' + html(row.version_number || "?") + " · " + html(data.name) + '</strong>' +
+          '<span>' + html(date(row.created_at)) + (place ? " · " + html(place) : "") + '</span></div>' +
+          '<div class="version-tags">' + pill(data.status) + '<span class="pill">' + html(pct(data.confidence)) + '</span></div>' +
+          '<p>' + html(compactText(data.summary, 180)) + '</p>' +
+          '</article>';
+      }).join("");
+    }
+
+    async function loadClinicVersions(clinicId) {
+      var requestId = ++activeClinicVersionRequest;
+      el("clinicVersionCount").textContent = "Cargando";
+      el("clinicVersionMeta").textContent = "Consultando historial guardado.";
+      el("clinicVersionList").innerHTML = '<p class="empty">Cargando historial...</p>';
+      var result = await client
+        .from("entity_versions")
+        .select("id, version_number, data, source_event_id, created_at")
+        .eq("entity_type", "clinic")
+        .eq("entity_id", clinicId)
+        .order("version_number", { ascending: false })
+        .limit(8);
+      if (requestId !== activeClinicVersionRequest) return;
+      if (result.error) {
+        el("clinicVersionCount").textContent = "No disponible";
+        el("clinicVersionMeta").textContent = "No se pudo cargar el historial.";
+        el("clinicVersionList").innerHTML = '<p class="empty">No se pudo leer el historial de esta clínica.</p>';
+        return;
+      }
+      renderClinicVersions(result.data || []);
+    }
+
     function normalizedFieldValue(value) {
       if (Array.isArray(value)) {
         return value.map(function (item) { return text(item).trim(); }).filter(Boolean).join("\n").trim();
@@ -876,6 +954,7 @@
       setInput("clinicVerification", activeClinic.verification_status || "human_curated");
       setInput("clinicNote", "");
       resetProposalPreview();
+      loadClinicVersions(activeClinic.id);
       show(el("clinicEditor"), true);
       el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
       el("clinicName").focus();
@@ -922,6 +1001,7 @@
     }
 
     function closeClinicEditor() {
+      activeClinicVersionRequest++;
       activeClinic = null;
       activeClinicReview = null;
       show(el("clinicEditor"), false);
