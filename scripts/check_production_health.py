@@ -22,7 +22,7 @@ CHECKS = [
     {
         "name": "admin_shell",
         "path": "/admin/",
-        "markers": ["Centro de control", "loadProfileCompleteness", "Fichas completas"],
+        "markers": ["Centro de control", "loadProfileCompleteness", "Fichas completas", "Duplicados mejoras", "Web pública"],
     },
     {
         "name": "public_profile_ux",

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for the read-only production health report."""
 
-from check_production_health import check_response, clean_base_url, format_report
+from check_production_health import CHECKS, check_response, clean_base_url, format_report
 
 
 def check(condition, message):
@@ -31,6 +31,9 @@ def main():
     check("admin: Atención · 200" in output, "missing-marker line missing")
     check("faltan: Fichas completas" in output, "missing markers should be listed")
     check("profile: Atención · sin respuesta" in output, "error line missing")
+    admin_check = [item for item in CHECKS if item["name"] == "admin_shell"][0]
+    check("Duplicados mejoras" in admin_check["markers"], "admin deployment should include review-backlog marker")
+    check("Web pública" in admin_check["markers"], "admin deployment should include public-health marker")
     print("OK production health: report is read-only")
 
 
