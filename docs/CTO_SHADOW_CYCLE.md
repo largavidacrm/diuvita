@@ -11,10 +11,11 @@ for Daniel instead of implementing, softening or silently discarding the change.
 2. hydrate pending source records;
 3. monitor source changes;
 4. process changed-source cards into profile-enrichment proposals;
-5. turn blocking claims into internal quality-review cards;
-6. measure source snapshot retention without deleting evidence;
-7. print the admin digest;
-8. evaluate stored claims against publication rules.
+5. optionally run saved-source shadow extraction batches;
+6. turn blocking claims into internal quality-review cards;
+7. measure source snapshot retention without deleting evidence;
+8. print the admin digest;
+9. evaluate stored claims against publication rules.
 
 Default mode is dry-run:
 
@@ -33,6 +34,14 @@ reviews into draft clinics. It only writes internal evidence/review state.
 The claim-rule evaluation step is read-only in both modes. Blocking-claim cards
 are internal review items only. Source snapshot retention is measured only; no
 cleanup/deletion path is enabled.
+Saved-source shadow extraction is off by default. To include a small batch:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --source-shadow-limit 3
+```
+
+In safe apply mode, that optional batch can create or refresh internal review
+cards, but still does not edit clinics or publish pages.
 The cycle output is compact by default: it keeps counters and small examples,
 but avoids printing full evidence payloads or large claim lists.
 Source monitoring respects cadence by default, so a healthy run may report zero

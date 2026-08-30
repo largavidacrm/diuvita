@@ -38,6 +38,12 @@ Refresh an existing open card for the same source:
 python3 scripts/submit_source_shadow_reviews.py --clinic-slug sensabell --replace-existing --apply
 ```
 
+The safe CTO cycle can include this batch when explicitly requested:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --source-shadow-limit 3
+```
+
 Safety boundaries:
 
 - no clinic records are edited;

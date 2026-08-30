@@ -47,6 +47,14 @@ STEP_ITEM_KEYS = {
     ),
     "submit_blocking_claim_reviews": ("clinic_slug", "clinic_name", "status", "claims"),
     "measure_source_snapshot_retention": ("clinic_name", "source_url", "snapshots", "prunable"),
+    "submit_source_shadow_reviews": (
+        "clinic_slug",
+        "clinic_name",
+        "source_url",
+        "status",
+        "proposed_fields",
+        "created_review",
+    ),
 }
 
 
@@ -111,7 +119,7 @@ def run_step(name: str, args: list[str], timeout: int) -> dict[str, Any]:
 
 def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
     apply_flag = ["--apply"] if args.apply_safe else []
-    return [
+    steps = [
         (
             "capture_enrichment_review_claims",
             ["capture_enrichment_review_claims.py", "--limit", str(args.review_limit), *apply_flag],
@@ -153,6 +161,28 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ],
             max(90, args.source_change_limit * args.fetch_timeout + 30),
         ),
+    ]
+    if args.source_shadow_limit:
+        source_shadow_args = [
+            "submit_source_shadow_reviews.py",
+            "--limit",
+            str(args.source_shadow_limit),
+            "--timeout",
+            str(args.fetch_timeout),
+            *apply_flag,
+        ]
+        if args.source_shadow_clinic_slug:
+            source_shadow_args.extend(["--clinic-slug", args.source_shadow_clinic_slug])
+        if args.source_shadow_replace_existing:
+            source_shadow_args.append("--replace-existing")
+        steps.append(
+            (
+                "submit_source_shadow_reviews",
+                source_shadow_args,
+                max(90, args.source_shadow_limit * args.fetch_timeout + 30),
+            )
+        )
+    steps.extend([
         (
             "submit_blocking_claim_reviews",
             ["submit_blocking_claim_reviews.py", "--limit", str(args.blocking_claim_limit), *apply_flag],
@@ -182,7 +212,8 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ["evaluate_claim_rules.py", "--limit", str(args.claim_limit), "--json"],
             45,
         ),
-    ]
+    ])
+    return steps
 
 
 def parse_args() -> argparse.Namespace:
@@ -192,6 +223,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-limit", type=int, default=40)
     parser.add_argument("--monitor-limit", type=int, default=40)
     parser.add_argument("--source-change-limit", type=int, default=10)
+    parser.add_argument("--source-shadow-limit", type=int, default=0, help="Optional saved-source shadow extraction batch.")
+    parser.add_argument("--source-shadow-clinic-slug", help="Limit optional saved-source batch to one clinic.")
+    parser.add_argument("--source-shadow-replace-existing", action="store_true", help="Refresh matching open review cards.")
     parser.add_argument("--digest-limit", type=int, default=8)
     parser.add_argument("--claim-limit", type=int, default=100)
     parser.add_argument("--blocking-claim-limit", type=int, default=20)
@@ -204,6 +238,20 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if min(
+        args.review_limit,
+        args.source_limit,
+        args.monitor_limit,
+        args.source_change_limit,
+        args.source_shadow_limit,
+        args.digest_limit,
+        args.claim_limit,
+        args.blocking_claim_limit,
+        args.snapshot_retention_days,
+        args.snapshot_keep_latest,
+        args.snapshot_retention_limit,
+    ) < 0:
+        raise SystemExit("limits must be zero or greater.")
     if min(
         args.review_limit,
         args.source_limit,
