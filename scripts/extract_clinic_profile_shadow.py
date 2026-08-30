@@ -44,6 +44,13 @@ YEARS_IN_PRACTICE_RE = re.compile(
     r"años\s+(?:de\s+)?(?P<context>experiencia|trayectoria|ejercicio|actividad|pr[aá]ctica)\b",
     re.I,
 )
+DECADE_IN_PRACTICE_RE = re.compile(
+    r"\b(?:(?:experiencia|trayectoria|ejercicio|actividad|pr[aá]ctica)[^.]{0,50}?)?"
+    r"(?P<prefix>m[aá]s\s+de|over|more\s+than)?\s*"
+    r"(?P<decades>un|una|dos|tres|cuatro|cinco|\d{1,2})\s+d[eé]cada[s]?\b"
+    r"(?:[^.]{0,50}(?:experiencia|trayectoria|ejercicio|actividad|pr[aá]ctica))?",
+    re.I,
+)
 SPECIALISTS_COUNT_RE = re.compile(
     r"\b(?P<prefix>m[aá]s\s+de|over|more\s+than|equipo\s+de|cuenta\s+con)?\s*"
     r"(?P<count>\d{1,3})\s+(?:especialistas|profesionales\s+m[eé]dicos|profesionales|m[eé]dicos)\b",
@@ -356,6 +363,14 @@ TITLE_NOISE_TERMS = {
     "servicios",
     "somos",
 }
+DECADE_WORDS = {
+    "un": 1,
+    "una": 1,
+    "dos": 2,
+    "tres": 3,
+    "cuatro": 4,
+    "cinco": 5,
+}
 
 
 def role_pattern(phrase: str) -> str:
@@ -641,14 +656,9 @@ def extract_professionals(text: str) -> list[str]:
 
 def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:
     transparency: dict[str, Any] = {}
-    years_match = YEARS_IN_PRACTICE_RE.search(text)
-    if years_match:
-        years = int(years_match.group("years"))
-        prefix = normalize_space(years_match.group("prefix") or "").lower()
-        label = f"{years} años"
-        if prefix in {"más de", "mas de", "over", "more than"}:
-            label = f"más de {label}"
-        transparency["years_in_practice"] = label
+    years_label = extract_years_in_practice(text)
+    if years_label:
+        transparency["years_in_practice"] = years_label
 
     specialists_match = SPECIALISTS_COUNT_RE.search(text)
     if specialists_match:
@@ -663,6 +673,30 @@ def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:
         transparency["public_pricing"] = "si"
 
     return transparency
+
+
+def extract_years_in_practice(text: str) -> str | None:
+    years_match = YEARS_IN_PRACTICE_RE.search(text)
+    if years_match:
+        years = int(years_match.group("years"))
+        prefix = normalize_space(years_match.group("prefix") or "").lower()
+        label = f"{years} años"
+        if prefix in {"más de", "mas de", "over", "more than"}:
+            label = f"más de {label}"
+        return label
+
+    decade_match = DECADE_IN_PRACTICE_RE.search(text)
+    if not decade_match:
+        return None
+    raw_decades = fold(decade_match.group("decades"))
+    decades = int(raw_decades) if raw_decades.isdigit() else DECADE_WORDS.get(raw_decades, 0)
+    if decades < 1 or decades > 10:
+        return None
+    years = decades * 10
+    prefix = normalize_space(decade_match.group("prefix") or "").lower()
+    if prefix in {"más de", "mas de", "over", "more than"}:
+        return f"más de {years} años"
+    return f"{years} años"
 
 
 def detect_keywords(text: str) -> dict[str, list[str]]:

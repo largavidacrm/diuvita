@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Basic checks for the shadow clinic profile extractor."""
 from capture_source_snapshot import FetchResult
-from extract_clinic_profile_shadow import extract_from_fetch, extract_locations, extract_professionals
+from extract_clinic_profile_shadow import (
+    extract_from_fetch,
+    extract_locations,
+    extract_professionals,
+    extract_years_in_practice,
+)
 
 
 def check(condition, message):
@@ -56,6 +61,14 @@ def main():
     check(profile["specialists_count"] == 12, "specialist count detection failed")
     check(profile["team_credentialing_visible"] == "si", "credentialing visibility detection failed")
     check(profile["public_pricing"] == "si", "public pricing detection failed")
+    check(
+        extract_years_in_practice("Con experiencia de más de una década y miles de clientes") == "más de 10 años",
+        "textual decade experience should be normalized",
+    )
+    check(
+        extract_years_in_practice("Dos décadas de experiencia clínica") == "20 años",
+        "decades should be converted to years",
+    )
     check("contact.email" in fields, "email claim missing")
     check("location.locations" in fields, "location claim missing")
     check("units.list" in fields, "unit claim missing")
