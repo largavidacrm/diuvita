@@ -37,6 +37,7 @@ Low risk:
 Medium risk:
 
 - Services.
+- Clinical units.
 - Diagnostics.
 - Programs.
 - Technologies.
@@ -56,12 +57,19 @@ Code:
 
 - `scripts/diuvita_rules.py`
 - `scripts/test_diuvita_rules.py`
+- `scripts/evaluate_claim_rules.py`
+- `scripts/test_evaluate_claim_rules.py`
 
 Example:
 
 ```bash
 python3 scripts/test_diuvita_rules.py
 python3 scripts/diuvita_rules.py claims.json
+python3 scripts/evaluate_claim_rules.py --preview-low-risk-autopublish
 ```
 
 The first useful integration point is `EXTRACT_CLINIC_PROFILE` and `VERIFY_CLINIC_PROFILE`: extracted claims should pass through `decide_claim()` before they create review items or publication candidates.
+
+Stored `field_claims` can now be evaluated read-only with
+`scripts/evaluate_claim_rules.py`. That report does not write to Supabase or
+publish anything.

@@ -27,6 +27,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/DIUVITA_LIMITES_OPERATIVOS.md`: limites legales, medicos, editoriales y de publicacion que requieren escalado a Daniel.
 - `docs/AGENT_WORKFLOWS.md`: primer diseno de workflows agenticos.
 - `docs/RULES_ENGINE.md`: reglas deterministas para decidir si un dato se rechaza, se revisa o puede autoaceptarse en el futuro.
+- `docs/CLAIM_RULE_EVALUATION.md`: ensayo de reglas sobre claims ya guardados, sin escribir ni publicar.
 - `docs/SOURCE_PROVENANCE.md`: estrategia de evidencias compactas para saber de dónde sale cada dato.
 - `docs/SHADOW_EXTRACTOR.md`: primer extractor local en modo sombra para convertir una fuente en claims estructurados.
 - `docs/SHADOW_VERIFIER.md`: primer verificador local que desafía claims extraídos antes de reglas/publicación.
@@ -56,6 +57,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/capture_source_snapshot.py`: captura metadatos, hash y extracto corto de una fuente publica.
 - `scripts/source_snapshot_records.py`: helpers SQL para guardar capturas compactas en Supabase.
 - `scripts/diuvita_rules.py`: motor local de reglas por riesgo de campo.
+- `scripts/evaluate_claim_rules.py`: evalua claims guardados contra las reglas en modo solo lectura.
 - `scripts/extract_clinic_profile_shadow.py`: extractor inicial de claims de clínica en modo sombra.
 - `scripts/verify_clinic_profile_shadow.py`: verificador inicial de claims extraídos en modo sombra.
 - `scripts/submit_shadow_extraction_review.py`: convierte una extracción verificada en una tarjeta interna revisable.

@@ -25,9 +25,11 @@ LOW_RISK_PREFIXES = (
 MEDIUM_RISK_PREFIXES = (
     "services.",
     "specialties.",
+    "units.",
     "diagnostics.",
     "programs.",
     "technologies.",
+    "professionals.published",
     "team.public_professionals",
 )
 
