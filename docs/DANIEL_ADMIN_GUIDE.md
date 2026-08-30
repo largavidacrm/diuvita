@@ -158,6 +158,9 @@ crear borrador interno, completar datos y publicar solo desde el editor de clín
 En el editor de clínica, el apartado **Sedes** permite añadir varias ubicaciones
 sin escribir formatos técnicos.
 
+El editor evita etiquetas tipo “Sede 1” o “Sede 2”: muestra sede principal y
+sedes adicionales para que no parezca un ranking ni un contador.
+
 Cada sede puede tener:
 
 - Nombre de la sede.

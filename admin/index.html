@@ -2975,9 +2975,10 @@
 
     function locationRowHtml(location, index) {
       location = normalizedLocation(location) || {};
+      var rowLabel = index === 0 ? "Sede principal" : "Sede adicional";
       return '<article class="location-row" data-location-row>' +
         '<div class="location-row-head">' +
-          '<strong>Sede ' + html(index + 1) + '</strong>' +
+          '<strong>' + html(rowLabel) + '</strong>' +
           '<button class="link-btn" type="button" data-remove-location>Quitar</button>' +
         '</div>' +
         '<div class="location-row-grid">' +

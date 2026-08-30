@@ -56,9 +56,13 @@ def main() -> None:
         "query_place_id=",
         "Transparencia revisada si existe en la web",
         "Añadir sede",
+        "Sede principal",
+        "Sede adicional",
         "Quitar",
     ]:
         check(marker in index, f"missing admin location/transparency marker: {marker}")
+
+    check("Sede ' + html(index + 1)" not in index, "location editor should avoid decorative location numbers")
 
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     for marker in [
