@@ -406,6 +406,15 @@
       return '<span class="pill' + tone + '">' + html(status || "—") + '</span>';
     }
 
+    function reviewTypeLabel(type) {
+      var labels = {
+        candidate_clinic: "Clínica nueva",
+        clinic_quality_audit: "Auditoría de calidad",
+        clinic_profile_enrichment: "Mejora de ficha"
+      };
+      return labels[type] || type || "Revisión";
+    }
+
     function emptyRow(target, columns, text) {
       target.innerHTML = '<tr><td colspan="' + columns + '" class="empty">' + html(text) + '</td></tr>';
     }
@@ -521,6 +530,9 @@
       if (row.event_name === "quality_audit_completed") {
         return (payload.review_items_created || 0) + " fichas para revisar";
       }
+      if (row.event_name === "clinic_profile_enrichment_proposals_created") {
+        return ((payload.inserted || []).length || 0) + " nuevas; " + ((payload.existing || []).length || 0) + " ya estaban";
+      }
       if (row.event_name === "agent_job_failed") {
         return payload.error || "Revisar trabajo fallido";
       }
@@ -615,11 +627,17 @@
         telefono: "Teléfono",
         instagram: "Instagram"
       };
-      return Object.keys(labels).filter(function (key) {
+      var items = Object.keys(labels).filter(function (key) {
         return hasOwn(fields, key) && proposalListValue(fields[key]);
       }).map(function (key) {
         return labels[key] + ": " + proposalListValue(fields[key]);
       });
+      if (Array.isArray(payload.warnings)) {
+        payload.warnings.forEach(function (warning) {
+          if (text(warning).trim()) items.push("Revisar: " + text(warning).trim());
+        });
+      }
+      return items;
     }
 
     function proposalProfessionals(payload) {
@@ -775,7 +793,7 @@
       var blocksDraft = duplicateProbability >= 0.9;
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
-      el("reviewEditorMeta").textContent = activeReview.review_type + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
+      el("reviewEditorMeta").textContent = reviewTypeLabel(activeReview.review_type) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
       setText("reviewCandidateName", (isQualityAudit || isEnrichment) ? payload.clinic_name : candidate.name || candidate.clinic_name);
       setText("reviewCandidateCity", (isQualityAudit || isEnrichment) ? payload.clinic_city : candidate.city);
       setText("reviewCandidateCountry", (isQualityAudit || isEnrichment) ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
@@ -924,7 +942,7 @@
       } else {
         reviewCache = reviewRows.data;
         reviewsBody.innerHTML = reviewRows.data.map(function (row) {
-          return "<tr><td>" + html(row.title) + "</td><td>" + html(row.review_type) + "</td><td>" + html(row.priority) + "</td><td>" +
+          return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewTypeLabel(row.review_type)) + "</td><td>" + html(row.priority) + "</td><td>" +
             date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
             html(row.id) + '">Revisar</button></td></tr>';
         }).join("");
