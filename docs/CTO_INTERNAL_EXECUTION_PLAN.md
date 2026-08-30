@@ -26,6 +26,11 @@ Core principle:
 AI proposes. AI challenges. Rules decide. Daniel handles exceptions. Everything is reversible.
 ```
 
+Operating boundary:
+
+- Before content, product, automation or publication work, check `docs/DIUVITA_LIMITES_OPERATIVOS.md`.
+- If a task touches one of those hard limits, stop and ask Daniel with the escalation format in that guide.
+
 ## Current operating state
 
 Already built:
@@ -257,5 +262,6 @@ Ask Daniel only when needed for:
 - Whether/when to enable any auto-publish category.
 - Brand/editorial policy for how much team/pricing/treatment detail Diuvita should display.
 - Business decisions around clinic claim portal and outreach tone.
+- Any hard limit listed in `docs/DIUVITA_LIMITES_OPERATIVOS.md`.
 
 Everything else should be advanced directly and reported afterwards.

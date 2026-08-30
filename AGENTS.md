@@ -11,6 +11,7 @@ When working on this project:
 - Avoid asking Daniel to run commands unless there is no safer or simpler option.
 - State risks plainly before actions that affect production, GitHub, Netlify, Supabase or credentials.
 - Keep the operating mode: Daniel decides; Codex executes and guides.
+- Use `docs/DIUVITA_LIMITES_OPERATIVOS.md` as the project reference for Diuvita's legal, medical, editorial and publication boundaries.
 
 ## Autonomous CTO mode
 
@@ -33,6 +34,7 @@ Codex should stop and ask Daniel only for:
 - Publishing, deploying, or pushing changes to shared production branches.
 - Deleting data, overwriting history, or doing anything hard to undo.
 - Legal, medical, brand, pricing or business-positioning decisions that require founder judgment.
+- Any task that touches the hard limits in `docs/DIUVITA_LIMITES_OPERATIVOS.md`.
 - Ambiguous choices where the wrong decision would create meaningful rework or public risk.
 
 When blocked, Codex should say exactly what is needed, why it is needed, and what will happen immediately after Daniel provides it.

@@ -24,6 +24,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 
 - `docs/CTO_ROADMAP.md`: plan tecnico por fases.
 - `docs/CTO_INTERNAL_EXECUTION_PLAN.md`: plan operativo interno para avanzar hacia la arquitectura objetivo.
+- `docs/DIUVITA_LIMITES_OPERATIVOS.md`: limites legales, medicos, editoriales y de publicacion que requieren escalado a Daniel.
 - `docs/AGENT_WORKFLOWS.md`: primer diseno de workflows agenticos.
 - `docs/RULES_ENGINE.md`: reglas deterministas para decidir si un dato se rechaza, se revisa o puede autoaceptarse en el futuro.
 - `docs/SOURCE_PROVENANCE.md`: estrategia de evidencias compactas para saber de dónde sale cada dato.
