@@ -1999,6 +1999,16 @@
       return true;
     }
 
+    function syncReviewFiltersFromInputs() {
+      reviewSearchQuery = trimmed("reviewSearch").toLowerCase();
+      reviewTypeFilter = el("reviewTypeFilter").value;
+      reviewPriorityFilter = el("reviewPriorityFilter").value;
+    }
+
+    function filteredReviewRows() {
+      return reviewCache.filter(reviewMatchesFilters);
+    }
+
     function clearReviewFilters() {
       setInput("reviewSearch", "");
       el("reviewTypeFilter").value = "";
@@ -3333,12 +3343,10 @@
 
     function renderReviews() {
       var reviewsBody = el("reviewsBody");
-      reviewSearchQuery = trimmed("reviewSearch").toLowerCase();
-      reviewTypeFilter = el("reviewTypeFilter").value;
-      reviewPriorityFilter = el("reviewPriorityFilter").value;
-      var rows = reviewCache.filter(reviewMatchesFilters);
+      syncReviewFiltersFromInputs();
+      var rows = filteredReviewRows();
       var hasFilters = activeReviewFilters();
-      var nextReview = firstActionReview(reviewCache, 0);
+      var nextReview = firstActionReview(rows, 0);
       var clinicGroup = firstClinicWorkgroup(reviewCache);
       var duplicateReview = firstDuplicateReview(reviewCache);
       var sourceReview = firstSourceTargetReview(reviewCache);
@@ -3940,7 +3948,8 @@
         renderReviews();
       });
       el("openPriorityReviewBtn").addEventListener("click", function () {
-        var nextReview = firstActionReview(reviewCache, 0);
+        syncReviewFiltersFromInputs();
+        var nextReview = firstActionReview(filteredReviewRows(), 0);
         if (nextReview) openReviewEditor(nextReview.id);
       });
       el("openClinicGroupBtn").addEventListener("click", openClinicWorkgroup);

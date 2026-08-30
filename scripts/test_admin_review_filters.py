@@ -22,6 +22,8 @@ def main() -> None:
         "REVIEW_PRIORITY_FILTERS",
         "function renderReviewFilterChips",
         "function reviewMatchesType",
+        "function syncReviewFiltersFromInputs",
+        "function filteredReviewRows",
         "function clearReviewFilters",
         'value="blocking_claim_review"',
         '["blocking_claim_review", "Claims bloqueantes"]',

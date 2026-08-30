@@ -20,6 +20,8 @@ def main() -> None:
         "function renderGlobalPlanStatus",
         "function reviewPrimarySubject",
         "function firstActionReview",
+        "function syncReviewFiltersFromInputs",
+        "function filteredReviewRows",
         'id="globalPlanPanel"',
         'id="globalPlanNextAction"',
         'id="openPriorityReviewBtn"',
@@ -37,6 +39,8 @@ def main() -> None:
         "Sin acción urgente",
         "renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
         "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
+        "var nextReview = firstActionReview(rows, 0);",
+        "var nextReview = firstActionReview(filteredReviewRows(), 0);",
     ]:
         check(marker in index, f"missing next-action marker: {marker}")
 
