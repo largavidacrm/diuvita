@@ -286,12 +286,13 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .profile-nav a:hover{background:var(--wash);text-decoration:none}
 .profile-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;min-height:1.35rem;border-radius:8px;background:var(--wash);font-size:.75rem;color:var(--green-deep)}
 .clinic-side{display:grid;gap:1rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
-.clinic-side .profile-block{margin-top:0;padding:0;border-top:0;background:transparent}
+.clinic-side .profile-block{margin-top:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .clinic-side h2{margin-top:0}
-.profile-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.5rem}
-.profile-block{padding:1rem;border-top:1px solid var(--line);background:rgba(255,253,248,.46)}
+.profile-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.5rem;align-items:start}
+.profile-block{min-width:0;padding:1.05rem 1.1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.22rem;margin:0 0 .55rem}
 .ficha ul{padding-left:1.1rem;color:var(--muted)}
+.profile-block li{margin:.24rem 0}
 .facts{display:grid;grid-template-columns:1fr;gap:.75rem;margin:.75rem 0 0}
 .facts div{border-top:1px solid var(--line);padding-top:.55rem}
 .facts dt{font-size:.74rem;text-transform:uppercase;color:var(--coral);font-weight:800;letter-spacing:0}
