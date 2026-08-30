@@ -1317,6 +1317,16 @@ td small {
   overflow-wrap: anywhere;
 }
 
+.compact-list em {
+  display: block;
+  margin-top: 0.12rem;
+  color: var(--amber);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 .location-editor {
   display: grid;
   gap: 0.7rem;

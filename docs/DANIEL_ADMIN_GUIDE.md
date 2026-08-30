@@ -95,6 +95,9 @@ enlace corresponde al perfil real de la clínica y solo entonces carga la
 propuesta en la ficha. Si el enlace abre una búsqueda genérica, una dirección
 suelta o un perfil dudoso, no lo guardes.
 
+Si una tarjeta muestra un aviso bajo el enlace de Google Maps, trátalo como
+pendiente: abre el enlace y guárdalo solo si ves la ficha real de la clínica.
+
 Dentro de una tarjeta con varias revisiones relacionadas verás **Orden
 recomendado**. Empieza por lo que marque ahí: normalmente claims bloqueantes o
 fuentes cambiadas antes de guardar la ficha final.

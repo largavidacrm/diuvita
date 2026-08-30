@@ -3759,11 +3759,19 @@
       return /^https?:\/\//i.test(clean) ? clean : "";
     }
 
-    function addProposalLink(items, seen, label, value) {
+    function addProposalLink(items, seen, label, value, kind) {
       var url = proposalLinkUrl(value);
       if (!url || seen[url]) return;
       seen[url] = true;
-      items.push({ label: label, url: url });
+      items.push({ label: label, url: url, kind: kind || "" });
+    }
+
+    function proposalLinkWarning(item) {
+      if (!item || item.kind !== "maps_url") return "";
+      if (!isGoogleMapsLikeUrl(item.url)) return "Revisar: no parece un enlace directo de Google Maps.";
+      if (googleMapsUrlNeedsManualReview(item.url)) return "Revisar: parece búsqueda, ruta o dirección; abre el enlace antes de guardarlo.";
+      if (!isReviewedGoogleMapsProfileUrl(item.url)) return "Revisar: falta señal clara de ficha de clínica.";
+      return "";
     }
 
     function proposalLinkItems(payload) {
@@ -3771,23 +3779,23 @@
       var items = [];
       var seen = {};
       [
-        ["maps_url", "Google Maps"],
-        ["google_maps_url", "Google Maps"],
-        ["google_reviews_url", "Valoraciones Google"],
-        ["reviews_url", "Valoraciones Google"],
-        ["pricing_url", "Página de precios"],
-        ["website", "Web propuesta"],
-        ["web", "Web propuesta"]
+        ["maps_url", "Google Maps", "maps_url"],
+        ["google_maps_url", "Google Maps", "maps_url"],
+        ["google_reviews_url", "Valoraciones Google", "google_reviews_url"],
+        ["reviews_url", "Valoraciones Google", "google_reviews_url"],
+        ["pricing_url", "Página de precios", "pricing_url"],
+        ["website", "Web propuesta", "website"],
+        ["web", "Web propuesta", "website"]
       ].forEach(function (pair) {
-        if (hasOwn(fields, pair[0])) addProposalLink(items, seen, pair[1], fields[pair[0]]);
+        if (hasOwn(fields, pair[0])) addProposalLink(items, seen, pair[1], fields[pair[0]], pair[2]);
       });
       if (Array.isArray(fields.locations)) {
         fields.locations.forEach(function (location, index) {
           if (!location || typeof location !== "object") return;
           var suffix = text(location.name || location.city || "").trim();
-          var labelSuffix = suffix ? " · " + suffix : " · sede " + (index + 1);
-          addProposalLink(items, seen, "Google Maps" + labelSuffix, location.maps_url || location.google_maps_url || location.map_url);
-          addProposalLink(items, seen, "Valoraciones Google" + labelSuffix, location.google_reviews_url || location.reviews_url || location.valoraciones_url);
+          var labelSuffix = suffix ? " · " + suffix : index === 0 ? " · sede principal" : " · sede adicional";
+          addProposalLink(items, seen, "Google Maps" + labelSuffix, location.maps_url || location.google_maps_url || location.map_url, "maps_url");
+          addProposalLink(items, seen, "Valoraciones Google" + labelSuffix, location.google_reviews_url || location.reviews_url || location.valoraciones_url, "google_reviews_url");
         });
       }
       return items;
@@ -4316,8 +4324,10 @@
         return;
       }
       target.innerHTML = '<ul class="compact-list">' + links.map(function (item) {
+        var warning = proposalLinkWarning(item);
         return '<li><a href="' + html(item.url) + '" rel="nofollow noopener" target="_blank">' +
-          html(item.label) + '</a><small>' + html(item.url) + '</small></li>';
+          html(item.label) + '</a><small>' + html(item.url) + '</small>' +
+          (warning ? '<em>' + html(warning) + '</em>' : '') + '</li>';
       }).join("") + "</ul>";
       show(block, true);
     }

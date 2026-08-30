@@ -44,20 +44,29 @@ def main() -> None:
         and 'id="reviewCandidateProposedLinks"' in index
         and "function proposalLinkUrl(value)" in index
         and "function proposalLinkItems(payload)" in index
+        and "function proposalLinkWarning(item)" in index
         and "function setProposedLinks(payload)" in index
         and "setProposedLinks(payload);" in index,
         "review editor should show proposed links separately",
     )
     check(
         'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
-        and '["maps_url", "Google Maps"]' in index
-        and '["google_reviews_url", "Valoraciones Google"]' in index
-        and '["reviews_url", "Valoraciones Google"]' in index
-        and '["pricing_url", "Página de precios"]' in index,
+        and '["maps_url", "Google Maps", "maps_url"]' in index
+        and '["google_reviews_url", "Valoraciones Google", "google_reviews_url"]' in index
+        and '["reviews_url", "Valoraciones Google", "google_reviews_url"]' in index
+        and '["pricing_url", "Página de precios", "pricing_url"]' in index,
         "proposed review links should be safe and cover Maps/reviews/pricing",
+    )
+    check(
+        "parece búsqueda, ruta o dirección" in index
+        and "falta señal clara de ficha de clínica" in index
+        and '" · sede principal"' in index
+        and '" · sede adicional"' in index,
+        "proposed Google Maps links should warn on weak URLs without numbered sede labels",
     )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".compact-list small" in css, "proposed link URLs should remain readable on mobile")
+    check(".compact-list em" in css, "proposed link warnings should be styled")
     print("OK admin review actions: dismiss keeps context")
 
 
