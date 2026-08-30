@@ -26,7 +26,7 @@ BATCH_VERSION = "2026-08-30"
 
 
 FetchFn = Callable[..., FetchResult]
-CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool], dict[str, Any]]
+CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool], dict[str, Any]]
 
 
 def today_batch() -> str:
@@ -191,6 +191,7 @@ def process_source(
             admin_email,
             local_env,
             args.replace_existing,
+            args.allow_multiple_open_clinic_reviews,
         )
     return result
 

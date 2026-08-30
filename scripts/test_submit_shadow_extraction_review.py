@@ -46,6 +46,32 @@ def main():
     check("rule_decisions" in payload, "rule decisions missing")
     signature = inspect.signature(create_review)
     check(signature.parameters["replace_existing"].default is False, "existing review replacement should be opt-in")
+    check(
+        signature.parameters["allow_multiple_open_clinic_reviews"].default is False,
+        "multiple clinic review cards should be opt-in",
+    )
+
+    captured = {}
+
+    def fake_run_psql(sql, local_env):
+        captured["sql"] = sql
+        return '[{"status": "existing_clinic", "id": "review-1", "title": "Open review"}]'
+
+    original_run_psql = create_review.__globals__["run_psql"]
+    try:
+        create_review.__globals__["run_psql"] = fake_run_psql
+        result = create_review("example-clinic", payload, "admin@example.test", {})
+    finally:
+        create_review.__globals__["run_psql"] = original_run_psql
+
+    check(result["status"] == "existing_clinic", "same-clinic open review should be reported")
+    sql = captured.get("sql", "")
+    check("open_clinic_reviews as" in sql, "same-clinic duplicate guard missing")
+    check("existing_clinic as" in sql, "same-clinic existing review CTE missing")
+    check(
+        "and (false or not exists (select 1 from existing_clinic))" in sql,
+        "new review should be blocked when another clinic review is open",
+    )
     print("OK review payload: shadow extraction")
 
 

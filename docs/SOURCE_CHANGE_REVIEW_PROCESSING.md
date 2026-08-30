@@ -27,4 +27,6 @@ Safety boundaries:
 - It carries the source-change material hints into the new proposal.
 - If an open proposal already exists for the same clinic and source, apply mode
   refreshes that proposal instead of creating a duplicate.
+- If another open enrichment proposal already exists for the same clinic, apply
+  mode reuses that open clinic review instead of creating a parallel card.
 - Daniel still decides whether any extracted change is saved.

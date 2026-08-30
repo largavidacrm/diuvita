@@ -26,6 +26,7 @@ TEST_STEPS = [
     ("test: candidate secondary-source enrichment", "scripts/test_enrich_candidate_review_from_url.py"),
     ("test: candidate team-page enrichment", "scripts/test_enrich_candidate_reviews_from_team_pages.py"),
     ("test: review submission", "scripts/test_submit_shadow_extraction_review.py"),
+    ("test: manual profile enrichment submission", "scripts/test_submit_profile_enrichment_reviews.py"),
     ("test: source shadow reviews", "scripts/test_submit_source_shadow_reviews.py"),
     ("test: admin review filters", "scripts/test_admin_review_filters.py"),
     ("test: admin review actions", "scripts/test_admin_review_actions.py"),

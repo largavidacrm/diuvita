@@ -74,8 +74,15 @@ def main():
 
     calls = []
 
-    def fake_create_review(clinic_slug, payload, admin_email, local_env, replace_existing):
-        calls.append((clinic_slug, payload, admin_email, replace_existing))
+    def fake_create_review(
+        clinic_slug,
+        payload,
+        admin_email,
+        local_env,
+        replace_existing,
+        allow_multiple_open_clinic_reviews,
+    ):
+        calls.append((clinic_slug, payload, admin_email, replace_existing, allow_multiple_open_clinic_reviews))
         return {"status": "inserted", "id": "review-1"}
 
     apply_args = Namespace(timeout=15, apply=True, replace_existing=True, allow_multiple_open_clinic_reviews=False)
@@ -89,6 +96,7 @@ def main():
     )
     check(applied["created_review"]["status"] == "inserted", "apply mode should create a review")
     check(calls and calls[0][3] is True, "replace_existing should pass through")
+    check(calls and calls[0][4] is False, "clinic duplicate guard should pass through")
 
     batch_args = Namespace(timeout=15, apply=False, replace_existing=False, allow_multiple_open_clinic_reviews=False)
     batch = process_sources(
