@@ -24,6 +24,9 @@ Machine-readable output:
 python3 scripts/measure_specialist_coverage.py --json
 ```
 
+The same top-line coverage signal is included in `scripts/admin_digest.py` and
+`scripts/daniel_review_brief.py`.
+
 This report supports the safe rule in `docs/DIUVITA_LIMITES_OPERATIVOS.md`: only
 public professional information can be used, and any publication still goes
 through Daniel's manual review in `/admin/`.

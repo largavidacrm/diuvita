@@ -203,6 +203,26 @@ source_monitoring as (
     )
   ) as data
   from source_cadences
+),
+visible_specialist_rows as (
+  select
+    c.id,
+    case
+      when jsonb_typeof(c.current_data -> 'profesionales') = 'array'
+        then jsonb_array_length(c.current_data -> 'profesionales')
+      else 0
+    end as specialist_entries
+  from public.clinics c
+  where c.status in ('published', 'preliminary')
+),
+specialist_coverage as (
+  select jsonb_build_object(
+    'visible_clinics', count(*),
+    'with_specialists', count(*) filter (where specialist_entries > 0),
+    'without_specialists', count(*) filter (where specialist_entries = 0),
+    'total_specialist_entries', coalesce(sum(specialist_entries), 0)
+  ) as data
+  from visible_specialist_rows
 )
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
@@ -214,6 +234,7 @@ select jsonb_build_object(
   'costs', (select data from costs),
   'claim_quality', (select data from claim_quality),
   'source_monitoring', (select data from source_monitoring),
+  'specialist_coverage', (select data from specialist_coverage),
   'generated_at', now()
 );
 """
@@ -294,6 +315,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     automation = summary.get("automation") or {}
     costs = digest.get("costs") or {}
     source_monitoring = digest.get("source_monitoring") or {}
+    specialist_coverage = digest.get("specialist_coverage") or {}
 
     output: list[str] = []
     output.append("# Diuvita CTO digest")
@@ -309,6 +331,10 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Fuentes guardadas", as_int(evidence.get("sources"))))
     output.append(line("Capturas guardadas", as_int(evidence.get("snapshots"))))
     output.append(line("Claims guardados", as_int(evidence.get("claims"))))
+    specialist_visible = as_int(specialist_coverage.get("visible_clinics"))
+    specialist_with = as_int(specialist_coverage.get("with_specialists"))
+    if specialist_visible:
+        output.append(line("Fichas con especialistas", f"{specialist_with}/{specialist_visible}"))
     output.append("")
 
     output.append("## Automatizacion")

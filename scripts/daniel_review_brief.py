@@ -75,6 +75,16 @@ def maturity_status(digest: dict[str, Any]) -> str:
     return "lista para comentarlo con Daniel; no se activa sola"
 
 
+def specialist_status(digest: dict[str, Any]) -> str:
+    coverage = digest.get("specialist_coverage") or {}
+    visible = as_int(coverage.get("visible_clinics"))
+    with_specialists = as_int(coverage.get("with_specialists"))
+    without_specialists = as_int(coverage.get("without_specialists"))
+    if not visible:
+        return "sin fichas visibles medidas"
+    return f"{with_specialists}/{visible} fichas con especialistas; {without_specialists} pendientes"
+
+
 def first_step(digest: dict[str, Any]) -> list[str]:
     counts = review_counts(digest)
     failed = digest.get("recent_failed_jobs") or []
@@ -162,6 +172,7 @@ def format_brief(digest: dict[str, Any]) -> str:
         "",
         "## Señales técnicas",
         f"- Clínicas visibles: {as_int(clinics.get('published'))} publicadas y {as_int(clinics.get('preliminary'))} preliminares.",
+        f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",
         "",

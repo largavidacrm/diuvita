@@ -73,6 +73,12 @@ def main():
             "oldest_due_at": None,
             "next_due_at": "2026-09-05T10:00:00+00:00",
         },
+        "specialist_coverage": {
+            "visible_clinics": 19,
+            "with_specialists": 2,
+            "without_specialists": 17,
+            "total_specialist_entries": 3,
+        },
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
@@ -92,6 +98,7 @@ def main():
     check("# Diuvita CTO digest" in output, "title missing")
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Capturas guardadas: 3" in output, "snapshot count missing")
+    check("Fichas con especialistas: 2/19" in output, "specialist coverage missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Bajo riesgo: no lista" in output, "maturity signal missing")
     check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")

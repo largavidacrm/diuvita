@@ -12,6 +12,7 @@ It answers:
 - whether low-risk auto-publish is mature enough to discuss;
 - whether any jobs failed;
 - whether clinic source monitoring is fresh or due;
+- how many visible profiles include published specialists;
 - how much agent cost is recorded in the database.
 
 It does not publish clinics, edit data, or resolve review items.

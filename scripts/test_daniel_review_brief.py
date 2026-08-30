@@ -41,6 +41,12 @@ def sample_digest():
             "due_sources": 0,
             "next_due_at": "2026-09-29T09:58:00+00:00",
         },
+        "specialist_coverage": {
+            "visible_clinics": 19,
+            "with_specialists": 2,
+            "without_specialists": 17,
+            "total_specialist_entries": 3,
+        },
     }
 
 
@@ -61,6 +67,7 @@ def main():
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
+    check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
 
     failed_digest = sample_digest()
