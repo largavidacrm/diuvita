@@ -61,6 +61,8 @@ def main():
     home_check = [item for item in CHECKS if item["name"] == "home"][0]
     profile_check = [item for item in CHECKS if item["name"] == "public_profile_ux"][0]
     check("card-signals" in home_check["markers"], "home deployment should include card signal marker")
+    check('class="logo-link"' in home_check["markers"], "home deployment should include clickable logo marker")
+    check("clínicas visibles" not in home_check["markers"], "home deployment should not expect removed stats marker")
     check("Plan global" in admin_check["markers"], "admin deployment should include global plan title marker")
     check("globalPlanPanel" in admin_check["markers"], "admin deployment should include global plan panel marker")
     check("globalPlanOpenNextBtn" in admin_check["markers"], "admin deployment should include global plan next-action button marker")

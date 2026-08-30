@@ -18,7 +18,7 @@ CHECKS = [
     {
         "name": "home",
         "path": "/",
-        "markers": ["Diuvita", "Buscar clínica", "clínicas visibles", "card-signals"],
+        "markers": ["Diuvita", "Buscar clínica", 'class="results-section"', 'class="logo-link"', "card-signals"],
     },
     {
         "name": "admin_shell",
