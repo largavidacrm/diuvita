@@ -260,6 +260,31 @@ def maturity_blockers(digest: dict[str, Any]) -> list[str]:
     return blockers
 
 
+def next_action_label(digest: dict[str, Any]) -> str:
+    failed = digest.get("recent_failed_jobs") or []
+    open_reviews = digest.get("open_reviews") or []
+    reviews_by_type = {
+        str(item.get("review_type") or ""): as_int(item.get("open_count"))
+        for item in digest.get("reviews_by_type") or []
+        if isinstance(item, dict)
+    }
+    if failed:
+        return "Revisar fallos recientes"
+    if reviews_by_type.get("blocking_claim_review"):
+        return "Revisar claim bloqueante"
+    if any(item.get("review_type") == "candidate_clinic" and as_int(item.get("priority")) >= 90 for item in open_reviews):
+        return "Validar candidatas"
+    if reviews_by_type.get("candidate_clinic"):
+        return "Validar candidatas"
+    if reviews_by_type.get("source_change_detected"):
+        return "Revisar cambios de fuente"
+    if reviews_by_type.get("clinic_profile_enrichment"):
+        return "Mejorar fichas existentes"
+    if reviews_by_type.get("clinic_quality_audit"):
+        return "Completar fichas"
+    return "Sin accion urgente"
+
+
 def format_digest(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
@@ -311,6 +336,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Dead letter", as_int(jobs.get("dead_letter"))))
     output.append(line("Coste registrado 24h", as_money(costs.get("last_24h_cents"))))
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
+    output.append(line("Siguiente accion", next_action_label(digest)))
     output.append("")
 
     output.append("## Vigilancia de fuentes")

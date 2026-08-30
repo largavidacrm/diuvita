@@ -7,6 +7,7 @@ It answers:
 - how many clinics are public or preliminary;
 - how many internal review cards are open;
 - whether any review cards are blocking-claim reviews;
+- what the next recommended internal action is;
 - whether agents are in shadow mode;
 - whether low-risk auto-publish is mature enough to discuss;
 - whether any jobs failed;

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for the internal CTO digest formatter."""
 
-from admin_digest import format_digest
+from admin_digest import format_digest, next_action_label
 
 
 def check(condition, message):
@@ -75,6 +75,20 @@ def main():
         },
     }
     output = format_digest(digest)
+    check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
+    limited_digest = dict(digest)
+    limited_digest["open_reviews"] = [
+        {
+            "review_type": "candidate_clinic",
+            "priority": 90,
+            "clinic_name": "",
+            "title": "Candidata visible",
+        }
+    ]
+    check(
+        next_action_label(limited_digest) == "Revisar claim bloqueante",
+        "next action should use full review-type summary, not only visible cards",
+    )
     check("# Diuvita CTO digest" in output, "title missing")
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Capturas guardadas: 3" in output, "snapshot count missing")
@@ -86,6 +100,7 @@ def main():
     check("claims bloqueantes: 1 abierta" in output, "blocking claim label missing")
     check("Sensabell" in output, "priority item missing")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
+    check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")
     check("Fuentes vigilables: 39" in output, "monitorable source count missing")
     check("Fuentes vencidas ahora: todo reciente" in output, "fresh source status missing")
