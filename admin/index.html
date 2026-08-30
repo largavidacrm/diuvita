@@ -525,6 +525,9 @@
       "outcomes.",
       "evidence."
     ];
+    var DEFAULT_MONITOR_CADENCE_DAYS = 30;
+    var MIN_MONITOR_CADENCE_DAYS = 7;
+    var MAX_MONITOR_CADENCE_DAYS = 90;
 
     function el(id) {
       return document.getElementById(id);
@@ -637,6 +640,126 @@
       return blockers;
     }
 
+    function emptySourceMonitoring() {
+      return {
+        candidateSources: 0,
+        dueSources: 0,
+        neverCheckedSources: 0,
+        weeklySources: 0,
+        standardSources: 0,
+        slowSources: 0,
+        customSources: 0,
+        oldestDueAt: null,
+        nextDueAt: null,
+        unavailable: false
+      };
+    }
+
+    function parseDateValue(value) {
+      if (!value) return null;
+      var parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function addDays(value, days) {
+      return new Date(value.getTime() + Number(days || 0) * 24 * 60 * 60 * 1000);
+    }
+
+    function boundedMonitorCadenceDays(value) {
+      if (value == null || value === "") return null;
+      var parsed = Number(String(value).replace(/[^0-9]/g, ""));
+      if (!parsed) return null;
+      return Math.max(MIN_MONITOR_CADENCE_DAYS, Math.min(MAX_MONITOR_CADENCE_DAYS, parsed));
+    }
+
+    function monitorCadenceDays(source) {
+      var metadata = source && source.metadata && typeof source.metadata === "object" ? source.metadata : {};
+      var explicit = boundedMonitorCadenceDays(metadata.monitor_cadence_days);
+      if (explicit != null) return explicit;
+      var tier = text(metadata.monitor_tier).trim().toLowerCase();
+      if (["weekly", "high", "7", "7d"].indexOf(tier) >= 0) return 7;
+      if (["slow", "low", "90", "90d"].indexOf(tier) >= 0) return 90;
+      return DEFAULT_MONITOR_CADENCE_DAYS;
+    }
+
+    function latestSnapshotsBySource(snapshots) {
+      var latest = {};
+      (snapshots || []).forEach(function (snapshot) {
+        var key = snapshot.source_record_id || "";
+        var current = latest[key];
+        var currentDate = parseDateValue(current && current.retrieved_at);
+        var snapshotDate = parseDateValue(snapshot.retrieved_at);
+        if (!current || (snapshotDate && (!currentDate || snapshotDate > currentDate))) {
+          latest[key] = snapshot;
+        }
+      });
+      return latest;
+    }
+
+    function sourceMonitoringStatus(sources, snapshots) {
+      var status = emptySourceMonitoring();
+      var latest = latestSnapshotsBySource(snapshots);
+      var now = new Date();
+
+      (sources || []).forEach(function (source) {
+        if (source.entity_type !== "clinic") return;
+        if (!source.content_hash || !/^https?:\/\//i.test(source.source_url || "")) return;
+
+        var cadence = monitorCadenceDays(source);
+        var latestSnapshot = latest[source.id] || {};
+        var lastCheckedAt = parseDateValue(latestSnapshot.retrieved_at || source.retrieved_at);
+        status.candidateSources += 1;
+
+        if (cadence === 7) status.weeklySources += 1;
+        else if (cadence === 30) status.standardSources += 1;
+        else if (cadence === 90) status.slowSources += 1;
+        else status.customSources += 1;
+
+        if (!lastCheckedAt) {
+          status.neverCheckedSources += 1;
+          status.dueSources += 1;
+          return;
+        }
+
+        var dueAt = addDays(lastCheckedAt, cadence);
+        if (dueAt <= now) {
+          status.dueSources += 1;
+          if (!status.oldestDueAt || dueAt < status.oldestDueAt) status.oldestDueAt = dueAt;
+        }
+        if (!status.nextDueAt || dueAt < status.nextDueAt) status.nextDueAt = dueAt;
+      });
+
+      return status;
+    }
+
+    async function loadSourceMonitoring() {
+      var sourceResult = await client
+        .from("source_records")
+        .select("id, entity_type, source_url, retrieved_at, content_hash, metadata")
+        .limit(2000);
+
+      if (sourceResult.error) {
+        var unavailable = emptySourceMonitoring();
+        unavailable.unavailable = true;
+        return unavailable;
+      }
+
+      var sources = sourceResult.data || [];
+      var sourceIds = sources.map(function (source) { return source.id; }).filter(Boolean);
+      var snapshots = [];
+      if (sourceIds.length) {
+        var snapshotResult = await client
+          .from("source_snapshots")
+          .select("source_record_id, retrieved_at")
+          .in("source_record_id", sourceIds)
+          .order("retrieved_at", { ascending: false })
+          .limit(2000);
+        if (!snapshotResult.error) snapshots = snapshotResult.data || [];
+      }
+
+      return sourceMonitoringStatus(sources, snapshots);
+    }
+
     function pill(status) {
       var tone = "";
       if (["failed", "dead_letter", "rejected", "conflict"].indexOf(status) >= 0) tone = " danger";
@@ -740,7 +863,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -755,6 +878,14 @@
       var completed = Number(automation.candidate_reviews_completed || 0);
       var target = Number(automation.shadow_review_target || 0);
       var blockers = adminReadinessBlockers(summary, claimQuality || emptyClaimQuality());
+      var monitoring = sourceMonitoring || emptySourceMonitoring();
+      var sourceMonitorLabel = monitoring.unavailable
+        ? "No disponible"
+        : monitoring.dueSources
+          ? monitoring.dueSources + " pendientes"
+          : "Todo reciente";
+      var sourceMonitorDateLabel = monitoring.dueSources ? "Fuente más vencida" : "Próxima revisión fuentes";
+      var sourceMonitorDate = monitoring.dueSources ? monitoring.oldestDueAt : monitoring.nextDueAt;
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -764,6 +895,8 @@
         systemItem("Modo sombra", automation.shadow_mode_active === false ? "Inactivo" : "Activo"),
         systemItem("Madurez auto-publicación", blockers.length ? "No lista" : "Lista para Daniel", blockers.length ? "warning-text" : ""),
         systemItem("Motivo principal", blockers[0] || "Sin bloqueos medidos", blockers.length ? "warning-text" : ""),
+        systemItem("Vigilancia fuentes", sourceMonitorLabel, monitoring.unavailable || monitoring.dueSources ? "warning-text" : ""),
+        systemItem(sourceMonitorDateLabel, sourceMonitorDate ? date(sourceMonitorDate) : "—"),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
@@ -2219,7 +2352,8 @@
           }).join("");
         }
         var claimQuality = await loadClaimQuality();
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality);
+        var sourceMonitoring = await loadSourceMonitoring();
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring);
 
         var clinicRows = await client
           .from("clinics")

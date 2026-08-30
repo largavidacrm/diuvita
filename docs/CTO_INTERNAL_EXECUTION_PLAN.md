@@ -47,6 +47,7 @@ Already built:
 - Admin rollback control from clinic version history, with every restore audited as a new version.
 - Candidate reviews now create internal drafts and route Daniel to final validation before publication.
 - Admin system status shows why auto-publication is or is not mature enough to discuss.
+- Admin system status shows whether source monitoring is fresh or pending.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
@@ -262,6 +263,7 @@ Next 10 technical steps:
 11. Add a read-only review maturity measurement before any auto-publish expansion. Done locally in `scripts/measure_review_maturity.py`; the signal now appears in the admin status and digest.
 12. Process source-change review cards into profile-enrichment proposals. Done locally in `scripts/process_source_change_reviews.py`; it never edits or publishes clinic data.
 13. Add source-monitoring cadence so the watcher checks due sources instead of repeatedly scanning the same fresh sources. Done locally in `scripts/monitor_source_changes.py`; use `--force` for manual spot checks.
+14. Show source-monitoring freshness in the admin control center. Done locally in `/admin/`, using source records and latest snapshots.
 
 ## Daniel decision checkpoints
 
