@@ -104,6 +104,21 @@ open_reviews as (
     limit {int(limit)}
   ) items
 ),
+enrichment_review_groups as (
+  select clinic_id, count(*) as open_count
+  from public.review_queue
+  where status = 'open'
+    and review_type = 'clinic_profile_enrichment'
+    and clinic_id is not null
+  group by clinic_id
+),
+review_backlog_quality as (
+  select jsonb_build_object(
+    'duplicate_enrichment_clinics', count(*) filter (where open_count > 1),
+    'duplicate_enrichment_reviews', coalesce(sum(open_count) filter (where open_count > 1), 0)
+  ) as data
+  from enrichment_review_groups
+),
 review_examples_by_type as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
   from (
@@ -350,6 +365,7 @@ select jsonb_build_object(
   'summary', (select data from summary),
   'reviews_by_type', (select data from reviews_by_type),
   'open_reviews', (select data from open_reviews),
+  'review_backlog_quality', (select data from review_backlog_quality),
   'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
@@ -440,6 +456,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     source_monitoring = digest.get("source_monitoring") or {}
     specialist_coverage = digest.get("specialist_coverage") or {}
     profile_completeness = digest.get("profile_completeness") or {}
+    backlog_quality = digest.get("review_backlog_quality") or {}
 
     output: list[str] = []
     output.append("# Diuvita CTO digest")
@@ -491,6 +508,13 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Coste registrado 24h", as_money(costs.get("last_24h_cents"))))
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
     output.append(line("Siguiente accion", next_action_label(digest)))
+    output.append(
+        line(
+            "Duplicados mejoras",
+            f"{as_int(backlog_quality.get('duplicate_enrichment_clinics'))} clinicas / "
+            f"{as_int(backlog_quality.get('duplicate_enrichment_reviews'))} tarjetas",
+        )
+    )
     output.append("")
 
     output.append("## Vigilancia de fuentes")

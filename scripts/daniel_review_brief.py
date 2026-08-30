@@ -99,6 +99,16 @@ def profile_completeness_status(digest: dict[str, Any]) -> str:
     return f"{ready}/{visible} fichas sin campos pendientes medidos; {pending} con pendientes"
 
 
+def review_backlog_status(digest: dict[str, Any]) -> str:
+    quality = digest.get("review_backlog_quality") or {}
+    duplicate_clinics = as_int(quality.get("duplicate_enrichment_clinics"))
+    duplicate_reviews = as_int(quality.get("duplicate_enrichment_reviews"))
+    if not duplicate_clinics:
+        return "sin duplicados de mejoras detectados"
+    clinic_label = "clínica" if duplicate_clinics == 1 else "clínicas"
+    return f"{duplicate_clinics} {clinic_label} con varias mejoras abiertas; {duplicate_reviews} tarjetas"
+
+
 def production_health_status(report: dict[str, Any]) -> str:
     checks = report.get("checks") or []
     if report.get("ok"):
@@ -200,6 +210,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Completitud de fichas: {profile_completeness_status(digest)}.",
         f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
+        f"- Bandeja: {review_backlog_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",
     ])
     if production_health is not None:

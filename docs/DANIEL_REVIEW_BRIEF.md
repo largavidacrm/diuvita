@@ -12,6 +12,7 @@ It is designed for future morning or weekly automations. It answers:
 - whether auto-publication is still off;
 - how many visible profiles still have measured public fields pending;
 - how many visible profiles include published specialists;
+- whether the review inbox has repeated improvement cards for the same clinic;
 - whether source monitoring is fresh or pending;
 - whether there are open technical failures;
 - optionally, whether the live public website responds correctly.

@@ -66,6 +66,10 @@ def main():
                 "title": "Candidata visible",
             },
         ],
+        "review_backlog_quality": {
+            "duplicate_enrichment_clinics": 1,
+            "duplicate_enrichment_reviews": 2,
+        },
         "recent_failed_jobs": [],
         "claim_quality": {
             "conflict": 0,
@@ -139,6 +143,7 @@ def main():
     check("review_examples_by_type" not in output, "raw example key should not appear in formatted digest")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
+    check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")
     check("Fuentes vigilables: 39" in output, "monitorable source count missing")
     check("Fuentes vencidas ahora: todo reciente" in output, "fresh source status missing")

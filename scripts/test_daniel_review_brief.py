@@ -44,6 +44,10 @@ def sample_digest():
                 "title": "Revisar claims bloqueantes: Sensabell",
             }
         ],
+        "review_backlog_quality": {
+            "duplicate_enrichment_clinics": 1,
+            "duplicate_enrichment_reviews": 2,
+        },
         "recent_failed_jobs": [],
         "source_monitoring": {
             "due_sources": 0,
@@ -83,6 +87,7 @@ def main():
     check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
+    check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
 
     production_report = {
         "ok": True,

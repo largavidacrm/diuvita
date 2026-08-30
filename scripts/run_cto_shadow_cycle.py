@@ -117,6 +117,12 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in open_reviews[:3]
         ]
         compact.pop("open_reviews", None)
+    backlog_quality = compact.get("review_backlog_quality")
+    if isinstance(backlog_quality, dict):
+        compact["review_backlog_quality"] = {
+            "duplicate_enrichment_clinics": backlog_quality.get("duplicate_enrichment_clinics", 0),
+            "duplicate_enrichment_reviews": backlog_quality.get("duplicate_enrichment_reviews", 0),
+        }
     review_examples = compact.get("review_examples_by_type")
     if isinstance(review_examples, list):
         compact["review_examples_by_type_count"] = len(review_examples)
