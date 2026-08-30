@@ -64,9 +64,9 @@ Already built:
 Not yet mature:
 
 - Real recurring internet discovery.
-- Durable source snapshots.
-- Independent extraction and verification agents.
-- Deterministic rules engine for field-level publication.
+- Source snapshots are durable, but the cadence and retention policy are still early.
+- Extraction and verification exist in shadow mode, but they are not yet independent production workers.
+- Deterministic field rules exist locally, but low-risk auto-approval stays disabled until accuracy is measured.
 - Doctor, pricing, treatment and SEO workflows.
 - Daily/weekly digest.
 - Rollback controls in the admin UI need operational usage, but the restore path now exists.
