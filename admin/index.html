@@ -310,6 +310,13 @@
             </div>
             <div class="rule-list" id="reviewRulesList"></div>
           </section>
+          <section class="related-reviews hidden" id="relatedReviewsPanel">
+            <div>
+              <h3>Otras revisiones de esta clínica</h3>
+              <p id="relatedReviewsMeta">Tarjetas abiertas para revisar juntas.</p>
+            </div>
+            <div class="related-review-list" id="relatedReviewsList"></div>
+          </section>
           <div class="field">
             <label for="reviewResolutionNote">Nota interna</label>
             <textarea id="reviewResolutionNote" rows="2"></textarea>
@@ -1547,6 +1554,35 @@
       }).join("");
     }
 
+    function relatedOpenReviews(row) {
+      if (!row || !row.clinic_id) return [];
+      return reviewCache.filter(function (item) {
+        return item.id !== row.id && item.clinic_id === row.clinic_id;
+      });
+    }
+
+    function renderRelatedReviews(row) {
+      var panel = el("relatedReviewsPanel");
+      var list = el("relatedReviewsList");
+      var related = relatedOpenReviews(row);
+      if (!related.length) {
+        show(panel, false);
+        list.innerHTML = "";
+        return;
+      }
+      show(panel, true);
+      el("relatedReviewsMeta").textContent = related.length + (related.length === 1
+        ? " tarjeta abierta relacionada."
+        : " tarjetas abiertas relacionadas.");
+      list.innerHTML = related.map(function (item) {
+        return '<button class="related-review-item" type="button" data-related-review-id="' + html(item.id) + '">' +
+          '<strong>' + html(reviewVisibleLabel(item)) + '</strong>' +
+          '<span>' + html(priorityLabel(item.priority)) + " · " + html(date(item.created_at)) + '</span>' +
+          '<small>' + html(item.title || "Revisión abierta") + '</small>' +
+          '</button>';
+      }).join("");
+    }
+
     function emptyRow(target, columns, text) {
       target.innerHTML = '<tr><td colspan="' + columns + '" class="empty">' + html(text) + '</td></tr>';
     }
@@ -2735,6 +2771,7 @@
       setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
       renderReviewRules(payload);
       renderReviewFlow(activeReview.review_type, blocksDraft);
+      renderRelatedReviews(activeReview);
       el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;
       el("reviewCreateDraftBtn").textContent = primaryReviewButtonLabel(activeReview.review_type, blocksDraft);
       el("reviewActionNote").textContent = reviewActionNote(activeReview.review_type, blocksDraft);
@@ -2746,6 +2783,8 @@
 
     function closeReviewEditor() {
       activeReview = null;
+      show(el("relatedReviewsPanel"), false);
+      el("relatedReviewsList").innerHTML = "";
       show(el("reviewEditor"), false);
     }
 
@@ -3139,6 +3178,10 @@
       el("reviewTypeFilter").addEventListener("change", renderReviews);
       el("reviewPriorityFilter").addEventListener("change", renderReviews);
       el("reviewClearFilters").addEventListener("click", clearReviewFilters);
+      el("relatedReviewsList").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-related-review-id]");
+        if (button) openReviewEditor(button.getAttribute("data-related-review-id"));
+      });
       el("reviewFilterChips").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate]");
         if (!button) return;

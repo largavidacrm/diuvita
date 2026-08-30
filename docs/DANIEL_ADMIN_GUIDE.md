@@ -78,6 +78,10 @@ Cuando sea un duplicado probable, el botón de crear borrador queda bloqueado. E
 
 Si varias tarjetas abiertas intentan mejorar la misma ficha, la tabla muestra **Varias propuestas**. Puedes usar el filtro rápido **Atascos** para ver solo esas repeticiones.
 
+Cuando abras una tarjeta y existan otras revisiones abiertas para la misma
+clínica, verás **Otras revisiones de esta clínica**. Úsalo para revisar esas
+tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
+
 ## Editar una clínica
 
 1. Baja al bloque **Clínicas**.

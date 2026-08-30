@@ -641,7 +641,8 @@ td small {
   line-height: 1.32;
 }
 
-.review-rules {
+.review-rules,
+.related-reviews {
   display: grid;
   gap: 0.7rem;
   padding: 0.85rem;
@@ -650,22 +651,26 @@ td small {
   background: rgba(255, 253, 248, 0.7);
 }
 
-.review-rules h3 {
+.review-rules h3,
+.related-reviews h3 {
   margin: 0;
   font-size: 0.96rem;
 }
 
-.review-rules p {
+.review-rules p,
+.related-reviews p {
   margin: 0.12rem 0 0;
   color: var(--muted);
 }
 
-.rule-list {
+.rule-list,
+.related-review-list {
   display: grid;
   gap: 0.55rem;
 }
 
-.rule-item {
+.rule-item,
+.related-review-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.45rem 0.8rem;
@@ -673,6 +678,28 @@ td small {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
+}
+
+.related-review-item {
+  grid-template-columns: minmax(0, 1fr);
+  color: var(--ink);
+  text-align: left;
+}
+
+.related-review-item:hover {
+  background: var(--wash);
+}
+
+.related-review-item strong,
+.related-review-item span,
+.related-review-item small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.related-review-item span,
+.related-review-item small {
+  color: var(--muted);
 }
 
 .rule-item strong,
