@@ -362,6 +362,7 @@ Next 10 technical steps:
 58. Preserve file-like source URLs. Done locally in the source discoverers: `.html` pages keep their real URL instead of receiving a trailing slash that can create false 404s.
 59. De-duplicate near-identical extracted locations. Done locally in `scripts/extract_clinic_profile_shadow.py`: repeated city suffixes and punctuation variants no longer create duplicate sede proposals.
 60. Add compact source hydration output. Done locally in `scripts/hydrate_source_records.py`: large internal source-update runs can be summarized without dumping full snapshot payloads.
+61. Stop rehydrating known-empty source excerpts. Done locally in `scripts/hydrate_source_records.py`: pages already marked as having no readable text no longer appear as pending forever.
 
 ## Daniel decision checkpoints
 

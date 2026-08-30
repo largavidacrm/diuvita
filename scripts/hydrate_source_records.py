@@ -48,7 +48,10 @@ def fetch_pending_sources(
         and coalesce((sr.metadata ->> 'text_excerpt_empty')::boolean, false) = false
       )
       or sr.source_title is null
-      or sr.metadata ->> 'text_sha256' is null
+      or (
+        sr.metadata ->> 'text_sha256' is null
+        and coalesce((sr.metadata ->> 'text_excerpt_empty')::boolean, false) = false
+      )
     )
 """
     error_filter = "true" if refresh or retry_errors else """

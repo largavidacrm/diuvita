@@ -3,6 +3,7 @@
 
 from hydrate_source_records import (
     compact_output,
+    fetch_pending_sources,
     first_json_line,
     record_failure_sql,
     snapshot_metadata,
@@ -65,6 +66,26 @@ def main():
     check(compact["items"][0]["has_excerpt"] is True, "compact output should keep useful flags")
     check("snapshot" not in compact["items"][0], "compact output should omit snapshot details")
     check(compact["items"][1]["error"] == "HTTP 403", "compact output should keep errors")
+
+    captured = {}
+
+    def fake_run_psql(sql, local_env):
+        captured["sql"] = sql
+        return "[]"
+
+    original_run_psql = fetch_pending_sources.__globals__["run_psql"]
+    try:
+        fetch_pending_sources.__globals__["run_psql"] = fake_run_psql
+        fetch_pending_sources(10, False, False, {})
+    finally:
+        fetch_pending_sources.__globals__["run_psql"] = original_run_psql
+
+    pending_sql = captured.get("sql", "")
+    check("text_sha256' is null" in pending_sql, "pending-source SQL should check text hash")
+    check(
+        "text_excerpt_empty')::boolean, false) = false" in pending_sql,
+        "empty excerpts should not be rehydrated forever",
+    )
     print("OK hydrate: source record update")
 
 
