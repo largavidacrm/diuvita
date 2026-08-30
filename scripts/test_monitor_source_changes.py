@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 """Checks for source change monitoring."""
 
-from monitor_source_changes import compare_record, create_review_sql, first_json_line, material_change_hints
+from datetime import datetime, timezone
+
+from monitor_source_changes import (
+    compare_record,
+    create_review_sql,
+    first_json_line,
+    monitor_cadence_days,
+    next_due_at,
+    select_due_sources,
+    source_due,
+    material_change_hints,
+)
 
 
 def check(condition, message):
@@ -19,6 +30,7 @@ def main():
         "content_hash": "old",
         "metadata": {"text_sha256": "old-text"},
         "retrieved_at": "2026-08-30T09:00:00Z",
+        "last_checked_at": "2026-08-30T09:00:00Z",
         "raw_excerpt": "Equipo médico y servicios de longevidad",
     }
     snapshot = {
@@ -31,6 +43,21 @@ def main():
     change = compare_record(record, snapshot)
     check(change["changed"] is True, "hash change not detected")
     check(change["hash_type"] == "text", "text hash should be preferred")
+    check(monitor_cadence_days(record) == 30, "default cadence should be 30 days")
+    high = dict(record, metadata={"monitor_tier": "weekly"})
+    check(monitor_cadence_days(high) == 7, "weekly tier should check every 7 days")
+    slow = dict(record, metadata={"monitor_cadence_days": 365})
+    check(monitor_cadence_days(slow) == 90, "cadence should be capped at 90 days")
+    check(
+        next_due_at(record).isoformat().startswith("2026-09-29"),
+        "next due date should use last checked timestamp",
+    )
+    now = datetime(2026, 8, 31, tzinfo=timezone.utc)
+    check(not source_due(record, now), "fresh source should not be due")
+    old = dict(record, last_checked_at="2026-07-01T00:00:00Z")
+    check(source_due(old, now), "old source should be due")
+    check(select_due_sources([record, old], 1, force=False) == [old], "due selector should skip fresh sources")
+    check(select_due_sources([record, old], 1, force=True) == [record], "forced selector should keep source order")
     hints = material_change_hints(record, snapshot)
     hint_areas = {hint["area"] for hint in hints}
     check({"contact", "team", "services", "prices"}.issubset(hint_areas), "material change hints missing")

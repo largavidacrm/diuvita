@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 import unicodedata
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.error import HTTPError, URLError
 
@@ -44,9 +45,14 @@ MATERIAL_HINTS = {
 }
 
 
-def fetch_sources(limit: int, local_env: dict[str, str]) -> list[dict[str, Any]]:
+DEFAULT_MONITOR_CADENCE_DAYS = 30
+MIN_MONITOR_CADENCE_DAYS = 7
+MAX_MONITOR_CADENCE_DAYS = 90
+
+
+def fetch_sources(pool_limit: int, local_env: dict[str, str]) -> list[dict[str, Any]]:
     sql = f"""
-select coalesce(jsonb_agg(to_jsonb(items) order by items.retrieved_at asc), '[]'::jsonb)
+select coalesce(jsonb_agg(to_jsonb(items) order by items.last_checked_at asc nulls first), '[]'::jsonb)
 from (
   select
     sr.id,
@@ -57,20 +63,85 @@ from (
     sr.content_hash,
     sr.raw_excerpt,
     sr.metadata,
+    sr.source_type,
+    latest.latest_snapshot_at,
     c.slug as clinic_slug,
     c.display_name as clinic_name,
     c.city as clinic_city,
-    c.country as clinic_country
+    c.country as clinic_country,
+    c.status as clinic_status,
+    coalesce(latest.latest_snapshot_at, sr.retrieved_at) as last_checked_at
   from public.source_records sr
   join public.clinics c on c.id = sr.clinic_id
+  left join lateral (
+    select max(ss.retrieved_at) as latest_snapshot_at
+    from public.source_snapshots ss
+    where ss.source_record_id = sr.id
+  ) latest on true
   where sr.entity_type = 'clinic'
     and sr.content_hash is not null
     and sr.source_url ~* '^https?://'
-  order by sr.retrieved_at asc
-  limit {int(limit)}
+  order by coalesce(latest.latest_snapshot_at, sr.retrieved_at) asc nulls first
+  limit {int(pool_limit)}
 ) items;
 """
     return json.loads(run_psql(sql, local_env) or "[]")
+
+
+def parse_timestamp(value: Any) -> datetime | None:
+    if not value:
+        return None
+    text = str(value)
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def bounded_cadence_days(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        days = int(value)
+    except (TypeError, ValueError):
+        return None
+    return max(MIN_MONITOR_CADENCE_DAYS, min(MAX_MONITOR_CADENCE_DAYS, days))
+
+
+def monitor_cadence_days(record: dict[str, Any]) -> int:
+    metadata = record.get("metadata") if isinstance(record.get("metadata"), dict) else {}
+    explicit = bounded_cadence_days(metadata.get("monitor_cadence_days"))
+    if explicit is not None:
+        return explicit
+    tier = str(metadata.get("monitor_tier") or "").strip().lower()
+    if tier in {"weekly", "high", "7", "7d"}:
+        return 7
+    if tier in {"slow", "low", "90", "90d"}:
+        return 90
+    return DEFAULT_MONITOR_CADENCE_DAYS
+
+
+def next_due_at(record: dict[str, Any]) -> datetime | None:
+    last_checked = parse_timestamp(record.get("last_checked_at"))
+    if last_checked is None:
+        return None
+    return last_checked + timedelta(days=monitor_cadence_days(record))
+
+
+def source_due(record: dict[str, Any], now: datetime | None = None) -> bool:
+    due_at = next_due_at(record)
+    if due_at is None:
+        return True
+    now = now or datetime.now(timezone.utc)
+    return due_at <= now
+
+
+def select_due_sources(records: list[dict[str, Any]], limit: int, force: bool = False) -> list[dict[str, Any]]:
+    selected = records if force else [record for record in records if source_due(record)]
+    return selected[:limit]
 
 
 def normalized_text(value: Any) -> str:
@@ -285,9 +356,11 @@ def monitor_record(record: dict[str, Any], args: argparse.Namespace, admin_email
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=20)
+    parser.add_argument("--pool-limit", type=int, help="Source candidates to inspect before applying cadence.")
     parser.add_argument("--timeout", type=int, default=15)
     parser.add_argument("--excerpt-chars", type=int, default=1600)
     parser.add_argument("--admin-email", help="Admin email assigned to created review cards.")
+    parser.add_argument("--force", action="store_true", help="Ignore monitoring cadence and check the oldest hydrated sources.")
     parser.add_argument("--apply", action="store_true", help="Create source_change_detected review cards.")
     return parser.parse_args()
 
@@ -300,15 +373,22 @@ def main() -> int:
         raise SystemExit("--timeout must be between 3 and 60 seconds.")
     if args.excerpt_chars < 200 or args.excerpt_chars > 5000:
         raise SystemExit("--excerpt-chars must be between 200 and 5000.")
+    if args.pool_limit is not None and args.pool_limit < args.limit:
+        raise SystemExit("--pool-limit must be at least --limit.")
 
     local_env = load_env_file()
     admin_email = args.admin_email or get_default_admin_email(local_env)
-    records = fetch_sources(args.limit, local_env)
+    pool_limit = args.pool_limit or max(args.limit * 5, 200)
+    candidates = fetch_sources(pool_limit, local_env)
+    records = select_due_sources(candidates, args.limit, args.force)
     results = [monitor_record(record, args, admin_email, local_env) for record in records]
     print(
         json.dumps(
             {
                 "mode": "apply" if args.apply else "dry_run",
+                "cadence": "forced" if args.force else "due_only",
+                "candidate_sources": len(candidates),
+                "due_sources": len(records),
                 "sources_checked": len(results),
                 "changed": sum(1 for item in results if item["status"] == "changed"),
                 "unchanged": sum(1 for item in results if item["status"] == "unchanged"),

@@ -64,7 +64,8 @@ Already built:
 Not yet mature:
 
 - Real recurring internet discovery.
-- Source snapshots are durable, but the cadence and retention policy are still early.
+- Source snapshots are durable and the watcher now respects monitoring cadence;
+  retention policy is still early.
 - Extraction and verification exist in shadow mode, but they are not yet independent production workers.
 - Deterministic field rules exist locally, but low-risk auto-approval stays disabled until accuracy is measured.
 - Doctor, pricing, treatment and SEO workflows.
@@ -141,11 +142,13 @@ Goal: once a clinic exists, Diuvita notices meaningful changes.
 
 Build next:
 
-1. Monitoring cadence per clinic tier: 7, 30 or 90 days.
-2. Cheap page hash check before expensive AI.
-3. Material-change detector.
-4. Change extraction and verification.
-5. Review cards for conflicts or important changes.
+1. Monitoring cadence per clinic tier: 7, 30 or 90 days. Done locally in
+   `scripts/monitor_source_changes.py`, using the latest stored snapshot date.
+2. Cheap page hash check before expensive AI. Done locally in the watcher.
+3. Material-change detector. Done locally with conservative internal hints.
+4. Change extraction and verification. Initial bridge exists in
+   `scripts/process_source_change_reviews.py`.
+5. Review cards for conflicts or important changes. Done for source changes.
 
 Definition of done:
 
@@ -257,6 +260,7 @@ Next 10 technical steps:
 10. Add a daily digest card/report for open reviews, failed jobs and costs. Done locally in `scripts/admin_digest.py`; next step is turning it into a scheduled notification when Daniel chooses the channel.
 11. Add a read-only review maturity measurement before any auto-publish expansion. Done locally in `scripts/measure_review_maturity.py`; next step is feeding the maturity signal into admin status/digest.
 12. Process source-change review cards into profile-enrichment proposals. Done locally in `scripts/process_source_change_reviews.py`; it never edits or publishes clinic data.
+13. Add source-monitoring cadence so the watcher checks due sources instead of repeatedly scanning the same fresh sources. Done locally in `scripts/monitor_source_changes.py`; use `--force` for manual spot checks.
 
 ## Daniel decision checkpoints
 

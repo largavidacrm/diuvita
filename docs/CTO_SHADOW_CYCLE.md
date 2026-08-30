@@ -26,6 +26,8 @@ reviews into draft clinics. It only writes internal evidence/review state.
 The claim-rule evaluation step is read-only in both modes.
 The cycle output is compact by default: it keeps counters and small examples,
 but avoids printing full evidence payloads or large claim lists.
+Source monitoring respects cadence by default, so a healthy run may report zero
+checked sources when all sources were recently observed.
 
 This script is intended for future scheduled CTO runs once Daniel chooses the
 cadence and notification channel.
