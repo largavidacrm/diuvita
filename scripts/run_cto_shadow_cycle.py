@@ -29,6 +29,50 @@ def try_parse_json(output: str) -> Any:
         return None
 
 
+STEP_ITEM_KEYS = {
+    "capture_enrichment_review_claims": (
+        "title",
+        "review_id",
+        "field_claims_created",
+        "source_records_created",
+    ),
+    "hydrate_source_records": ("source_url", "status"),
+    "monitor_source_changes": ("source_url", "clinic_name", "status", "hash"),
+    "process_source_change_reviews": (
+        "clinic_slug",
+        "source_url",
+        "status",
+        "proposed_fields",
+        "created_review",
+    ),
+}
+
+
+def compact_item(item: Any, keys: tuple[str, ...]) -> Any:
+    if not isinstance(item, dict) or not keys:
+        return item
+    return {key: item[key] for key in keys if key in item}
+
+
+def compact_summary(name: str, summary: Any) -> Any:
+    if not isinstance(summary, dict):
+        return summary
+    compact = dict(summary)
+    items = compact.get("items")
+    if isinstance(items, list):
+        compact["items_count"] = len(items)
+        compact["sample_items"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in items[:3]
+        ]
+        compact.pop("items", None)
+    evaluations = compact.get("evaluations")
+    if isinstance(evaluations, list):
+        compact["evaluations_count"] = len(evaluations)
+        compact.pop("evaluations", None)
+    return compact
+
+
 def run_step(name: str, args: list[str], timeout: int) -> dict[str, Any]:
     started = time.time()
     command = [sys.executable, str(SCRIPTS / args[0]), *args[1:]]
@@ -41,13 +85,16 @@ def run_step(name: str, args: list[str], timeout: int) -> dict[str, Any]:
         check=False,
     )
     duration = round(time.time() - started, 2)
+    summary = try_parse_json(result.stdout)
     return {
         "name": name,
         "ok": result.returncode == 0,
         "returncode": result.returncode,
         "duration_seconds": duration,
-        "summary": try_parse_json(result.stdout),
-        "stdout_tail": result.stdout.strip()[-1200:],
+        "summary": compact_summary(name, summary),
+        "stdout_tail": ""
+        if result.returncode == 0 and summary is not None
+        else result.stdout.strip()[-1200:],
         "stderr_tail": result.stderr.strip()[-1200:],
     }
 

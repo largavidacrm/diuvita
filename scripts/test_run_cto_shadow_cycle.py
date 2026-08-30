@@ -2,7 +2,7 @@
 """Checks for the CTO shadow cycle orchestrator."""
 from argparse import Namespace
 
-from run_cto_shadow_cycle import build_steps, try_parse_json
+from run_cto_shadow_cycle import build_steps, compact_summary, try_parse_json
 
 
 def check(condition, message):
@@ -14,6 +14,32 @@ def main():
     check(try_parse_json('{"ok": true}')["ok"] is True, "JSON output should parse")
     check(try_parse_json("plain text") is None, "plain text should not parse")
     check(try_parse_json("") is None, "empty output should be None")
+    compact = compact_summary("evaluate_claim_rules", {
+        "summary": {"actions": {"review": 2}},
+        "evaluations": [{"id": "a"}, {"id": "b"}],
+    })
+    check(compact["evaluations_count"] == 2, "evaluation count should be kept")
+    check("evaluations" not in compact, "full evaluations should be removed")
+    compact_items = compact_summary("monitor_source_changes", {
+        "changed": 0,
+        "items": [
+            {
+                "source_url": "https://a.test",
+                "clinic_name": "A",
+                "status": "unchanged",
+                "snapshot": {"large": True},
+            },
+            {
+                "source_url": "https://b.test",
+                "clinic_name": "B",
+                "status": "changed",
+                "snapshot": {"large": True},
+            },
+        ],
+    })
+    check(compact_items["items_count"] == 2, "items count should be kept")
+    check("items" not in compact_items, "full item list should be removed")
+    check("snapshot" not in compact_items["sample_items"][0], "large nested snapshot should be omitted")
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
