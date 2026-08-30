@@ -72,6 +72,15 @@ def sample_digest():
             "max_priority": 85,
             "oldest_created_at": "2026-08-30T08:30:00+00:00",
         },
+        "google_link_reviews": {
+            "open_count": 4,
+            "first_review": {
+                "review_type": "clinic_profile_enrichment",
+                "priority": 60,
+                "clinic_name": "Sensabell",
+                "title": "Completar enlaces Google: Sensabell",
+            },
+        },
         "recent_failed_jobs": [],
         "source_monitoring": {
             "due_sources": 0,
@@ -169,6 +178,7 @@ def main():
     check("Crear borrador no publica" in output, "draft safety reminder missing")
     check("Completitud de fichas: 0/19 fichas sin campos pendientes medidos; 19 con pendientes" in output, "profile completeness missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending profile field missing")
+    check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps review target missing")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile action missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")

@@ -12,6 +12,8 @@ It is designed for future morning or weekly automations. It answers:
 - whether auto-publication is still off;
 - how many visible profiles still have measured public fields pending;
 - which measured public field is missing from the most visible profiles;
+- whether there are open Google Maps/review-link proposals and which one to
+  start with;
 - which incomplete visible profile should be reviewed next;
 - how many visible profiles include published specialists;
 - which missing-specialist profile is the best first review target;

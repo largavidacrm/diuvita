@@ -236,6 +236,81 @@ review_first_clinic_workgroup as (
     '{{}}'::jsonb
   ) as data
 ),
+google_link_review_rows as (
+  select
+    rq.id,
+    rq.review_type as raw_review_type,
+    case
+      when rq.review_type = 'clinic_quality_audit'
+        and rq.payload ->> 'quality_context' = 'blocking_claims'
+        then 'blocking_claim_review'
+      else rq.review_type
+    end as review_type,
+    rq.title,
+    rq.priority,
+    rq.created_at,
+    rq.updated_at,
+    c.slug as clinic_slug,
+    c.display_name as clinic_name
+  from public.review_queue rq
+  left join public.clinics c on c.id = rq.clinic_id
+  where rq.status = 'open'
+    and (
+      exists (
+        select 1
+        from jsonb_each_text(
+          (case when jsonb_typeof(rq.payload -> 'proposed_fields') = 'object' then rq.payload -> 'proposed_fields' else '{{}}'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
+        ) proposed(key, value)
+        where proposed.key in ('maps_url', 'google_maps_url', 'google_reviews_url', 'reviews_url')
+          and btrim(proposed.value) ~* '^https?://'
+      )
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          (case when jsonb_typeof(rq.payload #> '{{proposed_fields,locations}}') = 'array' then rq.payload #> '{{proposed_fields,locations}}' else '[]'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload #> '{{proposed_current_data,locations}}') = 'array' then rq.payload #> '{{proposed_current_data,locations}}' else '[]'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
+        ) location(value)
+        where coalesce(
+          nullif(btrim(location.value ->> 'maps_url'), ''),
+          nullif(btrim(location.value ->> 'google_maps_url'), ''),
+          nullif(btrim(location.value ->> 'map_url'), ''),
+          nullif(btrim(location.value ->> 'google_reviews_url'), ''),
+          nullif(btrim(location.value ->> 'reviews_url'), ''),
+          nullif(btrim(location.value ->> 'valoraciones_url'), '')
+        ) ~* '^https?://'
+      )
+    )
+),
+google_link_reviews as (
+  select jsonb_build_object(
+    'open_count', count(*),
+    'first_review', coalesce(
+      (
+        select to_jsonb(items)
+        from (
+          select
+            id,
+            raw_review_type,
+            review_type,
+            title,
+            priority,
+            created_at,
+            updated_at,
+            clinic_slug,
+            clinic_name
+          from google_link_review_rows
+          order by priority desc, created_at asc
+          limit 1
+        ) items
+      ),
+      '{{}}'::jsonb
+    )
+  ) as data
+  from google_link_review_rows
+),
 review_examples_by_type as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
   from (
@@ -788,6 +863,7 @@ select jsonb_build_object(
   'review_backlog_quality', (select data from review_backlog_quality),
   'review_backlog_first_duplicate_target', (select data from review_backlog_first_duplicate_target),
   'review_first_clinic_workgroup', (select data from review_first_clinic_workgroup),
+  'google_link_reviews', (select data from google_link_reviews),
   'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
@@ -1042,6 +1118,23 @@ def first_backlog_bottleneck(digest: dict[str, Any]) -> str:
     return f"Ordenar {name}"
 
 
+def google_link_review_status(digest: dict[str, Any]) -> str:
+    status = digest.get("google_link_reviews") or {}
+    if not isinstance(status, dict):
+        return "sin tarjetas con Google Maps"
+    count = as_int(status.get("open_count"))
+    if not count:
+        return "sin tarjetas con Google Maps"
+    first = status.get("first_review") or {}
+    name = str((first or {}).get("clinic_name") or (first or {}).get("clinic_slug") or "").strip()
+    title = str((first or {}).get("title") or "").strip()
+    if name and title and name.lower() not in title.lower():
+        first_label = f"{name}: {title}"
+    else:
+        first_label = title or name or "primera tarjeta"
+    return f"{count} {plural(count, 'tarjeta', 'tarjetas')}; primera: {first_label}"
+
+
 def format_digest(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
@@ -1114,6 +1207,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
     output.append(line("Siguiente accion", next_action_label(digest)))
     output.append(line("Freno bandeja", review_backlog_guard_status(digest)))
+    google_links = google_link_review_status(digest)
+    if google_links != "sin tarjetas con Google Maps":
+        output.append(line("Google Maps pendientes", google_links))
     clinic_group = first_clinic_workgroup(digest)
     if clinic_group != "sin grupo por clínica medido":
         output.append(line("Grupo por clinica", clinic_group))

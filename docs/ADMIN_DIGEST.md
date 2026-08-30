@@ -11,6 +11,8 @@ It answers:
 - whether several open enrichment cards are stacked on the same clinic;
 - which clinic concentrates the highest-priority group of open review cards;
 - whether the review inbox is near the safe-write backlog guard;
+- whether Google Maps/review-link proposals are open and which safe review card
+  should be opened first;
 - what the next recommended internal action is;
 - whether agents are in shadow mode;
 - whether low-risk auto-publish is mature enough to discuss;

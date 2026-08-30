@@ -5,6 +5,7 @@ from admin_digest import (
     first_clinic_workgroup,
     first_backlog_bottleneck,
     format_digest,
+    google_link_review_status,
     next_action_label,
     next_profile_action,
     next_source_action,
@@ -116,6 +117,15 @@ def main():
             "candidate_reviews": 0,
             "max_priority": 85,
             "oldest_created_at": "2026-08-30T08:30:00+00:00",
+        },
+        "google_link_reviews": {
+            "open_count": 4,
+            "first_review": {
+                "review_type": "clinic_profile_enrichment",
+                "priority": 60,
+                "clinic_name": "Sensabell",
+                "title": "Completar enlaces Google: Sensabell",
+            },
         },
         "recent_failed_jobs": [],
         "claim_quality": {
@@ -230,6 +240,10 @@ def main():
     check(first_backlog_bottleneck(digest) == "Ordenar Sensabell: 2 mejoras abiertas", "first backlog bottleneck missing")
     check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
     check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending profile field missing")
+    check(
+        google_link_review_status(digest) == "4 tarjetas; primera: Completar enlaces Google: Sensabell",
+        "Google link review status missing",
+    )
     limited_digest = dict(digest)
     limited_digest["open_reviews"] = [
         {
@@ -265,6 +279,7 @@ def main():
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
     check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
+    check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
     check("Grupo por clinica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck line missing")
