@@ -48,13 +48,17 @@ def main():
         source_change_limit=8,
         digest_limit=5,
         claim_limit=6,
+        blocking_claim_limit=9,
         fetch_timeout=7,
     ))
     names = [step[0] for step in steps]
     check("process_source_change_reviews" in names, "source-change processing step missing")
+    check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
     source_change_step = [step for step in steps if step[0] == "process_source_change_reviews"][0]
     check("8" in source_change_step[1], "source-change limit should be passed through")
+    blocking_step = [step for step in steps if step[0] == "submit_blocking_claim_reviews"][0]
+    check("9" in blocking_step[1], "blocking-claim limit should be passed through")
     claim_step = [step for step in steps if step[0] == "evaluate_claim_rules"][0]
     check("--json" in claim_step[1], "claim rule evaluation should be machine readable")
     check("6" in claim_step[1], "claim limit should be passed through")

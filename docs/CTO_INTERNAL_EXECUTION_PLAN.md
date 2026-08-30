@@ -57,6 +57,7 @@ Already built:
 - Local safety checks are bundled in `scripts/run_local_checks.py`.
 - Review maturity can be measured read-only before considering low-risk auto-publish expansion.
 - Stored field claims can be evaluated read-only against publication rules before any policy change.
+- Blocking field claims can be routed into internal quality-review cards without editing clinic data.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
@@ -264,6 +265,7 @@ Next 10 technical steps:
 12. Process source-change review cards into profile-enrichment proposals. Done locally in `scripts/process_source_change_reviews.py`; it never edits or publishes clinic data.
 13. Add source-monitoring cadence so the watcher checks due sources instead of repeatedly scanning the same fresh sources. Done locally in `scripts/monitor_source_changes.py`; use `--force` for manual spot checks.
 14. Show source-monitoring freshness in the admin control center. Done locally in `/admin/`, using source records and latest snapshots.
+15. Turn rejected/conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle.
 
 ## Daniel decision checkpoints
 

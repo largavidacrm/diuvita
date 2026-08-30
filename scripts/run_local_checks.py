@@ -33,6 +33,7 @@ TEST_STEPS = [
     ("test: admin digest", "scripts/test_admin_digest.py"),
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: enrichment claims", "scripts/test_capture_enrichment_review_claims.py"),
+    ("test: blocking claim reviews", "scripts/test_submit_blocking_claim_reviews.py"),
     ("test: candidate promotion gate", "scripts/test_promote_candidate_reviews.py"),
     ("test: source hydration", "scripts/test_hydrate_source_records.py"),
     ("test: source monitoring", "scripts/test_monitor_source_changes.py"),

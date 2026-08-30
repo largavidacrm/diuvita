@@ -45,6 +45,7 @@ STEP_ITEM_KEYS = {
         "proposed_fields",
         "created_review",
     ),
+    "submit_blocking_claim_reviews": ("clinic_slug", "clinic_name", "status", "claims"),
 }
 
 
@@ -144,6 +145,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             max(90, args.source_change_limit * args.fetch_timeout + 30),
         ),
         (
+            "submit_blocking_claim_reviews",
+            ["submit_blocking_claim_reviews.py", "--limit", str(args.blocking_claim_limit), *apply_flag],
+            45,
+        ),
+        (
             "admin_digest",
             ["admin_digest.py", "--limit", str(args.digest_limit)],
             45,
@@ -165,6 +171,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-change-limit", type=int, default=10)
     parser.add_argument("--digest-limit", type=int, default=8)
     parser.add_argument("--claim-limit", type=int, default=100)
+    parser.add_argument("--blocking-claim-limit", type=int, default=20)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     return parser.parse_args()
 
@@ -178,6 +185,7 @@ def main() -> int:
         args.source_change_limit,
         args.digest_limit,
         args.claim_limit,
+        args.blocking_claim_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:

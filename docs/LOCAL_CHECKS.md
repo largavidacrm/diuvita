@@ -15,7 +15,8 @@ The full pass currently covers:
 7. Public clinic profile UX and basic site asset checks.
 8. Admin digest and review-maturity checks.
 9. Enrichment, candidate promotion, source hydration and source monitoring.
-10. Changed-source processing and the safe CTO shadow cycle.
+10. Changed-source processing, blocking-claim review routing and the safe CTO
+    shadow cycle.
 11. Clinic data validation.
 12. Static site build.
 13. Admin JavaScript syntax.
