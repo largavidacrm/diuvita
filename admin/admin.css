@@ -410,6 +410,72 @@ button:disabled {
   padding: 1rem;
 }
 
+.review-filter-panel {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(236, 243, 238, 0.42);
+}
+
+.review-filter-panel:empty {
+  display: none;
+}
+
+.filter-chip-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+
+.filter-chip-row > strong {
+  min-width: 4.7rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-height: 1.9rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.22rem 0.36rem 0.22rem 0.62rem;
+  background: #fff;
+  color: var(--green-deep);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.filter-chip:hover {
+  background: var(--wash);
+}
+
+.filter-chip.active {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+}
+
+.filter-chip span {
+  min-width: 1.45rem;
+  border-radius: 999px;
+  padding: 0.05rem 0.34rem;
+  background: var(--wash);
+  color: var(--green-deep);
+  text-align: center;
+}
+
+.filter-chip.active span {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -856,6 +922,10 @@ td small {
   .panel-tools {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .filter-chip-row > strong {
+    width: 100%;
   }
 
   .panel-tools input,
