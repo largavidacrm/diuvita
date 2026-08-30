@@ -17,7 +17,8 @@ for Daniel instead of implementing, softening or silently discarding the change.
 8. measure visible-profile completeness without editing clinics;
 9. print the admin digest;
 10. evaluate stored claims against publication rules.
-11. optionally check public production URLs without logging in or writing data.
+11. optionally run strict editorial limit checks;
+12. optionally check public production URLs without logging in or writing data.
 
 Default mode is dry-run:
 
@@ -59,6 +60,16 @@ python3 scripts/run_cto_shadow_cycle.py --production-health
 
 This step only verifies public pages and expected interface markers. It does not
 log in, change Supabase, publish clinics or resolve review cards.
+
+Strict editorial mode is also off by default. To include the more sensitive scan
+for rankings, awards or comparison language:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --strict-editorial
+```
+
+If this step finds a hard-limit issue, the cycle reports it and stops for
+Daniel's decision instead of changing the content.
 
 This script is intended for future scheduled CTO runs once Daniel chooses the
 cadence and notification channel.

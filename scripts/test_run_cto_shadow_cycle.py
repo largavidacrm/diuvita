@@ -127,6 +127,7 @@ def main():
         snapshot_retention_limit=7,
         profile_completeness_limit=11,
         fetch_timeout=7,
+        strict_editorial=False,
         production_health=False,
         production_base_url="https://www.diuvita.com",
         production_timeout=7,
@@ -134,6 +135,7 @@ def main():
     names = [step[0] for step in steps]
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
+    check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
     check("check_production_health" not in names, "production health should be off by default")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
@@ -170,6 +172,7 @@ def main():
         snapshot_retention_limit=7,
         profile_completeness_limit=11,
         fetch_timeout=7,
+        strict_editorial=True,
         production_health=True,
         production_base_url="https://www.diuvita.com",
         production_timeout=7,
@@ -178,7 +181,10 @@ def main():
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")
+    strict_step = [step for step in optional_steps if step[0] == "check_operational_limits_strict"][0]
+    check("--strict-editorial" in strict_step[1], "strict editorial flag should pass through")
     health_step = [step for step in optional_steps if step[0] == "check_production_health"][0]
+    check(optional_steps.index(strict_step) < optional_steps.index(health_step), "strict editorial should run before production health")
     check("--json" in health_step[1], "production health should be machine readable")
     check("https://www.diuvita.com" in health_step[1], "production health base URL should pass through")
     check("7" in health_step[1], "production health timeout should pass through")

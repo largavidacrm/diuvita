@@ -253,6 +253,14 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
     ])
+    if args.strict_editorial:
+        steps.append(
+            (
+                "check_operational_limits_strict",
+                ["check_operational_limits.py", "--strict-editorial"],
+                45,
+            )
+        )
     if args.production_health:
         steps.append(
             (
@@ -293,6 +301,11 @@ def parse_args() -> argparse.Namespace:
         "--production-health",
         action="store_true",
         help="Optionally check public production URLs; read-only and network-dependent.",
+    )
+    parser.add_argument(
+        "--strict-editorial",
+        action="store_true",
+        help="Optionally fail on sensitive ranking/prize/comparison language that needs Daniel.",
     )
     parser.add_argument("--production-base-url", default="https://www.diuvita.com")
     parser.add_argument("--production-timeout", type=int, default=12)
