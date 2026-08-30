@@ -2,7 +2,7 @@
 """Checks the public-content operational limits scanner."""
 from pathlib import Path
 
-from check_operational_limits import ROOT, scan_text
+from check_operational_limits import ROOT, is_negated_context, scan_text
 
 
 def check(condition: bool, message: str) -> None:
@@ -19,6 +19,7 @@ def main() -> None:
 
     check(scan_text(ROOT / "data" / "posts" / "unsafe.md", unsafe), "unsafe public claims should be flagged")
     check(not scan_text(ROOT / "data" / "posts" / "safe.md", safe), "negated safety wording should be allowed")
+    check(is_negated_context(safe, safe.index("revertir")), "nearby negation should be detected")
     print("OK operational limits scanner: public red flags detected")
 
 

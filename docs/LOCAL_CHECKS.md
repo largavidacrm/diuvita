@@ -7,7 +7,7 @@ The full pass currently covers:
 
 1. Python syntax across local scripts.
 2. Source snapshot and durable evidence helpers.
-3. Operational-limit red flags in public content.
+3. Operational-limit red flags in source content and generated public pages.
 4. Publication rules and stored-claim rule evaluation.
 5. Shadow extraction, verification and review-card creation.
 6. Admin review UX checks: filters, actions, publication flow, clinic diffs

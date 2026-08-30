@@ -168,5 +168,9 @@ Preguntar de más no tiene coste; implementar o descartar de más, sí.
 El repositorio incluye `scripts/check_operational_limits.py`, una comprobación
 conservadora para detectar señales obvias de riesgo en contenido público:
 recomendaciones directas, rankings, claims terapéuticos, testimonios o señales
-de publicidad/afiliación. No sustituye la revisión de Daniel, pero ayuda a
-evitar que un texto problemático entre por accidente en el build.
+de publicidad/afiliación.
+
+La comprobación se ejecuta sobre los archivos fuente y también sobre las
+páginas públicas ya generadas en `dist/`. No sustituye la revisión de Daniel,
+pero ayuda a evitar que un texto problemático entre por accidente en el build
+o en el despliegue de Netlify.

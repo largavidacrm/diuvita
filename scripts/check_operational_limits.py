@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import sys
+import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -67,12 +68,25 @@ RULES = [
 NEGATION_RE = re.compile(r"\b(?:no|sin|nunca|ning[uú]n|ninguna|evita(?:r)?|evitamos|prohibid[oa]s?)\b", re.I)
 
 
-def public_content_paths() -> list[Path]:
+def public_source_paths() -> list[Path]:
     paths = [ROOT / "data" / "clinics.json", ROOT / "build.py"]
     posts_dir = ROOT / "data" / "posts"
     if posts_dir.exists():
         paths.extend(sorted(posts_dir.glob("*.md")))
     return [path for path in paths if path.exists()]
+
+
+def built_site_paths() -> list[Path]:
+    dist = ROOT / "dist"
+    if not dist.exists():
+        return []
+    paths = []
+    for path in sorted(dist.rglob("*.html")):
+        relative_parts = path.relative_to(dist).parts
+        if relative_parts and relative_parts[0] == "admin":
+            continue
+        paths.append(path)
+    return paths
 
 
 def is_negated_context(line: str, match_start: int) -> bool:
@@ -94,10 +108,27 @@ def scan_text(path: Path, content: str) -> list[str]:
     return findings
 
 
-def main() -> int:
+def scan_paths(paths: list[Path]) -> list[str]:
     findings: list[str] = []
-    for path in public_content_paths():
+    for path in paths:
         findings.extend(scan_text(path, path.read_text(encoding="utf-8")))
+    return findings
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--built-site",
+        action="store_true",
+        help="Scan generated public HTML in dist/ instead of source content.",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    paths = built_site_paths() if args.built_site else public_source_paths()
+    findings = scan_paths(paths)
 
     if findings:
         print("FAIL operational limits: public content needs review")
@@ -105,7 +136,8 @@ def main() -> int:
             print(f"  {finding}")
         return 1
 
-    print("OK operational limits: no obvious public red flags")
+    scope = "built site" if args.built_site else "source content"
+    print(f"OK operational limits: no obvious public red flags in {scope}")
     return 0
 
 
