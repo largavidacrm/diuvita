@@ -72,9 +72,12 @@
             <p class="empty">Cargando estado del plan.</p>
           </div>
           <div class="global-next-box">
-            <span>Siguiente trabajo recomendado</span>
-            <strong id="globalPlanNextAction">Cargando</strong>
-            <p id="globalPlanNextDetail">Todavía estamos leyendo el estado del proyecto.</p>
+            <div>
+              <span>Siguiente trabajo recomendado</span>
+              <strong id="globalPlanNextAction">Cargando</strong>
+              <p id="globalPlanNextDetail">Todavía estamos leyendo el estado del proyecto.</p>
+            </div>
+            <button class="link-btn hidden" id="globalPlanOpenNextBtn" type="button">Abrir siguiente</button>
           </div>
         </div>
       </section>
@@ -540,6 +543,8 @@
     var dashboardLoading = false;
     var dashboardAutomation = {};
     var dashboardOpenReviewCount = 0;
+    var globalPlanNextReviewId = "";
+    var globalPlanNextGroupId = "";
     var REVIEW_TYPE_FILTERS = [
       ["", "Todas"],
       ["candidate_clinic", "Clínicas nuevas"],
@@ -1478,6 +1483,12 @@
       var sourceTarget = sourceCoverageTargetLabel(sources.nextTarget);
       var profileTarget = profileNextTargetLabel(completeness.nextTarget);
       var next = nextActionLabel(openReviews || [], failedJobs);
+      var groupRows = group && Array.isArray(group.rows) ? group.rows : [];
+      var nextReview = groupRows.length
+        ? firstActionReview(groupRows, 0) || sortReviewWorkgroup(groupRows)[0]
+        : firstActionReview(openReviews || [], failedJobs);
+      globalPlanNextReviewId = nextReview && nextReview.id ? nextReview.id : "";
+      globalPlanNextGroupId = group && group.clinicId ? group.clinicId : "";
 
       el("globalPlanPhase").textContent = phase;
       el("globalPlanPhase").className = "pill" + (failedJobs || openCount >= 45 ? " warning" : "");
@@ -1497,6 +1508,24 @@
         : sourceTarget !== "—"
           ? "Siguiente fuente: " + sourceTarget + "."
           : "Siguiente ficha: " + profileTarget + ".";
+      show(el("globalPlanOpenNextBtn"), Boolean(globalPlanNextReviewId || globalPlanNextGroupId));
+    }
+
+    function openGlobalPlanNext() {
+      if (globalPlanNextGroupId) {
+        reviewClinicGroupFilter = globalPlanNextGroupId;
+        setInput("reviewSearch", "");
+        el("reviewTypeFilter").value = "";
+        el("reviewPriorityFilter").value = "";
+        reviewDuplicateFilter = false;
+        renderReviews();
+      }
+      if (globalPlanNextReviewId) {
+        openReviewEditor(globalPlanNextReviewId);
+        return;
+      }
+      var nextReview = firstActionReview(filteredReviewRows(), 0);
+      if (nextReview) openReviewEditor(nextReview.id);
     }
 
     function reviewPrimarySubject(row) {
@@ -3988,6 +4017,7 @@
         if (duplicateReview) openReviewEditor(duplicateReview.id);
       });
       el("openSourceTargetBtn").addEventListener("click", openSourceTarget);
+      el("globalPlanOpenNextBtn").addEventListener("click", openGlobalPlanNext);
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));

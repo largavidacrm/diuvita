@@ -31,6 +31,7 @@ def main() -> None:
         "function activeClinicWorkgroup",
         "function reviewMatchesClinicGroup",
         "function openClinicWorkgroup",
+        "function openGlobalPlanNext",
         "function duplicateEnrichmentClinicIds",
         "function isDuplicateEnrichmentReview",
         "function relatedOpenReviews",

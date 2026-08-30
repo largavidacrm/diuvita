@@ -24,6 +24,9 @@ Arriba del panel verás **Plan global**. Ese bloque resume dónde estamos: fase
 actual, estado de la web pública, presión de la bandeja, automatización,
 fuentes, especialistas y el siguiente trabajo recomendado.
 
+Puedes pulsar **Abrir siguiente** para ir directamente al grupo o tarjeta que el
+panel considera más importante.
+
 ## Entender el estado del sistema
 
 En **Estado del sistema**, mira especialmente:

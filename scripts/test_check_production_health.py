@@ -63,6 +63,7 @@ def main():
     check("card-signals" in home_check["markers"], "home deployment should include card signal marker")
     check("Plan global" in admin_check["markers"], "admin deployment should include global plan title marker")
     check("globalPlanPanel" in admin_check["markers"], "admin deployment should include global plan panel marker")
+    check("globalPlanOpenNextBtn" in admin_check["markers"], "admin deployment should include global plan next-action button marker")
     check("profile-snapshot" in profile_check["markers"], "profile deployment should include summary stats marker")
     check("loadPublicationControl" in admin_check["markers"], "admin deployment should include publication control loader marker")
     check("Publicación agrupada" in admin_check["markers"], "admin deployment should include batched publication marker")
