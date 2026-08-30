@@ -24,6 +24,8 @@ def main() -> None:
         "dashboardAutomation = automation",
         "riskPill(decision.risk)",
         "actionPill(decision.action)",
+        "function materialChangeItems",
+        "Posible impacto",
     ]:
         check(marker in index, f"missing admin claim-rule marker: {marker}")
 

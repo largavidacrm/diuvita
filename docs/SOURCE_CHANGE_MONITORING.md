@@ -7,6 +7,11 @@ new readable-text hash with the stored hash when available and reports whether
 the source changed. Falling back to full content hash is allowed only when text
 hashes are missing.
 
+When a change is detected, the watcher adds conservative material hints to the
+internal payload. These hints do not update the clinic; they only tell the
+reviewer whether the changed source may affect contact data, team, services,
+prices or medical claims.
+
 Dry run:
 
 ```bash

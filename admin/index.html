@@ -1393,6 +1393,20 @@
       }).join("") + "</ul>";
     }
 
+    function materialChangeItems(payload) {
+      var hints = Array.isArray(payload.material_hints) ? payload.material_hints : [];
+      if (!hints.length && payload.material_summary) {
+        return ["Posible impacto: " + payload.material_summary];
+      }
+      return hints.map(function (hint) {
+        var label = hint.label || hint.area || "contenido";
+        var terms = Array.isArray(hint.terms) && hint.terms.length
+          ? " (" + hint.terms.slice(0, 3).join(", ") + ")"
+          : "";
+        return "Posible impacto: " + label + terms;
+      });
+    }
+
     function issueLabels(issues) {
       if (!Array.isArray(issues)) return [];
       return issues.map(function (issue) {
@@ -1913,7 +1927,7 @@
         "Hash anterior: " + text(payload.previous_hash || "").slice(0, 12),
         "Hash actual: " + text(payload.current_hash || "").slice(0, 12),
         "Fuente revisada: " + date(payload.retrieved_at)
-      ] : candidateList(candidate, "services"));
+      ].concat(materialChangeItems(payload)) : candidateList(candidate, "services"));
       setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
       renderReviewRules(payload);
       el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;

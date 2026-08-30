@@ -49,6 +49,7 @@ Already built:
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
+- Source-change reviews include material hints for contact, team, services, prices and medical claims.
 - Safe recurring CTO shadow cycle exists in `scripts/run_cto_shadow_cycle.py`.
 - Local safety checks are bundled in `scripts/run_local_checks.py`.
 - Review maturity can be measured read-only before considering low-risk auto-publish expansion.

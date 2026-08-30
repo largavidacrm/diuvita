@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import unicodedata
 from typing import Any
 from urllib.error import HTTPError, URLError
 
@@ -19,6 +20,28 @@ from submit_discovery_candidates import get_default_admin_email, load_env_file, 
 
 WATCHER_NAME = "diuvita-source-watcher"
 WATCHER_VERSION = "2026-08-30"
+MATERIAL_HINTS = {
+    "contact": {
+        "label": "Contacto",
+        "terms": ("telefono", "whatsapp", "email", "correo", "direccion", "contacto", "horario", "cita"),
+    },
+    "team": {
+        "label": "Equipo",
+        "terms": ("doctor", "doctora", "dra", "dr.", "equipo", "medico", "medica", "especialista", "profesional"),
+    },
+    "services": {
+        "label": "Servicios",
+        "terms": ("servicio", "programa", "unidad", "diagnostico", "tratamiento", "terapia", "medicina preventiva", "longevidad"),
+    },
+    "prices": {
+        "label": "Precios",
+        "terms": ("precio", "tarifa", "cuota", "consulta inicial", "€", "eur", "euro"),
+    },
+    "medical_claims": {
+        "label": "Claims médicos",
+        "terms": ("cura", "curar", "revierte", "revertir", "rejuvenece", "antiaging", "anti-aging", "resultado", "garantia", "garantiza"),
+    },
+}
 
 
 def fetch_sources(limit: int, local_env: dict[str, str]) -> list[dict[str, Any]]:
@@ -32,6 +55,7 @@ from (
     sr.source_title,
     sr.retrieved_at,
     sr.content_hash,
+    sr.raw_excerpt,
     sr.metadata,
     c.slug as clinic_slug,
     c.display_name as clinic_name,
@@ -49,6 +73,39 @@ from (
     return json.loads(run_psql(sql, local_env) or "[]")
 
 
+def normalized_text(value: Any) -> str:
+    text = str(value or "").lower()
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(char for char in decomposed if not unicodedata.combining(char))
+
+
+def material_change_hints(record: dict[str, Any], snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    metadata = record.get("metadata") if isinstance(record.get("metadata"), dict) else {}
+    haystack = normalized_text(" ".join([
+        str(record.get("source_title") or ""),
+        str(record.get("raw_excerpt") or ""),
+        str(metadata.get("text_excerpt") or ""),
+        str(snapshot.get("source_title") or ""),
+        str(snapshot.get("text_excerpt") or ""),
+    ]))
+    hints = []
+    for area, config in MATERIAL_HINTS.items():
+        matches = [term for term in config["terms"] if term in haystack]
+        if matches:
+            hints.append({
+                "area": area,
+                "label": config["label"],
+                "terms": matches[:4],
+            })
+    return hints
+
+
+def material_summary(hints: list[dict[str, Any]]) -> str:
+    if not hints:
+        return "Contenido general"
+    return ", ".join(str(hint.get("label") or hint.get("area")) for hint in hints)
+
+
 def compare_record(record: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
     metadata = record.get("metadata") if isinstance(record.get("metadata"), dict) else {}
     previous_text_hash = str(metadata.get("text_sha256") or "")
@@ -57,6 +114,7 @@ def compare_record(record: dict[str, Any], snapshot: dict[str, Any]) -> dict[str
     previous_hash = previous_text_hash if use_text_hash else str(record.get("content_hash") or "")
     current_hash = current_text_hash if use_text_hash else str(snapshot.get("content_sha256") or "")
     changed = bool(previous_hash and current_hash and previous_hash != current_hash)
+    hints = material_change_hints(record, snapshot) if changed else []
     return {
         "source_record_id": record.get("id"),
         "clinic_id": record.get("clinic_id"),
@@ -73,6 +131,8 @@ def compare_record(record: dict[str, Any], snapshot: dict[str, Any]) -> dict[str
         "retrieved_at": snapshot.get("retrieved_at"),
         "previous_retrieved_at": record.get("retrieved_at"),
         "excerpt": snapshot.get("text_excerpt"),
+        "material_hints": hints,
+        "material_summary": material_summary(hints),
     }
 
 
@@ -94,6 +154,8 @@ def create_review_sql(change: dict[str, Any], admin_email: str) -> str:
         "retrieved_at": change.get("retrieved_at"),
         "source_title": change.get("source_title"),
         "excerpt": change.get("excerpt"),
+        "material_hints": change.get("material_hints"),
+        "material_summary": change.get("material_summary"),
     }
     payload_sql = sql_literal(json.dumps(payload, ensure_ascii=False)) + "::jsonb"
     return f"""
@@ -210,6 +272,8 @@ def monitor_record(record: dict[str, Any], args: argparse.Namespace, admin_email
         "previous_hash": change["previous_hash"][:12],
         "current_hash": change["current_hash"][:12],
         "hash_type": change["hash_type"],
+        "material_hints": change["material_hints"],
+        "material_summary": change["material_summary"],
     }
     if snapshot_row:
         result["snapshot"] = snapshot_row
