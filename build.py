@@ -284,7 +284,7 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .profile-nav{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1rem}
 .profile-nav a{display:inline-flex;align-items:center;gap:.35rem;min-height:1.85rem;padding:.26rem .42rem .26rem .62rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--green-deep);font-size:.84rem;font-weight:800}
 .profile-nav a:hover{background:var(--wash);text-decoration:none}
-.profile-nav span{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;min-height:1.35rem;border-radius:8px;background:var(--wash);font-size:.75rem;color:var(--green-deep)}
+.profile-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;min-height:1.35rem;border-radius:8px;background:var(--wash);font-size:.75rem;color:var(--green-deep)}
 .clinic-side{display:grid;gap:1rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .clinic-side .profile-block{margin-top:0;padding:0;border-top:0;background:transparent}
 .clinic-side h2{margin-top:0}
@@ -541,7 +541,11 @@ def contacto_block(c):
     return '<section class="profile-block" id="contacto"><h2>Contacto publicado</h2><ul class="contacto info-list">' + "".join(items) + "</ul></section>"
 
 def profile_nav_item(label, count, target):
-    return f'<a href="{h(target)}">{h(label)}<span>{h(count)}</span></a>'
+    return (
+        f'<a href="{h(target)}" aria-label="{h(label)}: {h(count)}">'
+        f'<span class="profile-nav-label">{h(label)}</span>'
+        f'<span class="profile-nav-count">{h(count)}</span></a>'
+    )
 
 def profile_nav(c, has_contact, has_tech):
     items = []

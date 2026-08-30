@@ -18,6 +18,8 @@ def main() -> None:
         "def profile_nav(",
         "def profile_nav_item(",
         'class="profile-nav"',
+        'aria-label="{h(label)}: {h(count)}"',
+        'class="profile-nav-count"',
         'id="servicios"',
         'id="unidades"',
         'id="especialistas"',
