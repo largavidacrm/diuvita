@@ -39,6 +39,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/CANDIDATE_DRAFT_PROMOTION.md`: herramienta conservadora para convertir candidatas en borradores internos.
 - `docs/SOURCE_RECORD_HYDRATION.md`: hidratación de evidencias compactas para fuentes guardadas.
 - `docs/SOURCE_CHANGE_MONITORING.md`: primer watcher para detectar cambios en fuentes ya guardadas.
+- `docs/SOURCE_CHANGE_REVIEW_PROCESSING.md`: puente seguro desde fuente cambiada a propuesta interna revisable.
 - `docs/CTO_SHADOW_CYCLE.md`: ciclo seguro para encadenar tareas internas repetibles.
 - `docs/LOCAL_CHECKS.md`: comprobaciones locales antes de guardar y subir cambios.
 - `supabase/migrations/0014_source_snapshots.sql`: historial interno de capturas compactas de fuentes.
@@ -67,6 +68,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/promote_candidate_reviews.py`: simula o crea borradores internos desde candidatas revisables.
 - `scripts/hydrate_source_records.py`: completa `source_records` con título, hash y extracto corto.
 - `scripts/monitor_source_changes.py`: compara hashes de fuentes y crea revisiones internas si cambian.
+- `scripts/process_source_change_reviews.py`: convierte revisiones de fuente cambiada en propuestas internas de mejora.
 - `scripts/run_cto_shadow_cycle.py`: ejecuta el ciclo sombra seguro de CTO.
 - `scripts/run_local_checks.py`: ejecuta pruebas, validación, build y revisión básica del admin.
 - `scripts/apply_supabase_sql.sh`: aplica un SQL concreto contra Supabase.

@@ -29,6 +29,7 @@ TEST_STEPS = [
     ("test: candidate promotion gate", "scripts/test_promote_candidate_reviews.py"),
     ("test: source hydration", "scripts/test_hydrate_source_records.py"),
     ("test: source monitoring", "scripts/test_monitor_source_changes.py"),
+    ("test: source change processing", "scripts/test_process_source_change_reviews.py"),
     ("test: CTO shadow cycle", "scripts/test_run_cto_shadow_cycle.py"),
 ]
 

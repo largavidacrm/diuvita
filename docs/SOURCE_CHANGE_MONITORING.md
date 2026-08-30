@@ -27,3 +27,7 @@ python3 scripts/monitor_source_changes.py --limit 10 --apply
 Apply mode creates internal `source_change_detected` review cards. It does not
 edit clinic data, update source hashes, resolve review cards or publish pages.
 Daniel can then decide whether a changed source needs a profile update.
+
+Open source-change cards can be processed into separate profile-enrichment
+proposals with `scripts/process_source_change_reviews.py`. That second step is
+also safe by default and keeps Daniel in the final review loop.

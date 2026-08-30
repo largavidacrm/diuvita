@@ -5,8 +5,9 @@
 1. capture enrichment review claims;
 2. hydrate pending source records;
 3. monitor source changes;
-4. print the admin digest;
-5. evaluate stored claims against publication rules.
+4. process changed-source cards into profile-enrichment proposals;
+5. print the admin digest;
+6. evaluate stored claims against publication rules.
 
 Default mode is dry-run:
 

@@ -50,6 +50,7 @@ Already built:
 - Compact source snapshot history is stored in `source_snapshots`.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
 - Source-change reviews include material hints for contact, team, services, prices and medical claims.
+- Open source-change reviews can be processed into separate profile-enrichment proposals without editing public clinic data.
 - Safe recurring CTO shadow cycle exists in `scripts/run_cto_shadow_cycle.py`.
 - Local safety checks are bundled in `scripts/run_local_checks.py`.
 - Review maturity can be measured read-only before considering low-risk auto-publish expansion.
@@ -255,6 +256,7 @@ Next 10 technical steps:
 9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; review-card wiring exists in `scripts/submit_shadow_extraction_review.py`.
 10. Add a daily digest card/report for open reviews, failed jobs and costs. Done locally in `scripts/admin_digest.py`; next step is turning it into a scheduled notification when Daniel chooses the channel.
 11. Add a read-only review maturity measurement before any auto-publish expansion. Done locally in `scripts/measure_review_maturity.py`; next step is feeding the maturity signal into admin status/digest.
+12. Process source-change review cards into profile-enrichment proposals. Done locally in `scripts/process_source_change_reviews.py`; it never edits or publishes clinic data.
 
 ## Daniel decision checkpoints
 
