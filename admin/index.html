@@ -80,7 +80,7 @@
         <section class="proposal-preview hidden" id="clinicProposalPreview">
           <div class="proposal-preview-head">
             <div>
-              <h3>Propuesta cargada</h3>
+              <h3 id="clinicProposalTitle">Cambios antes de guardar</h3>
               <p id="clinicProposalMeta">Revisa estos cambios antes de guardar.</p>
             </div>
             <span class="pill warning">Pendiente de guardar</span>
@@ -1196,6 +1196,7 @@
           '<strong>' + html(item.label) + '</strong>' +
           '</div>';
       }).join("");
+      renderUnsavedChanges();
     }
 
     function missingFinalValidationLabels() {
@@ -1403,7 +1404,10 @@
         tech: "Tecnología",
         email: "Email",
         telefono: "Teléfono",
-        instagram: "Instagram"
+        instagram: "Instagram",
+        status: "Estado",
+        profile_confidence: "Confianza",
+        verification_status: "Verificación"
       };
       return labels[key] || key;
     }
@@ -1419,9 +1423,14 @@
         city: clinic && clinic.city,
         region: clinic && clinic.region,
         address: clinic && clinic.address,
-        summary: clinic && clinic.summary
+        summary: clinic && clinic.summary,
+        status: clinic && clinic.status,
+        profile_confidence: clinic ? Math.round(Number(clinic.profile_confidence || 0) * 100) : "",
+        verification_status: clinic && clinic.verification_status
       };
-      if (hasOwn(topLevel, key)) return topLevel[key] || data[key];
+      if (hasOwn(topLevel, key)) {
+        return topLevel[key] == null || topLevel[key] === "" ? data[key] : topLevel[key];
+      }
       return data[key];
     }
 
@@ -1429,6 +1438,49 @@
       if (Array.isArray(value)) return value.length ? value.join("\n") : "—";
       var clean = text(value).trim();
       return clean || "—";
+    }
+
+    function displayDiffValue(key, value) {
+      if (key === "status") return clinicStatusLabel(value);
+      if (key === "profile_confidence") {
+        var confidence = text(value).trim();
+        return confidence ? confidence + "%" : "—";
+      }
+      return displayFieldValue(value);
+    }
+
+    function clinicFormFields() {
+      return {
+        display_name: trimmed("clinicName"),
+        website: trimmed("clinicWebsite"),
+        country: trimmed("clinicCountry"),
+        city: trimmed("clinicCity"),
+        region: trimmed("clinicRegion"),
+        address: trimmed("clinicAddress"),
+        status: trimmed("clinicStatus"),
+        profile_confidence: text(el("clinicConfidence").value).trim(),
+        summary: trimmed("clinicSummary"),
+        services: linesToArray(el("clinicServices").value),
+        specialties: linesToArray(el("clinicSpecialties").value),
+        unidades: linesToArray(el("clinicUnits").value),
+        profesionales: linesToArray(el("clinicProfessionals").value),
+        tech: trimmed("clinicTech"),
+        email: trimmed("clinicEmail"),
+        telefono: trimmed("clinicPhone"),
+        instagram: trimmed("clinicInstagram"),
+        verification_status: trimmed("clinicVerification")
+      };
+    }
+
+    function diffItemHtml(key, beforeValue, afterValue, beforeLabel, afterLabel) {
+      var changed = normalizedFieldValue(beforeValue) !== normalizedFieldValue(afterValue);
+      return '<article class="diff-item' + (changed ? "" : " unchanged") + '">' +
+        '<h4>' + html(proposalLabel(key)) + '</h4>' +
+        '<div class="diff-cols"><div><span>' + html(beforeLabel) + '</span><pre>' +
+        html(displayDiffValue(key, beforeValue)) + '</pre></div>' +
+        '<div><span>' + html(afterLabel) + '</span><pre>' +
+        html(displayDiffValue(key, afterValue)) + '</pre></div></div>' +
+        '</article>';
     }
 
     function compactText(value, maxLength) {
@@ -1539,6 +1591,7 @@
     function resetProposalPreview() {
       show(el("clinicProposalPreview"), false);
       el("clinicProposalChanges").innerHTML = "";
+      el("clinicProposalTitle").textContent = "Cambios antes de guardar";
       el("clinicProposalMeta").textContent = "Revisa estos cambios antes de guardar.";
     }
 
@@ -1549,19 +1602,35 @@
       }).map(function (key) {
         var beforeValue = currentClinicField(activeClinic, key);
         var afterValue = fields[key];
-        var changed = normalizedFieldValue(beforeValue) !== normalizedFieldValue(afterValue);
-        return '<article class="diff-item' + (changed ? "" : " unchanged") + '">' +
-          '<h4>' + html(proposalLabel(key)) + '</h4>' +
-          '<div class="diff-cols"><div><span>Ahora</span><pre>' + html(displayFieldValue(beforeValue)) + '</pre></div>' +
-          '<div><span>Propuesta</span><pre>' + html(displayFieldValue(afterValue)) + '</pre></div></div>' +
-          '</article>';
+        return diffItemHtml(key, beforeValue, afterValue, "Ahora", "Propuesta");
       });
+      el("clinicProposalTitle").textContent = "Propuesta cargada";
       el("clinicProposalMeta").textContent = rows.length
         ? rows.length + " campos propuestos. Revisa antes de guardar."
         : "No hay campos propuestos para esta ficha.";
       el("clinicProposalChanges").innerHTML = rows.length
         ? rows.join("")
         : '<p class="empty">Sin cambios detectados.</p>';
+      show(el("clinicProposalPreview"), true);
+    }
+
+    function renderUnsavedChanges() {
+      if (!activeClinic) return;
+      var fields = clinicFormFields();
+      var rows = Object.keys(fields).filter(function (key) {
+        return normalizedFieldValue(currentClinicField(activeClinic, key)) !== normalizedFieldValue(fields[key]);
+      }).map(function (key) {
+        return diffItemHtml(key, currentClinicField(activeClinic, key), fields[key], "Guardado", "Formulario");
+      });
+      if (!rows.length) {
+        resetProposalPreview();
+        return;
+      }
+      el("clinicProposalTitle").textContent = "Cambios sin guardar";
+      el("clinicProposalMeta").textContent = rows.length + (rows.length === 1
+        ? " campo cambiará al guardar."
+        : " campos cambiarán al guardar.");
+      el("clinicProposalChanges").innerHTML = rows.join("");
       show(el("clinicProposalPreview"), true);
     }
 
@@ -1663,7 +1732,7 @@
       setInput("clinicRegion", activeClinic.region || data.region);
       setInput("clinicAddress", activeClinic.address || data.address);
       setInput("clinicStatus", activeClinic.status || "review");
-      setInput("clinicConfidence", Math.round(Number(activeClinic.profile_confidence || 0) * 100));
+      setInput("clinicConfidence", activeClinic.profile_confidence == null ? "" : Math.round(Number(activeClinic.profile_confidence) * 100));
       setInput("clinicSummary", activeClinic.summary || data.summary);
       setInput("clinicServices", arrayLines(data.services));
       setInput("clinicSpecialties", arrayLines(data.specialties));

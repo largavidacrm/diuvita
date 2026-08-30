@@ -241,7 +241,7 @@ Avoid:
 Next 10 technical steps:
 
 1. Add review inbox filters and clearer counts in `/admin/`. Done locally with quick filters by type and priority, visible counts and a clear-filters control.
-2. Add a proposal diff view before saving clinic changes.
+2. Add a proposal diff view before saving clinic changes. Done locally with a live before/after panel for manual edits and loaded proposals.
 3. Add rollback view using `entity_versions`. Done as a read-only version history in `/admin/`; restoring an old version remains intentionally gated.
 4. Add human-lock controls for fields Daniel corrects manually. Done locally in `supabase/migrations/0012_human_field_locks.sql` and `/admin/`.
 5. Add source snapshot capture for reviewed proposals. Done locally in `scripts/capture_source_snapshot.py`; enrichment review URLs can now be linked into Supabase `source_records` with `scripts/capture_enrichment_review_claims.py`.
