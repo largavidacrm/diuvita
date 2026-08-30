@@ -6,6 +6,7 @@ from admin_digest import (
     first_backlog_bottleneck,
     format_digest,
     google_link_review_status,
+    location_coverage_status,
     next_action_label,
     next_profile_action,
     next_source_action,
@@ -219,6 +220,14 @@ def main():
             "pending_specialists": 17,
             "pending_technology": 5,
         },
+        "location_coverage": {
+            "clinics_with_locations": 2,
+            "multi_location_clinics": 1,
+            "total_locations": 3,
+            "locations_missing_address": 0,
+            "locations_missing_google_maps_profile": 2,
+            "locations_missing_google_reviews": 3,
+        },
         "profile_next_target": {
             "slug": "kairos-longevity-clinic",
             "clinic_name": "Kairos Longevity Clinic",
@@ -253,6 +262,10 @@ def main():
     check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
     check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending profile field missing")
     check(
+        location_coverage_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 sin Maps de clínica; 3 sin valoraciones; 0 sin dirección",
+        "location coverage status missing",
+    )
+    check(
         google_link_review_status(digest) == "4 tarjetas; primera: Completar enlaces Google: Sensabell",
         "Google link review status missing",
     )
@@ -282,6 +295,7 @@ def main():
     check("Fichas sin campos pendientes medidos: 0/19" in output, "profile completeness missing")
     check("Campo mas pendiente: Google Maps · 19 fichas" in output, "top pending profile field line missing")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile line missing")
+    check("Sedes: 3 sedes explícitas; 1 clínica multisede; 2 sin Maps de clínica" in output, "location coverage line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Publicacion web: agrupada cada 30 min" in output, "publication batching missing")
     check("Ultima peticion Netlify: 2026-08-30 10:35" in output, "last rebuild request missing")
@@ -305,6 +319,7 @@ def main():
     check("Fuentes vigilables: 39" in output, "monitorable source count missing")
     check("Fuentes vencidas ahora: todo reciente" in output, "fresh source status missing")
     check("Cobertura fuentes: 11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente" in output, "source coverage line missing")
+    check("Cobertura sedes: 3 sedes explícitas; 1 clínica multisede; 2 sin Maps de clínica" in output, "source location coverage line missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source line missing")
     check("Proxima revision prevista: 2026-09-05 10:00" in output, "next due date missing")
     check("Cadencia: 4 semanal / 32 estandar / 3 lenta" in output, "cadence mix missing")

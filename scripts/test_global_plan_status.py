@@ -6,6 +6,7 @@ from global_plan_status import (
     codex_can_continue_status,
     daniel_now_status,
     format_global_plan_status,
+    location_status,
     not_ready_status,
     plan_phase,
     source_monitoring_status,
@@ -97,6 +98,14 @@ def sample_digest():
             "pending_specialists": 17,
             "pending_contact": 6,
         },
+        "location_coverage": {
+            "clinics_with_locations": 2,
+            "multi_location_clinics": 1,
+            "total_locations": 3,
+            "locations_missing_address": 0,
+            "locations_missing_google_maps_profile": 2,
+            "locations_missing_google_reviews": 3,
+        },
         "profile_next_target": {
             "clinic_name": "Sensabell",
             "pending_count": 4,
@@ -124,6 +133,7 @@ def main():
     check(visible_clinic_status(digest) == "11 publicadas y 8 preliminares", "visible clinic status missing")
     check(automation_status(digest) == "modo sombra activo; auto-publicación apagada", "automation status missing")
     check(specialist_status(digest) == "2/19 fichas con especialistas; 17 pendientes", "specialist status missing")
+    check(location_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 sin Maps de clínica; 3 sin valoraciones; 0 sin dirección", "location status missing")
     check(source_monitoring_status(digest) == "todo reciente; próxima revisión 2026-09-29 09:58", "source monitoring missing")
     check(daniel_now_status(digest).startswith("Trabajar Sensabell"), "Daniel next step should use clinic workgroup")
     check(codex_can_continue_status(digest) == "mejorar panel, extractores y checks sin crear tarjetas nuevas", "Codex safe next step missing")
@@ -143,6 +153,7 @@ def main():
     check("Web pública: 11 publicadas y 8 preliminares" in output, "public website line missing")
     check("Bandeja: 48 revisiones abiertas; cerca del freno: 48/50 abiertas" in output, "backlog line missing")
     check("Trazabilidad de fuentes: 11/19 fichas con fuente" in output, "source coverage line missing")
+    check("Sedes y ubicaciones: 3 sedes explícitas; 1 clínica multisede; 2 sin Maps de clínica" in output, "location coverage line missing")
     check("Ciclo autónomo: activo en sombra" in output, "shadow cycle line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")

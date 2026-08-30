@@ -12,6 +12,7 @@ from admin_digest import (
     as_int,
     first_clinic_workgroup,
     google_link_review_status,
+    location_coverage_status,
     load_digest,
     maturity_blockers,
     next_action_label,
@@ -87,6 +88,10 @@ def specialist_status(digest: dict[str, Any]) -> str:
     if not visible:
         return "sin fichas visibles medidas"
     return f"{with_specialists}/{visible} fichas con especialistas; {without_specialists} pendientes"
+
+
+def location_status(digest: dict[str, Any]) -> str:
+    return location_coverage_status(digest)
 
 
 def plan_phase(digest: dict[str, Any]) -> str:
@@ -172,6 +177,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         "## Carriles del plan",
         "- Centro de control: operativo; Daniel puede revisar, editar, publicar manualmente y ver prioridades.",
         f"- Trazabilidad de fuentes: {source_coverage_status(digest)}.",
+        f"- Sedes y ubicaciones: {location_status(digest)}.",
         f"- Ciclo autónomo: activo en sombra; siguiente acción del sistema: {next_action_label(digest)}.",
         f"- Monitorización: {source_monitoring_status(digest)}.",
         f"- Coste Netlify: publicación {publication_control_status(digest)}.",

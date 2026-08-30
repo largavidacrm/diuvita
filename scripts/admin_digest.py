@@ -12,7 +12,11 @@ import sys
 from datetime import datetime
 from typing import Any
 
-from google_maps_url_rules import google_maps_profile_link_predicate
+from google_maps_url_rules import (
+    coalesced_jsonb_text_sql,
+    google_maps_profile_link_predicate,
+    google_maps_profile_url_sql,
+)
 from submit_discovery_candidates import (
     get_default_admin_email,
     load_env_file,
@@ -47,6 +51,9 @@ def parse_timestamp(value: Any) -> str:
 
 def load_digest(admin_email: str, limit: int, local_env: dict[str, str]) -> dict[str, Any]:
     has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
+    location_maps_check = google_maps_profile_url_sql(
+        coalesced_jsonb_text_sql("location.value", ("maps_url", "google_maps_url", "map_url"))
+    )
     sql = f"""
 with claims as (
   select set_config(
@@ -915,6 +922,54 @@ profile_next_target as (
     ),
     '{{}}'::jsonb
   ) as data
+),
+visible_location_rows as (
+  select
+    c.id,
+    location.ordinality as location_index,
+    nullif(btrim(coalesce(
+      location.value ->> 'address',
+      location.value ->> 'direccion',
+      location.value ->> 'dirección',
+      case
+        when jsonb_typeof(location.value) = 'string'
+          then location.value #>> '{{}}'
+        else ''
+      end
+    )), '') is not null as has_address,
+    {location_maps_check} as has_google_maps_profile,
+    nullif(btrim(coalesce(
+      location.value ->> 'google_reviews_url',
+      location.value ->> 'reviews_url',
+      location.value ->> 'valoraciones_url',
+      ''
+    )), '') is not null as has_google_reviews
+  from public.clinics c
+  cross join lateral jsonb_array_elements(
+    case
+      when jsonb_typeof(c.current_data -> 'locations') = 'array'
+        then c.current_data -> 'locations'
+      else '[]'::jsonb
+    end
+  ) with ordinality as location(value, ordinality)
+  where c.status in ('published', 'preliminary')
+),
+visible_location_checks as (
+  select
+    *,
+    count(*) over (partition by id) as clinic_location_count
+  from visible_location_rows
+),
+location_coverage as (
+  select jsonb_build_object(
+    'clinics_with_locations', count(distinct id),
+    'multi_location_clinics', count(distinct id) filter (where clinic_location_count > 1),
+    'total_locations', count(*),
+    'locations_missing_address', count(*) filter (where not has_address),
+    'locations_missing_google_maps_profile', count(*) filter (where not has_google_maps_profile),
+    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews)
+  ) as data
+  from visible_location_checks
 )
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
@@ -939,6 +994,7 @@ select jsonb_build_object(
   'specialist_next_target', (select data from specialist_next_target),
   'profile_completeness', (select data from profile_completeness),
   'profile_next_target', (select data from profile_next_target),
+  'location_coverage', (select data from location_coverage),
   'generated_at', now()
 );
 """
@@ -1131,6 +1187,24 @@ def source_coverage_status(digest: dict[str, Any]) -> str:
     )
 
 
+def location_coverage_status(digest: dict[str, Any]) -> str:
+    coverage = digest.get("location_coverage") or {}
+    total = as_int(coverage.get("total_locations"))
+    if not total:
+        return "0 sedes explícitas"
+    multi = as_int(coverage.get("multi_location_clinics"))
+    missing_maps = as_int(coverage.get("locations_missing_google_maps_profile"))
+    missing_reviews = as_int(coverage.get("locations_missing_google_reviews"))
+    missing_address = as_int(coverage.get("locations_missing_address"))
+    return (
+        f"{total} sedes explícitas; "
+        f"{multi} {plural(multi, 'clínica multisede', 'clínicas multisede')}; "
+        f"{missing_maps} sin Maps de clínica; "
+        f"{missing_reviews} sin valoraciones; "
+        f"{missing_address} sin dirección"
+    )
+
+
 def next_action_label(digest: dict[str, Any]) -> str:
     failed = digest.get("recent_failed_jobs") or []
     open_reviews = digest.get("open_reviews") or []
@@ -1234,6 +1308,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     source_coverage = digest.get("source_coverage") or {}
     specialist_coverage = digest.get("specialist_coverage") or {}
     profile_completeness = digest.get("profile_completeness") or {}
+    location_coverage = digest.get("location_coverage") or {}
     backlog_quality = digest.get("review_backlog_quality") or {}
 
     output: list[str] = []
@@ -1264,6 +1339,8 @@ def format_digest(digest: dict[str, Any]) -> str:
         output.append(line("Fichas sin campos pendientes medidos", f"{completeness_ready}/{completeness_visible}"))
         output.append(line("Campo mas pendiente", top_pending_profile_field(digest)))
         output.append(line("Siguiente ficha", next_profile_action(digest)))
+    if location_coverage:
+        output.append(line("Sedes", location_coverage_status(digest)))
     output.append("")
 
     output.append("## Automatizacion")
@@ -1327,6 +1404,8 @@ def format_digest(digest: dict[str, Any]) -> str:
     if source_visible:
         output.append(line("Cobertura fuentes", source_coverage_status(digest)))
         output.append(line("Siguiente fuente", next_source_action(digest)))
+    if location_coverage:
+        output.append(line("Cobertura sedes", location_coverage_status(digest)))
     if due_sources:
         output.append(line("Mas antigua pendiente", parse_timestamp(source_monitoring.get("oldest_due_at"))))
     else:
