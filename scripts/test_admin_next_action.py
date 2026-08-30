@@ -36,9 +36,14 @@ def main() -> None:
         "function globalPlanNextDetailText",
         "function countOpenReviewsByType",
         "function openGlobalPlanNext",
+        "function googleLinkReviewRows",
+        "function firstGoogleLinkReview",
+        "function openGoogleLinksTarget",
         'id="openPriorityReviewBtn"',
+        'id="openGoogleLinksBtn"',
         "Abrir siguiente",
         "Abrir prioridad",
+        "Abrir Google Maps",
         "Plan global",
         "Punto actual",
         "Qué mirar primero",
@@ -71,6 +76,7 @@ def main() -> None:
         "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
         "var nextReview = firstActionReview(rows, 0);",
         "var nextReview = firstActionReview(filteredReviewRows(), 0);",
+        'el("openGoogleLinksBtn").addEventListener("click", openGoogleLinksTarget);',
     ]:
         check(marker in index, f"missing next-action marker: {marker}")
 

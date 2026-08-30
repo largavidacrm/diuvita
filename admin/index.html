@@ -469,6 +469,7 @@
               <button class="btn secondary hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
               <button class="btn secondary hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
               <button class="btn secondary hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
+              <button class="btn secondary hidden" id="openGoogleLinksBtn" type="button">Abrir Google Maps</button>
               <button class="btn secondary hidden" id="openSpecialistTargetBtn" type="button">Abrir especialistas</button>
               <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
               <span class="pill" id="reviewCount">0 abiertas</span>
@@ -1949,6 +1950,33 @@
           (parseDateValue(a.created_at) || new Date(8640000000000000)) -
           (parseDateValue(b.created_at) || new Date(8640000000000000));
       })[0];
+    }
+
+    function googleLinkReviewRows(rows) {
+      return (rows || []).filter(reviewHasGoogleLinkProposal);
+    }
+
+    function firstGoogleLinkReview(rows) {
+      var matches = googleLinkReviewRows(rows);
+      if (!matches.length) return null;
+      return firstActionReview(matches, 0) || matches.slice().sort(function (a, b) {
+        return Number(b.priority || 0) - Number(a.priority || 0) ||
+          (parseDateValue(a.created_at) || new Date(8640000000000000)) -
+          (parseDateValue(b.created_at) || new Date(8640000000000000));
+      })[0];
+    }
+
+    function openGoogleLinksTarget() {
+      var match = firstGoogleLinkReview(reviewCache);
+      if (!match) return;
+      setInput("reviewSearch", "");
+      el("reviewTypeFilter").value = "";
+      el("reviewPriorityFilter").value = "";
+      reviewDuplicateFilter = false;
+      reviewClinicGroupFilter = "";
+      reviewGoogleLinksFilter = true;
+      renderReviews();
+      openReviewEditor(match.id);
     }
 
     function openSpecialistTarget() {
@@ -4084,6 +4112,7 @@
       var duplicateReview = firstDuplicateReview(reviewCache);
       var sourceReview = firstSourceTargetReview(reviewCache);
       var sourceTarget = sourceCoverageCache && sourceCoverageCache.nextTarget;
+      var googleLinkReview = firstGoogleLinkReview(reviewCache);
       var specialistReview = firstSpecialistTargetReview(reviewCache);
       var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
       renderReviewFilterChips();
@@ -4097,6 +4126,10 @@
       el("openSourceTargetBtn").textContent = sourceTarget
         ? (sourceReview ? "Abrir fuente: " : "Filtrar fuente: ") + sourceTargetSubject(sourceTarget)
         : "Abrir fuente";
+      show(el("openGoogleLinksBtn"), Boolean(googleLinkReview));
+      el("openGoogleLinksBtn").textContent = googleLinkReview
+        ? "Abrir Google Maps: " + reviewPrimarySubject(googleLinkReview)
+        : "Abrir Google Maps";
       show(el("openSpecialistTargetBtn"), Boolean(specialistTarget));
       el("openSpecialistTargetBtn").textContent = specialistTarget
         ? (specialistReview ? "Abrir especialistas: " : "Filtrar especialistas: ") + specialistTargetSubject(specialistTarget)
@@ -4750,6 +4783,7 @@
         if (duplicateReview) openReviewEditor(duplicateReview.id);
       });
       el("openSourceTargetBtn").addEventListener("click", openSourceTarget);
+      el("openGoogleLinksBtn").addEventListener("click", openGoogleLinksTarget);
       el("openSpecialistTargetBtn").addEventListener("click", openSpecialistTarget);
       el("globalPlanOpenNextBtn").addEventListener("click", openGlobalPlanNext);
       el("reviewsBody").addEventListener("click", function (event) {
