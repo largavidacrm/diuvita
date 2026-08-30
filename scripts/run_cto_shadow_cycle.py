@@ -54,6 +54,17 @@ STEP_ITEM_KEYS = {
         "source_url",
         "source_type",
     ),
+    "discover_clinic_team_sources": (
+        "clinic_slug",
+        "clinic_name",
+        "city",
+        "status",
+        "url",
+        "label",
+        "score",
+        "already_stored",
+        "source_type",
+    ),
     "hydrate_source_records": ("source_url", "status"),
     "monitor_source_changes": ("source_url", "clinic_name", "status", "hash"),
     "process_source_change_reviews": (
@@ -115,6 +126,7 @@ STEP_ITEM_KEYS = {
 STEP_LABELS = {
     "capture_enrichment_review_claims": "captura de claims desde propuestas",
     "seed_visible_clinic_sources": "siembra de webs oficiales como fuentes",
+    "discover_clinic_team_sources": "descubrimiento de paginas de equipo",
     "hydrate_source_records": "hidratacion de fuentes",
     "monitor_source_changes": "vigilancia de cambios de fuentes",
     "process_source_change_reviews": "conversion de cambios en propuestas",
@@ -437,6 +449,28 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ["seed_visible_clinic_sources.py", "--limit", str(args.seed_source_limit), "--json", *apply_flag],
             45,
         ),
+    ]
+    if args.team_source_limit:
+        team_source_args = [
+            "discover_clinic_team_sources.py",
+            "--limit",
+            str(args.team_source_limit),
+            "--timeout",
+            str(args.fetch_timeout),
+            "--max-links-per-clinic",
+            str(args.team_source_max_links),
+            *apply_flag,
+        ]
+        if args.team_source_clinic_slug:
+            team_source_args.extend(["--clinic-slug", args.team_source_clinic_slug])
+        steps.append(
+            (
+                "discover_clinic_team_sources",
+                team_source_args,
+                max(90, args.team_source_limit * args.fetch_timeout + 30),
+            )
+        )
+    steps.extend([
         (
             "hydrate_source_records",
             [
@@ -473,7 +507,7 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ],
             max(90, args.source_change_limit * args.fetch_timeout + 30),
         ),
-    ]
+    ])
     if args.source_shadow_limit:
         source_shadow_args = [
             "submit_source_shadow_reviews.py",
@@ -571,6 +605,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--apply-safe", action="store_true", help="Run safe internal writes; never publish or edit clinics.")
     parser.add_argument("--review-limit", type=int, default=100)
     parser.add_argument("--seed-source-limit", type=int, default=20)
+    parser.add_argument("--team-source-limit", type=int, default=0, help="Optional discovery of official team/about source pages.")
+    parser.add_argument("--team-source-clinic-slug", help="Limit optional team-source discovery to one clinic.")
+    parser.add_argument("--team-source-max-links", type=int, default=3)
     parser.add_argument("--source-limit", type=int, default=40)
     parser.add_argument("--monitor-limit", type=int, default=40)
     parser.add_argument("--source-change-limit", type=int, default=10)
@@ -618,6 +655,7 @@ def main() -> int:
     if min(
         args.review_limit,
         args.seed_source_limit,
+        args.team_source_limit,
         args.source_limit,
         args.monitor_limit,
         args.source_change_limit,
@@ -632,6 +670,8 @@ def main() -> int:
         args.max_open_reviews_for_safe_writes,
     ) < 0:
         raise SystemExit("limits must be zero or greater.")
+    if args.team_source_max_links < 1:
+        raise SystemExit("--team-source-max-links must be at least 1.")
     if min(
         args.review_limit,
         args.seed_source_limit,

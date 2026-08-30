@@ -75,6 +75,9 @@ Already built:
 - Blocking field claims can be routed into internal quality-review cards without editing clinic data.
 - Blocking field claims have a read-only Daniel brief so the first manual review target is clearer.
 - Visible clinics with an existing official website can now get a matching internal source record before hydration, without editing profile fields or publishing.
+- Visible clinics can now discover same-domain team/about pages as internal
+  sources before specialist extraction, without editing profile fields or
+  publishing.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
@@ -105,6 +108,8 @@ Not yet mature:
 - Deterministic field rules exist locally, but low-risk auto-approval stays disabled until accuracy is measured.
 - Doctor, pricing, treatment and SEO workflows.
 - Specialist coverage can now be measured, but publication of new professional details still needs manual review.
+- Team/about source discovery exists for visible clinics; it is optional and
+  should be used in small batches before source-shadow extraction.
 - Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
 - Daily/weekly digest and notification cadence.
 - Rollback controls in the admin UI need operational usage, but the restore path and preview now exist.

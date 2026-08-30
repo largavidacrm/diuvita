@@ -66,6 +66,27 @@ def main():
     check(compact_seed_sources["items_count"] == 1, "seed source count should be kept")
     check("metadata" not in compact_seed_sources["sample_items"][0], "large seed metadata should be omitted")
     check("source_url" in compact_seed_sources["sample_items"][0], "seed source URL should be kept")
+    compact_team_sources = compact_summary("discover_clinic_team_sources", {
+        "mode": "dry_run",
+        "team_sources_found": 1,
+        "items": [
+            {
+                "clinic_slug": "arvila-magna",
+                "clinic_name": "Clínica Arvila Magna",
+                "city": "Barcelona",
+                "status": "published",
+                "url": "https://arvilamagna.example/equipo/",
+                "label": "Equipo",
+                "score": 30,
+                "already_stored": False,
+                "source_type": "official_team_page",
+                "metadata": {"large": True},
+            }
+        ],
+    })
+    check(compact_team_sources["items_count"] == 1, "team source count should be kept")
+    check("metadata" not in compact_team_sources["sample_items"][0], "large team source metadata should be omitted")
+    check("url" in compact_team_sources["sample_items"][0], "team source URL should be kept")
     compact_top_sources = compact_summary("measure_source_snapshot_retention", {
         "summary": {"total_snapshots": 2},
         "top_sources": [
@@ -283,6 +304,9 @@ def main():
         apply_safe=False,
         review_limit=2,
         seed_source_limit=12,
+        team_source_limit=0,
+        team_source_clinic_slug=None,
+        team_source_max_links=3,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,
@@ -307,6 +331,7 @@ def main():
     ))
     names = [step[0] for step in steps]
     check("seed_visible_clinic_sources" in names, "official source seeding step missing")
+    check("discover_clinic_team_sources" not in names, "team source discovery should be off by default")
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
@@ -344,6 +369,9 @@ def main():
         apply_safe=True,
         review_limit=2,
         seed_source_limit=12,
+        team_source_limit=2,
+        team_source_clinic_slug="arvila-magna",
+        team_source_max_links=5,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,
@@ -368,7 +396,13 @@ def main():
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
+    team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
     check("--apply" in seed_apply_step[1], "source seeding should follow safe apply mode")
+    check("--apply" in team_source_step[1], "team source discovery should follow safe apply mode")
+    check("--clinic-slug" in team_source_step[1] and "arvila-magna" in team_source_step[1], "team source clinic slug should pass through")
+    check("--max-links-per-clinic" in team_source_step[1] and "5" in team_source_step[1], "team source max links should pass through")
+    check(optional_steps.index(seed_apply_step) < optional_steps.index(team_source_step), "team source discovery should run after source seeding")
+    check(optional_steps.index(team_source_step) < optional_steps.index(source_shadow_step), "team source discovery should run before source shadow reviews")
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")
