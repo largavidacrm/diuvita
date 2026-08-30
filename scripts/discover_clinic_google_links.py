@@ -322,6 +322,19 @@ def clinic_name_score(candidate: GoogleLinkCandidate, clinic: dict[str, Any] | N
     return sum(1 for term in clinic_name_terms(clinic) if term and term in haystack)
 
 
+def has_direct_place_identifier(candidate: GoogleLinkCandidate) -> bool:
+    parsed = urlparse(candidate.url)
+    host = google_host(candidate.url)
+    query = parse_qs(parsed.query)
+    haystack = fold(" ".join([parsed.path, parsed.query]))
+    return bool(
+        host in {"maps.app.goo.gl", "g.page"} or
+        (host == "goo.gl" and parsed.path.lower().startswith("/maps")) or
+        any(key in query for key in ("cid", "placeid", "query_place_id")) or
+        "place_id:" in haystack
+    )
+
+
 def looks_like_address_label(label: str) -> bool:
     return bool(ADDRESS_LABEL_RE.search(label or ""))
 
@@ -346,7 +359,7 @@ def best_links(candidates: list[GoogleLinkCandidate], clinic: dict[str, Any] | N
                 clinic
                 and kind == "maps_url"
                 and not clinic_name_score(ranked[0], clinic)
-                and looks_like_address_label(ranked[0].label)
+                and (looks_like_address_label(ranked[0].label) or not has_direct_place_identifier(ranked[0]))
             ):
                 continue
             result[kind] = ranked[0].url

@@ -40,3 +40,9 @@ clinic name, city and country, not by street address alone.
 Discovery rule: a Google Maps link whose visible text looks only like a street
 address is not enough unless the URL or label also contains the clinic name.
 Those cases should be checked manually before becoming public profile links.
+
+If the link label is generic, such as "Google Maps", and the URL looks like a
+street-address `/maps/place/` URL instead of a named clinic profile, it is also
+left for manual review. Generic labels are accepted only when the URL has a
+strong direct-place signal such as `place_id`, `cid` or a Google short place
+link.

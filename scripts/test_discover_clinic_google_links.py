@@ -9,6 +9,7 @@ from discover_clinic_google_links import (
     dedupe_google_candidates,
     discover_google_links,
     discover_secondary_pages,
+    has_direct_place_identifier,
     process_clinic,
     review_payload,
 )
@@ -56,6 +57,27 @@ def main():
         "city": "Madrid",
     })["maps_url"].startswith("https://www.google.com/maps/place/Example+Longevity+Clinic/"), "named Maps profiles should still be proposed")
     check(len(dedupe_google_candidates(named_place + named_place)) == 1, "duplicate candidates should be collapsed")
+
+    generic_label_address_place = discover_google_links(
+        "https://exampleclinic.test/",
+        '<a href="https://www.google.com/maps/place/Calle+Sagasta+8,+Malaga">Google Maps</a>',
+    )
+    check(not best_links(generic_label_address_place, clinic={
+        "display_name": "Example Longevity Clinic",
+        "slug": "example-clinic",
+        "city": "Málaga",
+    }), "generic-label address place URLs should not be proposed as clinic profiles")
+
+    place_id_link = discover_google_links(
+        "https://exampleclinic.test/",
+        '<a href="https://www.google.com/maps/place/?q=place_id:abc123">Google Maps</a>',
+    )
+    check(has_direct_place_identifier(place_id_link[0]), "place-id links should be treated as direct place identifiers")
+    check(best_links(place_id_link, clinic={
+        "display_name": "Example Longevity Clinic",
+        "slug": "example-clinic",
+        "city": "Madrid",
+    })["maps_url"].startswith("https://www.google.com/maps/place/"), "place-id Maps links should still be proposed")
 
     noisy = discover_google_links(
         "https://exampleclinic.test/",
