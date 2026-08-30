@@ -37,6 +37,7 @@ En **Estado del sistema**, mira especialmente:
 - **Fichas completas**: muestra cuántas fichas visibles no tienen campos importantes pendientes.
 - **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
 - **Campo más pendiente**: resume qué tipo de dato falta en más fichas visibles.
+- **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.
 - **Tarjetas duplicadas**: muestra cuántas tarjetas forman parte de esas repeticiones.
 - **Web pública**: confirma si la web visible responde correctamente desde el panel.

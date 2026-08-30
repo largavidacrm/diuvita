@@ -28,6 +28,7 @@ CHECKS = [
             "Fichas completas",
             "Campo más pendiente",
             "Duplicados mejoras",
+            "Freno bandeja",
             "Web pública",
             "Caso prioritario",
             "openPriorityReviewBtn",

@@ -18,6 +18,7 @@ def main() -> None:
         'id="relatedReviewsPanel"',
         'id="relatedReviewsList"',
         "function reviewBacklogQuality",
+        "function reviewBacklogGuardStatus",
         "function duplicateEnrichmentClinicIds",
         "function isDuplicateEnrichmentReview",
         "function relatedOpenReviews",
@@ -34,6 +35,10 @@ def main() -> None:
         "Varias propuestas",
         "Duplicados mejoras",
         "Tarjetas duplicadas",
+        "Freno bandeja",
+        "SAFE_WRITE_REVIEW_BACKLOG_LIMIT",
+        "Cerca · ",
+        "Activo · ",
         "Sin duplicados",
     ]:
         check(marker in index, f"missing admin review backlog marker: {marker}")

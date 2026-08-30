@@ -551,6 +551,7 @@
     var MAX_MONITOR_CADENCE_DAYS = 90;
     var SNAPSHOT_RETENTION_DAYS = 180;
     var SNAPSHOT_KEEP_LATEST = 3;
+    var SAFE_WRITE_REVIEW_BACKLOG_LIMIT = 50;
     var PUBLIC_HEALTH_CHECKS = [
       { label: "Inicio", path: "/", markers: ["Diuvita", "Buscar clínica"] },
       { label: "Ficha", path: "/clinica/the-long-game/", markers: ["profile-jump", "Especialistas publicados por la clínica"] },
@@ -1122,6 +1123,14 @@
       }, { duplicateClinics: 0, duplicateReviews: 0 });
     }
 
+    function reviewBacklogGuardStatus(openCount) {
+      var count = Number(openCount || 0);
+      var limit = SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
+      if (count >= limit) return { label: "Activo · " + count + "/" + limit, tone: "danger-text" };
+      if (limit - count <= 5) return { label: "Cerca · " + count + "/" + limit, tone: "warning-text" };
+      return { label: "Normal · " + count + "/" + limit, tone: "" };
+    }
+
     function duplicateEnrichmentClinicIds(rows) {
       var grouped = {};
       (rows || []).forEach(function (row) {
@@ -1267,6 +1276,7 @@
         ? "—"
         : completeness.withPendingFields + " con pendientes";
       var backlogQuality = reviewBacklogQuality(openReviews || []);
+      var backlogGuard = reviewBacklogGuardStatus(reviews.open || (openReviews || []).length);
       var duplicateReviewLabel = backlogQuality.duplicateClinics
         ? backlogQuality.duplicateClinics + " clínicas"
         : "Sin duplicados";
@@ -1299,6 +1309,7 @@
         systemItem("Retención capturas", retentionLabel, retention.unavailable || retention.cleanupCandidates ? "warning-text" : ""),
         systemItem("Inventario capturas", retentionInventory),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
+        systemItem("Freno bandeja", backlogGuard.label, backlogGuard.tone),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
         systemItem("Especialistas", specialistLabel, specialists.unavailable || specialists.withoutSpecialists ? "warning-text" : ""),
