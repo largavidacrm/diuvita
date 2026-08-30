@@ -677,11 +677,19 @@
       };
     }
 
+    function isNoisyTitleIdentityClaim(row) {
+      return row
+        && row.field_path === "identity.canonical_name"
+        && text(row.verification_status).toLowerCase() === "rejected"
+        && Number(row.confidence || 0) <= 0.6
+        && text(row.agent_name) === "diuvita-shadow-extractor";
+    }
+
     async function loadClaimQuality() {
       var quality = emptyClaimQuality();
       var result = await client
         .from("field_claims")
-        .select("verification_status, source_record_id")
+        .select("field_path, verification_status, source_record_id, confidence, agent_name")
         .limit(2000);
 
       if (result.error) {
@@ -690,6 +698,7 @@
       }
 
       (result.data || []).forEach(function (row) {
+        if (isNoisyTitleIdentityClaim(row)) return;
         var status = text(row.verification_status).toLowerCase();
         if (status === "conflict") quality.conflict += 1;
         if (status === "rejected") quality.rejected += 1;

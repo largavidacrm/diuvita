@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """Checks for blocking-claim review card creation."""
 
-from submit_blocking_claim_reviews import create_review_sql, issue_label, priority_for_claims, review_payload
+from submit_blocking_claim_reviews import (
+    NON_NOISY_BLOCKING_CLAIM_SQL,
+    create_review_sql,
+    is_noisy_title_identity_claim,
+    issue_label,
+    priority_for_claims,
+    resolve_obsolete_reviews,
+    review_payload,
+    uuid_array_sql,
+)
 
 
 def check(condition, message):
@@ -46,6 +55,16 @@ def main():
     sql = create_review_sql(group, "admin@example.com")
 
     check(priority_for_claims(group["claims"]) == 85, "rejected claim should be high priority")
+    check(
+        is_noisy_title_identity_claim({
+            "field_path": "identity.canonical_name",
+            "verification_status": "rejected",
+            "confidence": 0.55,
+            "agent_name": "diuvita-shadow-extractor",
+        }),
+        "low-confidence title identity claims should be classified as noise",
+    )
+    check("diuvita-shadow-extractor" in NON_NOISY_BLOCKING_CLAIM_SQL, "SQL noise filter missing agent guard")
     check(issue_label(group["claims"][0]) == "Claim rechazado: identity.canonical_name", "rejected label missing")
     check(issue_label(group["claims"][1]) == "Claim sin fuente: contact.phone", "without-source label missing")
     check(payload["quality_context"] == "blocking_claims", "quality context missing")
@@ -56,6 +75,8 @@ def main():
     check("public.clinics" in sql and "public.review_queue" in sql, "expected tables missing")
     check("admin_update_clinic" not in sql, "tool must not edit clinic profiles")
     check("published" not in sql, "tool must not publish clinics")
+    check(uuid_array_sql([]) == "array[]::uuid[]", "empty uuid array should be valid SQL")
+    check(callable(resolve_obsolete_reviews), "obsolete review cleanup should be available")
     print("OK blocking claims: internal review card")
 
 

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from admin_digest import as_int, format_review_type, parse_timestamp
+from submit_blocking_claim_reviews import NON_NOISY_BLOCKING_CLAIM_SQL
 from submit_discovery_candidates import (
     get_default_admin_email,
     load_env_file,
@@ -100,8 +101,11 @@ blocked_claims as (
     from public.field_claims fc
     left join public.clinics c on c.id = fc.clinic_id
     left join public.source_records sr on sr.id = fc.source_record_id
-    where fc.verification_status in ('conflict', 'rejected')
-       or fc.source_record_id is null
+    where (
+        fc.verification_status in ('conflict', 'rejected')
+        or fc.source_record_id is null
+      )
+      and {NON_NOISY_BLOCKING_CLAIM_SQL}
     order by severity desc, fc.created_at desc
     limit 20
   ) items

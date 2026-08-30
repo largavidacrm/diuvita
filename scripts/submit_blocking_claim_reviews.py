@@ -22,6 +22,14 @@ from submit_discovery_candidates import (
 
 TOOL_NAME = "diuvita-blocking-claim-reviewer"
 TOOL_VERSION = "2026-08-30"
+NON_NOISY_BLOCKING_CLAIM_SQL = """
+not (
+  fc.field_path = 'identity.canonical_name'
+  and fc.verification_status = 'rejected'
+  and fc.confidence <= 0.6
+  and coalesce(fc.agent_name, '') = 'diuvita-shadow-extractor'
+)
+"""
 
 
 def as_int(value: Any) -> int:
@@ -29,6 +37,19 @@ def as_int(value: Any) -> int:
         return int(value or 0)
     except (TypeError, ValueError):
         return 0
+
+
+def is_noisy_title_identity_claim(claim: dict[str, Any]) -> bool:
+    try:
+        confidence = float(claim.get("confidence") or 0)
+    except (TypeError, ValueError):
+        confidence = 0
+    return (
+        str(claim.get("field_path") or "") == "identity.canonical_name"
+        and str(claim.get("verification_status") or "").lower() == "rejected"
+        and confidence <= 0.6
+        and str(claim.get("agent_name") or "") == "diuvita-shadow-extractor"
+    )
 
 
 def priority_for_claims(claims: list[dict[str, Any]]) -> int:
@@ -100,6 +121,7 @@ with blocked as (
       else fc.verification_status
     end as blocker_status,
     fc.confidence,
+    fc.agent_name,
     fc.source_record_id,
     fc.created_at,
     c.slug as clinic_slug,
@@ -117,8 +139,11 @@ with blocked as (
   from public.field_claims fc
   join public.clinics c on c.id = fc.clinic_id
   left join public.source_records sr on sr.id = fc.source_record_id
-  where fc.verification_status in ('conflict', 'rejected')
-     or fc.source_record_id is null
+  where (
+      fc.verification_status in ('conflict', 'rejected')
+      or fc.source_record_id is null
+    )
+    and {NON_NOISY_BLOCKING_CLAIM_SQL}
 ),
 grouped as (
   select
@@ -137,6 +162,7 @@ grouped as (
         'verification_status', verification_status,
         'blocker_status', blocker_status,
         'confidence', confidence,
+        'agent_name', agent_name,
         'source_record_id', source_record_id,
         'source_url', source_url,
         'created_at', created_at
@@ -246,6 +272,57 @@ def create_review(group: dict[str, Any], admin_email: str, local_env: dict[str, 
     return row
 
 
+def uuid_array_sql(values: list[str]) -> str:
+    clean = [value for value in values if value]
+    if not clean:
+        return "array[]::uuid[]"
+    return "array[" + ", ".join(sql_literal(value) + "::uuid" for value in clean) + "]::uuid[]"
+
+
+def resolve_obsolete_reviews(groups: list[dict[str, Any]], admin_email: str, local_env: dict[str, str]) -> list[dict[str, Any]]:
+    current_ids = [
+        str(group.get("clinic_id"))
+        for group in groups
+        if str(group.get("clinic_id") or "").strip()
+    ]
+    sql = f"""
+with current_ids as (
+  select unnest({uuid_array_sql(current_ids)}) as clinic_id
+),
+obsolete as (
+  select rq.id
+  from public.review_queue rq
+  where rq.review_type = 'clinic_quality_audit'
+    and rq.status = 'open'
+    and rq.payload ->> 'quality_context' = 'blocking_claims'
+    and not exists (
+      select 1
+      from current_ids ci
+      where ci.clinic_id = rq.clinic_id
+    )
+),
+updated as (
+  update public.review_queue rq
+  set
+    status = 'dismissed',
+    resolution = jsonb_strip_nulls(jsonb_build_object(
+      'action', 'obsolete_blocking_claim_review_dismissed',
+      'note', 'Cerrada automaticamente porque los claims restantes son ruido tecnico de titulo de pagina o ya no son bloqueantes.',
+      'actor_email', {sql_literal(admin_email)},
+      'resolved_at', now()
+    )),
+    resolved_by = {sql_literal(admin_email)},
+    resolved_at = now()
+  from obsolete
+  where rq.id = obsolete.id
+  returning rq.id, rq.title
+)
+select coalesce(jsonb_agg(to_jsonb(updated.*)), '[]'::jsonb)
+from updated;
+"""
+    return json.loads(run_psql(sql, local_env) or "[]")
+
+
 def record_event(results: list[dict[str, Any]], admin_email: str, local_env: dict[str, str]) -> None:
     inserted = [item.get("clinic_slug") for item in results if item.get("status") == "inserted"]
     updated = [item.get("clinic_slug") for item in results if item.get("status") == "updated"]
@@ -283,6 +360,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=20)
     parser.add_argument("--admin-email", help="Admin email used for assignment/audit.")
     parser.add_argument("--apply", action="store_true", help="Create or refresh internal review cards.")
+    parser.add_argument("--resolve-obsolete", action="store_true", help="Dismiss open blocking-claim cards that no longer have active blocking claims.")
     return parser.parse_args()
 
 
@@ -311,6 +389,7 @@ def main() -> int:
         return 0
 
     results = [create_review(group, admin_email, local_env) for group in groups]
+    obsolete = resolve_obsolete_reviews(groups, admin_email, local_env) if args.resolve_obsolete else []
     if results:
         record_event(results, admin_email, local_env)
     print(json.dumps({
@@ -319,7 +398,9 @@ def main() -> int:
         "inserted": sum(1 for item in results if item.get("status") == "inserted"),
         "updated": sum(1 for item in results if item.get("status") == "updated"),
         "missing": sum(1 for item in results if item.get("status") == "missing"),
+        "obsolete_dismissed": len(obsolete),
         "items": results,
+        "obsolete": obsolete,
     }, ensure_ascii=False, indent=2))
     return 0
 

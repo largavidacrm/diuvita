@@ -8,6 +8,7 @@ import sys
 from typing import Any
 
 from admin_digest import as_int, parse_timestamp, plural
+from submit_blocking_claim_reviews import NON_NOISY_BLOCKING_CLAIM_SQL
 from submit_discovery_candidates import load_env_file, run_psql
 
 
@@ -68,8 +69,11 @@ coverage_rows as (
       count(*) filter (where fc.source_record_id is not null) as claims_with_source,
       count(*) filter (where fc.source_record_id is null) as claims_without_source,
       count(*) filter (
-        where fc.verification_status in ('conflict', 'rejected')
-           or fc.source_record_id is null
+        where (
+          fc.verification_status in ('conflict', 'rejected')
+          or fc.source_record_id is null
+        )
+        and {NON_NOISY_BLOCKING_CLAIM_SQL}
       ) as blocking_claims
     from public.field_claims fc
     where fc.clinic_id = c.id

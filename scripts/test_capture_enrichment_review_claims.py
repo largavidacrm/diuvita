@@ -29,6 +29,13 @@ def main():
                 "confidence": 0.5,
                 "verifier_verdict": "conflict",
             },
+            {
+                "field_path": "identity.canonical_name",
+                "value": "Clinic was born from a passion for ageing well",
+                "confidence": 0.55,
+                "verifier_verdict": "rejected",
+                "agent_name": "diuvita-shadow-extractor",
+            },
         ],
         "proposed_fields": {
             "summary": "Clinic summary",
@@ -47,6 +54,7 @@ def main():
     check(by_path["summary"]["value"] == "Clinic summary", "summary mapping missing")
     check(by_path["services.list"]["value"] == ["VO2 max", "DEXA"], "services mapping missing")
     check(by_path["professionals.published"]["value"] == ["Dr. Example"], "professionals mapping missing")
+    check("identity.canonical_name" not in by_path, "noisy title identity claim should be suppressed")
     check(len(claims) == 5, "duplicate claim should not be added twice")
     print("OK capture: enrichment review claims")
 

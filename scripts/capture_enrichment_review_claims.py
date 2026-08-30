@@ -18,6 +18,7 @@ from submit_discovery_candidates import (
     run_psql,
     sql_literal,
 )
+from submit_blocking_claim_reviews import is_noisy_title_identity_claim
 
 
 AGENT_NAME = "diuvita-profile-enrichment"
@@ -130,17 +131,20 @@ def field_claims(payload: dict[str, Any]) -> list[dict[str, Any]]:
             status = "rejected"
         else:
             status = normalized_status(raw.get("verifier_verdict") or raw.get("verification_status"))
+        candidate_claim = {
+            "field_path": field_path,
+            "value": raw.get("value"),
+            "confidence": raw.get("confidence"),
+            "verification_status": status,
+            "agent_name": raw.get("agent_name") or AGENT_NAME,
+            "agent_version": raw.get("agent_version") or AGENT_VERSION,
+        }
+        if is_noisy_title_identity_claim(candidate_claim):
+            continue
         add_claim(
             claims,
             seen,
-            {
-                "field_path": field_path,
-                "value": raw.get("value"),
-                "confidence": raw.get("confidence"),
-                "verification_status": status,
-                "agent_name": raw.get("agent_name") or AGENT_NAME,
-                "agent_version": raw.get("agent_version") or AGENT_VERSION,
-            },
+            candidate_claim,
         )
 
     proposed = payload.get("proposed_fields") or {}
