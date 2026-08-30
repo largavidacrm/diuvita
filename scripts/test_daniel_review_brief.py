@@ -57,6 +57,20 @@ def sample_digest():
             "max_priority": 60,
             "oldest_created_at": "2026-08-30T09:00:00+00:00",
         },
+        "review_first_clinic_workgroup": {
+            "clinic_slug": "sensabell",
+            "clinic_name": "Sensabell",
+            "city": "Valencia",
+            "clinic_status": "published",
+            "open_count": 5,
+            "blocking_claim_reviews": 1,
+            "quality_reviews": 1,
+            "enrichment_reviews": 3,
+            "source_change_reviews": 0,
+            "candidate_reviews": 0,
+            "max_priority": 85,
+            "oldest_created_at": "2026-08-30T08:30:00+00:00",
+        },
         "recent_failed_jobs": [],
         "source_monitoring": {
             "due_sources": 0,
@@ -158,6 +172,7 @@ def main():
     check("Cobertura fuentes: 11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente" in output, "source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
+    check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
 

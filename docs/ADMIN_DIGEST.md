@@ -9,6 +9,7 @@ It answers:
 - whether any review cards are blocking-claim reviews;
 - one representative open card per review type, when available;
 - whether several open enrichment cards are stacked on the same clinic;
+- which clinic concentrates the highest-priority group of open review cards;
 - whether the review inbox is near the safe-write backlog guard;
 - what the next recommended internal action is;
 - whether agents are in shadow mode;

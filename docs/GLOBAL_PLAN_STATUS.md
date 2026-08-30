@@ -12,6 +12,9 @@ It combines the protected admin digest with the roadmap lanes:
 - specialist/knowledge-graph coverage;
 - growth workflows still waiting for stronger accuracy and lower review load.
 
+The "Siguiente trabajo recomendado" section also includes the first clinic
+workgroup, so Daniel can clear several related review cards in one session.
+
 It does not publish clinics, edit Supabase, resolve review cards or create new
 work. It is meant for quick answers to "where are we in the plan?"
 

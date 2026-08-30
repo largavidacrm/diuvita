@@ -10,6 +10,7 @@ from typing import Any
 
 from admin_digest import (
     as_int,
+    first_clinic_workgroup,
     load_digest,
     maturity_blockers,
     next_action_label,
@@ -123,6 +124,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         "",
         "## Siguiente trabajo recomendado",
         f"- Revisión principal: {next_action_label(digest)}.",
+        f"- Grupo por clínica: {first_clinic_workgroup(digest)}.",
         f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Siguiente ficha: {next_profile_action(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",

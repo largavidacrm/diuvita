@@ -53,6 +53,15 @@ def sample_digest():
             "claims_without_source": 0,
             "blocking_claims": 2,
         },
+        "review_first_clinic_workgroup": {
+            "clinic_name": "Sensabell",
+            "open_count": 5,
+            "blocking_claim_reviews": 1,
+            "quality_reviews": 1,
+            "enrichment_reviews": 3,
+            "source_change_reviews": 0,
+            "candidate_reviews": 0,
+        },
         "profile_completeness": {
             "visible_clinics": 19,
             "pending_specialists": 17,
@@ -93,6 +102,7 @@ def main():
     check("Bandeja: 48 revisiones abiertas; cerca del freno: 48/50 abiertas" in output, "backlog line missing")
     check("Trazabilidad de fuentes: 11/19 fichas con fuente" in output, "source coverage line missing")
     check("Ciclo autónomo: activo en sombra" in output, "shadow cycle line missing")
+    check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")
     check("Campo más pendiente: Especialistas · 17 fichas" in output, "top pending field missing")

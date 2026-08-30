@@ -152,6 +152,64 @@ review_backlog_first_duplicate_target as (
     '{{}}'::jsonb
   ) as data
 ),
+review_clinic_workgroups as (
+  select
+    rq.clinic_id,
+    c.slug as clinic_slug,
+    c.display_name as clinic_name,
+    c.city,
+    c.status as clinic_status,
+    count(*) as open_count,
+    count(*) filter (
+      where rq.review_type = 'clinic_quality_audit'
+        and rq.payload ->> 'quality_context' = 'blocking_claims'
+    ) as blocking_claim_reviews,
+    count(*) filter (
+      where rq.review_type = 'clinic_quality_audit'
+        and coalesce(rq.payload ->> 'quality_context', '') <> 'blocking_claims'
+    ) as quality_reviews,
+    count(*) filter (where rq.review_type = 'clinic_profile_enrichment') as enrichment_reviews,
+    count(*) filter (where rq.review_type = 'source_change_detected') as source_change_reviews,
+    count(*) filter (where rq.review_type = 'candidate_clinic') as candidate_reviews,
+    max(rq.priority) as max_priority,
+    min(rq.created_at) as oldest_created_at
+  from public.review_queue rq
+  left join public.clinics c on c.id = rq.clinic_id
+  where rq.status = 'open'
+    and rq.clinic_id is not null
+  group by rq.clinic_id, c.slug, c.display_name, c.city, c.status
+),
+review_first_clinic_workgroup as (
+  select coalesce(
+    (
+      select to_jsonb(items)
+      from (
+        select
+          clinic_slug,
+          clinic_name,
+          city,
+          clinic_status,
+          open_count,
+          blocking_claim_reviews,
+          quality_reviews,
+          enrichment_reviews,
+          source_change_reviews,
+          candidate_reviews,
+          max_priority,
+          oldest_created_at
+        from review_clinic_workgroups
+        order by
+          blocking_claim_reviews desc,
+          open_count desc,
+          max_priority desc,
+          oldest_created_at asc,
+          clinic_name
+        limit 1
+      ) items
+    ),
+    '{{}}'::jsonb
+  ) as data
+),
 review_examples_by_type as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
   from (
@@ -606,6 +664,7 @@ select jsonb_build_object(
   'open_reviews', (select data from open_reviews),
   'review_backlog_quality', (select data from review_backlog_quality),
   'review_backlog_first_duplicate_target', (select data from review_backlog_first_duplicate_target),
+  'review_first_clinic_workgroup', (select data from review_first_clinic_workgroup),
   'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
@@ -692,6 +751,29 @@ def top_pending_profile_field(digest: dict[str, Any]) -> str:
 
 def plural(value: int, singular: str, plural_text: str) -> str:
     return singular if value == 1 else plural_text
+
+
+def first_clinic_workgroup(digest: dict[str, Any]) -> str:
+    target = digest.get("review_first_clinic_workgroup") or {}
+    if not isinstance(target, dict) or not target:
+        return "sin grupo por clínica medido"
+    name = str(target.get("clinic_name") or target.get("clinic_slug") or "la primera clínica")
+    open_count = as_int(target.get("open_count"))
+    parts = []
+    for key, singular, plural_text in [
+        ("blocking_claim_reviews", "claim bloqueante", "claims bloqueantes"),
+        ("enrichment_reviews", "mejora", "mejoras"),
+        ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
+        ("quality_reviews", "auditoría", "auditorías"),
+        ("candidate_reviews", "candidata", "candidatas"),
+    ]:
+        count = as_int(target.get(key))
+        if count:
+            parts.append(f"{count} {plural(count, singular, plural_text)}")
+    detail = " / ".join(parts)
+    if detail:
+        return f"Trabajar {name}: {open_count} {plural(open_count, 'tarjeta', 'tarjetas')} ({detail})"
+    return f"Trabajar {name}: {open_count} {plural(open_count, 'tarjeta', 'tarjetas')}"
 
 
 def next_specialist_action(digest: dict[str, Any]) -> str:
@@ -885,6 +967,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
     output.append(line("Siguiente accion", next_action_label(digest)))
     output.append(line("Freno bandeja", review_backlog_guard_status(digest)))
+    clinic_group = first_clinic_workgroup(digest)
+    if clinic_group != "sin grupo por clínica medido":
+        output.append(line("Grupo por clinica", clinic_group))
     duplicate_clinics = as_int(backlog_quality.get("duplicate_enrichment_clinics"))
     duplicate_reviews = as_int(backlog_quality.get("duplicate_enrichment_reviews"))
     if duplicate_clinics:

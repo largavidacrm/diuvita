@@ -2,6 +2,7 @@
 """Checks for the internal CTO digest formatter."""
 
 from admin_digest import (
+    first_clinic_workgroup,
     first_backlog_bottleneck,
     format_digest,
     next_action_label,
@@ -88,6 +89,20 @@ def main():
             "open_count": 2,
             "max_priority": 60,
             "oldest_created_at": "2026-08-30T09:00:00+00:00",
+        },
+        "review_first_clinic_workgroup": {
+            "clinic_slug": "sensabell",
+            "clinic_name": "Sensabell",
+            "city": "Valencia",
+            "clinic_status": "published",
+            "open_count": 5,
+            "blocking_claim_reviews": 1,
+            "quality_reviews": 1,
+            "enrichment_reviews": 3,
+            "source_change_reviews": 0,
+            "candidate_reviews": 0,
+            "max_priority": 85,
+            "oldest_created_at": "2026-08-30T08:30:00+00:00",
         },
         "recent_failed_jobs": [],
         "claim_quality": {
@@ -190,6 +205,10 @@ def main():
     )
     check(next_source_action(digest) == "Revisar 2 claims bloqueantes de Kairos Longevity Clinic", "next source action missing")
     check(
+        first_clinic_workgroup(digest) == "Trabajar Sensabell: 5 tarjetas (1 claim bloqueante / 3 mejoras / 1 auditoría)",
+        "first clinic workgroup missing",
+    )
+    check(
         source_coverage_status(digest) == "11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente",
         "source coverage status missing",
     )
@@ -228,6 +247,7 @@ def main():
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
     check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
+    check("Grupo por clinica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck line missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")
