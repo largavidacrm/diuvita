@@ -1,4 +1,4 @@
-# Diuvita rules engine
+# Vitalarga rules engine
 
 The rules engine is the deterministic layer between AI output and publication.
 
@@ -55,16 +55,16 @@ High risk:
 
 Code:
 
-- `scripts/diuvita_rules.py`
-- `scripts/test_diuvita_rules.py`
+- `scripts/vitalarga_rules.py`
+- `scripts/test_vitalarga_rules.py`
 - `scripts/evaluate_claim_rules.py`
 - `scripts/test_evaluate_claim_rules.py`
 
 Example:
 
 ```bash
-python3 scripts/test_diuvita_rules.py
-python3 scripts/diuvita_rules.py claims.json
+python3 scripts/test_vitalarga_rules.py
+python3 scripts/vitalarga_rules.py claims.json
 python3 scripts/evaluate_claim_rules.py --preview-low-risk-autopublish
 ```
 

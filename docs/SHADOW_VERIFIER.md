@@ -32,7 +32,7 @@ python3 scripts/test_verify_clinic_profile_shadow.py
 python3 scripts/verify_clinic_profile_shadow.py data/extractions/example.json
 ```
 
-This gives Diuvita the first complete local chain:
+This gives Vitalarga the first complete local chain:
 
 ```text
 source -> snapshot -> extraction -> verification -> rules decisions

@@ -1,7 +1,7 @@
 begin;
 
 insert into private.app_settings (key, value)
-values ('diuvita_rebuild_batch_minutes', '30')
+values ('vitalarga_rebuild_batch_minutes', '30')
 on conflict (key) do nothing;
 
 create or replace function private.request_public_site_rebuild()
@@ -19,7 +19,7 @@ begin
   select value
   into hook_url
   from private.app_settings
-  where key = 'diuvita_build_hook_url';
+  where key = 'vitalarga_build_hook_url';
 
   if hook_url is null or btrim(hook_url) = '' then
     return;
@@ -31,7 +31,7 @@ begin
   )
   into batch_minutes
   from private.app_settings
-  where key = 'diuvita_rebuild_batch_minutes';
+  where key = 'vitalarga_rebuild_batch_minutes';
 
   batch_window := interval '1 minute' * coalesce(batch_minutes, 30);
 

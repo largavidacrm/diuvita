@@ -67,7 +67,7 @@ def main():
     check("profile_fields_changed" in insert_sql, "insert SQL should preserve no-profile-edit metadata")
     check(metadata["profile_fields_changed"] is False, "metadata should mark no profile edits")
     check(metadata["requires_human_review"] is False, "metadata should not create review pressure")
-    check("# Diuvita: siembra de fuentes oficiales" in dry_report, "title missing")
+    check("# Vitalarga: siembra de fuentes oficiales" in dry_report, "title missing")
     check("Writes data: no" in dry_report, "dry run signal missing")
     check("Fuentes candidatas: 2" in dry_report, "candidate count missing")
     check("Clinic A · Madrid · published · https://clinic-a.example/" in dry_report, "candidate row missing")

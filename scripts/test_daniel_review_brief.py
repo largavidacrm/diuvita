@@ -154,7 +154,7 @@ def main():
 
     check(counts["blocking_claim_review"] == 1, "blocking-claim count missing")
     check(first_step(digest)[0] == "Primero revisa claims bloqueantes.", "blocking claims should be first")
-    check("# Diuvita: brief de revisión" in output, "title missing")
+    check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")
     check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible case missing")
     check("Acción sugerida por el sistema: Revisar claim bloqueante." in output, "next action missing")

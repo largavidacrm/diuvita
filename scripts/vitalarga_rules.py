@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic publication rules for Diuvita field claims.
+"""Deterministic publication rules for Vitalarga field claims.
 
 The AI creates claims. This module decides whether a claim is eligible for
 publication, human review, or rejection. Defaults are deliberately conservative.

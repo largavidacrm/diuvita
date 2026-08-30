@@ -96,7 +96,7 @@ def patched_payload(payload: dict[str, Any], extraction: dict[str, Any], source_
         "field": "profesionales",
         "source_url": source_url,
         "values": professionals,
-        "agent_name": "diuvita-candidate-enrichment",
+        "agent_name": "vitalarga-candidate-enrichment",
         "agent_version": "2026-08-30",
     }
     if not any(

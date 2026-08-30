@@ -13,9 +13,9 @@ def check(condition: bool, message: str) -> None:
 def main() -> None:
     unsafe = "Estas son las mejores clínicas; te conviene hacerte esta prueba porque revierte el envejecimiento."
     strict_unsafe = "Centro clasificado #1 en relación calidad-precio."
-    strict_safe_css = ":root{--ink:#17231f;--green:#1e7a5a}"
+    strict_safe_css = ":root{--ink:#17231f;--green:#0E4F4A}"
     safe = (
-        "Diuvita no hace rankings de calidad. Una clínica seria no promete "
+        "Vitalarga no hace rankings de calidad. Una clínica seria no promete "
         "revertir el envejecimiento ni garantiza resultados milagrosos."
     )
 

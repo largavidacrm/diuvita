@@ -1,18 +1,28 @@
-# Límites operativos de Diuvita
+# Límites operativos de Vitalarga
 
 Fuente: texto aportado por Daniel e integrado en el proyecto el 2026-08-30.
 
 Propósito: servir como guía de referencia para decisiones de producto, contenido,
-automatización, datos y publicación en `www.diuvita.com`.
+automatización, datos y publicación en `www.vitalarga.com`.
 
 ## Contexto
 
-Diuvita es una guía informativa e independiente de clínicas de medicina de
+Vitalarga es una guía informativa e independiente de clínicas de medicina de
 longevidad en España. Su posicionamiento legal es deliberado y es la principal
 protección jurídica del proyecto: contenido editorial neutro, sin publicidad
 sanitaria, sin rankings, sin pago por aparecer y sin recomendaciones médicas.
 Ninguna tarea de contenido, producto o código puede erosionar ese perímetro
 sin decisión expresa de Daniel.
+
+## Titular legal
+
+Datos aportados por Daniel el 2026-08-30 para textos legales y contacto
+administrativo:
+
+- Razón social: Neurotrans SLU.
+- NIF: B-67221093.
+- Domicilio: Padilla 327 Ent 68, 08025 Barcelona.
+- Email administrativo: admin@neurotrans.es.
 
 ## Regla central: protocolo de escalado
 
@@ -49,7 +59,7 @@ o en Google.
 Solo se permiten:
 
 - logos oficiales usados para identificar al centro;
-- material creado por Diuvita o con licencia escrita.
+- material creado por Vitalarga o con licencia escrita.
 
 Cualquier otra imagen exige preguntar.
 
@@ -78,7 +88,7 @@ atribuir eficacia no acreditada.
 
 Los claims de cada clínica se describen en estilo atributivo neutro, por ejemplo
 "la clínica ofrece" o "la clínica afirma", nunca como hechos validados por
-Diuvita.
+Vitalarga.
 
 ### L5 · Testimonios y pacientes
 
@@ -127,7 +137,7 @@ criterios de inclusión ni afirmaciones del tipo "independiente", "sin pago" o
 ### L11 · Comunicaciones salientes
 
 No enviar emails ni mensajes a clínicas, profesionales o usuarios en nombre de
-Diuvita sin aprobación previa del texto y del destinatario.
+Vitalarga sin aprobación previa del texto y del destinatario.
 
 ### L12 · Nuevas funcionalidades con dimensión legal
 

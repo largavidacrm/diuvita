@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Generador estático de Diuvita — la guía de las clínicas de longevidad.
+"""Generador estático de Vitalarga — la guía de las clínicas de longevidad.
 Uso: python3 build.py  ->  genera el sitio en dist/
 Datos en data/clinics.json. Las fichas en pendientes/ NO se publican.
 """
@@ -7,9 +7,16 @@ import html, json, os, shutil, unicodedata, urllib.error, urllib.parse, urllib.r
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
-SITE = "Diuvita"
+SITE = "Vitalarga"
 TAGLINE = "La guía de las clínicas de longevidad"
-BASE = "https://www.diuvita.com"
+BASE = "https://www.vitalarga.com"
+LEGAL_OWNER = {
+    "name": "Neurotrans SLU",
+    "tax_id": "B-67221093",
+    "address_line_1": "Padilla 327 Ent 68",
+    "postal_city": "08025 Barcelona",
+    "email": "admin@neurotrans.es",
+}
 PUBLIC_ENV_DEFAULTS = {
     "SUPABASE_URL": "https://twxhcmvzbpnrneywdece.supabase.co",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_IHIMbYQacziyL1GcU6Mdtw_7AQdaCWg",
@@ -81,7 +88,7 @@ def load_clinics_from_supabase():
     return clinics
 
 def load_clinics():
-    source = env_value("DIUVITA_DATA_SOURCE", "json").strip().lower()
+    source = env_value("VITALARGA_DATA_SOURCE", "json").strip().lower()
     if source in ("supabase", "auto"):
         try:
             clinics = load_clinics_from_supabase()
@@ -452,26 +459,28 @@ countries = sorted({c["country"] for c in clinics})
 specialties = sorted({s for c in clinics for s in c["specialties"]})
 
 CSS = """
-:root{--bg:#f3f6f1;--surface:#fffdf8;--surface-strong:#fff;--ink:#17231f;--muted:#647168;--green:#1e7a5a;--green-deep:#123f32;--coral:#df6c4b;--line:#dfe6dc;--wash:#e9f2ec;--soft:#f8f4eb;--shadow:0 18px 44px rgba(23,35,31,.08)}
+:root{--bg:#EFEBE2;--surface:#F7F4EE;--surface-strong:#fff;--ink:#12211F;--muted:#5A6764;--green:#0E4F4A;--green-deep:#0B3E3A;--green-mid:#16645C;--coral:#C9A15A;--line:#DED8CB;--line-strong:#C7DBD5;--wash:#DCEAE6;--soft:#F6EBD4;--shadow:0 18px 44px rgba(18,33,31,.08)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{font-family:'Source Sans 3',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.58}
+body{font-family:'Archivo',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.58;-webkit-font-smoothing:antialiased}
 a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:3px}
-.site{position:sticky;top:0;z-index:10;padding:.95rem 5vw;display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid var(--line);background:rgba(255,253,248,.92);backdrop-filter:blur(14px)}
-.site .logo{font-family:'Fraunces',Georgia,serif;font-size:1.55rem;font-weight:600;color:var(--ink)}
-.site .logo em{color:var(--coral);font-style:normal}
+.site{position:sticky;top:0;z-index:10;padding:.95rem 5vw;display:flex;justify-content:space-between;align-items:center;gap:1rem;border-bottom:1px solid var(--line);background:rgba(247,244,238,.92);backdrop-filter:blur(14px)}
+.site .logo{display:inline-flex;align-items:center;gap:.68rem;font-family:'Newsreader',Georgia,serif;font-size:1.55rem;font-weight:400;color:var(--ink);letter-spacing:.01em}
+.site .logo:hover{text-decoration:none;color:var(--green)}
+.logo-mark{display:inline-block;width:30px;height:30px;border-radius:50%;border:1.4px solid var(--coral);position:relative;flex:0 0 auto}
+.logo-mark::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--coral)}
 .site nav{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;justify-content:flex-end}
 .site nav a{padding:.42rem .7rem;border-radius:8px;color:var(--muted);font-weight:700;font-size:.95rem}
 .site nav a:hover{background:var(--wash);color:var(--green-deep);text-decoration:none}
 .hero{max-width:1180px;margin:0 auto;padding:2.35rem 5vw 1rem}
 .hero-copy{max-width:860px}
 .hero .kicker{color:var(--coral);font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
-.hero h1{max-width:24ch;margin:.55rem 0 0;font-family:'Fraunces',Georgia,serif;font-size:3.2rem;font-weight:500;line-height:1.05;text-wrap:balance}
+.hero h1{max-width:24ch;margin:.55rem 0 0;font-family:'Newsreader',Georgia,serif;font-size:3.2rem;font-weight:300;line-height:1.05;text-wrap:balance}
 .hero h1 em{color:var(--green);font-style:italic}
 .hero p.sub{max-width:660px;margin:1rem 0 0;color:var(--muted);font-size:1.18rem}
 .finder{margin-top:1.35rem;background:var(--surface-strong);border:1px solid var(--line);border-radius:8px;padding:.9rem;box-shadow:var(--shadow)}
 .finder input{width:100%;min-height:3.35rem;font:inherit;font-size:1.04rem;padding:.75rem 1rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
-.finder input:focus{outline:3px solid rgba(30,122,90,.2);border-color:var(--green)}
+.finder input:focus{outline:3px solid rgba(14,79,74,.22);border-color:var(--green)}
 .filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin-top:.85rem}
 .fgroup{min-width:0}
 .fgroup .flabel{display:block;margin-bottom:.35rem;color:var(--muted);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
@@ -480,23 +489,23 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .chip:hover{border-color:var(--green);color:var(--green-deep)}
 .chip.on{background:var(--green);border-color:var(--green);color:#fff}
 .logo-strip{display:flex;gap:.6rem;overflow-x:auto;max-width:1180px;margin:.25rem auto 0;padding:.5rem 5vw 1.05rem;scrollbar-width:thin}
-.mini-logo{flex:0 0 auto;height:42px;display:flex;align-items:center;padding:.35rem .7rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.82)}
-.mini-logo:hover{text-decoration:none;background:#fff;border-color:#cbd9ce}
-.mini-logo:focus-visible{outline:3px solid rgba(30,122,90,.25);outline-offset:3px}
+.mini-logo{flex:0 0 auto;height:42px;display:flex;align-items:center;padding:.35rem .7rem;border:1px solid var(--line);border-radius:8px;background:rgba(247,244,238,.82)}
+.mini-logo:hover{text-decoration:none;background:#fff;border-color:#C7DBD5}
+.mini-logo:focus-visible{outline:3px solid rgba(14,79,74,.25);outline-offset:3px}
 .mini-logo img{max-width:126px;max-height:26px;object-fit:contain;display:block}
 .results-section{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
 .wrap{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
-.resbar{position:sticky;top:66px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:.9rem;margin:.5rem 0 1rem;padding:.72rem .85rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.94);backdrop-filter:blur(12px)}
+.resbar{position:sticky;top:66px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:.9rem;margin:.5rem 0 1rem;padding:.72rem .85rem;border:1px solid var(--line);border-radius:8px;background:rgba(247,244,238,.94);backdrop-filter:blur(12px)}
 .rescount{color:var(--muted);font-size:.96rem}
 .rescount b{color:var(--ink)}
 .clear-btn{font:inherit;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);padding:.4rem .7rem;font-weight:800;cursor:pointer}
 .clear-btn:disabled{cursor:not-allowed;opacity:.45}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:1rem}
 .card{position:relative;display:flex;flex-direction:column;min-height:365px;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
-.card:hover{transform:translateY(-2px);border-color:#cbd9ce;box-shadow:var(--shadow)}
+.card:hover{transform:translateY(-2px);border-color:#C7DBD5;box-shadow:var(--shadow)}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem;min-height:48px}
 .card .loc{display:block;margin-top:.35rem;color:var(--coral);font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
-.card h3{margin-top:.25rem;font-family:'Fraunces',Georgia,serif;font-size:1.28rem;font-weight:600;line-height:1.12}
+.card h3{margin-top:.25rem;font-family:'Newsreader',Georgia,serif;font-size:1.28rem;font-weight:500;line-height:1.12}
 .card h3 a{color:var(--ink)}
 .card p{margin-top:.6rem;color:var(--muted);font-size:.96rem;flex:1}
 .card-signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.85rem}
@@ -510,22 +519,22 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .card-cta:hover{background:var(--wash);text-decoration:none}
 .logo-link{display:inline-flex;align-self:flex-start;border-radius:8px}
 .logo-link:hover{text-decoration:none}
-.logo-link:focus-visible{outline:3px solid rgba(30,122,90,.25);outline-offset:3px}
+.logo-link:focus-visible{outline:3px solid rgba(14,79,74,.25);outline-offset:3px}
 .logobox{height:44px;width:fit-content;max-width:190px;display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:.35rem .65rem;align-self:flex-start}
 .logobox img{max-height:29px;max-width:160px;object-fit:contain;display:block}
 .flogo{height:62px;max-width:255px;margin-bottom:1rem}
 .flogo img{max-height:43px;max-width:225px}
 .hidden{display:none!important}
-.empty-state{padding:2rem;border:1px dashed #cbd9ce;border-radius:8px;background:rgba(255,253,248,.72);color:var(--muted);text-align:center}
+.empty-state{padding:2rem;border:1px dashed var(--line-strong);border-radius:8px;background:rgba(247,244,238,.72);color:var(--muted);text-align:center}
 .ficha{max-width:1120px;margin:0 auto;padding:2.1rem 5vw 4rem}
 .crumbs{font-size:.9rem;color:var(--muted);margin-bottom:1.25rem}
 .clinic-intro{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:2rem;align-items:start}
 .clinic-main{min-width:0}
-.clinic-main h1,.ficha>h1{font-family:'Fraunces',Georgia,serif;font-size:3.05rem;font-weight:500;line-height:1.04;text-wrap:balance}
+.clinic-main h1,.ficha>h1{font-family:'Newsreader',Georgia,serif;font-size:3.05rem;font-weight:300;line-height:1.04;text-wrap:balance}
 .ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0;overflow-wrap:anywhere}
 .ficha .summary{max-width:720px;margin-top:1rem;font-size:1.18rem;color:var(--ink)}
 .profile-snapshot{max-width:760px;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:.55rem;margin-top:1rem}
-.profile-snapshot div{min-width:0;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.88);padding:.55rem .65rem}
+.profile-snapshot div{min-width:0;border:1px solid var(--line);border-radius:8px;background:rgba(247,244,238,.88);padding:.55rem .65rem}
 .profile-snapshot dt{color:var(--muted);font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .profile-snapshot dd{margin:.12rem 0 0;color:var(--green-deep);font-size:1.25rem;font-weight:800;line-height:1}
 .profile-jump{display:grid;gap:.45rem;margin-top:1rem}
@@ -540,7 +549,7 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .profile-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.5rem;align-items:start}
 .profile-block{min-width:0;padding:1.05rem 1.1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .profile-section-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.6rem}
-.ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.22rem;margin:0}
+.ficha h2{font-family:'Newsreader',Georgia,serif;font-weight:500;font-size:1.22rem;margin:0}
 .section-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.6rem;height:1.6rem;border-radius:8px;background:var(--wash);color:var(--green-deep);font-size:.78rem;font-weight:800}
 .ficha ul{padding-left:1.1rem;color:var(--muted)}
 .profile-block li{margin:.24rem 0}
@@ -555,7 +564,7 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .location-list{display:grid;gap:.72rem}
 .location-item{border-top:1px solid var(--line);padding-top:.72rem}
 .location-item:first-child{border-top:0;padding-top:0}
-.location-item h3{font-family:'Source Sans 3',system-ui,sans-serif;font-size:1rem;line-height:1.2;margin:0 0 .15rem;font-weight:800;color:var(--ink)}
+.location-item h3{font-family:'Archivo',system-ui,sans-serif;font-size:1rem;line-height:1.2;margin:0 0 .15rem;font-weight:800;color:var(--ink)}
 .location-item p{color:var(--muted);margin:.15rem 0 .45rem;overflow-wrap:anywhere}
 .location-actions{display:flex;flex-wrap:wrap;gap:.45rem}
 .mini-action{display:inline-flex;align-items:center;justify-content:center;min-height:1.9rem;padding:.3rem .58rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font-size:.84rem;font-weight:800}
@@ -574,8 +583,14 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .visit:hover{text-decoration:none;background:var(--green-deep)}
 .clinic-side .visit{width:100%}
 .note{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:1rem 1.1rem;font-size:.93rem;color:var(--muted);margin-top:1.4rem}
-footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.9rem;background:rgba(255,253,248,.56)}
-footer p{max-width:1120px;margin:0 auto}
+footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.9rem;background:rgba(247,244,238,.56)}
+.footer-inner{max-width:1120px;margin:0 auto;display:grid;gap:.72rem}
+footer p{margin:0}
+.legal-id{font-size:.86rem}
+.legal-links{display:flex;flex-wrap:wrap;gap:.7rem}
+.legal-links a{color:var(--green-deep);font-weight:800}
+.legal-copy{display:grid;gap:1rem;margin-top:1.2rem;color:var(--muted)}
+.legal-copy h2{margin-top:.4rem}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 @media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
 @media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;justify-content:space-between;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
@@ -586,31 +601,43 @@ HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <title>{title}</title>
 <meta name="description" content="{desc}">
 <link rel="canonical" href="{url}">
-<meta property="og:type" content="website"><meta property="og:site_name" content="Diuvita">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Vitalarga">
 <meta property="og:title" content="{title}"><meta property="og:description" content="{desc}">
 <meta property="og:url" content="{url}"><meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
-<script data-goatcounter="https://diuvita.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://vitalarga.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 {jsonld}</head><body>
-<header class="site"><a class="logo" href="/">Diuvita<em>.</em></a>
+<header class="site"><a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
 <nav><a href="/#buscar">Buscar clínica</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
 """
 
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-<rect width="64" height="64" rx="14" fill="#fffdf8"/>
-<path d="M16 44c16-1 27-12 31-28-16 1-27 12-31 28Z" fill="#1e7a5a"/>
-<circle cx="47" cy="47" r="6" fill="#df6c4b"/>
+<rect width="64" height="64" rx="14" fill="#F7F4EE"/>
+<circle cx="32" cy="32" r="19" fill="none" stroke="#C9A15A" stroke-width="3"/>
+<circle cx="32" cy="32" r="9" fill="#0E4F4A"/>
 </svg>
 """
 
 def head(title, desc, path, jsonld=""):
     return HEAD.format(title=title, desc=desc, url=BASE + path, jsonld=jsonld)
 
-FOOTER = """<footer><p><strong>Diuvita</strong> — {tag}. Guía informativa e independiente: no emitimos recomendaciones médicas, no hacemos rankings y ninguna clínica paga por aparecer. Cada ficha se elabora a partir de información pública y se revisa manualmente.</p></footer></body></html>""".format(tag=TAGLINE)
+def legal_owner_address():
+    return f'{LEGAL_OWNER["address_line_1"]}, {LEGAL_OWNER["postal_city"]}'
+
+def legal_owner_summary_html():
+    email = LEGAL_OWNER["email"]
+    return (
+        '<p class="legal-id"><strong>Titular:</strong> '
+        f'{h(LEGAL_OWNER["name"])} · NIF {h(LEGAL_OWNER["tax_id"])} · '
+        f'{h(legal_owner_address())} · '
+        f'<a href="mailto:{h(email)}">{h(email)}</a></p>'
+    )
+
+FOOTER = f"""<footer><div class="footer-inner"><p><strong>Vitalarga</strong> — {TAGLINE}. Guía informativa e independiente: no emitimos recomendaciones médicas, no hacemos rankings y ninguna clínica paga por aparecer. Cada ficha se elabora a partir de información pública y se revisa manualmente.</p>{legal_owner_summary_html()}<nav class="legal-links" aria-label="Información legal"><a href="/aviso-legal/">Aviso legal</a><a href="/privacidad/">Privacidad</a><a href="/cookies/">Cookies</a></nav></div></footer></body></html>"""
 
 def attrs(c):
     extra = c.get("cities_extra", [])
@@ -750,11 +777,11 @@ INDEX_LD = '<script type="application/ld+json">' + json.dumps({
     "url": BASE, "description": TAGLINE, "inLanguage": "es",
 }, ensure_ascii=False) + "</script>"
 
-index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud. Diuvita te ayuda a encontrar clínica de medicina de longevidad por ciudad, país y especialidad.", "/", INDEX_LD) + f"""
+index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud. Vitalarga te ayuda a encontrar clínica de medicina de longevidad por ciudad, país y especialidad.", "/", INDEX_LD) + f"""
 <section class="hero">
 <div class="hero-copy"><p class="kicker">La guía de las clínicas de longevidad</p>
 <h1>Encuentra clínicas de longevidad con datos claros.</h1>
-<p class="sub">Compara centros por ciudad, país y área médica con una guía independiente: sin rankings, sin publicidad y con revisión humana antes de publicar.</p></div>
+<p class="sub">Explora centros por ciudad, país y área médica con una guía independiente: sin rankings, sin publicidad y con revisión humana antes de publicar.</p></div>
 <div class="finder" id="buscar">
 <input id="q" type="search" placeholder="Busca por nombre, ciudad o especialidad…" aria-label="Buscar clínica">
 <div class="filter-grid">
@@ -764,12 +791,12 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </div>
 </div>
 </section>
-<section class="logo-strip" aria-label="Clínicas destacadas">{featured_logos}</section>
+<section class="logo-strip" aria-label="Logos de clínicas en la guía">{featured_logos}</section>
 <section class="results-section">
 <div class="resbar"><p class="rescount" id="count"></p><button class="clear-btn" id="clearFilters" type="button">Limpiar filtros</button></div>
 <div class="grid">{allcards}</div>
 <p class="empty-state hidden" id="emptyState">No hay clínicas con esos filtros.</p>
-<div class="note">¿Diriges una clínica de longevidad que no aparece aquí? Escríbenos y la evaluaremos según nuestros <a href="/sobre/">criterios de inclusión</a>. Aparecer en Diuvita es gratuito — y no se puede pagar.</div>
+<div class="note">¿Diriges una clínica de longevidad que no aparece aquí? Escríbenos y la evaluaremos según nuestros <a href="/sobre/">criterios de inclusión</a>. Aparecer en Vitalarga es gratuito — y no se puede pagar.</div>
 </section>{JS}""" + FOOTER
 
 # --- fichas ---
@@ -816,7 +843,7 @@ def facts_block(c):
     if c.get("cities_extra"):
         facts.append(("También aparece en", h(" · ".join(c["cities_extra"]))))
     if c.get("status"):
-        facts.append(("Estado en Diuvita", h(status_label(c))))
+        facts.append(("Estado en Vitalarga", h(status_label(c))))
     if not facts:
         return ""
     rows = "".join(f"<div><dt>{h(label)}</dt><dd>{value}</dd></div>" for label, value in facts)
@@ -966,7 +993,7 @@ def ficha(c):
         ld_obj["telephone"] = c["telefono"]
     ld = '<script type="application/ld+json">' + json.dumps(ld_obj, ensure_ascii=False) + "</script>"
     return head(f'{c["name"]} — clínica de longevidad en {c["city"]} | {SITE}', c["summary"][:150], f'/clinica/{c["slug"]}/', ld) + f"""
-<main class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/ciudad/{slugify(c["city"])}/">{h(c["city"])}</a> → {h(c["name"])}</p>
+<main class="ficha"><p class="crumbs"><a href="/">Vitalarga</a> → <a href="/ciudad/{slugify(c["city"])}/">{h(c["city"])}</a> → {h(c["name"])}</p>
 <section class="clinic-intro"><div class="clinic-main">{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
 <div class="tags">{tags}</div>
 <p class="summary">{h(c["summary"])}</p>
@@ -991,9 +1018,9 @@ def ciudad_page(city):
 <div class="hero"><h1>Clínicas de longevidad en <em>{city}</em></h1><p class="sub">{len(cs)} clínica{"s" if len(cs)>1 else ""} documentada{"s" if len(cs)>1 else ""} en la guía.</p></div>
 <div class="wrap"><div class="grid">{grid}</div></div>""" + FOOTER
 
-SOBRE = head(f"Sobre la guía | {SITE}", "Qué es Diuvita y con qué criterios incluimos clínicas en la guía.", "/sobre/") + """
-<div class="ficha"><h1>Sobre Diuvita</h1>
-<p class="summary">Diuvita (del latín <em>diu</em>, «por largo tiempo», y <em>vita</em>, «vida») es una guía independiente de las clínicas de medicina de longevidad, escrita para quien quiere vivir más años con salud y no sabe por dónde empezar.</p>
+SOBRE = head(f"Sobre la guía | {SITE}", "Qué es Vitalarga y con qué criterios incluimos clínicas en la guía.", "/sobre/") + """
+<div class="ficha"><h1>Sobre Vitalarga</h1>
+<p class="summary">Vitalarga es una guía independiente de las clínicas de medicina de longevidad, escrita para quien quiere vivir más años con salud y no sabe por dónde empezar.</p>
 <h2>Criterios de inclusión</h2>
 <ul><li>Centro sanitario con actividad médica real (no solo estética o wellness).</li>
 <li>Oferta específica de medicina de longevidad, preventiva o de precisión: biomarcadores, edad biológica, programas de seguimiento.</li>
@@ -1004,6 +1031,100 @@ SOBRE = head(f"Sobre la guía | {SITE}", "Qué es Diuvita y con qué criterios i
 <li>Las fichas se redactan a partir de información pública y se revisan manualmente antes de publicarse.</li></ul>
 </div>""" + FOOTER
 
+def legal_owner_block():
+    rows = [
+        ("Titular del sitio", h(LEGAL_OWNER["name"])),
+        ("NIF", h(LEGAL_OWNER["tax_id"])),
+        ("Domicilio", h(legal_owner_address())),
+        (
+            "Email administrativo",
+            f'<a href="mailto:{h(LEGAL_OWNER["email"])}">{h(LEGAL_OWNER["email"])}</a>',
+        ),
+    ]
+    return (
+        '<section class="profile-block legal-owner" id="titular">'
+        + section_heading("Datos del titular")
+        + '<dl class="facts">'
+        + "".join(f"<div><dt>{h(label)}</dt><dd>{value}</dd></div>" for label, value in rows)
+        + "</dl></section>"
+    )
+
+def legal_page(slug, title, desc, intro, sections):
+    body = "".join(
+        f"<h2>{h(section_title)}</h2><p>{h(section_body)}</p>"
+        for section_title, section_body in sections
+    )
+    return head(f"{title} | {SITE}", desc, f"/{slug}/") + f"""
+<main class="ficha legal-page"><p class="crumbs"><a href="/">Vitalarga</a> → {h(title)}</p>
+<h1>{h(title)}</h1>
+<p class="summary">{h(intro)}</p>
+{legal_owner_block()}
+<div class="legal-copy">{body}</div>
+</main>""" + FOOTER
+
+LEGAL_PAGES = {
+    "aviso-legal": legal_page(
+        "aviso-legal",
+        "Aviso legal",
+        "Identificación del titular de Vitalarga y naturaleza informativa del sitio.",
+        "Estos son los datos del titular legal de Vitalarga y el marco básico de uso del sitio.",
+        [
+            (
+                "Naturaleza del sitio",
+                "Vitalarga publica información editorial sobre clínicas de longevidad a partir de fuentes públicas y revisión manual. No presta servicios sanitarios, no diagnostica, no prescribe y no sustituye una consulta médica.",
+            ),
+            (
+                "Relación con clínicas",
+                "La aparición de una clínica en la guía no implica recomendación médica, ranking de calidad ni relación comercial con Vitalarga.",
+            ),
+            (
+                "Contacto administrativo",
+                "Para asuntos legales, administrativos o de corrección de información pública, utiliza el email administrativo indicado en esta página.",
+            ),
+        ],
+    ),
+    "privacidad": legal_page(
+        "privacidad",
+        "Política de privacidad",
+        "Información básica sobre el responsable y el canal de contacto administrativo de Vitalarga.",
+        "Esta página resume quién es el responsable del sitio y cómo contactar para asuntos de privacidad.",
+        [
+            (
+                "Responsable",
+                "El responsable del sitio Vitalarga es el titular legal indicado en esta página.",
+            ),
+            (
+                "Contacto por email",
+                "Si escribes al email administrativo, los datos incluidos en tu mensaje se usarán para atender y gestionar tu solicitud. Evita enviar datos de salud o documentación médica por este canal salvo que sea imprescindible.",
+            ),
+            (
+                "Contenido público",
+                "Las fichas de clínicas se elaboran con información pública y se revisan antes de publicarse. Las solicitudes de corrección pueden enviarse al email administrativo.",
+            ),
+        ],
+    ),
+    "cookies": legal_page(
+        "cookies",
+        "Política de cookies",
+        "Información básica sobre medición técnica y estadística en Vitalarga.",
+        "Esta página recoge la información básica sobre herramientas técnicas o estadísticas asociadas al sitio.",
+        [
+            (
+                "Uso del sitio",
+                "Vitalarga puede usar medición estadística del tráfico para entender el uso agregado de las páginas públicas y mejorar la guía.",
+            ),
+            (
+                "Sin decisiones clínicas",
+                "La medición de uso del sitio no se emplea para emitir recomendaciones médicas, valorar clínicas ni tomar decisiones sanitarias sobre usuarios.",
+            ),
+            (
+                "Cambios futuros",
+                "Si se incorporan formularios, cuentas de usuario, newsletter, publicidad u otras herramientas de terceros, esta política deberá revisarse antes de publicarse.",
+            ),
+        ],
+    ),
+}
+
 # --- blog ---
 posts = load_posts()
 
@@ -1013,7 +1134,7 @@ def blog_index():
         items += f'''<div class="card"><span class="loc">{p["date"]}</span>
 <h3><a href="/blog/{p["slug"]}/">{p["title"]}</a></h3><p>{p["desc"]}</p></div>'''
     return head(f"Blog | {SITE}", "Guías y artículos sobre medicina de longevidad, escritos para pacientes: qué medir, qué preguntar, dónde acudir.", "/blog/") + f"""
-<div class="hero"><h1>El blog de <em>Diuvita</em></h1><p class="sub">Medicina de longevidad explicada para personas, no para médicos: qué medir, qué preguntar y dónde acudir.</p></div>
+<div class="hero"><h1>El blog de <em>Vitalarga</em></h1><p class="sub">Medicina de longevidad explicada para personas, no para médicos: qué medir, qué preguntar y dónde acudir.</p></div>
 <div class="wrap"><div class="grid">{items}</div></div>""" + FOOTER
 
 def blog_post(p):
@@ -1023,10 +1144,10 @@ def blog_post(p):
         "publisher": {"@type": "Organization", "name": SITE, "url": BASE},
     }, ensure_ascii=False) + "</script>"
     return head(f'{p["title"]} | {SITE}', p["desc"][:150], f'/blog/{p["slug"]}/', ld) + f"""
-<div class="ficha"><p class="crumbs"><a href="/">Diuvita</a> → <a href="/blog/">Blog</a></p>
+<div class="ficha"><p class="crumbs"><a href="/">Vitalarga</a> → <a href="/blog/">Blog</a></p>
 <h1>{p["title"]}</h1><p class="loc">{p["date"]}</p>
 {p["html"]}
-<div class="note">Contenido divulgativo: no sustituye la valoración de un profesional sanitario. Diuvita no emite recomendaciones médicas.</div>
+<div class="note">Contenido divulgativo: no sustituye la valoración de un profesional sanitario. Vitalarga no emite recomendaciones médicas.</div>
 </div>""" + FOOTER
 
 def write_admin():
@@ -1041,7 +1162,7 @@ def write_admin():
     }
     config_json = json.dumps(config, ensure_ascii=False).replace("<", "\\u003c")
     html = open(os.path.join(src, "index.html"), encoding="utf-8").read()
-    html = html.replace("__DIUVITA_ADMIN_CONFIG__", config_json)
+    html = html.replace("__VITALARGA_ADMIN_CONFIG__", config_json)
     open(os.path.join(dest, "index.html"), "w", encoding="utf-8").write(html)
     shutil.copy(os.path.join(src, "admin.css"), os.path.join(dest, "admin.css"))
 
@@ -1054,6 +1175,10 @@ open(os.path.join(DIST, "favicon.svg"), "w", encoding="utf-8").write(FAVICON_SVG
 open(os.path.join(DIST, "index.html"), "w", encoding="utf-8").write(index)
 os.makedirs(os.path.join(DIST, "sobre"))
 open(os.path.join(DIST, "sobre", "index.html"), "w", encoding="utf-8").write(SOBRE)
+for slug, html_doc in LEGAL_PAGES.items():
+    d = os.path.join(DIST, slug)
+    os.makedirs(d)
+    open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(html_doc)
 for c in clinics:
     d = os.path.join(DIST, "clinica", c["slug"])
     os.makedirs(d)
@@ -1078,6 +1203,7 @@ write_admin()
 
 # --- sitemap y robots ---
 urls = ["/", "/sobre/", "/blog/"]
+urls += [f"/{slug}/" for slug in LEGAL_PAGES]
 urls += [f'/clinica/{c["slug"]}/' for c in clinics]
 urls += [f"/ciudad/{slugify(ct)}/" for ct in cities]
 urls += [f'/blog/{p["slug"]}/' for p in posts]

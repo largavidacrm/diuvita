@@ -1,9 +1,9 @@
-# Diuvita agent workflows
+# Vitalarga agent workflows
 
 This document defines the first agent-ready workflows. It intentionally starts narrow: clinics only.
 
 Operational boundary: every workflow in this document is subordinate to
-`docs/DIUVITA_LIMITES_OPERATIVOS.md`. If a job, review, extraction or publishing
+`docs/VITALARGA_LIMITES_OPERATIVOS.md`. If a job, review, extraction or publishing
 step touches a hard limit, it must stop and escalate to Daniel using that guide's
 format before acting.
 
@@ -34,7 +34,7 @@ Every job stores:
 
 ## DISCOVER_CLINIC
 
-Purpose: find a clinic Diuvita does not already know about.
+Purpose: find a clinic Vitalarga does not already know about.
 
 Input:
 

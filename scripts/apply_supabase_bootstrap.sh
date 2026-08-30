@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$ROOT/.env"
-BOOTSTRAP_SQL="/tmp/diuvita_supabase_bootstrap.sql"
+BOOTSTRAP_SQL="/tmp/vitalarga_supabase_bootstrap.sql"
 
 if [ ! -f "$ENV_FILE" ]; then
   echo "Missing .env. Copy .env.example to .env and set SUPABASE_DB_PASSWORD." >&2

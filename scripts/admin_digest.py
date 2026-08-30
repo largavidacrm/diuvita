@@ -958,7 +958,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     backlog_quality = digest.get("review_backlog_quality") or {}
 
     output: list[str] = []
-    output.append("# Diuvita CTO digest")
+    output.append("# Vitalarga CTO digest")
     output.append("")
     output.append(f"Generado: {parse_timestamp(digest.get('generated_at') or summary.get('generated_at'))}")
     output.append("")

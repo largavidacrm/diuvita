@@ -53,7 +53,7 @@ def main():
     output = format_coverage(report)
 
     check(pct(1, 4) == "25%", "percentage formatting missing")
-    check("# Diuvita specialist coverage" in output, "title missing")
+    check("# Vitalarga specialist coverage" in output, "title missing")
     check("Clínicas visibles: 4" in output, "visible clinic count missing")
     check("Con especialistas publicados: 1 (25%)" in output, "covered percentage missing")
     check("Sin especialistas publicados: 3 (75%)" in output, "missing percentage missing")

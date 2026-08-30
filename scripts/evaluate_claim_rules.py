@@ -12,7 +12,7 @@ import sys
 from collections import Counter
 from typing import Any
 
-from diuvita_rules import RiskPolicy, decide_claim
+from vitalarga_rules import RiskPolicy, decide_claim
 from submit_discovery_candidates import (
     get_default_admin_email,
     load_env_file,
@@ -162,7 +162,7 @@ def summarize(evaluations: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
 def format_report(evaluations: list[dict[str, Any]], mode: str) -> str:
     summary = summarize(evaluations)
     lines = [
-        "# Diuvita claim rule evaluation",
+        "# Vitalarga claim rule evaluation",
         f"- Mode: {mode}",
         "- Database writes: none",
         "- Public changes: none",

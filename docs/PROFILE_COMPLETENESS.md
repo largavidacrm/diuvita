@@ -1,7 +1,7 @@
 # Profile completeness
 
 `scripts/measure_profile_completeness.py` is a read-only checklist for visible
-Diuvita clinic profiles.
+Vitalarga clinic profiles.
 
 It measures whether each visible clinic profile has the main public fields that
 the current quality audit expects:
@@ -36,7 +36,7 @@ Machine-readable output:
 python3 scripts/measure_profile_completeness.py --json
 ```
 
-This report supports the safe rule in `docs/DIUVITA_LIMITES_OPERATIVOS.md`:
+This report supports the safe rule in `docs/VITALARGA_LIMITES_OPERATIVOS.md`:
 missing or weak public information can be detected automatically, but publication
 or correction still goes through Daniel's manual review in `/admin/`.
 

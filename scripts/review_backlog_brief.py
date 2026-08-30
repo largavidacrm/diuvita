@@ -285,7 +285,7 @@ def format_backlog(report: dict[str, Any]) -> str:
     duplicates = report.get("duplicate_enrichment") or []
     workgroups = report.get("clinic_workgroups") or []
     output = [
-        "# Diuvita: atascos de bandeja",
+        "# Vitalarga: atascos de bandeja",
         "",
         f"Generado: {parse_timestamp(report.get('generated_at'))}",
         "",

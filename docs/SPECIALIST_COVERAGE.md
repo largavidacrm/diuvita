@@ -1,7 +1,7 @@
 # Specialist coverage
 
 `scripts/measure_specialist_coverage.py` is a read-only coverage report for
-published specialists on visible Diuvita clinic profiles.
+published specialists on visible Vitalarga clinic profiles.
 
 It answers:
 
@@ -33,6 +33,6 @@ The admin review inbox also has an **Especialistas** filter and an
 Missing-specialist rows are ordered by easiest review path first: open review
 cards, then internal specialist claims, then the remaining visible profiles.
 
-This report supports the safe rule in `docs/DIUVITA_LIMITES_OPERATIVOS.md`: only
+This report supports the safe rule in `docs/VITALARGA_LIMITES_OPERATIVOS.md`: only
 public professional information can be used, and any publication still goes
 through Daniel's manual review in `/admin/`.

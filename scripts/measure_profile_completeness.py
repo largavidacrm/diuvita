@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only completeness report for visible Diuvita clinic profiles."""
+"""Read-only completeness report for visible Vitalarga clinic profiles."""
 from __future__ import annotations
 
 import argparse
@@ -287,7 +287,7 @@ def format_completeness(report: dict[str, Any]) -> str:
     complete = as_int(summary.get("profiles_without_pending_fields"))
     pending_profiles = as_int(summary.get("profiles_with_pending_fields"))
     lines = [
-        "# Diuvita profile completeness",
+        "# Vitalarga profile completeness",
         "",
         f"Generado: {parse_timestamp(report.get('generated_at'))}",
         "",

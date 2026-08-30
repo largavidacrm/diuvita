@@ -209,7 +209,7 @@ begin
     claim.field_path,
     claim.value,
     source_id,
-    'diuvita-shadow-discovery',
+    'vitalarga-shadow-discovery',
     '2026-08-29',
     clean_confidence,
     'review'

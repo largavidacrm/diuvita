@@ -1,6 +1,6 @@
 # Netlify deploy control
 
-Diuvita debe evitar publicaciones pequeñas a produccion cuando el cambio no
+Vitalarga debe evitar publicaciones pequeñas a produccion cuando el cambio no
 afecta lo que ve el publico o el panel interno.
 
 ## Politica operativa
@@ -31,7 +31,7 @@ El script es conservador. Si no entiende un archivo, prefiere construir.
 ## Limite importante
 
 El `ignore` de Netlify no cancela builds disparados por un build hook. En
-Diuvita existe un hook privado desde Supabase para reconstruir la web cuando una
+Vitalarga existe un hook privado desde Supabase para reconstruir la web cuando una
 ficha publicable cambia.
 
 Para reducir esos costes tambien, la siguiente mejora recomendada es cambiar el
@@ -40,7 +40,7 @@ pedir una sola publicacion web al final de la sesion.
 
 La migracion `supabase/migrations/0018_batch_public_site_rebuilds.sql` deja una
 primera version preparada: agrupa las reconstrucciones pedidas desde Supabase en
-ventanas de 30 minutos, configurable con `diuvita_rebuild_batch_minutes`.
+ventanas de 30 minutos, configurable con `vitalarga_rebuild_batch_minutes`.
 
 ## Comprobacion local
 

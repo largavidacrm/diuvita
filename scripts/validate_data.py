@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Validate Diuvita editorial data before building the static site."""
+"""Validate Vitalarga editorial data before building the static site."""
 import json
 import re
 import sys

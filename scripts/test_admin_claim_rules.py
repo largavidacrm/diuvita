@@ -26,7 +26,7 @@ def main() -> None:
         "actionPill(decision.action)",
         "function claimTraceText",
         "function isNoisyTitleIdentityClaim",
-        "diuvita-shadow-extractor",
+        "vitalarga-shadow-extractor",
         '.select("field_path, verification_status, source_record_id, confidence, agent_name")',
         "Motivo:",
         "Guardado:",

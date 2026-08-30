@@ -1,9 +1,9 @@
 # CTO shadow cycle
 
-`scripts/run_cto_shadow_cycle.py` runs the safe recurring Diuvita CTO loop:
+`scripts/run_cto_shadow_cycle.py` runs the safe recurring Vitalarga CTO loop:
 
 Reference boundary: the cycle must respect
-`docs/DIUVITA_LIMITES_OPERATIVOS.md` before any content, publication,
+`docs/VITALARGA_LIMITES_OPERATIVOS.md` before any content, publication,
 communication or product action. If a step touches one of those limits, it stops
 for Daniel instead of implementing, softening or silently discarding the change.
 

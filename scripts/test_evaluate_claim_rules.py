@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Checks for read-only evaluation of stored field claims."""
-from diuvita_rules import RiskPolicy
+from vitalarga_rules import RiskPolicy
 from evaluate_claim_rules import evaluate_rows, format_report, policy_from_automation, summarize
 
 

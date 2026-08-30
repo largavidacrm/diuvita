@@ -19,7 +19,7 @@ begin
   select exists (
     select 1
     from private.app_settings
-    where key = 'diuvita_build_hook_url'
+    where key = 'vitalarga_build_hook_url'
       and btrim(value) <> ''
   )
   into rebuild_hook_configured;
@@ -30,7 +30,7 @@ begin
   )
   into rebuild_batch_minutes
   from private.app_settings
-  where key = 'diuvita_rebuild_batch_minutes';
+  where key = 'vitalarga_rebuild_batch_minutes';
 
   select last_requested_at
   into last_public_site_rebuild_requested_at

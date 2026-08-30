@@ -1,4 +1,4 @@
-# Diuvita — la guía de las clínicas de longevidad
+# Vitalarga — la guía de las clínicas de longevidad
 
 Sitio estático: `data/clinics.json` o Supabase + `data/posts/*.md` → `python3 build.py` → `dist/`.
 Deploy: Netlify (build automatico solo cuando el cambio afecta la web/admin, ver `netlify.toml` y `docs/NETLIFY_DEPLOY_CONTROL.md`).
@@ -12,7 +12,7 @@ python3 build.py
 ```
 
 El build de Netlify ejecuta la validacion antes de generar el sitio.
-El dominio canonico es `https://www.diuvita.com`.
+El dominio canonico es `https://www.vitalarga.com`.
 
 El panel operativo se genera en `/admin/`. Los datos quedan protegidos por Supabase Auth y por la lista `admin_users`. Desde ese panel se pueden revisar métricas, crear trabajos en cola, ver historial/evidencias internas y editar clínicas manualmente, incluidos servicios, unidades clínicas, especialistas publicados y contacto. Tras guardar una ficha, Supabase inicia una nueva publicacion de Netlify para que la web estatica recoja los datos vivos.
 
@@ -24,7 +24,8 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 
 - `docs/CTO_ROADMAP.md`: plan tecnico por fases.
 - `docs/CTO_INTERNAL_EXECUTION_PLAN.md`: plan operativo interno para avanzar hacia la arquitectura objetivo.
-- `docs/DIUVITA_LIMITES_OPERATIVOS.md`: limites legales, medicos, editoriales y de publicacion que requieren escalado a Daniel.
+- `docs/VITALARGA_STYLEBOOK.md`: resumen operativo del nuevo stylebook y sus límites de uso.
+- `docs/VITALARGA_LIMITES_OPERATIVOS.md`: limites legales, medicos, editoriales y de publicacion que requieren escalado a Daniel.
 - `docs/AGENT_WORKFLOWS.md`: primer diseno de workflows agenticos.
 - `docs/RULES_ENGINE.md`: reglas deterministas para decidir si un dato se rechaza, se revisa o puede autoaceptarse en el futuro.
 - `docs/CLAIM_RULE_EVALUATION.md`: ensayo de reglas sobre claims ya guardados, sin escribir ni publicar.
@@ -35,7 +36,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SOURCE_SHADOW_REVIEW_BATCH.md`: lote seguro para convertir fuentes ya guardadas en propuestas internas de mejora.
 - `docs/ADMIN_DIGEST.md`: resumen interno de CTO para revisiones, jobs y costes registrados.
 - `docs/DANIEL_REVIEW_BRIEF.md`: resumen accionable en lenguaje simple para que Daniel sepa qué revisar primero.
-- `docs/GLOBAL_PLAN_STATUS.md`: resumen ejecutivo de dónde está Diuvita dentro del plan global.
+- `docs/GLOBAL_PLAN_STATUS.md`: resumen ejecutivo de dónde está Vitalarga dentro del plan global.
 - `docs/NETLIFY_DEPLOY_CONTROL.md`: reglas para agrupar publicaciones y evitar builds de Netlify innecesarios.
 - `docs/REVIEW_MATURITY.md`: medición de madurez antes de plantear auto-publicación de bajo riesgo.
 - `docs/HUMAN_FIELD_LOCKS.md`: protecciones para campos corregidos manualmente por Daniel.
@@ -59,6 +60,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `supabase/migrations/0017_admin_restore_clinic_version.sql`: restauración auditada de fichas desde el historial.
 - `supabase/migrations/0018_batch_public_site_rebuilds.sql`: prepara ventanas de publicacion agrupada para reducir rebuilds de Netlify desde Supabase.
 - `supabase/migrations/0019_admin_publication_control_summary.sql`: expone al admin el estado de publicacion agrupada sin revelar el hook privado.
+- `supabase/migrations/0021_vitalarga_brand_rename.sql`: migra ajustes internos vivos de la marca anterior a Vitalarga.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.
@@ -71,7 +73,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/check_supabase_rebuild_batching.sh`: comprueba si Supabase agrupa peticiones de rebuild a Netlify.
 - `scripts/capture_source_snapshot.py`: captura metadatos, hash y extracto corto de una fuente publica.
 - `scripts/source_snapshot_records.py`: helpers SQL para guardar capturas compactas en Supabase.
-- `scripts/diuvita_rules.py`: motor local de reglas por riesgo de campo.
+- `scripts/vitalarga_rules.py`: motor local de reglas por riesgo de campo.
 - `scripts/evaluate_claim_rules.py`: evalua claims guardados contra las reglas en modo solo lectura.
 - `scripts/extract_clinic_profile_shadow.py`: extractor inicial de claims de clínica en modo sombra.
 - `scripts/verify_clinic_profile_shadow.py`: verificador inicial de claims extraídos en modo sombra.

@@ -106,7 +106,7 @@ def main():
         == "- Sensabell · Valencia · publicada · 5 tarjetas · 1 claim bloqueante / 3 mejoras / 1 auditoría · P85 · más antigua 2026-08-30 08:30 · orden: claims bloqueantes -> mejoras -> auditorías · primero quitar o corregir datos dudosos",
         "clinic workgroup formatting missing",
     )
-    check("# Diuvita: atascos de bandeja" in output, "title missing")
+    check("# Vitalarga: atascos de bandeja" in output, "title missing")
     check("Revisiones abiertas: 48" in output, "open count missing")
     check("Mejoras de ficha abiertas: 16" in output, "enrichment count missing")
     check("claims bloqueantes: 4 abiertas; máxima prioridad P85" in output, "blocking claim type missing")

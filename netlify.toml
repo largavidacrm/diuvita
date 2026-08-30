@@ -1,10 +1,10 @@
 [build]
   ignore = "python3 ./scripts/netlify_ignore_build.py"
-  command = "python3 scripts/validate_data.py && DIUVITA_DATA_SOURCE=supabase python3 build.py && python3 scripts/check_operational_limits.py --built-site"
+  command = "python3 scripts/validate_data.py && VITALARGA_DATA_SOURCE=supabase python3 build.py && python3 scripts/check_operational_limits.py --built-site"
   publish = "dist"
 
 [[redirects]]
-  from = "https://diuvita.com/*"
-  to = "https://www.diuvita.com/:splat"
+  from = "https://vitalarga.com/*"
+  to = "https://www.vitalarga.com/:splat"
   status = 301
   force = true

@@ -64,7 +64,7 @@ def main():
     )
     duplicated_fields = compact_field_rows([summary["fields"][0], summary["fields"][0]])
     check(duplicated_fields[0]["count"] == 2, "repeated claim fields should be compacted")
-    check("# Diuvita: claims bloqueantes" in output, "title missing")
+    check("# Vitalarga: claims bloqueantes" in output, "title missing")
     check("Clínicas afectadas: 1" in output, "clinic count missing")
     check("Claims a revisar: 2" in output, "claim count missing")
     check("Clinic · Barcelona, España" in output, "clinic heading missing")

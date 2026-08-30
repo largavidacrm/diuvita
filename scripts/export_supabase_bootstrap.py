@@ -9,7 +9,7 @@ MIGRATION = ROOT / "supabase" / "migrations" / "0001_agent_foundation.sql"
 
 
 def main():
-    print("-- Diuvita Supabase bootstrap")
+    print("-- Vitalarga Supabase bootstrap")
     print("-- 1) Foundation schema")
     print(MIGRATION.read_text(encoding="utf-8").strip())
     print()

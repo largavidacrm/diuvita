@@ -1,19 +1,20 @@
-# Diuvita CTO roadmap
+# Vitalarga CTO roadmap
 
 Date: 2026-08-29
 
 ## Current state
 
-Diuvita is currently a small static Netlify site:
+Vitalarga is currently a small static Netlify site:
 
 - `data/clinics.json` is the editorial database.
 - `build.py` renders `dist/`.
 - `pendientes/` is the manual human-review holding area.
 - Netlify runs data validation and then `python3 build.py`.
-- Git is connected to `https://github.com/largavidacrm/diuvita`.
+- Git is connected to the existing GitHub repository; renaming that repository
+  is a separate external step.
 - Supabase project exists at `https://twxhcmvzbpnrneywdece.supabase.co`.
 
-This is a good starting point. The next technical goal is not to rebuild the site. The next goal is to make Diuvita agent-ready while keeping the public site stable.
+This is a good starting point. The next technical goal is not to rebuild the site. The next goal is to make Vitalarga agent-ready while keeping the public site stable.
 
 Operational execution plan: see `docs/CTO_INTERNAL_EXECUTION_PLAN.md`. That document is the working plan for unattended CTO runs and should be updated as major milestones are completed.
 
@@ -88,7 +89,7 @@ Done in this repo now:
 - Add a seed exporter for the current clinic JSON.
 - Add this CTO roadmap.
 - Protect local secrets and generated files in `.gitignore`.
-- Configure the canonical public domain as `https://www.diuvita.com`.
+- Configure the canonical public domain as `https://www.vitalarga.com`.
 
 Next implementation steps:
 

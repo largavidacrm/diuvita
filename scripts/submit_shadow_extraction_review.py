@@ -121,12 +121,14 @@ def create_review(
     admin_email: str,
     local_env: dict[str, str],
     replace_existing: bool = False,
+    allow_multiple_open_clinic_reviews: bool = False,
 ) -> dict[str, Any]:
     if not payload.get("proposed_fields"):
         return {"status": "empty", "slug": clinic_slug}
     source_url = (payload.get("source_urls") or [""])[0]
     sql_payload = json.dumps(payload, ensure_ascii=False)
     should_replace = "true" if replace_existing else "false"
+    allow_multiple = "true" if allow_multiple_open_clinic_reviews else "false"
     sql = f"""
 with target as (
   select id, slug, display_name, city, country, website
@@ -148,13 +150,27 @@ payload_input as (
   ) as data
   from target t
 ),
-existing as (
-  select rq.id, rq.title
+open_clinic_reviews as (
+  select rq.id, rq.title, rq.payload ->> 'source_url' as review_source_url
   from public.review_queue rq
   join target t on t.id = rq.clinic_id
   where rq.review_type = 'clinic_profile_enrichment'
     and rq.status = 'open'
-    and rq.payload ->> 'source_url' = {sql_literal(source_url)}
+  order by
+    case when rq.payload ->> 'source_url' = {sql_literal(source_url)} then 0 else 1 end,
+    rq.priority desc,
+    rq.created_at asc
+),
+existing as (
+  select rq.id, rq.title
+  from open_clinic_reviews rq
+  where rq.review_source_url = {sql_literal(source_url)}
+  limit 1
+),
+existing_clinic as (
+  select rq.id, rq.title
+  from open_clinic_reviews rq
+  where not exists (select 1 from existing)
   limit 1
 ),
 updated as (
@@ -191,6 +207,7 @@ inserted as (
   from target t
   cross join payload_input p
   where not exists (select 1 from existing)
+    and ({allow_multiple} or not exists (select 1 from existing_clinic))
   returning id, title
 ),
 resolved as (
@@ -201,6 +218,11 @@ resolved as (
   select 'existing' as status, id, title from existing
     where not exists (select 1 from inserted)
       and not exists (select 1 from updated)
+  union all
+  select 'existing_clinic' as status, id, title from existing_clinic
+    where not exists (select 1 from inserted)
+      and not exists (select 1 from updated)
+      and not exists (select 1 from existing)
 )
 select coalesce(jsonb_agg(to_jsonb(resolved.*)), '[]'::jsonb)
 from resolved;
@@ -216,8 +238,18 @@ def parse_args() -> argparse.Namespace:
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--url", help="Fetch and extract a clinic source URL.")
     source.add_argument("--extraction-json", type=Path, help="Use existing extraction JSON.")
-    parser.add_argument("--clinic-slug", required=True, help="Existing Diuvita clinic slug.")
+    parser.add_argument("--clinic-slug", required=True, help="Existing Vitalarga clinic slug.")
     parser.add_argument("--admin-email", help="Admin email used for assignment/audit.")
+    parser.add_argument(
+        "--replace-existing",
+        action="store_true",
+        help="Refresh an existing open review for the same source.",
+    )
+    parser.add_argument(
+        "--allow-multiple-open-clinic-reviews",
+        action="store_true",
+        help="Allow more than one open enrichment card for the same clinic.",
+    )
     parser.add_argument("--apply", action="store_true", help="Create the review card in Supabase.")
     return parser.parse_args()
 
@@ -237,7 +269,14 @@ def main() -> int:
 
     local_env = load_env_file()
     admin_email = args.admin_email or get_default_admin_email(local_env)
-    result = create_review(args.clinic_slug, payload, admin_email, local_env)
+    result = create_review(
+        args.clinic_slug,
+        payload,
+        admin_email,
+        local_env,
+        args.replace_existing,
+        args.allow_multiple_open_clinic_reviews,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

@@ -1,6 +1,6 @@
 # Review maturity measurement
 
-`scripts/measure_review_maturity.py` is a read-only safety report for Diuvita.
+`scripts/measure_review_maturity.py` is a read-only safety report for Vitalarga.
 
 It answers whether the system has enough human review history before any future
 low-risk auto-publish expansion.

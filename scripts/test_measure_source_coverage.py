@@ -80,7 +80,7 @@ def main():
     check(pct(1, 4) == "25%", "percentage formatting missing")
     check(status_label("published") == "publicada", "published label missing")
     check(next_source_action(report) == "Revisar 1 claim bloqueante de Clinic B", "next source action missing")
-    check("# Diuvita source coverage" in output, "title missing")
+    check("# Vitalarga source coverage" in output, "title missing")
     check("Fichas visibles: 4" in output, "visible count missing")
     check("Con fuentes guardadas: 3/4 (75%)" in output, "source coverage missing")
     check("Con fuentes hidratadas: 2/4 (50%)" in output, "hydrated source coverage missing")

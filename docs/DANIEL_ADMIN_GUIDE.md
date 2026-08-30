@@ -1,9 +1,9 @@
-# Guía rápida del panel Diuvita
+# Guía rápida del panel Vitalarga
 
 URL del panel:
 
 ```text
-https://www.diuvita.com/admin/
+https://www.vitalarga.com/admin/
 ```
 
 ## Revisar clínicas nuevas
@@ -14,7 +14,7 @@ https://www.diuvita.com/admin/
 4. También puedes pulsar **Revisar** en una propuesta concreta.
 5. Comprueba nombre, web, ciudad, fuente, servicios y especialistas detectados.
 6. Si parece una clínica válida, pulsa **Crear borrador y validar**.
-7. Si no encaja con Diuvita, pulsa **Descartar**.
+7. Si no encaja con Vitalarga, pulsa **Descartar**.
 
 Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma. El botón de publicar aparece después, al editar esa ficha, dentro de **Validación final**.
 
@@ -129,7 +129,7 @@ crear borrador interno, completar datos y publicar solo desde el editor de clín
 
 ## Duplicados
 
-Si el sistema detecta que una propuesta se parece mucho a una clínica existente, verás **Coincidencias en Diuvita**.
+Si el sistema detecta que una propuesta se parece mucho a una clínica existente, verás **Coincidencias en Vitalarga**.
 
 Cuando sea un duplicado probable, el botón de crear borrador queda bloqueado. En ese caso, lo normal es descartarlo o revisarlo manualmente más adelante.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the safe Diuvita CTO shadow cycle.
+"""Run the safe Vitalarga CTO shadow cycle.
 
 This orchestrates idempotent internal tools. It avoids public profile edits,
 candidate draft promotion and auto-publication.
@@ -402,7 +402,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
 
 def format_cycle_brief(brief: dict[str, Any]) -> str:
     lines = [
-        "# Diuvita: resumen CTO automatico",
+        "# Vitalarga: resumen CTO automatico",
         "",
         f"- Estado: {brief.get('headline')}",
         f"- Pasos: {brief.get('steps')}",
@@ -608,7 +608,7 @@ def parse_args() -> argparse.Namespace:
         default=SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
         help="In apply-safe mode, skip review-card writing steps once open reviews reach this count. Use 0 to disable.",
     )
-    parser.add_argument("--production-base-url", default="https://www.diuvita.com")
+    parser.add_argument("--production-base-url", default="https://www.vitalarga.com")
     parser.add_argument("--production-timeout", type=int, default=12)
     return parser.parse_args()
 

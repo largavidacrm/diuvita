@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only source snapshot retention report for Diuvita."""
+"""Read-only source snapshot retention report for Vitalarga."""
 from __future__ import annotations
 
 import argparse
@@ -117,7 +117,7 @@ def format_retention_report(report: dict[str, Any]) -> str:
     keep_latest = as_int(summary.get("keep_latest")) or DEFAULT_KEEP_LATEST
 
     lines = [
-        "# Diuvita source snapshot retention",
+        "# Vitalarga source snapshot retention",
         "",
         f"Generated: {parse_timestamp(report.get('generated_at'))}",
         "",

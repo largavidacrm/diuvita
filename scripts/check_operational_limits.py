@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan public Diuvita content for obvious operational-limit red flags."""
+"""Scan public Vitalarga content for obvious operational-limit red flags."""
 from __future__ import annotations
 
 import re

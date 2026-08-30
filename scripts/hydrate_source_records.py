@@ -18,7 +18,7 @@ from source_snapshot_records import insert_source_snapshot_sql, snapshot_storage
 from submit_discovery_candidates import load_env_file, run_psql, sql_literal
 
 
-HYDRATOR_NAME = "diuvita-source-hydrator"
+HYDRATOR_NAME = "vitalarga-source-hydrator"
 HYDRATOR_VERSION = "2026-08-30"
 
 

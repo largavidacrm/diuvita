@@ -19,7 +19,7 @@ from submit_shadow_extraction_review import create_review, review_payload
 from verify_clinic_profile_shadow import verify_extraction
 
 
-PROCESSOR_NAME = "diuvita-source-change-processor"
+PROCESSOR_NAME = "vitalarga-source-change-processor"
 PROCESSOR_VERSION = "2026-08-30"
 
 

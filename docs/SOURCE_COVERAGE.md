@@ -1,6 +1,6 @@
 # Source coverage
 
-`scripts/measure_source_coverage.py` is a read-only report for visible Diuvita
+`scripts/measure_source_coverage.py` is a read-only report for visible Vitalarga
 clinic profiles.
 
 It measures, per visible clinic:

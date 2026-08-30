@@ -1,6 +1,6 @@
 # Admin digest
 
-The admin digest is a read-only CTO snapshot for Diuvita operations.
+The admin digest is a read-only CTO snapshot for Vitalarga operations.
 
 It answers:
 

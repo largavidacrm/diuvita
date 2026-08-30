@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only specialist coverage report for public Diuvita clinic profiles."""
+"""Read-only specialist coverage report for public Vitalarga clinic profiles."""
 from __future__ import annotations
 
 import argparse
@@ -167,7 +167,7 @@ def format_coverage(report: dict[str, Any]) -> str:
     with_specialists = as_int(summary.get("with_specialists"))
     missing = as_int(summary.get("without_specialists"))
     lines = [
-        "# Diuvita specialist coverage",
+        "# Vitalarga specialist coverage",
         "",
         f"Generado: {parse_timestamp(report.get('generated_at'))}",
         "",

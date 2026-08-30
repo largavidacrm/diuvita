@@ -26,7 +26,7 @@ from capture_source_snapshot import (
     safe_host,
     snapshot_from_fetch,
 )
-from diuvita_rules import decide_many
+from vitalarga_rules import decide_many
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -482,7 +482,7 @@ def claim(field_path: str, value: Any, confidence: float, source_url: str) -> di
         "source_count": 1,
         "source_url": source_url,
         "verifier_verdict": "unknown",
-        "agent_name": "diuvita-shadow-extractor",
+        "agent_name": "vitalarga-shadow-extractor",
         "agent_version": "2026-08-30",
     }
 

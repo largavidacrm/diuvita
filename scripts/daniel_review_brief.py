@@ -184,7 +184,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
     failed_jobs = as_int(jobs.get("failed")) + as_int(jobs.get("dead_letter"))
 
     output = [
-        "# Diuvita: brief de revisión",
+        "# Vitalarga: brief de revisión",
         "",
         f"Generado: {parse_timestamp(digest.get('generated_at') or summary.get('generated_at'))}",
         "",
@@ -241,7 +241,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         output.append(f"- Web pública: {production_health_status(production_health)}.")
     output.extend([
         "",
-        "Panel: https://www.diuvita.com/admin/",
+        "Panel: https://www.vitalarga.com/admin/",
     ])
 
     return "\n".join(output) + "\n"
@@ -253,7 +253,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=30, help="Maximum open reviews and failed jobs to inspect.")
     parser.add_argument("--json", action="store_true", help="Print raw digest JSON instead of the Daniel brief.")
     parser.add_argument("--production-health", action="store_true", help="Include a read-only public-site health line.")
-    parser.add_argument("--production-base-url", default="https://www.diuvita.com")
+    parser.add_argument("--production-base-url", default="https://www.vitalarga.com")
     parser.add_argument("--production-timeout", type=int, default=12)
     return parser.parse_args()
 

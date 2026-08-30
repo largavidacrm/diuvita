@@ -1,7 +1,7 @@
 # Global plan status
 
 `scripts/global_plan_status.py` prints a plain-Spanish, read-only snapshot of
-where Diuvita is in the global CTO plan.
+where Vitalarga is in the global CTO plan.
 
 It combines the protected admin digest with the roadmap lanes:
 

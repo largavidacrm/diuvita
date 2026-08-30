@@ -61,7 +61,7 @@ def main():
         next_profile_action(report) == "Revisar Clinic A: ya tiene 1 revisión abierta relacionada. Primer campo: Email o teléfono",
         "next profile action missing",
     )
-    check("# Diuvita profile completeness" in output, "title missing")
+    check("# Vitalarga profile completeness" in output, "title missing")
     check("Clínicas visibles: 4" in output, "visible count missing")
     check("Sin campos pendientes medidos: 1 (25%)" in output, "complete count missing")
     check("Con campos pendientes medidos: 3 (75%)" in output, "pending count missing")

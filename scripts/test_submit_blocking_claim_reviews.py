@@ -60,11 +60,11 @@ def main():
             "field_path": "identity.canonical_name",
             "verification_status": "rejected",
             "confidence": 0.55,
-            "agent_name": "diuvita-shadow-extractor",
+            "agent_name": "vitalarga-shadow-extractor",
         }),
         "low-confidence title identity claims should be classified as noise",
     )
-    check("diuvita-shadow-extractor" in NON_NOISY_BLOCKING_CLAIM_SQL, "SQL noise filter missing agent guard")
+    check("vitalarga-shadow-extractor" in NON_NOISY_BLOCKING_CLAIM_SQL, "SQL noise filter missing agent guard")
     check(issue_label(group["claims"][0]) == "Claim rechazado: identity.canonical_name", "rejected label missing")
     check(issue_label(group["claims"][1]) == "Claim sin fuente: contact.phone", "without-source label missing")
     check(payload["quality_context"] == "blocking_claims", "quality context missing")

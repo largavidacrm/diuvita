@@ -29,7 +29,7 @@ _to_delete/
 
 # Local/private strategy notes
 BASELINE.md
-Diuvita_24_Month_Founder_Playbook.md
+*_24_Month_Founder_Playbook.md
 
 # Local/private clinic enrichment payloads
 data/clinic_profile_enrichment_proposals_*.json

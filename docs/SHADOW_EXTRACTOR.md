@@ -51,7 +51,7 @@ source page
   -> review or publication candidate
 ```
 
-Starting with a simple deterministic extractor lets Diuvita build the pipeline before depending on a stronger AI extraction model.
+Starting with a simple deterministic extractor lets Vitalarga build the pipeline before depending on a stronger AI extraction model.
 
 ## Example
 

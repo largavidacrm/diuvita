@@ -3,7 +3,7 @@
 `scripts/evaluate_claim_rules.py` is a read-only safety report for stored
 `field_claims`.
 
-It applies the deterministic rules from `scripts/diuvita_rules.py` to claims
+It applies the deterministic rules from `scripts/vitalarga_rules.py` to claims
 already in Supabase and answers:
 
 - how many claims would be kept in review;
@@ -42,4 +42,4 @@ python3 scripts/evaluate_claim_rules.py --json
 
 This tool is for measurement only. Any real auto-publication expansion still
 requires Daniel's explicit decision and must respect
-`docs/DIUVITA_LIMITES_OPERATIVOS.md`.
+`docs/VITALARGA_LIMITES_OPERATIVOS.md`.

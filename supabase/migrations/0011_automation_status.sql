@@ -2,9 +2,9 @@ begin;
 
 insert into private.app_settings (key, value)
 values
-  ('diuvita_agents_enabled', 'true'),
-  ('diuvita_auto_publish_enabled', 'false'),
-  ('diuvita_shadow_review_target', '200')
+  ('vitalarga_agents_enabled', 'true'),
+  ('vitalarga_auto_publish_enabled', 'false'),
+  ('vitalarga_shadow_review_target', '200')
 on conflict (key) do nothing;
 
 create or replace function public.admin_dashboard_summary()
@@ -27,7 +27,7 @@ begin
     (
       select lower(value) in ('true', '1', 'yes', 'on')
       from private.app_settings
-      where key = 'diuvita_agents_enabled'
+      where key = 'vitalarga_agents_enabled'
     ),
     true
   )
@@ -37,7 +37,7 @@ begin
     (
       select lower(value) in ('true', '1', 'yes', 'on')
       from private.app_settings
-      where key = 'diuvita_auto_publish_enabled'
+      where key = 'vitalarga_auto_publish_enabled'
     ),
     false
   )
@@ -47,7 +47,7 @@ begin
     (
       select nullif(regexp_replace(value, '[^0-9]', '', 'g'), '')::integer
       from private.app_settings
-      where key = 'diuvita_shadow_review_target'
+      where key = 'vitalarga_shadow_review_target'
     ),
     200
   )

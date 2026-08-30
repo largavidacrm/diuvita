@@ -21,14 +21,14 @@ from submit_discovery_candidates import (
 )
 
 
-TOOL_NAME = "diuvita-blocking-claim-reviewer"
+TOOL_NAME = "vitalarga-blocking-claim-reviewer"
 TOOL_VERSION = "2026-08-30"
 NON_NOISY_BLOCKING_CLAIM_SQL = """
 not (
   fc.field_path = 'identity.canonical_name'
   and fc.verification_status = 'rejected'
   and fc.confidence <= 0.6
-  and coalesce(fc.agent_name, '') = 'diuvita-shadow-extractor'
+  and coalesce(fc.agent_name, '') = 'vitalarga-shadow-extractor'
 )
 """
 
@@ -49,7 +49,7 @@ def is_noisy_title_identity_claim(claim: dict[str, Any]) -> bool:
         str(claim.get("field_path") or "") == "identity.canonical_name"
         and str(claim.get("verification_status") or "").lower() == "rejected"
         and confidence <= 0.6
-        and str(claim.get("agent_name") or "") == "diuvita-shadow-extractor"
+        and str(claim.get("agent_name") or "") == "vitalarga-shadow-extractor"
     )
 
 

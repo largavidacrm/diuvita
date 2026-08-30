@@ -1,6 +1,6 @@
-# Diuvita Supabase foundation
+# Vitalarga Supabase foundation
 
-This folder contains the first production-data foundation for Diuvita.
+This folder contains the first production-data foundation for Vitalarga.
 
 The current public website still builds from `data/clinics.json`. Supabase is the next canonical layer: versioned clinic truth, sources, field claims, agent jobs, review queue, human overrides and audit events.
 
@@ -21,10 +21,10 @@ twxhcmvzbpnrneywdece
 1. Generate a single SQL bootstrap file:
 
 ```bash
-python3 scripts/export_supabase_bootstrap.py > /tmp/diuvita_supabase_bootstrap.sql
+python3 scripts/export_supabase_bootstrap.py > /tmp/vitalarga_supabase_bootstrap.sql
 ```
 
-2. Review `/tmp/diuvita_supabase_bootstrap.sql`.
+2. Review `/tmp/vitalarga_supabase_bootstrap.sql`.
 3. Run it in the Supabase SQL editor.
 
 Local apply option:
@@ -33,7 +33,7 @@ Local apply option:
 scripts/apply_supabase_bootstrap.sh
 ```
 
-This reads `DATABASE_URL` from `.env`, generates `/tmp/diuvita_supabase_bootstrap.sql` and applies it with `psql`.
+This reads `DATABASE_URL` from `.env`, generates `/tmp/vitalarga_supabase_bootstrap.sql` and applies it with `psql`.
 
 For local use, the easiest option is to set only this value in `.env`:
 
@@ -94,10 +94,10 @@ Alternative two-step setup:
 2. Generate the initial clinic import:
 
 ```bash
-python3 scripts/export_supabase_seed.py > /tmp/diuvita_seed.sql
+python3 scripts/export_supabase_seed.py > /tmp/vitalarga_seed.sql
 ```
 
-3. Review `/tmp/diuvita_seed.sql`, then run it in Supabase.
+3. Review `/tmp/vitalarga_seed.sql`, then run it in Supabase.
 4. Add future server-side environment variables in Netlify or worker runtime:
 
 ```text
@@ -120,7 +120,7 @@ Daniel's non-technical panel guide lives in `docs/DANIEL_ADMIN_GUIDE.md`.
 
 ## Public site feed
 
-`public.public_clinics_for_site` returns only publishable clinic data (`published` and `preliminary`) for the static site build. In Netlify, set `DIUVITA_DATA_SOURCE=supabase` so `build.py` reads this feed when generating the public pages.
+`public.public_clinics_for_site` returns only publishable clinic data (`published` and `preliminary`) for the static site build. In Netlify, set `VITALARGA_DATA_SOURCE=supabase` so `build.py` reads this feed when generating the public pages.
 
 `supabase/migrations/0020_location_transparency_public_feed.sql` extends that
 feed with optional multi-location data, Google Maps links, Google review links
@@ -129,13 +129,13 @@ clinic rows keep working while richer profiles can be edited from `/admin/`.
 
 `supabase/migrations/0005_private_rebuild_hook.sql` adds a private Supabase setting and trigger. Once the build hook URL is stored in `private.app_settings`, public clinic changes ask Netlify to rebuild the static site. The hook URL is not committed to Git and is not exposed to the browser.
 
-`supabase/migrations/0018_batch_public_site_rebuilds.sql` updates that rebuild request so public-site rebuilds can be batched. The default window is 30 minutes and can be adjusted through `private.app_settings` with the key `diuvita_rebuild_batch_minutes`.
+`supabase/migrations/0018_batch_public_site_rebuilds.sql` updates that rebuild request so public-site rebuilds can be batched. The default window is 30 minutes and can be adjusted through `private.app_settings` with the key `vitalarga_rebuild_batch_minutes`.
 
 `supabase/migrations/0019_admin_publication_control_summary.sql` exposes the rebuild batching status to authorized admins without returning the private Netlify build hook URL.
 
 ## Shadow discovery review
 
-`supabase/migrations/0006_shadow_discovery_queue.sql` adds the first safe workflow surface for `DISCOVER_CLINIC`. A discovery job can be picked, completed with candidate clinics and converted into `review_queue` cards. Review cards can then be dismissed or turned into draft clinic records. Drafts are not published on Diuvita until an admin manually edits their status to `published` or `preliminary`.
+`supabase/migrations/0006_shadow_discovery_queue.sql` adds the first safe workflow surface for `DISCOVER_CLINIC`. A discovery job can be picked, completed with candidate clinics and converted into `review_queue` cards. Review cards can then be dismissed or turned into draft clinic records. Drafts are not published on Vitalarga until an admin manually edits their status to `published` or `preliminary`.
 
 `supabase/migrations/0007_candidate_duplicate_hints.sql` adds conservative duplicate hints. Candidates with the same website or a very similar name are still sent to review, but the review card shows likely existing matches and blocks draft creation for clear duplicates.
 

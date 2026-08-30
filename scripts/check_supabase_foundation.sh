@@ -75,15 +75,15 @@ export PGSSLMODE=require
   -c "select count(*) as candidate_dedupe_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('normalized_url_host', 'admin_candidate_duplicate_matches');" \
   -c "select count(*) as quality_audit_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_complete_quality_audit_job';" \
   -c "select count(*) as human_field_lock_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_set_clinic_field_locks';" \
-  -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'diuvita_build_hook_url' and btrim(value) <> '';" \
-  -c "select key, value from private.app_settings where key in ('diuvita_agents_enabled', 'diuvita_auto_publish_enabled', 'diuvita_shadow_review_target') order by key;" \
+  -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'vitalarga_build_hook_url' and btrim(value) <> '';" \
+  -c "select key, value from private.app_settings where key in ('vitalarga_agents_enabled', 'vitalarga_auto_publish_enabled', 'vitalarga_shadow_review_target') order by key;" \
   -c "select status, count(*) from public.clinics group by status order by status;" \
   -c "select count(*) as open_review_items from public.review_queue where status = 'open';" \
   -c "select count(*) as source_records_missing_hash from public.source_records where content_hash is null and (metadata ->> 'last_hydration_error_at' is null or (metadata ->> 'last_hydration_error_at')::timestamptz < now() - interval '24 hours');" \
   -c "select count(*) as candidate_source_records from public.source_records where entity_type = 'candidate_clinic';" \
   -c "select count(*) as total_field_claims from public.field_claims;" \
   -c "select count(*) as source_snapshots from public.source_snapshots;" \
-  -c "select count(*) as shadow_field_claims from public.field_claims where agent_name = 'diuvita-shadow-discovery';" \
-  -c "select count(*) as enrichment_field_claims from public.field_claims where agent_name = 'diuvita-profile-enrichment';" \
+  -c "select count(*) as shadow_field_claims from public.field_claims where agent_name = 'vitalarga-shadow-discovery';" \
+  -c "select count(*) as enrichment_field_claims from public.field_claims where agent_name = 'vitalarga-profile-enrichment';" \
   -c "select count(*) as active_human_field_locks from public.human_overrides where locked = true;" \
   -c "select count(*) as queued_jobs from public.agent_jobs where status = 'queued';"

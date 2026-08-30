@@ -1,10 +1,10 @@
-# Diuvita internal CTO execution plan
+# Vitalarga internal CTO execution plan
 
 Date: 2026-08-30
 
 ## North star
 
-Build Diuvita as a supervised intelligence machine, not as a manually edited directory.
+Build Vitalarga as a supervised intelligence machine, not as a manually edited directory.
 
 Target flow:
 
@@ -28,14 +28,14 @@ AI proposes. AI challenges. Rules decide. Daniel handles exceptions. Everything 
 
 Operating boundary:
 
-- Before content, product, automation or publication work, check `docs/DIUVITA_LIMITES_OPERATIVOS.md`.
+- Before content, product, automation or publication work, check `docs/VITALARGA_LIMITES_OPERATIVOS.md`.
 - If a task touches one of those hard limits, stop and ask Daniel with the escalation format in that guide.
 
 ## Current operating state
 
 Already built:
 
-- Public Netlify site at `https://www.diuvita.com`.
+- Public Netlify site at `https://www.vitalarga.com`.
 - Supabase canonical database for clinics.
 - Static build can read live clinic data from Supabase.
 - Private `/admin/` panel with Supabase Auth.
@@ -175,7 +175,7 @@ Definition of done:
 
 ### Lane 4: Monitoring
 
-Goal: once a clinic exists, Diuvita notices meaningful changes.
+Goal: once a clinic exists, Vitalarga notices meaningful changes.
 
 Build next:
 
@@ -209,7 +209,7 @@ Build after the clinic loop works:
 
 Definition of done:
 
-- Diuvita can answer structured questions beyond "which clinics exist".
+- Vitalarga can answer structured questions beyond "which clinics exist".
 
 ### Lane 6: Growth workflows
 
@@ -226,7 +226,7 @@ Build after data accuracy is measured:
 
 Definition of done:
 
-- Diuvita creates useful pages and outreach from verified data, not from generic text generation.
+- Vitalarga creates useful pages and outreach from verified data, not from generic text generation.
 
 ## Field-level publication rules
 
@@ -293,7 +293,7 @@ Next 10 technical steps:
 4. Add human-lock controls for fields Daniel corrects manually. Done locally in `supabase/migrations/0012_human_field_locks.sql` and `/admin/`.
 5. Add source snapshot capture for reviewed proposals. Done locally in `scripts/capture_source_snapshot.py`; enrichment review URLs can now be linked into Supabase `source_records` with `scripts/capture_enrichment_review_claims.py`.
 6. Convert enrichment proposals into `field_claims`, not only review payloads. Done for existing review payloads with `scripts/capture_enrichment_review_claims.py`.
-7. Add a deterministic rules module for field risk. Done locally in `scripts/diuvita_rules.py`; stored claims can now be evaluated read-only with `scripts/evaluate_claim_rules.py`.
+7. Add a deterministic rules module for field risk. Done locally in `scripts/vitalarga_rules.py`; stored claims can now be evaluated read-only with `scripts/evaluate_claim_rules.py`.
 8. Build a shadow `EXTRACT_CLINIC_PROFILE` script for one clinic URL. Done locally in `scripts/extract_clinic_profile_shadow.py`; next step is adding an independent verifier.
 9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; review-card wiring exists in `scripts/submit_shadow_extraction_review.py`.
 10. Add a daily digest card/report for open reviews, failed jobs and costs. Done locally in `scripts/admin_digest.py`; a simpler Daniel-facing brief exists in `scripts/daniel_review_brief.py`, and the safe CTO cycle now embeds a Daniel-facing summary. Next step is turning it into a scheduled notification when Daniel chooses the channel.
@@ -321,8 +321,8 @@ Ask Daniel only when needed for:
 - OpenAI/API production key.
 - Email notification sender.
 - Whether/when to enable any auto-publish category.
-- Brand/editorial policy for how much team/pricing/treatment detail Diuvita should display.
+- Brand/editorial policy for how much team/pricing/treatment detail Vitalarga should display.
 - Business decisions around clinic claim portal and outreach tone.
-- Any hard limit listed in `docs/DIUVITA_LIMITES_OPERATIVOS.md`.
+- Any hard limit listed in `docs/VITALARGA_LIMITES_OPERATIVOS.md`.
 
 Everything else should be advanced directly and reported afterwards.

@@ -28,7 +28,7 @@ python3 scripts/hydrate_source_records.py --limit 10 --apply
 Failures are reported per URL so one blocked website does not stop the rest of
 the evidence capture.
 
-If a public site rejects the default Diuvita provenance header with HTTP 403 or
+If a public site rejects the default Vitalarga provenance header with HTTP 403 or
 406, the capturer retries once with normal browser-compatible headers and stores
 that request profile in metadata. It does not use cookies, logins, captcha
 workarounds or high-frequency retries.

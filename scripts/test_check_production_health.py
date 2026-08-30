@@ -11,7 +11,7 @@ def check(condition, message):
 
 
 def main():
-    ok_item = check_response("home", "https://example.test/", 200, "Diuvita Buscar clínica", ["Diuvita"])
+    ok_item = check_response("home", "https://example.test/", 200, "Vitalarga Buscar clínica", ["Vitalarga"])
     missing_item = check_response("admin", "https://example.test/admin/", 200, "Centro", ["Fichas completas"])
     error_item = check_response("profile", "https://example.test/profile", None, "", ["x"], "timeout")
     report = {
@@ -26,7 +26,7 @@ def main():
     check(missing_item["ok"] is False, "missing markers should fail")
     check(error_item["ok"] is False, "network errors should fail")
     check(report["base_url"] == "https://example.test", "base url should be normalized")
-    check("# Diuvita production health" in output, "title missing")
+    check("# Vitalarga production health" in output, "title missing")
     check("Estado: Atención" in output, "overall state missing")
     check("Writes data: no" in output, "read-only signal missing")
     check("admin: Atención · 200" in output, "missing-marker line missing")

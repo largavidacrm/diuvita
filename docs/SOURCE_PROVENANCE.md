@@ -1,6 +1,6 @@
-# Diuvita source provenance
+# Vitalarga source provenance
 
-Diuvita should be able to answer a simple question for every important field:
+Vitalarga should be able to answer a simple question for every important field:
 
 ```text
 Why do we believe this?
@@ -16,7 +16,7 @@ The provenance layer stores compact evidence about source pages:
 - SHA-256 content hash.
 - Short readable excerpt.
 
-By default Diuvita does not store full external pages in the repo. Compact snapshots are enough for audit trails and safer for copyright, storage and review.
+By default Vitalarga does not store full external pages in the repo. Compact snapshots are enough for audit trails and safer for copyright, storage and review.
 Readable excerpts include visible text plus contact-style link targets such as
 `mailto:`, `tel:` and Instagram URLs when the page hides them behind icons.
 Supabase also keeps compact historical rows in `source_snapshots`, linked to
@@ -42,8 +42,8 @@ Examples:
 ```bash
 python3 scripts/test_capture_source_snapshot.py
 python3 scripts/test_measure_source_coverage.py
-python3 scripts/capture_source_snapshot.py https://www.diuvita.com/sobre/ --dry-run
-python3 scripts/capture_source_snapshot.py https://www.diuvita.com/sobre/
+python3 scripts/capture_source_snapshot.py https://www.vitalarga.com/sobre/ --dry-run
+python3 scripts/capture_source_snapshot.py https://www.vitalarga.com/sobre/
 ```
 
 Saved snapshots go under:

@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from capture_source_snapshot import normalize_space
-from diuvita_rules import decide_many
+from vitalarga_rules import decide_many
 
 
 def normalized_text(value: Any) -> str:

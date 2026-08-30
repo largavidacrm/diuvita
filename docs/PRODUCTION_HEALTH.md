@@ -1,7 +1,7 @@
 # Production health
 
 `scripts/check_production_health.py` is a read-only smoke check for the deployed
-Diuvita site.
+Vitalarga site.
 
 It verifies that a small set of public URLs respond and contain expected shell
 markers:

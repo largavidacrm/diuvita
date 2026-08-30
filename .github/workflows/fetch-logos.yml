@@ -22,8 +22,8 @@ jobs:
       - run: python scripts/fetch_logos.py
       - name: Commit results
         run: |
-          git config user.name "diuvita-bot"
-          git config user.email "noreply@diuvita.com"
+          git config user.name "vitalarga-bot"
+          git config user.email "noreply@vitalarga.com"
           git add assets/logos
           git diff --cached --quiet || git commit -m "bot: logos descargados/actualizados [skip ci]"
           git push

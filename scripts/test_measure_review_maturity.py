@@ -67,7 +67,7 @@ def main():
     check(status["completed_candidate_reviews"] == 2, "candidate decisions not counted")
     check(review_target(measurement, None) == 200, "target should come from automation summary")
     check(review_target(measurement, 50) == 50, "explicit target should win")
-    check("# Diuvita review maturity" in output, "title missing")
+    check("# Vitalarga review maturity" in output, "title missing")
     check("Low-risk auto-publish readiness: not ready" in output, "decision missing")
     check("clinicas candidatas: 2/4 closed" in output, "candidate review summary missing")
     check("## Blocking claims" in output, "blocking claims section missing")

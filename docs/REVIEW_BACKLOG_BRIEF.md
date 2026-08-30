@@ -1,7 +1,7 @@
 # Review backlog brief
 
 `scripts/review_backlog_brief.py` is a read-only operational brief for the
-Diuvita review inbox.
+Vitalarga review inbox.
 
 It answers:
 

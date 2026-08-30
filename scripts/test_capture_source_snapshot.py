@@ -47,7 +47,7 @@ def main():
     check("window.secret" not in snapshot["text_excerpt"], "script text should be ignored")
     check(len(snapshot["content_sha256"]) == 64, "hash should be sha256")
     check(len(snapshot["text_sha256"]) == 64, "text hash should be sha256")
-    check(snapshot["request_profile"] == "diuvita_bot", "request profile should be captured")
+    check(snapshot["request_profile"] == "vitalarga_bot", "request profile should be captured")
     check(safe_host("https://Clinic.Example/a") == "clinic.example", "host normalization failed")
     path = snapshot_path(snapshot)
     check(str(path).endswith(".json"), "snapshot path should be json")
@@ -57,7 +57,7 @@ def main():
 
     def fake_open_url(url, timeout, headers, request_profile):
         calls.append(request_profile)
-        if request_profile == "diuvita_bot":
+        if request_profile == "vitalarga_bot":
             raise urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
         return FetchResult(
             source_url=url,
@@ -74,7 +74,7 @@ def main():
     finally:
         capture_source_snapshot.open_url = original_open_url
 
-    check(calls == ["diuvita_bot", "browser_compatible"], "403 should retry with browser-compatible headers")
+    check(calls == ["vitalarga_bot", "browser_compatible"], "403 should retry with browser-compatible headers")
     check(fallback.request_profile == "browser_compatible", "fallback profile should be preserved")
     print("OK snapshots: compact source capture")
 

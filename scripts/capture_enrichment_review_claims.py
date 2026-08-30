@@ -21,7 +21,7 @@ from submit_discovery_candidates import (
 from submit_blocking_claim_reviews import is_noisy_title_identity_claim
 
 
-AGENT_NAME = "diuvita-profile-enrichment"
+AGENT_NAME = "vitalarga-profile-enrichment"
 AGENT_VERSION = "2026-08-30"
 
 FIELD_MAP = {

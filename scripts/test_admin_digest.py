@@ -233,7 +233,7 @@ def main():
         next_action_label(limited_digest) == "Revisar claim bloqueante",
         "next action should use full review-type summary, not only visible cards",
     )
-    check("# Diuvita CTO digest" in output, "title missing")
+    check("# Vitalarga CTO digest" in output, "title missing")
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Fichas con especialistas: 2/19" in output, "specialist coverage missing")

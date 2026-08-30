@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Basic checks for the deterministic Diuvita rules engine."""
-from diuvita_rules import RiskPolicy, decide_claim, field_risk
+"""Basic checks for the deterministic Vitalarga rules engine."""
+from vitalarga_rules import RiskPolicy, decide_claim, field_risk
 
 
 def check(condition, message):

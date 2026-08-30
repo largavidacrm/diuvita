@@ -34,7 +34,7 @@ def main():
         ],
     }
     output = format_retention_report(report)
-    check("# Diuvita source snapshot retention" in output, "title missing")
+    check("# Vitalarga source snapshot retention" in output, "title missing")
     check("Writes data: no" in output, "read-only signal missing")
     check("Keep at least latest snapshots per source: 3" in output, "keep-latest missing")
     check("Consider cleanup only after days: 180" in output, "retention days missing")

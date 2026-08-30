@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Control Diuvita</title>
+  <title>Control Vitalarga</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500;6..72,600&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/admin/admin.css">
   <script>
-    window.DIUVITA_ADMIN_CONFIG = __DIUVITA_ADMIN_CONFIG__;
+    window.VITALARGA_ADMIN_CONFIG = __VITALARGA_ADMIN_CONFIG__;
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="admin-body">
   <header class="admin-top">
     <div class="brand">
-      <a href="/">Diuvita<em>.</em></a>
+      <a href="/"><span class="brand-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
       <span>Control</span>
     </div>
     <div class="top-actions">
@@ -52,7 +52,7 @@
       <div class="hero-row">
         <div>
           <h1>Centro de control</h1>
-          <p>Estado operativo de Diuvita.</p>
+          <p>Estado operativo de Vitalarga.</p>
         </div>
         <div class="session-pill" id="sessionEmail"></div>
       </div>
@@ -384,7 +384,7 @@
               <dd id="reviewCandidateSource">—</dd>
             </div>
             <div class="detail-wide">
-              <dt>Coincidencias en Diuvita</dt>
+              <dt>Coincidencias en Vitalarga</dt>
               <dd id="reviewCandidateDuplicates">—</dd>
             </div>
             <div>
@@ -596,7 +596,7 @@
 
   <script>
   (function () {
-    var config = window.DIUVITA_ADMIN_CONFIG || {};
+    var config = window.VITALARGA_ADMIN_CONFIG || {};
     var client = null;
     var session = null;
     var clinicCache = [];
@@ -676,10 +676,10 @@
     var SNAPSHOT_KEEP_LATEST = 3;
     var SAFE_WRITE_REVIEW_BACKLOG_LIMIT = 50;
     var PUBLIC_HEALTH_CHECKS = [
-      { label: "Inicio", path: "/", markers: ["Diuvita", "Buscar clínica"] },
+      { label: "Inicio", path: "/", markers: ["Vitalarga", "Buscar clínica"] },
       { label: "Ficha", path: "/clinica/the-long-game/", markers: ["profile-jump", "Especialistas publicados por la clínica"] },
       { label: "Sitemap", path: "/sitemap.xml", markers: ["/clinica/"] },
-      { label: "Icono", path: "/favicon.svg", markers: ["<svg", "#1e7a5a"] }
+      { label: "Icono", path: "/favicon.svg", markers: ["<svg", "#0E4F4A"] }
     ];
 
     function el(id) {
@@ -759,7 +759,7 @@
         && row.field_path === "identity.canonical_name"
         && text(row.verification_status).toLowerCase() === "rejected"
         && Number(row.confidence || 0) <= 0.6
-        && text(row.agent_name) === "diuvita-shadow-extractor";
+        && text(row.agent_name) === "vitalarga-shadow-extractor";
     }
 
     async function loadClaimQuality() {
@@ -1600,7 +1600,7 @@
       }
       if (blockers && blockers.length) {
         return {
-          title: "Estamos midiendo si Diuvita puede ser más autónoma.",
+          title: "Estamos midiendo si Vitalarga puede ser más autónoma.",
           detail: "Todavía no se activa la auto-publicación. Falta muestra humana y decisiones revisadas por ti."
         };
       }

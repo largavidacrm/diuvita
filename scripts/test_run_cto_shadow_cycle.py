@@ -179,12 +179,12 @@ def main():
     check(compact_digest["review_examples_by_type_count"] == 2, "review example count should be kept")
     check("payload" not in compact_digest["sample_review_examples_by_type"][0], "review example payload should be omitted")
     compact_health = compact_summary("check_production_health", {
-        "base_url": "https://www.diuvita.com",
+        "base_url": "https://www.vitalarga.com",
         "ok": True,
         "checks": [
             {
                 "name": "home",
-                "url": "https://www.diuvita.com/",
+                "url": "https://www.vitalarga.com/",
                 "status": 200,
                 "ok": True,
                 "missing_markers": [],
@@ -254,7 +254,7 @@ def main():
     check("Kairos Longevity Clinic" in cycle_brief["source_next"], "Daniel brief should keep next source target")
     check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
     brief_text = format_cycle_brief(cycle_brief)
-    check("# Diuvita: resumen CTO automatico" in brief_text, "plain brief title missing")
+    check("# Vitalarga: resumen CTO automatico" in brief_text, "plain brief title missing")
     check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
     check("Siguiente ficha: Revisar Sensabell" in brief_text, "plain brief next profile missing")
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
@@ -302,7 +302,7 @@ def main():
         strict_editorial=False,
         plain_brief=False,
         production_health=False,
-        production_base_url="https://www.diuvita.com",
+        production_base_url="https://www.vitalarga.com",
         production_timeout=7,
     ))
     names = [step[0] for step in steps]
@@ -363,7 +363,7 @@ def main():
         strict_editorial=True,
         plain_brief=True,
         production_health=True,
-        production_base_url="https://www.diuvita.com",
+        production_base_url="https://www.vitalarga.com",
         production_timeout=7,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
@@ -377,7 +377,7 @@ def main():
     health_step = [step for step in optional_steps if step[0] == "check_production_health"][0]
     check(optional_steps.index(strict_step) < optional_steps.index(health_step), "strict editorial should run before production health")
     check("--json" in health_step[1], "production health should be machine readable")
-    check("https://www.diuvita.com" in health_step[1], "production health base URL should pass through")
+    check("https://www.vitalarga.com" in health_step[1], "production health base URL should pass through")
     check("7" in health_step[1], "production health timeout should pass through")
     print("OK cycle: CTO shadow orchestration")
 

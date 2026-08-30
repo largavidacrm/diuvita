@@ -1,4 +1,4 @@
-# Diuvita collaboration rules
+# Vitalarga collaboration rules
 
 Daniel is the founder/user, not an IT specialist.
 
@@ -11,7 +11,7 @@ When working on this project:
 - Avoid asking Daniel to run commands unless there is no safer or simpler option.
 - State risks plainly before actions that affect production, GitHub, Netlify, Supabase or credentials.
 - Keep the operating mode: Daniel decides; Codex executes and guides.
-- Use `docs/DIUVITA_LIMITES_OPERATIVOS.md` as the project reference for Diuvita's legal, medical, editorial and publication boundaries.
+- Use `docs/VITALARGA_LIMITES_OPERATIVOS.md` as the project reference for Vitalarga's legal, medical, editorial and publication boundaries.
 
 ## Autonomous CTO mode
 
@@ -21,7 +21,7 @@ Codex should:
 
 - Choose sensible technical defaults when the risk is low and the choice can be reversed.
 - Inspect, implement, verify and document without waiting for Daniel to approve every small step.
-- Continue from one obvious next technical step to the next when it advances the active Diuvita roadmap.
+- Continue from one obvious next technical step to the next when it advances the active Vitalarga roadmap.
 - Prefer local, reversible changes first; use branches or commits to make work easy to review.
 - Run available checks after changes and fix failures before reporting back.
 - Keep Daniel updated in plain Spanish, but do not turn progress updates into permission requests.
@@ -34,14 +34,14 @@ Codex should stop and ask Daniel only for:
 - Publishing, deploying, or pushing changes to shared production branches.
 - Deleting data, overwriting history, or doing anything hard to undo.
 - Legal, medical, brand, pricing or business-positioning decisions that require founder judgment.
-- Any task that touches the hard limits in `docs/DIUVITA_LIMITES_OPERATIVOS.md`.
+- Any task that touches the hard limits in `docs/VITALARGA_LIMITES_OPERATIVOS.md`.
 - Ambiguous choices where the wrong decision would create meaningful rework or public risk.
 
 When blocked, Codex should say exactly what is needed, why it is needed, and what will happen immediately after Daniel provides it.
 
 ## Unattended CTO runs
 
-When Daniel asks Codex to keep advancing the general Diuvita plan without staying present, use this operating pattern:
+When Daniel asks Codex to keep advancing the general Vitalarga plan without staying present, use this operating pattern:
 
 - Start from `docs/CTO_INTERNAL_EXECUTION_PLAN.md`, `docs/CTO_ROADMAP.md`, `docs/AGENT_WORKFLOWS.md`, recent git history and current Supabase state.
 - Pick the highest-impact safe task that moves the roadmap forward.

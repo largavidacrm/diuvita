@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only production health check for Diuvita public URLs."""
+"""Read-only production health check for Vitalarga public URLs."""
 from __future__ import annotations
 
 import argparse
@@ -11,14 +11,14 @@ import urllib.request
 from typing import Any
 
 
-DEFAULT_BASE_URL = "https://www.diuvita.com"
+DEFAULT_BASE_URL = "https://www.vitalarga.com"
 MAX_RESPONSE_BYTES = 2_000_000
 
 CHECKS = [
     {
         "name": "home",
         "path": "/",
-        "markers": ["Diuvita", "Buscar clínica", 'class="results-section"', 'class="logo-link"', "card-signals"],
+        "markers": ["Vitalarga", "Buscar clínica", 'class="results-section"', 'class="logo-link"', "card-signals"],
     },
     {
         "name": "admin_shell",
@@ -73,7 +73,7 @@ CHECKS = [
     {
         "name": "favicon",
         "path": "/favicon.svg",
-        "markers": ["<svg", 'viewBox="0 0 64 64"', "#1e7a5a"],
+        "markers": ["<svg", 'viewBox="0 0 64 64"', "#0E4F4A"],
     },
 ]
 
@@ -86,7 +86,7 @@ def clean_base_url(value: str) -> str:
 
 
 def fetch_text(url: str, timeout: int) -> tuple[int, str]:
-    request = urllib.request.Request(url, headers={"User-Agent": "DiuvitaHealthCheck/1.0"})
+    request = urllib.request.Request(url, headers={"User-Agent": "VitalargaHealthCheck/1.0"})
     with urllib.request.urlopen(request, timeout=timeout) as response:
         status = int(getattr(response, "status", response.getcode()))
         body = response.read(MAX_RESPONSE_BYTES)
@@ -139,7 +139,7 @@ def run_checks_with_retries(base_url: str, timeout: int, retries: int = 0, retry
 
 def format_report(report: dict[str, Any]) -> str:
     lines = [
-        "# Diuvita production health",
+        "# Vitalarga production health",
         "",
         f"Base: {report.get('base_url')}",
         f"Estado: {'OK' if report.get('ok') else 'Atención'}",

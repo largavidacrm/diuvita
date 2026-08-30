@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print a read-only brief for blocking Diuvita field claims."""
+"""Print a read-only brief for blocking Vitalarga field claims."""
 from __future__ import annotations
 
 import argparse
@@ -176,7 +176,7 @@ def format_brief(groups: list[dict[str, Any]]) -> str:
     summaries = [summarize_group(group) for group in groups]
     total_claims = sum(int(item["claims"]) for item in summaries)
     output = [
-        "# Diuvita: claims bloqueantes",
+        "# Vitalarga: claims bloqueantes",
         "",
         f"- Clínicas afectadas: {len(summaries)}",
         f"- Claims a revisar: {total_claims}",

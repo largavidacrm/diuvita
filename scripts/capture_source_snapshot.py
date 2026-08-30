@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture a compact source snapshot for Diuvita provenance.
+"""Capture a compact source snapshot for Vitalarga provenance.
 
 By default this stores metadata, a content hash and a short text excerpt rather
 than the full page. That is enough for audit trails without turning the repo into
@@ -26,7 +26,7 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT_DIR = ROOT / "data" / "source_snapshots"
 DEFAULT_EXCERPT_CHARS = 1600
-USER_AGENT = "DiuvitaBot/0.1 (+https://www.diuvita.com; provenance snapshot)"
+USER_AGENT = "VitalargaBot/0.1 (+https://www.vitalarga.com; provenance snapshot)"
 BROWSER_COMPAT_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
@@ -96,7 +96,7 @@ class FetchResult:
     status_code: int | None
     content_type: str
     body: bytes
-    request_profile: str = "diuvita_bot"
+    request_profile: str = "vitalarga_bot"
 
 
 def normalize_space(value: str) -> str:
@@ -157,7 +157,7 @@ def fetch_url(url: str, timeout: int = 20) -> FetchResult:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError("source URL must start with http:// or https://")
     try:
-        return open_url(url, timeout, DEFAULT_HEADERS, "diuvita_bot")
+        return open_url(url, timeout, DEFAULT_HEADERS, "vitalarga_bot")
     except urllib.error.HTTPError as error:
         if error.code not in {403, 406}:
             raise

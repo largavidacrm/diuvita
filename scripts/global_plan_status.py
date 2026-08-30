@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print a plain-Spanish global roadmap status for Diuvita."""
+"""Print a plain-Spanish global roadmap status for Vitalarga."""
 from __future__ import annotations
 
 import argparse
@@ -104,7 +104,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
     reviews = summary.get("reviews") or {}
     blockers = maturity_blockers(digest)
     output = [
-        "# Diuvita: estado del plan global",
+        "# Vitalarga: estado del plan global",
         "",
         f"Generado: {parse_timestamp(digest.get('generated_at') or summary.get('generated_at'))}",
         f"Git: {git_ref or 'no comprobado'}",

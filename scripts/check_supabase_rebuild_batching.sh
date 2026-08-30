@@ -66,7 +66,7 @@ export PGSSLMODE=require
   -d "$SUPABASE_DB_NAME" \
   -U "$SUPABASE_DB_USER" \
   -v ON_ERROR_STOP=1 \
-  -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'diuvita_build_hook_url' and btrim(value) <> '';" \
-  -c "select coalesce(max(value), 'not configured') as rebuild_batch_minutes from private.app_settings where key = 'diuvita_rebuild_batch_minutes';" \
-  -c "select position('diuvita_rebuild_batch_minutes' in pg_get_functiondef('private.request_public_site_rebuild()'::regprocedure)) > 0 as rebuild_batching_enabled;" \
+  -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'vitalarga_build_hook_url' and btrim(value) <> '';" \
+  -c "select coalesce(max(value), 'not configured') as rebuild_batch_minutes from private.app_settings where key = 'vitalarga_rebuild_batch_minutes';" \
+  -c "select position('vitalarga_rebuild_batch_minutes' in pg_get_functiondef('private.request_public_site_rebuild()'::regprocedure)) > 0 as rebuild_batching_enabled;" \
   -c "select last_requested_at as last_public_site_rebuild_requested_at from private.rebuild_state where name = 'public_site';"

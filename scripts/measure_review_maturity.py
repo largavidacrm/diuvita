@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only maturity measurement before any Diuvita auto-publish expansion."""
+"""Read-only maturity measurement before any Vitalarga auto-publish expansion."""
 from __future__ import annotations
 
 import argparse
@@ -203,7 +203,7 @@ def format_measurement(measurement: dict[str, Any], target: int) -> str:
     status = maturity_status(measurement, target)
 
     lines = [
-        "# Diuvita review maturity",
+        "# Vitalarga review maturity",
         "",
         f"Generated: {parse_timestamp(measurement.get('generated_at'))}",
         "",

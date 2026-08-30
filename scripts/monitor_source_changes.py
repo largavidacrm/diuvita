@@ -19,7 +19,7 @@ from source_snapshot_records import insert_source_snapshot_sql
 from submit_discovery_candidates import get_default_admin_email, load_env_file, run_psql, sql_literal
 
 
-WATCHER_NAME = "diuvita-source-watcher"
+WATCHER_NAME = "vitalarga-source-watcher"
 WATCHER_VERSION = "2026-08-30"
 MATERIAL_HINTS = {
     "contact": {

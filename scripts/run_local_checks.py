@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the local Diuvita safety checks used before commits."""
+"""Run the local Vitalarga safety checks used before commits."""
 from __future__ import annotations
 
 import argparse
@@ -19,7 +19,7 @@ TEST_STEPS = [
     ("test: production health formatter", "scripts/test_check_production_health.py"),
     ("test: Netlify deploy guard", "scripts/test_netlify_ignore_build.py"),
     ("test: operational limits", "scripts/test_check_operational_limits.py"),
-    ("test: publication rules", "scripts/test_diuvita_rules.py"),
+    ("test: publication rules", "scripts/test_vitalarga_rules.py"),
     ("test: claim rule evaluation", "scripts/test_evaluate_claim_rules.py"),
     ("test: shadow extraction", "scripts/test_extract_clinic_profile_shadow.py"),
     ("test: shadow verification", "scripts/test_verify_clinic_profile_shadow.py"),
@@ -47,6 +47,7 @@ TEST_STEPS = [
     ("test: public home simplified", "scripts/test_public_home_simplified.py"),
     ("test: public profile UX", "scripts/test_public_profile_ux.py"),
     ("test: public site assets", "scripts/test_public_site_assets.py"),
+    ("test: public legal identity", "scripts/test_public_legal_identity.py"),
     ("test: admin digest", "scripts/test_admin_digest.py"),
     ("test: Daniel review brief", "scripts/test_daniel_review_brief.py"),
     ("test: global plan status", "scripts/test_global_plan_status.py"),

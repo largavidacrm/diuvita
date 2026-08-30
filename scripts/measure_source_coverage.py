@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only source coverage report for visible Diuvita clinic profiles."""
+"""Read-only source coverage report for visible Vitalarga clinic profiles."""
 from __future__ import annotations
 
 import argparse
@@ -249,7 +249,7 @@ def format_source_coverage(report: dict[str, Any]) -> str:
     needing = as_int(summary.get("clinics_needing_source_work"))
     rows = report.get("needs_source_work") or []
     output = [
-        "# Diuvita source coverage",
+        "# Vitalarga source coverage",
         "",
         f"Generado: {parse_timestamp(report.get('generated_at'))}",
         "",

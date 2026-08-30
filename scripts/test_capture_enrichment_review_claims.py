@@ -34,7 +34,7 @@ def main():
                 "value": "Clinic was born from a passion for ageing well",
                 "confidence": 0.55,
                 "verifier_verdict": "rejected",
-                "agent_name": "diuvita-shadow-extractor",
+                "agent_name": "vitalarga-shadow-extractor",
             },
         ],
         "proposed_fields": {

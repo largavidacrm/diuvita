@@ -18,4 +18,4 @@ Con esos datos, el equipo médico construye un plan personalizado: nutrición, e
 
 Tres señales rápidas: tiene equipo médico identificable con nombre y colegiación; te explica qué mide y por qué antes de venderte nada; y no promete revertir el envejecimiento — la ciencia de la longevidad es prometedora, pero ningún profesional serio te garantiza resultados milagrosos.
 
-En Diuvita documentamos precisamente eso: qué clínicas existen, dónde están y qué ofrecen, con criterios de inclusión públicos y sin que nadie pague por aparecer. Empieza por buscar tu ciudad en la guía.
+En Vitalarga documentamos precisamente eso: qué clínicas existen, dónde están y qué ofrecen, con criterios de inclusión públicos y sin que nadie pague por aparecer. Empieza por buscar tu ciudad en la guía.

@@ -16,7 +16,7 @@ from admin_digest import parse_timestamp
 from submit_discovery_candidates import load_env_file, run_psql, sql_literal
 
 
-SEEDER_NAME = "diuvita-official-source-seeder"
+SEEDER_NAME = "vitalarga-official-source-seeder"
 SEEDER_VERSION = "2026-08-30"
 
 
@@ -185,7 +185,7 @@ def format_report(
     rows = inserted if apply else candidates
     generated_at = result.get("generated_at") if isinstance(result, dict) else None
     output = [
-        "# Diuvita: siembra de fuentes oficiales",
+        "# Vitalarga: siembra de fuentes oficiales",
         "",
         f"Generado: {parse_timestamp(generated_at)}",
         f"- Writes data: {'yes' if apply else 'no'}",

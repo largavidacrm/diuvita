@@ -46,7 +46,7 @@ begin
   select value
   into hook_url
   from private.app_settings
-  where key = 'diuvita_build_hook_url';
+  where key = 'vitalarga_build_hook_url';
 
   if hook_url is null or btrim(hook_url) = '' then
     return;
