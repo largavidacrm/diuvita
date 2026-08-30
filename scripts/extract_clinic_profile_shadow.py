@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -106,9 +107,19 @@ ROLE_START_WORDS = {
     "Cardiologa",
     "Cardiólogo",
     "Cardiologo",
+    "CCOEC",
+    "CFC",
+    "CNOO",
+    "COEC",
+    "COMB",
+    "COMM",
+    "Chequeos",
     "Cirujana",
     "Cirujano",
     "Cirugía",
+    "Consulta",
+    "Cosmética",
+    "Cosmetica",
     "Dirección",
     "Dermatología",
     "Dermatologia",
@@ -123,9 +134,14 @@ ROLE_START_WORDS = {
     "Endocrinólogo",
     "Endocrinologo",
     "Especialista",
+    "Estética",
+    "Estetica",
+    "Fertilidad",
     "Fisioterapia",
+    "Fisioterapeuta",
     "Flebología",
     "Flebologia",
+    "General",
     "Gerencia",
     "Gerente",
     "Ginecología",
@@ -141,12 +157,20 @@ ROLE_START_WORDS = {
     "Medico",
     "Nutrición",
     "Nutricion",
+    "Oncológica",
+    "Oncologica",
+    "Oncología",
+    "Oncologia",
+    "Ortomolecular",
     "Otorrino",
     "Otorrinolaringología",
     "Otorrinolaringologia",
     "Psicología",
     "Psicologia",
     "Responsable",
+    "Salud",
+    "Sesion",
+    "Sesión",
     "Subdirector",
     "Subdirectora",
     "Técnico",
@@ -255,7 +279,7 @@ def unique(items: list[str]) -> list[str]:
     result = []
     for item in items:
         clean = normalize_space(item)
-        key = clean.lower()
+        key = unicodedata.normalize("NFKD", clean.lower()).encode("ascii", "ignore").decode("ascii")
         if clean and key not in seen:
             seen.add(key)
             result.append(clean)
@@ -296,7 +320,7 @@ def title_name_segment(text: str, start: int) -> str:
     next_title = TITLE_SCAN_RE.search(segment)
     if next_title:
         segment = segment[: next_title.start()]
-    punctuation = re.search(r"[.,;:|]", segment)
+    punctuation = re.search(r"[.,;:|¿?¡!]", segment)
     if punctuation:
         segment = segment[: punctuation.start()]
     return segment

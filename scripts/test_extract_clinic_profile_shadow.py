@@ -107,6 +107,33 @@ def main():
         "unit or role text should not be part of extracted names",
     )
 
+    arvila_professionals = extract_professionals(
+        "Equipo de Arvila Magna Dr. Jordi Ibañez Chequeos de Longevidad "
+        "Dr. Joan Josep Fuertes Medicina General COMB 08-29679-5 "
+        "Dr. Pere Gascón Oncología Integrativa COMB 8.560 "
+        "Dra. Mariana Díaz Dermatología Estética COMB 47856 "
+        "Conoce al Dr. Jordi Ibañez ¿Qué te ofrecemos? Contacto"
+    )
+    check("Dr. Jordi Ibañez" in arvila_professionals, "navigation label should not merge into Jordi Ibañez")
+    check("Dr. Joan Josep Fuertes" in arvila_professionals, "medical role should not merge into Joan Josep Fuertes")
+    check("Dr. Pere Gascón" in arvila_professionals, "oncology role should not merge into Pere Gascón")
+    check("Dra. Mariana Díaz" in arvila_professionals, "dermatology role should not merge into Mariana Díaz")
+    check(
+        sum(1 for item in arvila_professionals if item.lower().replace("ñ", "n") == "dr. jordi ibanez") == 1,
+        "accent variants should dedupe to one professional",
+    )
+    check(
+        all(
+            "Chequeos" not in item
+            and "Oncología" not in item
+            and "COMB" not in item
+            and "Dermatología" not in item
+            and "Qué" not in item
+            for item in arvila_professionals
+        ),
+        "Arvila role/context text should not be part of extracted names",
+    )
+
     noisy_title_html = b"""
 <!doctype html>
 <html>
