@@ -2299,10 +2299,15 @@
         ? '<div class="filter-chip-row"><strong>Campo</strong>' + fieldChipItems.join("") + '</div>'
         : "";
       var activeGroup = activeClinicWorkgroup();
+      var recommendedGroup = firstClinicWorkgroup(reviewCache);
       var groupChips = reviewClinicGroupFilter
         ? '<div class="filter-chip-row"><strong>Grupo</strong>' +
           filterChip(clinicWorkgroupSubject(activeGroup), activeGroup ? activeGroup.count : 0, true, { "data-review-group-clear": "true" }) +
           '</div>'
+        : recommendedGroup
+          ? '<div class="filter-chip-row"><strong>Grupo recomendado</strong>' +
+            filterChip(clinicWorkgroupSubject(recommendedGroup), recommendedGroup.count, false, { "data-review-group": recommendedGroup.clinicId }) +
+            '</div>'
         : "";
 
       container.innerHTML = '<div class="filter-chip-row"><strong>Tipo</strong>' + typeChips + '</div>' +
@@ -5146,7 +5151,7 @@
         if (button) openReviewEditor(button.getAttribute("data-related-review-id"));
       });
       el("reviewFilterChips").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group-clear]");
+        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group],[data-review-group-clear]");
         if (!button) return;
         if (button.hasAttribute("data-review-type")) {
           el("reviewTypeFilter").value = button.getAttribute("data-review-type");
@@ -5162,6 +5167,9 @@
         }
         if (button.hasAttribute("data-review-specialists")) {
           reviewSpecialistsFilter = !reviewSpecialistsFilter;
+        }
+        if (button.hasAttribute("data-review-group")) {
+          reviewClinicGroupFilter = button.getAttribute("data-review-group");
         }
         if (button.hasAttribute("data-review-group-clear")) {
           reviewClinicGroupFilter = "";

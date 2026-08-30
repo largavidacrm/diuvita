@@ -351,6 +351,7 @@ Next 10 technical steps:
 47. Reduce noisy source-shadow proposals. Done locally in `scripts/submit_shadow_extraction_review.py` and `scripts/submit_source_shadow_reviews.py`: transparency claims now map into editable fields, and source-based review cards only propose fields tied to current clinic gaps.
 48. Verify transparency signals before review. Done locally in `scripts/verify_clinic_profile_shadow.py`: years/counts must be supported in source text, while credentialing and pricing need explicit registration-number or price signals before they are proposed.
 49. Skip source-shadow work for already complete profiles. Done locally in `scripts/submit_source_shadow_reviews.py`: source batches now ignore clinics with no measured gaps before creating any review proposal.
+50. Surface the recommended review group in quick filters. Done locally in `/admin/`: the review inbox now shows a `Grupo recomendado` chip so Daniel can jump into the highest-friction clinic group from the filter row.
 
 ## Daniel decision checkpoints
 
