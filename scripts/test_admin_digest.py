@@ -183,11 +183,13 @@ def main():
         },
         "profile_completeness": {
             "visible_clinics": 19,
-            "without_pending_fields": 1,
-            "with_pending_fields": 18,
+            "without_pending_fields": 0,
+            "with_pending_fields": 19,
             "pending_summary": 0,
             "pending_website": 0,
             "pending_address": 0,
+            "pending_google_maps": 19,
+            "pending_google_reviews": 18,
             "pending_contact": 6,
             "pending_services": 0,
             "pending_specialties": 0,
@@ -200,9 +202,9 @@ def main():
             "clinic_name": "Kairos Longevity Clinic",
             "city": "Madrid",
             "status": "published",
-            "pending_fields": ["Especialistas publicados", "Tecnología destacada"],
-            "pending_count": 2,
-            "next_pending_field": "Especialistas publicados",
+            "pending_fields": ["Google Maps de clínica", "Especialistas publicados", "Tecnología destacada"],
+            "pending_count": 3,
+            "next_pending_field": "Google Maps de clínica",
             "open_quality_reviews": 1,
             "open_profile_reviews": 2,
             "open_source_change_reviews": 1,
@@ -213,7 +215,7 @@ def main():
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
     check(next_specialist_action(digest) == "Revisar Age Reversal: ya tiene 2 revisiones abiertas", "next specialist action missing")
     check(
-        next_profile_action(digest) == "Revisar Kairos Longevity Clinic: ya tiene 4 revisiones abiertas relacionadas. Primer campo: Especialistas publicados",
+        next_profile_action(digest) == "Revisar Kairos Longevity Clinic: ya tiene 4 revisiones abiertas relacionadas. Primer campo: Google Maps de clínica",
         "next profile action missing",
     )
     check(next_source_action(digest) == "Revisar 2 claims bloqueantes de Kairos Longevity Clinic", "next source action missing")
@@ -227,7 +229,7 @@ def main():
     )
     check(first_backlog_bottleneck(digest) == "Ordenar Sensabell: 2 mejoras abiertas", "first backlog bottleneck missing")
     check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
-    check(top_pending_profile_field(digest) == "Especialistas · 17 fichas", "top pending profile field missing")
+    check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending profile field missing")
     limited_digest = dict(digest)
     limited_digest["open_reviews"] = [
         {
@@ -246,8 +248,8 @@ def main():
     check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Fichas con especialistas: 2/19" in output, "specialist coverage missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist line missing")
-    check("Fichas sin campos pendientes medidos: 1/19" in output, "profile completeness missing")
-    check("Campo mas pendiente: Especialistas · 17 fichas" in output, "top pending profile field line missing")
+    check("Fichas sin campos pendientes medidos: 0/19" in output, "profile completeness missing")
+    check("Campo mas pendiente: Google Maps · 19 fichas" in output, "top pending profile field line missing")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Publicacion web: agrupada cada 30 min" in output, "publication batching missing")

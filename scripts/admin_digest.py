@@ -601,6 +601,44 @@ visible_profile_base as (
         )), '') is not null
       )
     ) as has_address,
+    (
+      nullif(btrim(coalesce(c.current_data ->> 'maps_url', c.current_data ->> 'google_maps_url', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'maps_url',
+          location.value ->> 'google_maps_url',
+          location.value ->> 'map_url',
+          ''
+        )), '') is not null
+      )
+    ) as has_google_maps,
+    (
+      nullif(btrim(coalesce(c.current_data ->> 'google_reviews_url', c.current_data ->> 'reviews_url', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'google_reviews_url',
+          location.value ->> 'reviews_url',
+          location.value ->> 'valoraciones_url',
+          ''
+        )), '') is not null
+      )
+    ) as has_google_reviews,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null
       or nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_contact,
     case
@@ -656,6 +694,8 @@ visible_profile_checks as (
       case when not has_summary then 'Resumen corto o vacío' end,
       case when not has_website then 'Web oficial' end,
       case when not has_address then 'Dirección' end,
+      case when not has_google_maps then 'Google Maps de clínica' end,
+      case when not has_google_reviews then 'Valoraciones Google' end,
       case when not has_contact then 'Email o teléfono' end,
       case when not has_services then 'Servicios' end,
       case when not has_specialties then 'Especialidades' end,
@@ -672,6 +712,8 @@ profile_completeness as (
       where has_summary
         and has_website
         and has_address
+        and has_google_maps
+        and has_google_reviews
         and has_contact
         and has_services
         and has_specialties
@@ -684,6 +726,8 @@ profile_completeness as (
         has_summary
         and has_website
         and has_address
+        and has_google_maps
+        and has_google_reviews
         and has_contact
         and has_services
         and has_specialties
@@ -695,6 +739,8 @@ profile_completeness as (
     'pending_summary', count(*) filter (where not has_summary),
     'pending_website', count(*) filter (where not has_website),
     'pending_address', count(*) filter (where not has_address),
+    'pending_google_maps', count(*) filter (where not has_google_maps),
+    'pending_google_reviews', count(*) filter (where not has_google_reviews),
     'pending_contact', count(*) filter (where not has_contact),
     'pending_services', count(*) filter (where not has_services),
     'pending_specialties', count(*) filter (where not has_specialties),
@@ -822,6 +868,8 @@ PROFILE_COMPLETENESS_FIELDS = [
     ("pending_summary", "Resumen"),
     ("pending_website", "Web oficial"),
     ("pending_address", "Dirección"),
+    ("pending_google_maps", "Google Maps"),
+    ("pending_google_reviews", "Valoraciones Google"),
     ("pending_contact", "Contacto"),
     ("pending_services", "Servicios"),
     ("pending_specialties", "Especialidades"),

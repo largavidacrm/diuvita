@@ -119,11 +119,13 @@ def sample_digest():
         },
         "profile_completeness": {
             "visible_clinics": 19,
-            "without_pending_fields": 1,
-            "with_pending_fields": 18,
+            "without_pending_fields": 0,
+            "with_pending_fields": 19,
             "pending_summary": 0,
             "pending_website": 0,
             "pending_address": 0,
+            "pending_google_maps": 19,
+            "pending_google_reviews": 18,
             "pending_contact": 6,
             "pending_services": 0,
             "pending_specialties": 0,
@@ -136,9 +138,9 @@ def sample_digest():
             "clinic_name": "Kairos Longevity Clinic",
             "city": "Madrid",
             "status": "published",
-            "pending_fields": ["Especialistas publicados", "Tecnología destacada"],
-            "pending_count": 2,
-            "next_pending_field": "Especialistas publicados",
+            "pending_fields": ["Google Maps de clínica", "Especialistas publicados", "Tecnología destacada"],
+            "pending_count": 3,
+            "next_pending_field": "Google Maps de clínica",
             "open_quality_reviews": 1,
             "open_profile_reviews": 2,
             "open_source_change_reviews": 1,
@@ -165,8 +167,8 @@ def main():
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
-    check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
-    check("Campo más pendiente: Especialistas · 17 fichas" in output, "top pending profile field missing")
+    check("Completitud de fichas: 0/19 fichas sin campos pendientes medidos; 19 con pendientes" in output, "profile completeness missing")
+    check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending profile field missing")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile action missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")

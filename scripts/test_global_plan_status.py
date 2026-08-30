@@ -69,6 +69,8 @@ def sample_digest():
         },
         "profile_completeness": {
             "visible_clinics": 19,
+            "pending_google_maps": 19,
+            "pending_google_reviews": 18,
             "pending_specialists": 17,
             "pending_contact": 6,
         },
@@ -111,7 +113,7 @@ def main():
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")
-    check("Campo más pendiente: Especialistas · 17 fichas" in output, "top pending field missing")
+    check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending field missing")
     check("muestra humana insuficiente: 2/200 candidatas" in output, "maturity blocker missing")
     check("no publica, no edita clínicas" in output, "read-only note missing")
 

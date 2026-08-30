@@ -53,6 +53,44 @@ with clinic_rows as (
         )), '') is not null
       )
     ) as has_address,
+    (
+      nullif(btrim(coalesce(c.current_data ->> 'maps_url', c.current_data ->> 'google_maps_url', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'maps_url',
+          location.value ->> 'google_maps_url',
+          location.value ->> 'map_url',
+          ''
+        )), '') is not null
+      )
+    ) as has_google_maps,
+    (
+      nullif(btrim(coalesce(c.current_data ->> 'google_reviews_url', c.current_data ->> 'reviews_url', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'google_reviews_url',
+          location.value ->> 'reviews_url',
+          location.value ->> 'valoraciones_url',
+          ''
+        )), '') is not null
+      )
+    ) as has_google_reviews,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null as has_email,
     nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_phone,
     case
@@ -119,6 +157,8 @@ profile_checks as (
       case when not has_summary then 'Resumen corto o vacío' end,
       case when not has_website then 'Web oficial' end,
       case when not has_address then 'Dirección' end,
+      case when not has_google_maps then 'Google Maps de clínica' end,
+      case when not has_google_reviews then 'Valoraciones Google' end,
       case when not has_contact then 'Email o teléfono' end,
       case when not has_services then 'Servicios' end,
       case when not has_specialties then 'Especialidades' end,
@@ -146,6 +186,8 @@ field_summary as (
     jsonb_build_object('field', 'summary', 'label', 'Resumen suficiente', 'present', count(*) filter (where has_summary), 'pending', count(*) filter (where not has_summary)),
     jsonb_build_object('field', 'website', 'label', 'Web oficial', 'present', count(*) filter (where has_website), 'pending', count(*) filter (where not has_website)),
     jsonb_build_object('field', 'address', 'label', 'Dirección', 'present', count(*) filter (where has_address), 'pending', count(*) filter (where not has_address)),
+    jsonb_build_object('field', 'google_maps', 'label', 'Google Maps de clínica', 'present', count(*) filter (where has_google_maps), 'pending', count(*) filter (where not has_google_maps)),
+    jsonb_build_object('field', 'google_reviews', 'label', 'Valoraciones Google', 'present', count(*) filter (where has_google_reviews), 'pending', count(*) filter (where not has_google_reviews)),
     jsonb_build_object('field', 'contact', 'label', 'Email o teléfono', 'present', count(*) filter (where has_contact), 'pending', count(*) filter (where not has_contact)),
     jsonb_build_object('field', 'services', 'label', 'Servicios', 'present', count(*) filter (where has_services), 'pending', count(*) filter (where not has_services)),
     jsonb_build_object('field', 'specialties', 'label', 'Especialidades', 'present', count(*) filter (where has_specialties), 'pending', count(*) filter (where not has_specialties)),

@@ -869,6 +869,8 @@
         pendingSummary: 0,
         pendingWebsite: 0,
         pendingAddress: 0,
+        pendingGoogleMaps: 0,
+        pendingGoogleReviews: 0,
         pendingContact: 0,
         pendingServices: 0,
         pendingSpecialties: 0,
@@ -885,6 +887,8 @@
         ["pendingSummary", "Resumen"],
         ["pendingWebsite", "Web oficial"],
         ["pendingAddress", "Dirección"],
+        ["pendingGoogleMaps", "Google Maps"],
+        ["pendingGoogleReviews", "Valoraciones Google"],
         ["pendingContact", "Contacto"],
         ["pendingServices", "Servicios"],
         ["pendingSpecialties", "Especialidades"],
@@ -1234,6 +1238,8 @@
       if (text(row.summary || data.summary).trim().length < 120) fields.push("pendingSummary");
       if (!hasVisibleText(row.website, data.web)) fields.push("pendingWebsite");
       if (!hasVisibleText(row.address, data.address) && !locationsHaveAddress(data.locations)) fields.push("pendingAddress");
+      if (!hasVisibleText(data.maps_url, data.google_maps_url) && !locationsHaveMapsUrl(data.locations)) fields.push("pendingGoogleMaps");
+      if (!hasVisibleText(data.google_reviews_url, data.reviews_url) && !locationsHaveGoogleReviewsUrl(data.locations)) fields.push("pendingGoogleReviews");
       if (!hasVisibleText(data.email, data.telefono, data.phone, data.telephone)) fields.push("pendingContact");
       if (!countVisibleArray(data.services)) fields.push("pendingServices");
       if (!countVisibleArray(data.specialties)) fields.push("pendingSpecialties");
@@ -2777,6 +2783,22 @@
       return value.some(function (location) {
         if (typeof location === "string") return Boolean(text(location).trim());
         return Boolean(text(location && (location.address || location.direccion || location.dirección)).trim());
+      });
+    }
+
+    function locationsHaveMapsUrl(value) {
+      if (!Array.isArray(value)) return false;
+      return value.some(function (location) {
+        if (!location || typeof location === "string") return false;
+        return Boolean(text(location.maps_url || location.google_maps_url || location.map_url).trim());
+      });
+    }
+
+    function locationsHaveGoogleReviewsUrl(value) {
+      if (!Array.isArray(value)) return false;
+      return value.some(function (location) {
+        if (!location || typeof location === "string") return false;
+        return Boolean(text(location.google_reviews_url || location.reviews_url || location.valoraciones_url).trim());
       });
     }
 
