@@ -798,18 +798,25 @@
       return labels[type] || type || "Revisión";
     }
 
+    function isBlockingClaimReview(row) {
+      var payload = (row && row.payload) || {};
+      return row && row.review_type === "clinic_quality_audit" && payload.quality_context === "blocking_claims";
+    }
+
+    function reviewVisibleLabel(row) {
+      if (isBlockingClaimReview(row)) return "Claim bloqueante";
+      return reviewTypeLabel(row && row.review_type);
+    }
+
     function reviewSummary(rows) {
-      var counts = {};
-      rows.forEach(function (row) {
-        counts[row.review_type] = (counts[row.review_type] || 0) + 1;
-      });
       var parts = [
-        ["candidate_clinic", counts.candidate_clinic],
-        ["clinic_profile_enrichment", counts.clinic_profile_enrichment],
-        ["clinic_quality_audit", counts.clinic_quality_audit],
-        ["source_change_detected", counts.source_change_detected]
+        ["Clínica nueva", countWhere(rows, function (row) { return row.review_type === "candidate_clinic"; })],
+        ["Mejora de ficha", countWhere(rows, function (row) { return row.review_type === "clinic_profile_enrichment"; })],
+        ["Claim bloqueante", countWhere(rows, isBlockingClaimReview)],
+        ["Auditoría de calidad", countWhere(rows, function (row) { return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row); })],
+        ["Cambio de fuente", countWhere(rows, function (row) { return row.review_type === "source_change_detected"; })]
       ].filter(function (item) { return Number(item[1] || 0) > 0; }).map(function (item) {
-        return item[1] + " " + reviewTypeLabel(item[0]).toLowerCase();
+        return item[1] + " " + item[0].toLowerCase();
       });
       return parts.length ? parts.join(" · ") : "Sin revisiones abiertas";
     }
@@ -933,7 +940,7 @@
       var candidate = candidateFromReview(row);
       return [
         row.title,
-        reviewTypeLabel(row.review_type),
+        reviewVisibleLabel(row),
         row.priority,
         payload.clinic_name,
         payload.clinic_city,
@@ -2009,7 +2016,7 @@
         return;
       }
       reviewsBody.innerHTML = rows.map(function (row) {
-        return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewTypeLabel(row.review_type)) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
+        return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewVisibleLabel(row)) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
           date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
           html(row.id) + '">Revisar</button></td></tr>';
       }).join("");
@@ -2125,7 +2132,7 @@
       var blocksDraft = duplicateProbability >= 0.9;
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
-      el("reviewEditorMeta").textContent = reviewTypeLabel(activeReview.review_type) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
+      el("reviewEditorMeta").textContent = reviewVisibleLabel(activeReview) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
       setText("reviewCandidateName", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_name : candidate.name || candidate.clinic_name);
       setText("reviewCandidateCity", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_city : candidate.city);
       setText("reviewCandidateCountry", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);

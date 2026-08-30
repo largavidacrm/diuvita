@@ -43,6 +43,8 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 
 Hasta que no guardes, la web pública no cambia.
 
+Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia rechazada, en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión.
+
 ## Duplicados
 
 Si el sistema detecta que una propuesta se parece mucho a una clínica existente, verás **Coincidencias en Diuvita**.
