@@ -1235,15 +1235,45 @@
       var grouped = {};
       (rows || []).forEach(function (row) {
         if (row.review_type !== "clinic_profile_enrichment" || !row.clinic_id) return;
-        grouped[row.clinic_id] = (grouped[row.clinic_id] || 0) + 1;
+        if (!grouped[row.clinic_id]) {
+          grouped[row.clinic_id] = {
+            clinicId: row.clinic_id,
+            label: reviewPrimarySubject(row),
+            count: 0,
+            maxPriority: 0,
+            oldestCreatedAt: row.created_at || null
+          };
+        }
+        grouped[row.clinic_id].count += 1;
+        grouped[row.clinic_id].maxPriority = Math.max(grouped[row.clinic_id].maxPriority, Number(row.priority || 0));
+        var currentOldest = parseDateValue(grouped[row.clinic_id].oldestCreatedAt);
+        var rowDate = parseDateValue(row.created_at);
+        if (rowDate && (!currentOldest || rowDate < currentOldest)) grouped[row.clinic_id].oldestCreatedAt = row.created_at;
       });
-      return Object.keys(grouped).reduce(function (quality, key) {
-        if (grouped[key] > 1) {
+      var duplicates = Object.keys(grouped).map(function (key) {
+        return grouped[key];
+      }).filter(function (group) {
+        return group.count > 1;
+      }).sort(function (a, b) {
+        return Number(b.count || 0) - Number(a.count || 0) ||
+          Number(b.maxPriority || 0) - Number(a.maxPriority || 0) ||
+          (parseDateValue(a.oldestCreatedAt) || new Date(8640000000000000)) -
+          (parseDateValue(b.oldestCreatedAt) || new Date(8640000000000000)) ||
+          text(a.label).localeCompare(text(b.label));
+      });
+      return duplicates.reduce(function (quality, group, index) {
+        if (group.count > 1) {
           quality.duplicateClinics += 1;
-          quality.duplicateReviews += grouped[key];
+          quality.duplicateReviews += group.count;
+          if (index === 0) quality.firstDuplicateTarget = group;
         }
         return quality;
-      }, { duplicateClinics: 0, duplicateReviews: 0 });
+      }, { duplicateClinics: 0, duplicateReviews: 0, firstDuplicateTarget: null });
+    }
+
+    function duplicateBacklogTargetLabel(target) {
+      if (!target) return "—";
+      return target.label + " · " + target.count + (target.count === 1 ? " tarjeta" : " tarjetas");
     }
 
     function reviewBacklogGuardStatus(openCount) {
@@ -1409,6 +1439,7 @@
       var duplicateReviewDetail = backlogQuality.duplicateReviews
         ? backlogQuality.duplicateReviews + " tarjetas"
         : "—";
+      var duplicateTargetLabel = duplicateBacklogTargetLabel(backlogQuality.firstDuplicateTarget);
       var publicSite = publicHealth || emptyPublicHealth();
       var publicSiteLabel = publicSite.unavailable
         ? "No disponible"
@@ -1447,6 +1478,7 @@
         systemItem("Siguiente ficha", profileNextTargetLabel(completeness.nextTarget), completeness.nextTarget ? "warning-text" : ""),
         systemItem("Duplicados mejoras", duplicateReviewLabel, backlogQuality.duplicateClinics ? "warning-text" : ""),
         systemItem("Tarjetas duplicadas", duplicateReviewDetail, backlogQuality.duplicateReviews ? "warning-text" : ""),
+        systemItem("Primer atasco", duplicateTargetLabel, backlogQuality.firstDuplicateTarget ? "warning-text" : ""),
         systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Checks web", publicSiteDetail, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),

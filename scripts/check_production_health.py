@@ -31,6 +31,7 @@ CHECKS = [
             "Siguiente ficha",
             "Siguiente especialistas",
             "Duplicados mejoras",
+            "Primer atasco",
             "Freno bandeja",
             "Web pública",
             "Caso prioritario",
