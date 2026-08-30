@@ -7,6 +7,8 @@ from review_backlog_brief import (
     format_backlog,
     format_clinic_workgroup,
     safe_limit,
+    workgroup_order,
+    workgroup_recommendation,
 )
 
 
@@ -87,10 +89,21 @@ def main():
     check(safe_limit(0) == 1, "limit should have a lower bound")
     check(safe_limit(100) == 50, "limit should have an upper bound")
     check(backlog_guard(report["summary"]) == "cerca del freno: 48/50 abiertas", "guard label missing")
-    check(first_backlog_action(report) == "Revisar Sensabell: tiene 3 mejoras abiertas", "first action missing")
+    check(
+        first_backlog_action(report) == "Revisar Sensabell: 5 tarjetas, empezando por claims bloqueantes",
+        "first action should prefer blocking clinic workgroups",
+    )
+    check(
+        workgroup_order(report["clinic_workgroups"][0]) == "claims bloqueantes -> mejoras -> auditorías",
+        "clinic workgroup order missing",
+    )
+    check(
+        workgroup_recommendation(report["clinic_workgroups"][0]) == "primero quitar o corregir datos dudosos",
+        "clinic workgroup recommendation missing",
+    )
     check(
         format_clinic_workgroup(report["clinic_workgroups"][0])
-        == "- Sensabell · Valencia · publicada · 5 tarjetas · 1 claim bloqueante / 3 mejoras / 1 auditoría · P85 · más antigua 2026-08-30 08:30",
+        == "- Sensabell · Valencia · publicada · 5 tarjetas · 1 claim bloqueante / 3 mejoras / 1 auditoría · P85 · más antigua 2026-08-30 08:30 · orden: claims bloqueantes -> mejoras -> auditorías · primero quitar o corregir datos dudosos",
         "clinic workgroup formatting missing",
     )
     check("# Diuvita: atascos de bandeja" in output, "title missing")
@@ -106,6 +119,7 @@ def main():
     check("Sensabell · Valencia · publicada · 5 tarjetas" in output, "clinic workgroup missing")
     check("Kairos Longevity Clinic · Madrid · publicada · 4 tarjetas" in output, "second workgroup missing")
     check("2 claims bloqueantes / 2 mejoras" in output, "workgroup type counts missing")
+    check("orden: claims bloqueantes -> mejoras" in output, "workgroup order line missing")
     check("Sensabell · Valencia · publicada · 3 tarjetas · P80" in output, "duplicate group missing")
     check("No hay grupos duplicados" not in output, "should not show empty duplicate state")
     check("no descarta ni resuelve tarjetas" in output, "safety note missing")
@@ -117,6 +131,26 @@ def main():
         "duplicate_enrichment": [],
     }
     check(first_backlog_action(empty_report) == "No hay revisiones abiertas", "empty action missing")
+    duplicate_only_report = {
+        "summary": {"open_reviews": 3, "safe_write_limit": 50},
+        "clinic_workgroups": [
+            {
+                "clinic_name": "Neleva",
+                "card_count": 2,
+                "blocking_claim_reviews": 0,
+            }
+        ],
+        "duplicate_enrichment": [
+            {
+                "clinic_name": "Neleva",
+                "card_count": 2,
+            }
+        ],
+    }
+    check(
+        first_backlog_action(duplicate_only_report) == "Revisar Neleva: tiene 2 mejoras abiertas",
+        "duplicate-only action missing",
+    )
     check("No hay grupos de revisión por clínica" in format_backlog(empty_report), "empty workgroup state missing")
     check("No hay grupos duplicados" in format_backlog(empty_report), "empty duplicate state missing")
     print("OK review backlog brief: duplicate pressure is readable")

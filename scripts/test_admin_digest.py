@@ -36,6 +36,11 @@ def main():
                 "candidate_reviews_completed": 13,
             },
         },
+        "publication_control": {
+            "rebuild_hook_configured": True,
+            "rebuild_batch_minutes": 30,
+            "last_public_site_rebuild_requested_at": "2026-08-30T10:35:11+00:00",
+        },
         "reviews_by_type": [
             {
                 "review_type": "clinic_profile_enrichment",
@@ -237,6 +242,8 @@ def main():
     check("Campo mas pendiente: Especialistas · 17 fichas" in output, "top pending profile field line missing")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
+    check("Publicacion web: agrupada cada 30 min" in output, "publication batching missing")
+    check("Ultima peticion Netlify: 2026-08-30 10:35" in output, "last rebuild request missing")
     check("Bajo riesgo: no lista" in output, "maturity signal missing")
     check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")
     check("mejoras de ficha: 11 abiertas" in output, "review type summary missing")

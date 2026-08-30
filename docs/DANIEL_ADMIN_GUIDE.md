@@ -55,6 +55,10 @@ En **Estado del sistema**, mira especialmente:
 - **Primer atasco**: señala qué clínica con tarjetas repetidas conviene ordenar primero.
 - **Web pública**: confirma si la web visible responde correctamente desde el panel.
 - **Checks web**: muestra cuántas comprobaciones públicas han pasado.
+- **Publicación agrupada**: confirma si las ediciones visibles se agrupan antes
+  de pedir a Netlify una nueva publicación.
+- **Último rebuild**: muestra cuándo se pidió la última publicación web desde
+  Supabase.
 
 En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta del
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma

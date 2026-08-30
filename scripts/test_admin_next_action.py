@@ -26,6 +26,7 @@ def main() -> None:
         "Abrir prioridad",
         "Plan global",
         "Siguiente trabajo recomendado",
+        "Publicación web",
         "Siguiente acción",
         "Caso prioritario",
         "Revisar claim bloqueante",
@@ -34,8 +35,8 @@ def main() -> None:
         "Mejorar fichas existentes",
         "Completar fichas",
         "Sin acción urgente",
-        "renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);",
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);",
+        "renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
     ]:
         check(marker in index, f"missing next-action marker: {marker}")
 

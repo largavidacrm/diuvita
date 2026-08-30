@@ -63,3 +63,6 @@ scripts/check_supabase_rebuild_batching.sh
 
 Esta comprobacion no muestra el build hook privado, solo si existe, si la
 ventana esta configurada y si la funcion de Supabase ya usa esa ventana.
+
+El panel `/admin/` tambien muestra este estado en **Plan global** y en
+**Estado del sistema** como **Publicación agrupada**.

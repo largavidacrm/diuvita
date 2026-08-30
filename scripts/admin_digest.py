@@ -56,6 +56,10 @@ summary as (
   select public.admin_dashboard_summary() as data
   from claims
 ),
+publication_control as (
+  select public.admin_publication_control_summary() as data
+  from claims
+),
 typed_reviews as (
   select
     case
@@ -660,6 +664,7 @@ profile_next_target as (
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
   'summary', (select data from summary),
+  'publication_control', (select data from publication_control),
   'reviews_by_type', (select data from reviews_by_type),
   'open_reviews', (select data from open_reviews),
   'review_backlog_quality', (select data from review_backlog_quality),
@@ -721,6 +726,16 @@ def maturity_blockers(digest: dict[str, Any]) -> list[str]:
     if without_source:
         blockers.append(f"{without_source} claims sin fuente")
     return blockers
+
+
+def publication_control_status(digest: dict[str, Any]) -> str:
+    control = digest.get("publication_control") or {}
+    if not control.get("rebuild_hook_configured"):
+        return "no configurada"
+    minutes = as_int(control.get("rebuild_batch_minutes"))
+    if minutes > 1:
+        return f"agrupada cada {minutes} min"
+    return "directa"
 
 
 PROFILE_COMPLETENESS_FIELDS = [
@@ -945,6 +960,10 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Agentes activos", "si" if automation.get("agents_enabled") else "no"))
     output.append(line("Auto-publicacion", "activada" if auto_publish else "desactivada"))
     output.append(line("Modo sombra", "activo" if automation.get("shadow_mode_active") else "inactivo"))
+    output.append(line("Publicacion web", publication_control_status(digest)))
+    last_rebuild = parse_timestamp((digest.get("publication_control") or {}).get("last_public_site_rebuild_requested_at"))
+    if last_rebuild != "-":
+        output.append(line("Ultima peticion Netlify", last_rebuild))
     if automation.get("shadow_review_target") is not None:
         completed = as_int(automation.get("candidate_reviews_completed"))
         target = as_int(automation.get("shadow_review_target"))

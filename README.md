@@ -57,6 +57,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `supabase/migrations/0016_normalize_existing_candidate_drafts.sql`: normaliza candidatas internas antiguas a borrador.
 - `supabase/migrations/0017_admin_restore_clinic_version.sql`: restauración auditada de fichas desde el historial.
 - `supabase/migrations/0018_batch_public_site_rebuilds.sql`: prepara ventanas de publicacion agrupada para reducir rebuilds de Netlify desde Supabase.
+- `supabase/migrations/0019_admin_publication_control_summary.sql`: expone al admin el estado de publicacion agrupada sin revelar el hook privado.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.

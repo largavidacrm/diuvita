@@ -126,6 +126,8 @@ Daniel's non-technical panel guide lives in `docs/DANIEL_ADMIN_GUIDE.md`.
 
 `supabase/migrations/0018_batch_public_site_rebuilds.sql` updates that rebuild request so public-site rebuilds can be batched. The default window is 30 minutes and can be adjusted through `private.app_settings` with the key `diuvita_rebuild_batch_minutes`.
 
+`supabase/migrations/0019_admin_publication_control_summary.sql` exposes the rebuild batching status to authorized admins without returning the private Netlify build hook URL.
+
 ## Shadow discovery review
 
 `supabase/migrations/0006_shadow_discovery_queue.sql` adds the first safe workflow surface for `DISCOVER_CLINIC`. A discovery job can be picked, completed with candidate clinics and converted into `review_queue` cards. Review cards can then be dismissed or turned into draft clinic records. Drafts are not published on Diuvita until an admin manually edits their status to `published` or `preliminary`.

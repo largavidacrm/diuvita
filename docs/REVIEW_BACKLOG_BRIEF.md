@@ -9,6 +9,7 @@ It answers:
 - whether the inbox is close to the safe-write backlog guard;
 - how many profile-enrichment cards are open;
 - which clinics concentrate several open review cards across review types;
+- the recommended order inside each clinic group;
 - which clinics have several profile-enrichment cards open at the same time;
 - which duplicate group is the best first manual review target.
 

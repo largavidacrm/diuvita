@@ -36,6 +36,8 @@ CHECKS = [
             "openSourceTargetBtn",
             "Plan global",
             "globalPlanPanel",
+            "loadPublicationControl",
+            "Publicación agrupada",
             "reviewGuidancePanel",
             "Paso recomendado",
             "Orden recomendado",

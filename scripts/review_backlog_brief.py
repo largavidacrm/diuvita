@@ -202,6 +202,31 @@ def format_duplicate_group(row: dict[str, Any]) -> str:
     )
 
 
+def workgroup_order(row: dict[str, Any]) -> str:
+    steps = []
+    if as_int(row.get("blocking_claim_reviews")):
+        steps.append("claims bloqueantes")
+    if as_int(row.get("source_change_reviews")):
+        steps.append("fuentes cambiadas")
+    if as_int(row.get("enrichment_reviews")):
+        steps.append("mejoras")
+    if as_int(row.get("quality_reviews")):
+        steps.append("auditorías")
+    if as_int(row.get("candidate_reviews")):
+        steps.append("candidatas")
+    return " -> ".join(steps) if steps else "prioridad normal"
+
+
+def workgroup_recommendation(row: dict[str, Any]) -> str:
+    if as_int(row.get("blocking_claim_reviews")):
+        return "primero quitar o corregir datos dudosos"
+    if as_int(row.get("source_change_reviews")):
+        return "primero revisar qué cambió en la fuente"
+    if as_int(row.get("enrichment_reviews")):
+        return "consolidar una sola versión de ficha"
+    return "revisar juntas antes de cerrar"
+
+
 def format_clinic_workgroup(row: dict[str, Any]) -> str:
     name = row.get("clinic_name") or row.get("clinic_slug") or "sin clínica"
     city = row.get("city") or "sin ciudad"
@@ -224,11 +249,24 @@ def format_clinic_workgroup(row: dict[str, Any]) -> str:
     return (
         f"- {name} · {city} · {status} · "
         f"{cards} {plural(cards, 'tarjeta', 'tarjetas')} · {detail} · "
-        f"P{priority} · más antigua {oldest}"
+        f"P{priority} · más antigua {oldest} · "
+        f"orden: {workgroup_order(row)} · {workgroup_recommendation(row)}"
     )
 
 
 def first_backlog_action(report: dict[str, Any]) -> str:
+    workgroups = report.get("clinic_workgroups") or []
+    blocking_workgroups = [
+        row for row in workgroups if as_int(row.get("blocking_claim_reviews"))
+    ]
+    if blocking_workgroups:
+        first = blocking_workgroups[0]
+        name = first.get("clinic_name") or first.get("clinic_slug") or "la primera clínica bloqueada"
+        cards = as_int(first.get("card_count"))
+        return (
+            f"Revisar {name}: {cards} {plural(cards, 'tarjeta', 'tarjetas')}, "
+            f"empezando por claims bloqueantes"
+        )
     duplicates = report.get("duplicate_enrichment") or []
     if duplicates:
         first = duplicates[0]

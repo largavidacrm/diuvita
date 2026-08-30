@@ -828,6 +828,15 @@
       };
     }
 
+    function emptyPublicationControl() {
+      return {
+        rebuildHookConfigured: false,
+        rebuildBatchMinutes: null,
+        lastPublicSiteRebuildRequestedAt: null,
+        unavailable: false
+      };
+    }
+
     function parseDateValue(value) {
       if (!value) return null;
       var parsed = new Date(value);
@@ -1309,6 +1318,36 @@
       return health;
     }
 
+    async function loadPublicationControl() {
+      var control = emptyPublicationControl();
+      var result = await client.rpc("admin_publication_control_summary");
+      if (result.error) {
+        control.unavailable = true;
+        return control;
+      }
+      var data = result.data || {};
+      control.rebuildHookConfigured = Boolean(data.rebuild_hook_configured);
+      control.rebuildBatchMinutes = data.rebuild_batch_minutes == null ? null : Number(data.rebuild_batch_minutes);
+      control.lastPublicSiteRebuildRequestedAt = data.last_public_site_rebuild_requested_at || null;
+      return control;
+    }
+
+    function publicationControlLabel(control) {
+      control = control || emptyPublicationControl();
+      if (control.unavailable) return "No disponible";
+      if (!control.rebuildHookConfigured) return "Hook no configurado";
+      if (Number(control.rebuildBatchMinutes || 0) > 1) return "Agrupada · " + control.rebuildBatchMinutes + " min";
+      return "Directa";
+    }
+
+    function publicationControlDetail(control) {
+      control = control || emptyPublicationControl();
+      if (control.unavailable) return "No se pudo leer Supabase.";
+      if (!control.rebuildHookConfigured) return "No se pedirá rebuild automático.";
+      var last = control.lastPublicSiteRebuildRequestedAt ? date(control.lastPublicSiteRebuildRequestedAt) : "sin petición todavía";
+      return "Última petición: " + last;
+    }
+
     function pill(status) {
       var tone = "";
       if (["failed", "dead_letter", "rejected", "conflict"].indexOf(status) >= 0) tone = " danger";
@@ -1418,7 +1457,7 @@
         '</article>';
     }
 
-    function renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, openReviews) {
+    function renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews) {
       if (!el("globalPlanPanel")) return;
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -1432,6 +1471,7 @@
       var specialists = specialistCoverage || emptySpecialistCoverage();
       var completeness = profileCompleteness || emptyProfileCompleteness();
       var site = publicHealth || emptyPublicHealth();
+      var publication = publicationControl || emptyPublicationControl();
       var group = firstClinicWorkgroup(openReviews || []);
       var sourceTarget = sourceCoverageTargetLabel(sources.nextTarget);
       var profileTarget = profileNextTargetLabel(completeness.nextTarget);
@@ -1444,6 +1484,7 @@
         globalPlanItem("Web pública", publicWebsiteLabel(summary), site.failed ? "Hay alertas en la web publicada." : "La web visible se controla aparte de las revisiones internas.", site.failed ? "warning-text" : ""),
         globalPlanItem("Bandeja", openCount + " abiertas", backlogGuard.label, backlogGuard.tone),
         globalPlanItem("Automatización", automationPlanLabel(automation), blockers.length ? blockers[0] : "Sin bloqueos medidos; Daniel decide el siguiente nivel.", blockers.length ? "warning-text" : ""),
+        globalPlanItem("Publicación web", publicationControlLabel(publication), publicationControlDetail(publication), publication.unavailable || !publication.rebuildHookConfigured ? "warning-text" : ""),
         globalPlanItem("Fuentes", sourcePlanLabel(sources), sourceTarget, sources.nextTarget ? "warning-text" : ""),
         globalPlanItem("Especialistas", specialistPlanLabel(specialists), specialistNextTargetLabel(specialists.nextTarget), specialists.nextTarget ? "warning-text" : ""),
         globalPlanItem("Fichas", topPendingProfileField(completeness), profileTarget, completeness.nextTarget ? "warning-text" : "")
@@ -1780,7 +1821,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, openReviews) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -1858,6 +1899,7 @@
       var publicSiteDetail = publicSite.unavailable
         ? "—"
         : publicSite.ok + "/" + publicSite.checks + " comprobaciones";
+      var publication = publicationControl || emptyPublicationControl();
       var nextReview = firstActionReview(openReviews, failedJobs);
 
       el("systemHealthPill").className = "pill" + healthTone;
@@ -1894,6 +1936,8 @@
         systemItem("Primer atasco", duplicateTargetLabel, backlogQuality.firstDuplicateTarget ? "warning-text" : ""),
         systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Checks web", publicSiteDetail, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
+        systemItem("Publicación agrupada", publicationControlLabel(publication), publication.unavailable || !publication.rebuildHookConfigured ? "warning-text" : ""),
+        systemItem("Último rebuild", publicationControlDetail(publication)),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
         systemItem("Fallos", failedJobs, failedJobs ? "danger-text" : ""),
         systemItem("Último trabajo", latestJob ? latestJob.job_type + " · " + date(latestJob.created_at) : "—"),
@@ -3678,8 +3722,9 @@
         var specialistCoverage = await loadSpecialistCoverage(reviewCache);
         var profileCompleteness = await loadProfileCompleteness(reviewCache);
         var publicHealth = await loadPublicHealth();
-        renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
+        var publicationControl = await loadPublicationControl();
+        renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
         renderReviews();
 
         var clinicRows = await client

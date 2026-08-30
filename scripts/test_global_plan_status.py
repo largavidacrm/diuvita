@@ -30,6 +30,11 @@ def sample_digest():
                 "shadow_review_target": 200,
             },
         },
+        "publication_control": {
+            "rebuild_hook_configured": True,
+            "rebuild_batch_minutes": 30,
+            "last_public_site_rebuild_requested_at": "2026-08-30T10:35:11+00:00",
+        },
         "reviews_by_type": [{"review_type": "blocking_claim_review", "open_count": 4}],
         "open_reviews": [{"review_type": "blocking_claim_review", "priority": 95}],
         "recent_failed_jobs": [],
@@ -102,6 +107,7 @@ def main():
     check("Bandeja: 48 revisiones abiertas; cerca del freno: 48/50 abiertas" in output, "backlog line missing")
     check("Trazabilidad de fuentes: 11/19 fichas con fuente" in output, "source coverage line missing")
     check("Ciclo autónomo: activo en sombra" in output, "shadow cycle line missing")
+    check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")

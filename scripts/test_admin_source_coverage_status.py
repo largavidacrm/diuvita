@@ -41,7 +41,7 @@ def main() -> None:
         check(marker in index, f"missing admin source coverage marker: {marker}")
 
     check(
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, reviewCache);"
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);"
         in index,
         "dashboard should render source coverage status",
     )
