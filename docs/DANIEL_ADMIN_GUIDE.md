@@ -63,6 +63,9 @@ En **Estado del sistema**, mira especialmente:
 - **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
 - **Campo más pendiente**: resume qué tipo de dato falta en más fichas visibles.
 - **Siguiente ficha**: señala la ficha incompleta que conviene revisar primero.
+- **Sedes explícitas**: cuenta cuántas sedes están guardadas como sedes separadas y cuántas clínicas son multisede.
+- **Sedes sin Maps**: avisa si alguna sede guardada no tiene enlace a ficha de clínica en Google Maps.
+- **Sedes sin valoraciones**: avisa si alguna sede guardada no tiene enlace directo a valoraciones de Google.
 - **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas.
 - **Grupo por clínica**: señala qué clínica conviene revisar en bloque porque concentra varias tarjetas abiertas.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.

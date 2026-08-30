@@ -891,6 +891,11 @@
         pendingUnits: 0,
         pendingSpecialists: 0,
         pendingTechnology: 0,
+        explicitLocationRows: 0,
+        multiLocationClinics: 0,
+        locationRowsMissingAddress: 0,
+        locationRowsMissingMaps: 0,
+        locationRowsMissingReviews: 0,
         nextTarget: null,
         unavailable: false
       };
@@ -1246,6 +1251,22 @@
       return hasVisibleText(value);
     }
 
+    function locationCoverageForClinic(currentData) {
+      var locations = normalizedLocations((currentData || {}).locations);
+      return locations.reduce(function (stats, location) {
+        stats.rows += 1;
+        if (!hasVisibleText(location.address)) stats.missingAddress += 1;
+        if (!hasReviewedGoogleMapsUrl(location.maps_url, location.google_maps_url, location.map_url)) stats.missingMaps += 1;
+        if (!hasVisibleText(location.google_reviews_url, location.reviews_url, location.valoraciones_url)) stats.missingReviews += 1;
+        return stats;
+      }, {
+        rows: 0,
+        missingAddress: 0,
+        missingMaps: 0,
+        missingReviews: 0
+      });
+    }
+
     function profilePendingFields(row) {
       var data = row.current_data || {};
       var fields = [];
@@ -1290,8 +1311,14 @@
       var targets = [];
       var targetById = {};
       (result.data || []).forEach(function (row) {
+        var locationStats = locationCoverageForClinic(row.current_data || {});
         var pending = profilePendingFields(row);
         completeness.visibleClinics += 1;
+        completeness.explicitLocationRows += locationStats.rows;
+        if (locationStats.rows > 1) completeness.multiLocationClinics += 1;
+        completeness.locationRowsMissingAddress += locationStats.missingAddress;
+        completeness.locationRowsMissingMaps += locationStats.missingMaps;
+        completeness.locationRowsMissingReviews += locationStats.missingReviews;
         if (pending.length) completeness.withPendingFields += 1;
         else completeness.withoutPendingFields += 1;
         pending.forEach(function (key) {
@@ -1570,6 +1597,13 @@
       return status.withSpecialists + "/" + status.visibleClinics + " con especialistas";
     }
 
+    function locationPlanLabel(completeness) {
+      var status = completeness || emptyProfileCompleteness();
+      if (status.unavailable) return "sedes no disponibles";
+      if (!status.explicitLocationRows) return "0 sedes explícitas";
+      return status.explicitLocationRows + " sedes · " + status.multiLocationClinics + " multisede";
+    }
+
     function globalPlanItem(label, value, detail, tone) {
       return '<div class="global-plan-item">' +
         '<span>' + html(label) + '</span>' +
@@ -1653,8 +1687,8 @@
       return detail;
     }
 
-    function globalPlanDataDetail(sourceLabel, specialistLabel, sourceTarget, profileTarget) {
-      var parts = [sourceLabel, specialistLabel].filter(Boolean);
+    function globalPlanDataDetail(sourceLabel, specialistLabel, locationLabel, sourceTarget, profileTarget) {
+      var parts = [sourceLabel, specialistLabel, locationLabel].filter(Boolean);
       var next = [sourceTarget, profileTarget].filter(function (item) {
         return item && item !== "—";
       });
@@ -1717,7 +1751,7 @@
         globalPlanItem("Tú ahora", nextClick, globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck), openCount ? "warning-text" : ""),
         globalPlanItem("Freno de bandeja", backlogGuard.label, openCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5 ? "Pausa trabajos nuevos hasta bajar revisiones." : "Todavía hay margen para nuevas tareas útiles.", backlogGuard.tone),
         globalPlanItem("Yo puedo seguir con", failedJobs ? "Estabilidad técnica" : "Trabajo seguro", globalPlanCodexWorkDetail(openCount, failedJobs, sources, specialists, completeness), failedJobs ? "danger-text" : ""),
-        globalPlanItem("Datos pendientes", "Fuentes + fichas", globalPlanDataDetail(sourcePlanLabel(sources), specialistPlanLabel(specialists), sourceTarget, profileTarget), sources.nextTarget || specialists.nextTarget ? "warning-text" : ""),
+        globalPlanItem("Datos pendientes", "Fuentes + fichas", globalPlanDataDetail(sourcePlanLabel(sources), specialistPlanLabel(specialists), locationPlanLabel(completeness), sourceTarget, profileTarget), sources.nextTarget || specialists.nextTarget ? "warning-text" : ""),
         globalPlanItem("No activar todavía", "Autonomía / Growth", blockers.length ? blockers[0] + ". Primero cerramos revisión humana y claims." : "Se deja parado hasta que tú lo decidas.", blockers.length ? "warning-text" : "")
       ].join("");
       el("globalPlanRoadmap").innerHTML = [
@@ -2275,6 +2309,15 @@
       var completenessPendingLabel = completeness.unavailable
         ? "—"
         : completeness.withPendingFields + " con pendientes";
+      var locationRowsLabel = completeness.unavailable
+        ? "—"
+        : completeness.explicitLocationRows + " sedes · " + completeness.multiLocationClinics + " multisede";
+      var locationMapsLabel = completeness.unavailable
+        ? "—"
+        : completeness.locationRowsMissingMaps + " sin Maps";
+      var locationReviewsLabel = completeness.unavailable
+        ? "—"
+        : completeness.locationRowsMissingReviews + " sin valoraciones";
       var backlogQuality = reviewBacklogQuality(openReviews || []);
       var clinicWorkgroup = firstClinicWorkgroup(openReviews || []);
       var backlogGuard = reviewBacklogGuardStatus(reviews.open || (openReviews || []).length);
@@ -2326,6 +2369,9 @@
         systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Campo más pendiente", topPendingProfileField(completeness), completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Siguiente ficha", profileNextTargetLabel(completeness.nextTarget), completeness.nextTarget ? "warning-text" : ""),
+        systemItem("Sedes explícitas", locationRowsLabel, completeness.locationRowsMissingAddress ? "warning-text" : ""),
+        systemItem("Sedes sin Maps", locationMapsLabel, completeness.locationRowsMissingMaps ? "warning-text" : ""),
+        systemItem("Sedes sin valoraciones", locationReviewsLabel, completeness.locationRowsMissingReviews ? "warning-text" : ""),
         systemItem("Duplicados mejoras", duplicateReviewLabel, backlogQuality.duplicateClinics ? "warning-text" : ""),
         systemItem("Tarjetas duplicadas", duplicateReviewDetail, backlogQuality.duplicateReviews ? "warning-text" : ""),
         systemItem("Primer atasco", duplicateTargetLabel, backlogQuality.firstDuplicateTarget ? "warning-text" : ""),
