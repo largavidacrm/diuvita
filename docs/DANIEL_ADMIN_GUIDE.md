@@ -12,7 +12,7 @@ https://www.diuvita.com/admin/
 2. Mira el bloque **Necesitan revisión**.
 3. Pulsa **Revisar** en una propuesta.
 4. Comprueba nombre, web, ciudad, fuente, servicios y especialistas detectados.
-5. Si parece una clínica válida, pulsa **Crear borrador**.
+5. Si parece una clínica válida, pulsa **Crear borrador y validar**.
 6. Si no encaja con Diuvita, pulsa **Descartar**.
 
 Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma.
@@ -26,7 +26,7 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 3. Revisa los campos propuestos y sus fuentes.
 4. Pulsa **Editar clínica**.
 5. El panel carga la propuesta dentro del formulario.
-6. Revisa el contenido y pulsa **Guardar cambios** solo si te encaja publicarlo.
+6. Revisa el contenido, elige el estado de la ficha y guarda solo si te encaja.
 
 Hasta que no guardes, la web pública no cambia.
 
@@ -42,9 +42,13 @@ Cuando sea un duplicado probable, el botón de crear borrador queda bloqueado. E
 2. Busca la clínica por nombre o ciudad.
 3. Pulsa **Editar**.
 4. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, etc.
-5. Guarda.
+5. Mira el bloque **Validación final**.
+6. El botón de guardar cambia según el estado elegido: **Guardar borrador**,
+   **Guardar en revisión**, **Guardar como preliminar** o **Guardar como publicada**.
+7. Guarda cuando esté correcto.
 
 Si la clínica está como **Publicada** o **Preliminar**, el cambio se manda a la web automáticamente. Puede tardar unos minutos.
+Si está como **Borrador**, **Revisión**, **Descubierta**, **Extraída**, **Verificada** o **Archivada**, se guarda dentro del panel pero no aparece como ficha pública.
 
 ## Auditar fichas
 
