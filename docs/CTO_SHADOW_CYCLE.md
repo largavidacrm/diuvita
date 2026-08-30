@@ -38,6 +38,18 @@ The claim-rule evaluation step is read-only in both modes. Blocking-claim cards
 are internal review items only. Source snapshot retention is measured only; no
 cleanup/deletion path is enabled. Profile completeness is also measured only;
 it does not edit fields or resolve review cards.
+
+To avoid review noise, safe apply mode first checks the open review backlog.
+If there are 50 or more open review cards, the cycle skips the steps that could
+create more review cards and continues with safe read-only measurements. The
+limit can be adjusted:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --apply-safe --max-open-reviews-for-safe-writes 75
+```
+
+Use `0` only for an intentionally unfenced internal run.
+
 Saved-source shadow extraction is off by default. To include a small batch:
 
 ```bash

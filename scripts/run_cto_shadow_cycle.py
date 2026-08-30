@@ -87,6 +87,13 @@ STEP_LABELS = {
     "check_production_health": "salud de la web publica",
 }
 
+REVIEW_CARD_CREATING_STEPS = {
+    "monitor_source_changes",
+    "process_source_change_reviews",
+    "submit_source_shadow_reviews",
+    "submit_blocking_claim_reviews",
+}
+
 
 def compact_item(item: Any, keys: tuple[str, ...]) -> Any:
     if not isinstance(item, dict) or not keys:
@@ -186,6 +193,25 @@ def run_step(name: str, args: list[str], timeout: int) -> dict[str, Any]:
     }
 
 
+def skipped_step(name: str, reason: str) -> dict[str, Any]:
+    return {
+        "name": name,
+        "ok": True,
+        "skipped": True,
+        "returncode": 0,
+        "duration_seconds": 0,
+        "summary": {"status": "skipped", "reason": reason},
+        "stdout_tail": "",
+        "stderr_tail": "",
+    }
+
+
+def open_review_count_from_digest(digest: dict[str, Any]) -> int:
+    summary = digest.get("summary") if isinstance(digest.get("summary"), dict) else {}
+    reviews = summary.get("reviews") if isinstance(summary.get("reviews"), dict) else {}
+    return as_int(reviews.get("open"))
+
+
 def step_label(name: str) -> str:
     return STEP_LABELS.get(name, name.replace("_", " "))
 
@@ -223,7 +249,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     open_reviews = as_int(reviews.get("open"))
     mode = str(output.get("mode") or "dry_run")
     mode_label = "solo lectura" if mode == "dry_run" else "cambios internos seguros"
-    completed_steps = len([step for step in steps if step.get("ok")])
+    completed_steps = len([step for step in steps if step.get("ok") and not step.get("skipped")])
+    skipped_steps = len([step for step in steps if step.get("skipped")])
     total_steps = len(steps)
 
     if failed_step:
@@ -239,8 +266,15 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
             attention = "Hay un fallo tecnico en el ciclo; revisar el paso detenido antes de aceptar nuevas fichas."
         headline = f"Ciclo detenido en {step_label(failed_name)}."
     else:
-        status = "ok" if failed_jobs == 0 else "attention"
-        attention = "" if failed_jobs == 0 else "Hay fallos tecnicos abiertos en la bandeja interna."
+        if failed_jobs:
+            status = "attention"
+            attention = "Hay fallos tecnicos abiertos en la bandeja interna."
+        elif skipped_steps:
+            status = "attention"
+            attention = "Se omitieron pasos que podian crear mas tarjetas porque la bandeja ya esta cargada."
+        else:
+            status = "ok"
+            attention = ""
         headline = f"Ciclo completado en modo {mode_label}."
 
     production_step = find_step(steps, "check_production_health")
@@ -275,6 +309,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "headline": headline,
         "mode": mode_label,
         "steps": f"{completed_steps}/{total_steps} pasos OK",
+        "skipped_steps": skipped_steps,
         "next_action": next_action,
         "open_reviews": open_reviews,
         "failed_jobs": failed_jobs,
@@ -299,6 +334,8 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Modo sombra: {brief.get('shadow_mode')}.",
         f"- Web publica: {brief.get('production_health')}.",
     ]
+    if as_int(brief.get("skipped_steps")):
+        lines.append(f"- Pasos omitidos: {brief.get('skipped_steps')}")
     attention = str(brief.get("attention") or "").strip()
     if attention:
         lines.append(f"- Atencion: {attention}")
@@ -465,6 +502,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Print only Daniel's plain-language cycle brief instead of the technical JSON.",
     )
+    parser.add_argument(
+        "--max-open-reviews-for-safe-writes",
+        type=int,
+        default=50,
+        help="In apply-safe mode, skip review-card writing steps once open reviews reach this count. Use 0 to disable.",
+    )
     parser.add_argument("--production-base-url", default="https://www.diuvita.com")
     parser.add_argument("--production-timeout", type=int, default=12)
     return parser.parse_args()
@@ -485,6 +528,7 @@ def main() -> int:
         args.snapshot_keep_latest,
         args.snapshot_retention_limit,
         args.profile_completeness_limit,
+        args.max_open_reviews_for_safe_writes,
     ) < 0:
         raise SystemExit("limits must be zero or greater.")
     if min(
@@ -507,7 +551,39 @@ def main() -> int:
         raise SystemExit("--production-timeout must be between 3 and 60 seconds.")
 
     steps = []
+    review_card_writes_allowed = True
+    backlog_guard_reason = ""
+    if args.apply_safe and args.max_open_reviews_for_safe_writes:
+        preflight = run_step(
+            "preflight_review_backlog",
+            ["admin_digest.py", "--limit", "1", "--json"],
+            45,
+        )
+        steps.append(preflight)
+        if not preflight["ok"]:
+            output = {
+                "mode": "apply_safe",
+                "ok": False,
+                "steps": steps,
+            }
+            output["daniel_brief"] = build_cycle_brief(output)
+            if args.plain_brief:
+                print(format_cycle_brief(output["daniel_brief"]), end="")
+            else:
+                print(json.dumps(output, ensure_ascii=False, indent=2))
+            return 1
+        open_reviews = open_review_count_from_digest(safe_step_summary(preflight))
+        if open_reviews >= args.max_open_reviews_for_safe_writes:
+            review_card_writes_allowed = False
+            backlog_guard_reason = (
+                f"{open_reviews} revisiones abiertas; limite seguro "
+                f"{args.max_open_reviews_for_safe_writes}."
+            )
+
     for name, command_args, timeout in build_steps(args):
+        if args.apply_safe and not review_card_writes_allowed and name in REVIEW_CARD_CREATING_STEPS:
+            steps.append(skipped_step(name, backlog_guard_reason))
+            continue
         step = run_step(name, command_args, timeout)
         steps.append(step)
         if not step["ok"]:

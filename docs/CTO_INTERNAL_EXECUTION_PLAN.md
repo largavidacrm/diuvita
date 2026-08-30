@@ -77,6 +77,7 @@ Already built:
 - Public clinic pages display richer fields with clearer navigation, section counts, fast profile stats, contact-aware search and more scannable lists.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle now includes a Daniel-facing brief in its JSON output and can optionally print only that brief for unattended logs.
+- Safe CTO shadow cycle has a backlog guard so safe-apply runs do not keep adding review cards when the inbox is already full.
 - Safe CTO shadow cycle can optionally include the read-only production health check.
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.

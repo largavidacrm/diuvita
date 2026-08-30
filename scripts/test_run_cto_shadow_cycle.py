@@ -7,6 +7,8 @@ from run_cto_shadow_cycle import (
     build_steps,
     compact_summary,
     format_cycle_brief,
+    open_review_count_from_digest,
+    skipped_step,
     try_parse_json,
 )
 
@@ -151,6 +153,19 @@ def main():
     brief_text = format_cycle_brief(cycle_brief)
     check("# Diuvita: resumen CTO automatico" in brief_text, "plain brief title missing")
     check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
+    check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
+    guarded_brief = build_cycle_brief({
+        "mode": "apply_safe",
+        "ok": True,
+        "steps": [
+            {"name": "preflight_review_backlog", "ok": True, "summary": cycle_digest},
+            skipped_step("monitor_source_changes", "50 revisiones abiertas; limite seguro 50."),
+            {"name": "admin_digest", "ok": True, "summary": cycle_digest},
+        ],
+    })
+    check(guarded_brief["status"] == "attention", "skipped review-card writers should be visible")
+    check(guarded_brief["skipped_steps"] == 1, "skipped count should be kept")
+    check("Pasos omitidos: 1" in format_cycle_brief(guarded_brief), "plain brief should show skipped steps")
     failed_cycle_brief = build_cycle_brief({
         "mode": "dry_run",
         "ok": False,
