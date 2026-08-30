@@ -31,9 +31,12 @@ MEDIUM_RISK_PREFIXES = (
     "technologies.",
     "professionals.published",
     "team.public_professionals",
+    "transparency.years_in_practice",
+    "transparency.specialists_count",
 )
 
 HIGH_RISK_PREFIXES = (
+    "team.credentialing_visible",
     "team.credentials",
     "prices.",
     "treatments.",

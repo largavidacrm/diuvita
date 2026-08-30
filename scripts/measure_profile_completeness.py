@@ -30,7 +30,29 @@ with clinic_rows as (
     c.status,
     length(btrim(coalesce(c.summary, c.current_data ->> 'summary', ''))) >= 120 as has_summary,
     nullif(btrim(coalesce(c.website, c.current_data ->> 'web', '')), '') is not null as has_website,
-    nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is not null as has_address,
+    (
+      nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'address',
+          location.value ->> 'direccion',
+          location.value ->> 'dirección',
+          case
+            when jsonb_typeof(location.value) = 'string'
+              then location.value #>> '{{}}'
+            else ''
+          end
+        )), '') is not null
+      )
+    ) as has_address,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null as has_email,
     nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_phone,
     case

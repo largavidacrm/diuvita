@@ -6,6 +6,7 @@ Current implementation:
 
 - `scripts/extract_clinic_profile_shadow.py`
 - `scripts/enrich_candidate_review_from_url.py`
+- `scripts/enrich_candidate_reviews_from_team_pages.py`
 - `scripts/test_extract_clinic_profile_shadow.py`
 
 It reads one public source page and returns:
@@ -15,6 +16,9 @@ It reads one public source page and returns:
 - Field claims.
 - Rules-engine decisions.
 - Publicly listed specialists and clinical units when they are explicit enough.
+- Basic transparency hints when stated clearly: years in practice, public
+  specialist count, visible professional credentialing and public pricing
+  signals.
 - Clinic name only when the page title looks like an actual clinic name, not a
   marketing sentence.
 
@@ -25,6 +29,10 @@ card. This is useful when the initial discovery page describes the service but
 the public team is listed on a separate page such as "Quiénes somos". The
 enrichment keeps every source URL in the review and still requires human
 validation before a draft is created.
+
+`scripts/enrich_candidate_reviews_from_team_pages.py` applies the same idea in
+batch. It looks for same-site links that clearly point to team/about pages and
+updates only existing candidate review cards. Its default mode is a dry run.
 
 For extraction, it reads a larger compact excerpt than the provenance snapshot
 and also captures useful hidden contact links such as `mailto:`, `tel:` and
@@ -64,7 +72,10 @@ That folder is local/ignored by Git.
 
 - It only detects obvious contact details, public specialist names with clear
   doctor titles or name-role pairs inside explicit team sections, clinical
-  units and known longevity keywords.
+  units, transparency signals and known longevity keywords.
+- It does not infer years in practice from founding dates yet.
+- It does not fetch or verify Google Maps profiles yet; those links are edited
+  manually or proposed later from explicit sources.
 - It should not decide final clinic names from generic page titles.
 - It suppresses generic or marketing-like page titles instead of turning them
   into identity claims.

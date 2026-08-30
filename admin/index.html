@@ -68,19 +68,29 @@
           <span class="pill" id="globalPlanPhase">Cargando</span>
         </div>
         <div class="global-plan-body">
-          <div class="global-plan-grid" id="globalPlanGrid">
+          <div class="global-plan-orientation">
+            <article class="global-plan-focus">
+              <span>Ahora estás aquí</span>
+              <strong id="globalPlanFocus">Cargando estado del proyecto.</strong>
+              <p id="globalPlanWhy">Estoy ordenando la información para enseñarte el siguiente paso con claridad.</p>
+            </article>
+            <div class="global-next-box">
+              <div>
+                <span>Siguiente clic recomendado</span>
+                <strong id="globalPlanNextAction">Cargando</strong>
+                <p id="globalPlanNextDetail">Todavía estamos leyendo el estado del proyecto.</p>
+              </div>
+              <button class="link-btn hidden" id="globalPlanOpenNextBtn" type="button">Abrir siguiente</button>
+            </div>
+          </div>
+          <div class="global-plan-simple" id="globalPlanGrid">
             <p class="empty">Cargando estado del plan.</p>
           </div>
-          <div class="global-plan-roadmap" id="globalPlanRoadmap">
-            <p class="empty">Cargando desglose del plan.</p>
-          </div>
-          <div class="global-next-box">
-            <div>
-              <span>Siguiente trabajo recomendado</span>
-              <strong id="globalPlanNextAction">Cargando</strong>
-              <p id="globalPlanNextDetail">Todavía estamos leyendo el estado del proyecto.</p>
+          <div>
+            <div class="global-plan-section-title">Ruta global</div>
+            <div class="global-plan-roadmap" id="globalPlanRoadmap">
+              <p class="empty">Cargando desglose del plan.</p>
             </div>
-            <button class="link-btn hidden" id="globalPlanOpenNextBtn" type="button">Abrir siguiente</button>
           </div>
         </div>
       </section>
@@ -187,6 +197,18 @@
             <input id="clinicAddress" name="clinicAddress">
           </div>
           <div class="field">
+            <label for="clinicMapsUrl">Google Maps</label>
+            <input id="clinicMapsUrl" name="clinicMapsUrl" type="url" placeholder="https://">
+          </div>
+          <div class="field">
+            <label for="clinicGoogleReviewsUrl">Valoraciones Google</label>
+            <input id="clinicGoogleReviewsUrl" name="clinicGoogleReviewsUrl" type="url" placeholder="https://">
+          </div>
+          <div class="field field-wide">
+            <label for="clinicLocations">Sedes</label>
+            <textarea id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones"></textarea>
+          </div>
+          <div class="field">
             <label for="clinicStatus">Estado</label>
             <select id="clinicStatus" name="clinicStatus">
               <option value="published">Publicada</option>
@@ -223,6 +245,38 @@
             <label for="clinicProfessionals">Especialistas publicados por la clínica</label>
             <textarea id="clinicProfessionals" name="clinicProfessionals" rows="6"></textarea>
           </div>
+          <div class="field">
+            <label for="clinicYearsInPractice">Años en ejercicio</label>
+            <input id="clinicYearsInPractice" name="clinicYearsInPractice">
+          </div>
+          <div class="field">
+            <label for="clinicSpecialistsCount">Número de especialistas</label>
+            <input id="clinicSpecialistsCount" name="clinicSpecialistsCount" type="number" min="0" step="1">
+          </div>
+          <div class="field">
+            <label for="clinicTeamCredentialingVisible">Colegiación visible</label>
+            <select id="clinicTeamCredentialingVisible" name="clinicTeamCredentialingVisible">
+              <option value=""></option>
+              <option value="si">Sí</option>
+              <option value="parcial">Parcial</option>
+              <option value="no">No publicado</option>
+              <option value="no consta">No consta</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="clinicPublicPricing">Precio público</label>
+            <select id="clinicPublicPricing" name="clinicPublicPricing">
+              <option value=""></option>
+              <option value="si">Sí</option>
+              <option value="parcial">Parcial</option>
+              <option value="no">No publicado</option>
+              <option value="no consta">No consta</option>
+            </select>
+          </div>
+          <div class="field field-wide">
+            <label for="clinicPricingUrl">Página de precios</label>
+            <input id="clinicPricingUrl" name="clinicPricingUrl" type="url" placeholder="https://">
+          </div>
           <div class="field field-wide">
             <label for="clinicTech">Tecnología</label>
             <textarea id="clinicTech" name="clinicTech" rows="3"></textarea>
@@ -254,10 +308,18 @@
               <label><input type="checkbox" data-lock-field="location.city"> Ciudad</label>
               <label><input type="checkbox" data-lock-field="location.region"> Región</label>
               <label><input type="checkbox" data-lock-field="location.address"> Dirección</label>
+              <label><input type="checkbox" data-lock-field="location.locations"> Sedes</label>
+              <label><input type="checkbox" data-lock-field="location.maps_url"> Google Maps</label>
+              <label><input type="checkbox" data-lock-field="location.google_reviews_url"> Valoraciones Google</label>
               <label><input type="checkbox" data-lock-field="services.list"> Servicios</label>
               <label><input type="checkbox" data-lock-field="specialties.list"> Especialidades</label>
               <label><input type="checkbox" data-lock-field="units.list"> Unidades</label>
               <label><input type="checkbox" data-lock-field="professionals.published"> Especialistas</label>
+              <label><input type="checkbox" data-lock-field="transparency.years_in_practice"> Años en ejercicio</label>
+              <label><input type="checkbox" data-lock-field="transparency.specialists_count"> Nº especialistas</label>
+              <label><input type="checkbox" data-lock-field="team.credentialing_visible"> Colegiación</label>
+              <label><input type="checkbox" data-lock-field="prices.public_status"> Precio público</label>
+              <label><input type="checkbox" data-lock-field="prices.url"> Página de precios</label>
               <label><input type="checkbox" data-lock-field="technologies.list"> Tecnología</label>
               <label><input type="checkbox" data-lock-field="contact.email"> Email</label>
               <label><input type="checkbox" data-lock-field="contact.phone"> Teléfono</label>
@@ -582,9 +644,12 @@
       "programs.",
       "technologies.",
       "professionals.published",
-      "team.public_professionals"
+      "team.public_professionals",
+      "transparency.years_in_practice",
+      "transparency.specialists_count"
     ];
     var HIGH_RISK_PREFIXES = [
+      "team.credentialing_visible",
       "team.credentials",
       "prices.",
       "treatments.",
@@ -1156,7 +1221,7 @@
       var fields = [];
       if (text(row.summary || data.summary).trim().length < 120) fields.push("pendingSummary");
       if (!hasVisibleText(row.website, data.web)) fields.push("pendingWebsite");
-      if (!hasVisibleText(row.address, data.address)) fields.push("pendingAddress");
+      if (!hasVisibleText(row.address, data.address) && !locationsHaveAddress(data.locations)) fields.push("pendingAddress");
       if (!hasVisibleText(data.email, data.telefono, data.phone, data.telephone)) fields.push("pendingContact");
       if (!countVisibleArray(data.services)) fields.push("pendingServices");
       if (!countVisibleArray(data.specialties)) fields.push("pendingSpecialties");
@@ -1482,13 +1547,16 @@
     }
 
     function countOpenReviewsByType(openReviews, type) {
+      if (type === "blocking_claim_review") {
+        return countWhere(openReviews || [], isBlockingClaimReview);
+      }
       return (openReviews || []).filter(function (row) {
         return row && row.review_type === type;
       }).length;
     }
 
-    function globalPlanLane(number, label, status, next, tone) {
-      return '<article class="global-plan-lane">' +
+    function globalPlanLane(number, label, status, next, tone, state) {
+      return '<article class="global-plan-lane ' + html(state || "") + '">' +
         '<span class="global-plan-step">' + html(number) + '</span>' +
         '<div>' +
           '<span>' + html(label) + '</span>' +
@@ -1496,6 +1564,55 @@
           '<p>' + html(next || "") + '</p>' +
         '</div>' +
         '</article>';
+    }
+
+    function globalPlanFocusCopy(openCount, failedJobs, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers) {
+      if (Number(failedJobs || 0)) {
+        return {
+          title: "Estamos arreglando estabilidad técnica antes de avanzar.",
+          detail: "Cuando hay trabajos fallidos, conviene resolverlos antes de crear más propuestas internas."
+        };
+      }
+      if (openCount) {
+        var groupText = group ? " Empieza por " + clinicWorkgroupLabel(group) + "." : "";
+        return {
+          title: "Estamos en control interno: convertir revisiones en fichas fiables.",
+          detail: "La web ya funciona. Ahora el trabajo importante es revisar tarjetas, mejorar datos y no publicar nada automático." + groupText
+        };
+      }
+      if (specialists && specialists.withoutSpecialists) {
+        return {
+          title: "Estamos completando especialistas y transparencia clínica.",
+          detail: "Las fuentes están bastante ordenadas; el siguiente hueco grande es equipo médico, sedes y datos de confianza."
+        };
+      }
+      if (blockers && blockers.length) {
+        return {
+          title: "Estamos midiendo si Diuvita puede ser más autónoma.",
+          detail: "Todavía no se activa la auto-publicación. Falta muestra humana y decisiones revisadas por ti."
+        };
+      }
+      return {
+        title: "Estamos listos para ampliar el sistema con más crecimiento.",
+        detail: "Con datos y revisión bajo control, el siguiente bloque será SEO, páginas por ciudad/tratamiento y digest."
+      };
+    }
+
+    function globalPlanBottleneckText(openCount, group, blockers, sourceTarget, specialists) {
+      if (group) return clinicWorkgroupLabel(group);
+      if (openCount) return openCount + " revisiones abiertas";
+      if (sourceTarget && sourceTarget !== "—") return sourceTarget;
+      if (specialists && specialists.withoutSpecialists) return specialists.withoutSpecialists + " fichas sin especialistas";
+      if (blockers && blockers.length) return blockers[0];
+      return "sin cuello de botella claro";
+    }
+
+    function globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount) {
+      if (group) return "Abre juntas las tarjetas de " + clinicWorkgroupSubject(group) + " para no revisar la misma clínica en trozos.";
+      if (candidateOpenCount) return "Revisa las candidatas buenas: crear borrador no publica, solo prepara la ficha interna.";
+      if (sourceTarget && sourceTarget !== "—") return "Revisa esa fuente para convertir información guardada en datos aprovechables.";
+      if (profileTarget && profileTarget !== "—") return "Completa esa ficha primero porque ya concentra trabajo interno.";
+      return "No hay una acción urgente; puedes revisar la bandeja por prioridad.";
     }
 
     function renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews) {
@@ -1524,37 +1641,35 @@
       var candidateOpenCount = countOpenReviewsByType(openReviews, "candidate_clinic");
       var enrichmentOpenCount = countOpenReviewsByType(openReviews, "clinic_profile_enrichment");
       var blockingOpenCount = countOpenReviewsByType(openReviews, "blocking_claim_review");
+      var focus = globalPlanFocusCopy(openCount, failedJobs, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers);
+      var nextClick = group ? "Trabajar " + clinicWorkgroupSubject(group) : next;
+      var bottleneck = globalPlanBottleneckText(openCount, group, blockers, sourceTarget, specialists);
       globalPlanNextReviewId = nextReview && nextReview.id ? nextReview.id : "";
       globalPlanNextGroupId = group && group.clinicId ? group.clinicId : "";
 
       el("globalPlanPhase").textContent = phase;
       el("globalPlanPhase").className = "pill" + (failedJobs || openCount >= 45 ? " warning" : "");
-      el("globalPlanUpdated").textContent = "Lo que deberías mirar primero al entrar.";
+      el("globalPlanUpdated").textContent = "Dónde estamos, qué hacer ahora y qué queda después.";
+      el("globalPlanFocus").textContent = focus.title;
+      el("globalPlanWhy").textContent = focus.detail;
       el("globalPlanGrid").innerHTML = [
-        globalPlanItem("Web pública", publicWebsiteLabel(summary), site.failed ? "Hay alertas en la web publicada." : "La web visible se controla aparte de las revisiones internas.", site.failed ? "warning-text" : ""),
-        globalPlanItem("Bandeja", openCount + " abiertas", backlogGuard.label, backlogGuard.tone),
-        globalPlanItem("Automatización", automationPlanLabel(automation), blockers.length ? blockers[0] : "Sin bloqueos medidos; Daniel decide el siguiente nivel.", blockers.length ? "warning-text" : ""),
-        globalPlanItem("Publicación web", publicationControlLabel(publication), publicationControlDetail(publication), publication.unavailable || !publication.rebuildHookConfigured ? "warning-text" : ""),
-        globalPlanItem("Fuentes", sourcePlanLabel(sources), sourceTarget, sources.nextTarget ? "warning-text" : ""),
-        globalPlanItem("Especialistas", specialistPlanLabel(specialists), specialistNextTargetLabel(specialists.nextTarget), specialists.nextTarget ? "warning-text" : ""),
-        globalPlanItem("Fichas", topPendingProfileField(completeness), profileTarget, completeness.nextTarget ? "warning-text" : "")
+        globalPlanItem("Ya funciona", "Web + panel operativo", publicWebsiteLabel(summary) + ". Publicación web: " + publicationControlLabel(publication) + ". Puedes editar y publicar manualmente.", site.failed ? "warning-text" : ""),
+        globalPlanItem("Cuello de botella", bottleneck, "Hasta resolver esto, los agentes siguen proponiendo en sombra.", bottleneck === "sin cuello de botella claro" ? "" : "warning-text"),
+        globalPlanItem("No activar aún", "Auto-publicación", blockers.length ? blockers[0] + ". Growth y publicación automática esperan." : "Daniel decide cuándo subir autonomía.", blockers.length ? "warning-text" : "")
       ].join("");
       el("globalPlanRoadmap").innerHTML = [
-        globalPlanLane("1", "Base técnica", "Operativa", "Supabase, admin, GitHub y web pública ya están conectados."),
-        globalPlanLane("2", "Control interno", openCount + " revisiones", backlogGuard.label, backlogGuard.tone),
-        globalPlanLane("3", "Fuentes", sourcePlanLabel(sources), sourceTarget, sources.nextTarget ? "warning-text" : ""),
-        globalPlanLane("4", "Candidatas", candidateOpenCount + " abiertas", "Crear borrador solo tras revisión humana.", candidateOpenCount ? "warning-text" : ""),
-        globalPlanLane("5", "Mejorar fichas", enrichmentOpenCount + " mejoras", profileTarget, enrichmentOpenCount ? "warning-text" : ""),
-        globalPlanLane("6", "Especialistas", specialistPlanLabel(specialists), specialistNextTargetLabel(specialists.nextTarget), specialists.nextTarget ? "warning-text" : ""),
-        globalPlanLane("7", "Autonomía", automationPlanLabel(automation), blockers[0] || "Modo sombra hasta medir precisión.", blockers.length ? "warning-text" : ""),
-        globalPlanLane("8", "Growth", blockingOpenCount ? "En espera" : "Pendiente", blockingOpenCount ? "Antes: resolver claims bloqueantes." : "Después: SEO y páginas por ciudad/tratamiento.", blockingOpenCount ? "warning-text" : "")
+        globalPlanLane("1", "Base técnica", "Hecho", "Supabase, admin, GitHub, Netlify y web pública conectados.", "", "is-done"),
+        globalPlanLane("2", "Control interno", openCount ? "Ahora" : "Hecho", openCount ? openCount + " tarjetas abiertas. " + backlogGuard.label + "." : "Bandeja limpia.", backlogGuard.tone, openCount ? "is-current" : "is-done"),
+        globalPlanLane("3", "Fuentes verificables", sources.needingSourceWork ? "En curso" : "Hecho", sourcePlanLabel(sources) + ". " + sourceTarget + ".", sources.nextTarget ? "warning-text" : "", sources.needingSourceWork ? "is-waiting" : "is-done"),
+        globalPlanLane("4", "Candidatas nuevas", candidateOpenCount ? "En revisión" : "Sin urgencia", candidateOpenCount ? candidateOpenCount + " candidatas abiertas. Crear borrador no publica." : "No hay candidatas prioritarias.", candidateOpenCount ? "warning-text" : "", candidateOpenCount ? "is-waiting" : "is-later"),
+        globalPlanLane("5", "Mejorar fichas", enrichmentOpenCount ? "En curso" : "Sin urgencia", enrichmentOpenCount ? enrichmentOpenCount + " mejoras abiertas. " + profileTarget + "." : "Esperando nuevas propuestas útiles.", enrichmentOpenCount ? "warning-text" : "", enrichmentOpenCount ? "is-waiting" : "is-later"),
+        globalPlanLane("6", "Especialistas y sedes", specialists.withoutSpecialists ? "Siguiente bloque" : "Hecho", specialistPlanLabel(specialists) + ". " + specialistNextTargetLabel(specialists.nextTarget) + ".", specialists.nextTarget ? "warning-text" : "", specialists.withoutSpecialists ? "is-waiting" : "is-done"),
+        globalPlanLane("7", "Más autonomía", "Todavía no", blockers[0] || "Modo sombra hasta medir precisión suficiente.", blockers.length ? "warning-text" : "", blockers.length ? "is-later" : "is-waiting"),
+        globalPlanLane("8", "Growth", "Después", blockingOpenCount ? "Primero resolver claims bloqueantes y bandeja." : "SEO y páginas por ciudad/tratamiento cuando los datos estén maduros.", blockingOpenCount ? "warning-text" : "", "is-later")
       ].join("");
-      el("globalPlanNextAction").textContent = next;
-      el("globalPlanNextDetail").textContent = group
-        ? "Trabajar por grupo: " + clinicWorkgroupLabel(group) + "."
-        : sourceTarget !== "—"
-          ? "Siguiente fuente: " + sourceTarget + "."
-          : "Siguiente ficha: " + profileTarget + ".";
+      el("globalPlanNextAction").textContent = nextClick;
+      el("globalPlanNextDetail").textContent = globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount);
+      el("globalPlanOpenNextBtn").textContent = group ? "Filtrar grupo" : "Abrir siguiente";
       show(el("globalPlanOpenNextBtn"), Boolean(globalPlanNextReviewId || globalPlanNextGroupId));
     }
 
@@ -2490,6 +2605,61 @@
         .filter(Boolean);
     }
 
+    function locationLine(location) {
+      if (!location || typeof location !== "object") return text(location).trim();
+      return [
+        location.name || location.label || location.sede || "",
+        location.city || location.ciudad || "",
+        location.address || location.direccion || location.dirección || "",
+        location.maps_url || location.google_maps_url || location.map_url || "",
+        location.google_reviews_url || location.reviews_url || location.valoraciones_url || ""
+      ].map(function (item) {
+        return text(item).trim();
+      }).join(" | ").replace(/(?: \| )+$/g, "");
+    }
+
+    function locationsToLines(value) {
+      if (Array.isArray(value)) {
+        return value.map(locationLine).filter(Boolean).join("\n");
+      }
+      return text(value);
+    }
+
+    function parseLocationLine(line) {
+      var clean = text(line).trim();
+      if (!clean) return null;
+      if (clean.indexOf("|") < 0) return { address: clean };
+      var parts = clean.split("|").map(function (part) { return part.trim(); });
+      while (parts.length < 5) parts.push("");
+      var location = {
+        name: parts[0],
+        city: parts[1],
+        address: parts[2],
+        maps_url: parts[3],
+        google_reviews_url: parts[4]
+      };
+      if (!location.address && parts[1] && parts.filter(Boolean).length === 2) {
+        location.city = "";
+        location.address = parts[1];
+      }
+      Object.keys(location).forEach(function (key) {
+        if (!location[key]) delete location[key];
+      });
+      return Object.keys(location).length ? location : null;
+    }
+
+    function linesToLocations(value) {
+      return linesToArray(value).map(parseLocationLine).filter(Boolean);
+    }
+
+    function locationsHaveAddress(value) {
+      if (!Array.isArray(value)) return false;
+      return value.some(function (location) {
+        if (typeof location === "string") return Boolean(text(location).trim());
+        return Boolean(text(location && (location.address || location.direccion || location.dirección)).trim());
+      });
+    }
+
     function setInput(id, value) {
       el(id).value = text(value);
     }
@@ -2505,6 +2675,29 @@
 
     function setJsonArray(data, key, value) {
       var items = linesToArray(value);
+      if (items.length) {
+        data[key] = items;
+      } else {
+        delete data[key];
+      }
+    }
+
+    function setJsonInteger(data, key, value) {
+      var clean = text(value).trim();
+      if (!clean) {
+        delete data[key];
+        return;
+      }
+      var number = Number(clean);
+      if (Number.isFinite(number) && number >= 0) {
+        data[key] = Math.round(number);
+      } else {
+        delete data[key];
+      }
+    }
+
+    function setJsonLocations(data, key, value) {
+      var items = linesToLocations(value);
       if (items.length) {
         data[key] = items;
       } else {
@@ -2545,11 +2738,19 @@
         "location.city": trimmed("clinicCity"),
         "location.region": trimmed("clinicRegion"),
         "location.address": trimmed("clinicAddress"),
+        "location.locations": linesToLocations(el("clinicLocations").value),
+        "location.maps_url": trimmed("clinicMapsUrl"),
+        "location.google_reviews_url": trimmed("clinicGoogleReviewsUrl"),
         "summary": trimmed("clinicSummary"),
         "services.list": linesToArray(el("clinicServices").value),
         "specialties.list": linesToArray(el("clinicSpecialties").value),
         "units.list": linesToArray(el("clinicUnits").value),
         "professionals.published": linesToArray(el("clinicProfessionals").value),
+        "transparency.years_in_practice": trimmed("clinicYearsInPractice"),
+        "transparency.specialists_count": trimmed("clinicSpecialistsCount"),
+        "team.credentialing_visible": trimmed("clinicTeamCredentialingVisible"),
+        "prices.public_status": trimmed("clinicPublicPricing"),
+        "prices.url": trimmed("clinicPricingUrl"),
         "technologies.list": trimmed("clinicTech"),
         "contact.email": trimmed("clinicEmail"),
         "contact.phone": trimmed("clinicPhone"),
@@ -2603,6 +2804,9 @@
         "location.city": "Ciudad",
         "location.region": "Región",
         "location.address": "Dirección",
+        "location.locations": "Sedes",
+        "location.maps_url": "Google Maps",
+        "location.google_reviews_url": "Valoraciones Google",
         "summary": "Resumen",
         "services.list": "Servicios",
         "specialties.list": "Especialidades",
@@ -2611,11 +2815,16 @@
         "units.list": "Unidades",
         "professionals.published": "Especialistas",
         "team.public_professionals": "Especialistas",
+        "transparency.years_in_practice": "Años en ejercicio",
+        "transparency.specialists_count": "Número de especialistas",
+        "team.credentialing_visible": "Colegiación visible",
         "team.credentials": "Credenciales",
         "technologies.list": "Tecnología",
         "contact.email": "Email",
         "contact.phone": "Teléfono",
         "contact.instagram": "Instagram",
+        "prices.public_status": "Precio público",
+        "prices.url": "Página de precios",
         "prices.list": "Precios",
         "treatments.list": "Tratamientos",
         "medical_claims.list": "Claims médicos",
@@ -2864,14 +3073,19 @@
 
     function finalValidationItems(publicTarget) {
       var noBlockingClaims = activeClinicBlockingClaimCount !== null && activeClinicBlockingClaimCount === 0;
+      var hasLocation = trimmed("clinicAddress") || locationsHaveAddress(linesToLocations(el("clinicLocations").value));
+      var hasMapAccess = trimmed("clinicMapsUrl") || hasLocation;
       return [
         validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry")),
         validationItem("Web oficial revisada", /^https?:\/\//i.test(trimmed("clinicWebsite"))),
+        validationItem("Dirección o sede completa", hasLocation),
         validationItem("Resumen suficiente", trimmed("clinicSummary").length >= 120),
         validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0),
         validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false),
-        validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false)
+        validationItem("Dirección preparada para Google Maps", hasMapAccess, false),
+        validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false),
+        validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false)
       ];
     }
 
@@ -3064,7 +3278,13 @@
     }
 
     function proposalListValue(value) {
-      if (Array.isArray(value)) return value.join(", ");
+      if (Array.isArray(value)) {
+        if (value.some(function (item) { return item && typeof item === "object"; })) {
+          return locationsToLines(value).replace(/\n/g, ", ");
+        }
+        return value.join(", ");
+      }
+      if (value && typeof value === "object") return locationLine(value) || JSON.stringify(value);
       return text(value).trim();
     }
 
@@ -3079,11 +3299,20 @@
         city: "Ciudad",
         region: "Región",
         address: "Dirección",
+        locations: "Sedes",
+        maps_url: "Google Maps",
+        google_maps_url: "Google Maps",
+        google_reviews_url: "Valoraciones Google",
         summary: "Resumen",
         services: "Servicios",
         specialties: "Especialidades",
         unidades: "Unidades",
         profesionales: "Especialistas",
+        years_in_practice: "Años en ejercicio",
+        specialists_count: "Número de especialistas",
+        team_credentialing_visible: "Colegiación visible",
+        public_pricing: "Precio público",
+        pricing_url: "Página de precios",
         tech: "Tecnología",
         email: "Email",
         telefono: "Teléfono",
@@ -3117,11 +3346,20 @@
         city: "Ciudad",
         region: "Región",
         address: "Dirección",
+        locations: "Sedes",
+        maps_url: "Google Maps",
+        google_maps_url: "Google Maps",
+        google_reviews_url: "Valoraciones Google",
         summary: "Resumen",
         services: "Servicios",
         specialties: "Especialidades",
         unidades: "Unidades / áreas clínicas",
         profesionales: "Especialistas publicados",
+        years_in_practice: "Años en ejercicio",
+        specialists_count: "Número de especialistas",
+        team_credentialing_visible: "Colegiación visible",
+        public_pricing: "Precio público",
+        pricing_url: "Página de precios",
         tech: "Tecnología",
         email: "Email",
         telefono: "Teléfono",
@@ -3163,6 +3401,7 @@
 
     function displayDiffValue(key, value) {
       if (key === "status") return clinicStatusLabel(value);
+      if (key === "locations") return locationsToLines(value) || "—";
       if (key === "profile_confidence") {
         var confidence = text(value).trim();
         return confidence ? confidence + "%" : "—";
@@ -3178,6 +3417,9 @@
         city: trimmed("clinicCity"),
         region: trimmed("clinicRegion"),
         address: trimmed("clinicAddress"),
+        locations: linesToLocations(el("clinicLocations").value),
+        maps_url: trimmed("clinicMapsUrl"),
+        google_reviews_url: trimmed("clinicGoogleReviewsUrl"),
         status: trimmed("clinicStatus"),
         profile_confidence: text(el("clinicConfidence").value).trim(),
         summary: trimmed("clinicSummary"),
@@ -3185,6 +3427,11 @@
         specialties: linesToArray(el("clinicSpecialties").value),
         unidades: linesToArray(el("clinicUnits").value),
         profesionales: linesToArray(el("clinicProfessionals").value),
+        years_in_practice: trimmed("clinicYearsInPractice"),
+        specialists_count: trimmed("clinicSpecialistsCount"),
+        team_credentialing_visible: trimmed("clinicTeamCredentialingVisible"),
+        public_pricing: trimmed("clinicPublicPricing"),
+        pricing_url: trimmed("clinicPricingUrl"),
         tech: trimmed("clinicTech"),
         email: trimmed("clinicEmail"),
         telefono: trimmed("clinicPhone"),
@@ -3232,6 +3479,10 @@
         "city",
         "region",
         "address",
+        "locations",
+        "maps_url",
+        "google_maps_url",
+        "google_reviews_url",
         "status",
         "profile_confidence",
         "summary",
@@ -3239,6 +3490,11 @@
         "specialties",
         "unidades",
         "profesionales",
+        "years_in_practice",
+        "specialists_count",
+        "team_credentialing_visible",
+        "public_pricing",
+        "pricing_url",
         "tech",
         "email",
         "telefono",
@@ -3366,7 +3622,10 @@
 
     function normalizedFieldValue(value) {
       if (Array.isArray(value)) {
-        return value.map(function (item) { return text(item).trim(); }).filter(Boolean).join("\n").trim();
+        return value.map(function (item) {
+          if (item && typeof item === "object") return locationLine(item);
+          return text(item).trim();
+        }).filter(Boolean).join("\n").trim();
       }
       return text(value).trim();
     }
@@ -3553,6 +3812,9 @@
       setInput("clinicCountry", activeClinic.country || data.country);
       setInput("clinicRegion", activeClinic.region || data.region);
       setInput("clinicAddress", activeClinic.address || data.address);
+      setInput("clinicMapsUrl", data.maps_url || data.google_maps_url);
+      setInput("clinicGoogleReviewsUrl", data.google_reviews_url || data.reviews_url);
+      setInput("clinicLocations", locationsToLines(data.locations));
       setInput("clinicStatus", activeClinic.status || "review");
       setInput("clinicConfidence", activeClinic.profile_confidence == null ? "" : Math.round(Number(activeClinic.profile_confidence) * 100));
       setInput("clinicSummary", activeClinic.summary || data.summary);
@@ -3560,6 +3822,11 @@
       setInput("clinicSpecialties", arrayLines(data.specialties));
       setInput("clinicUnits", arrayLines(data.unidades));
       setInput("clinicProfessionals", arrayLines(data.profesionales));
+      setInput("clinicYearsInPractice", data.years_in_practice);
+      setInput("clinicSpecialistsCount", data.specialists_count);
+      setInput("clinicTeamCredentialingVisible", data.team_credentialing_visible);
+      setInput("clinicPublicPricing", data.public_pricing);
+      setInput("clinicPricingUrl", data.pricing_url);
       setInput("clinicTech", data.tech);
       setInput("clinicEmail", data.email);
       setInput("clinicPhone", data.telefono);
@@ -3591,7 +3858,16 @@
         city: "clinicCity",
         region: "clinicRegion",
         address: "clinicAddress",
+        maps_url: "clinicMapsUrl",
+        google_maps_url: "clinicMapsUrl",
+        google_reviews_url: "clinicGoogleReviewsUrl",
+        reviews_url: "clinicGoogleReviewsUrl",
         summary: "clinicSummary",
+        years_in_practice: "clinicYearsInPractice",
+        specialists_count: "clinicSpecialistsCount",
+        team_credentialing_visible: "clinicTeamCredentialingVisible",
+        public_pricing: "clinicPublicPricing",
+        pricing_url: "clinicPricingUrl",
         tech: "clinicTech",
         email: "clinicEmail",
         telefono: "clinicPhone",
@@ -3606,6 +3882,7 @@
       if (hasOwn(fields, "specialties")) setInput("clinicSpecialties", arrayLines(fields.specialties));
       if (hasOwn(fields, "unidades")) setInput("clinicUnits", arrayLines(fields.unidades));
       if (hasOwn(fields, "profesionales")) setInput("clinicProfessionals", arrayLines(fields.profesionales));
+      if (hasOwn(fields, "locations")) setInput("clinicLocations", locationsToLines(fields.locations));
       updateFinalValidation();
 
       var note = ["Propuesta interna cargada. Revisa antes de guardar."];
@@ -3722,7 +3999,14 @@
       setJsonText(currentData, "city", city);
       setJsonText(currentData, "region", trimmed("clinicRegion"));
       setJsonText(currentData, "address", trimmed("clinicAddress"));
+      setJsonText(currentData, "maps_url", trimmed("clinicMapsUrl"));
+      setJsonText(currentData, "google_reviews_url", trimmed("clinicGoogleReviewsUrl"));
       setJsonText(currentData, "summary", trimmed("clinicSummary"));
+      setJsonText(currentData, "years_in_practice", trimmed("clinicYearsInPractice"));
+      setJsonInteger(currentData, "specialists_count", trimmed("clinicSpecialistsCount"));
+      setJsonText(currentData, "team_credentialing_visible", trimmed("clinicTeamCredentialingVisible"));
+      setJsonText(currentData, "public_pricing", trimmed("clinicPublicPricing"));
+      setJsonText(currentData, "pricing_url", trimmed("clinicPricingUrl"));
       setJsonText(currentData, "tech", trimmed("clinicTech"));
       setJsonText(currentData, "email", trimmed("clinicEmail"));
       setJsonText(currentData, "telefono", trimmed("clinicPhone"));
@@ -3731,6 +4015,7 @@
       setJsonArray(currentData, "specialties", el("clinicSpecialties").value);
       setJsonArray(currentData, "unidades", el("clinicUnits").value);
       setJsonArray(currentData, "profesionales", el("clinicProfessionals").value);
+      setJsonLocations(currentData, "locations", el("clinicLocations").value);
 
       var clinicId = activeClinic.id;
       el("clinicSaveBtn").disabled = true;

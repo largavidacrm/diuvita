@@ -3,7 +3,7 @@
 Uso: python3 build.py  ->  genera el sitio en dist/
 Datos en data/clinics.json. Las fichas en pendientes/ NO se publican.
 """
-import html, json, os, shutil, unicodedata, urllib.error, urllib.request
+import html, json, os, shutil, unicodedata, urllib.error, urllib.parse, urllib.request
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DIST = os.path.join(ROOT, "dist")
@@ -14,6 +14,21 @@ PUBLIC_ENV_DEFAULTS = {
     "SUPABASE_URL": "https://twxhcmvzbpnrneywdece.supabase.co",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_IHIMbYQacziyL1GcU6Mdtw_7AQdaCWg",
 }
+CITY_HINTS = (
+    "Alicante",
+    "Altea",
+    "Barcelona",
+    "Cofrentes",
+    "L'Albir",
+    "Madrid",
+    "Málaga",
+    "Malaga",
+    "Mallorca",
+    "Marbella",
+    "Sevilla",
+    "Valencia",
+    "Zaragoza",
+)
 
 import re
 
@@ -82,10 +97,23 @@ def normalize_clinic(clinic):
     clinic = dict(clinic)
     for key in ("slug", "name", "city", "country", "address", "web", "summary", "status"):
         clinic[key] = clinic.get(key) or ""
-    for key in ("tech", "email", "telefono", "instagram"):
+    for key in (
+        "tech",
+        "email",
+        "telefono",
+        "instagram",
+        "maps_url",
+        "google_maps_url",
+        "google_reviews_url",
+        "reviews_url",
+        "years_in_practice",
+        "team_credentialing_visible",
+        "public_pricing",
+        "pricing_url",
+    ):
         if key in clinic and clinic[key] is None:
             clinic[key] = ""
-    for key in ("services", "specialties", "cities_extra", "profesionales", "unidades"):
+    for key in ("services", "specialties", "cities_extra", "profesionales", "unidades", "locations"):
         if not isinstance(clinic.get(key), list):
             clinic[key] = []
     return clinic
@@ -154,6 +182,187 @@ def external_url(value):
         return value
     return ""
 
+def first_text(*values):
+    for value in values:
+        clean = str(value or "").strip()
+        if clean:
+            return clean
+    return ""
+
+def positive_int(value):
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, (int, float)) and int(value) > 0:
+        return int(value)
+    match = re.search(r"\d+", str(value or ""))
+    return int(match.group(0)) if match else 0
+
+def google_maps_search_url(*parts):
+    query = " ".join(visible_values(parts))
+    if not query:
+        return ""
+    return "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(query)
+
+def location_from_dict(value):
+    loc = {
+        "name": first_text(value.get("name"), value.get("label"), value.get("sede")),
+        "city": first_text(value.get("city"), value.get("ciudad")),
+        "address": first_text(value.get("address"), value.get("direccion"), value.get("dirección")),
+        "maps_url": external_url(first_text(value.get("maps_url"), value.get("google_maps_url"), value.get("map_url"))),
+        "google_reviews_url": external_url(first_text(value.get("google_reviews_url"), value.get("reviews_url"), value.get("valoraciones_url"))),
+    }
+    return {key: item for key, item in loc.items() if item}
+
+def location_from_text(value):
+    clean = str(value or "").strip()
+    if not clean:
+        return {}
+    if "|" not in clean:
+        return {"address": clean}
+    parts = [part.strip() for part in clean.split("|")]
+    while len(parts) < 5:
+        parts.append("")
+    loc = {
+        "name": parts[0],
+        "city": parts[1],
+        "address": parts[2],
+        "maps_url": external_url(parts[3]),
+        "google_reviews_url": external_url(parts[4]),
+    }
+    if not loc["address"] and parts[1] and len([part for part in parts if part]) == 2:
+        loc["city"] = ""
+        loc["address"] = parts[1]
+    return {key: item for key, item in loc.items() if item}
+
+def city_from_address(address, fallback=""):
+    clean = str(address or "")
+    for city in CITY_HINTS:
+        if re.search(r"\b" + re.escape(city) + r"\b", clean, flags=re.I):
+            return city
+    return str(fallback or "").strip()
+
+def unique_locations(locations):
+    seen = set()
+    result = []
+    for loc in locations:
+        key = "|".join(str(loc.get(name, "")).lower() for name in ("name", "city", "address", "maps_url"))
+        if key and key not in seen:
+            seen.add(key)
+            result.append(loc)
+    return result
+
+def clinic_locations(c):
+    locations = []
+    raw = c.get("locations")
+    if isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict):
+                loc = location_from_dict(item)
+            else:
+                loc = location_from_text(item)
+            if loc:
+                locations.append(loc)
+    elif isinstance(raw, str):
+        for line in raw.splitlines():
+            loc = location_from_text(line)
+            if loc:
+                locations.append(loc)
+    locations = unique_locations(locations)
+    if locations:
+        return locations
+
+    address = str(c.get("address") or "").strip()
+    if not address:
+        return []
+    parts = [part.strip() for part in address.split(" · ") if part.strip()]
+    if len(parts) > 1:
+        return [
+            {"name": f"Sede {index + 1}", "city": city_from_address(part, c.get("city", "")), "address": part}
+            for index, part in enumerate(parts)
+        ]
+    return [{"city": city_from_address(address, c.get("city", "")), "address": address}]
+
+def primary_location(c):
+    locations = clinic_locations(c)
+    if locations:
+        return locations[0]
+    return {}
+
+def location_address(loc):
+    return first_text(loc.get("address"), loc.get("direccion"), loc.get("dirección"))
+
+def location_city(loc, c):
+    return first_text(loc.get("city"), c.get("city"))
+
+def location_maps_url(loc, c):
+    direct = external_url(first_text(
+        loc.get("maps_url"),
+        loc.get("google_maps_url"),
+        c.get("maps_url"),
+        c.get("google_maps_url"),
+    ))
+    if direct:
+        return direct
+    address = location_address(loc)
+    city = location_city(loc, c)
+    city_part = "" if city and city.lower() in address.lower() else city
+    return google_maps_search_url(address, city_part, c.get("country")) if address else ""
+
+def location_reviews_url(loc, c):
+    return external_url(first_text(
+        loc.get("google_reviews_url"),
+        loc.get("reviews_url"),
+        c.get("google_reviews_url"),
+        c.get("reviews_url"),
+    ))
+
+def location_detail(loc, c):
+    address = location_address(loc)
+    city = location_city(loc, c)
+    if not address:
+        return city
+    if city and city.lower() not in address.lower():
+        return f"{city} · {address}"
+    return address
+
+def transparency_status_label(value):
+    clean = str(value or "").strip()
+    lower = clean.lower()
+    if lower in {"yes", "true", "1", "si", "sí", "publico", "público", "visible"}:
+        return "Sí"
+    if lower in {"partial", "parcial", "parte"}:
+        return "Parcial"
+    if lower in {"no", "false", "0"}:
+        return "No publicado"
+    if lower in {"unknown", "no consta", "sin dato"}:
+        return "No consta"
+    return clean
+
+def transparency_items(c):
+    items = []
+    years = first_text(c.get("years_in_practice"), c.get("years_active"), c.get("founded_year"))
+    if years:
+        items.append(("Años en ejercicio", h(years)))
+    specialists = first_text(c.get("specialists_count"), c.get("num_specialists"), c.get("specialists_public_count"))
+    if specialists:
+        items.append(("Número de especialistas", h(specialists)))
+    credentialing = transparency_status_label(first_text(
+        c.get("team_credentialing_visible"),
+        c.get("medical_license_visible"),
+        c.get("colegiacion_visible"),
+    ))
+    if credentialing:
+        items.append(("Colegiación visible", h(credentialing)))
+    pricing = transparency_status_label(first_text(c.get("public_pricing"), c.get("prices_public"), c.get("price_public")))
+    pricing_url = external_url(c.get("pricing_url"))
+    if pricing:
+        if pricing_url:
+            pricing = f'<a href="{h(pricing_url)}" rel="nofollow noopener" target="_blank">{h(pricing)}</a>'
+        else:
+            pricing = h(pricing)
+        items.append(("Precio público", pricing))
+    return items
+
 def display_url(value):
     value = str(value or "").strip()
     return value.replace("https://", "").replace("http://", "").rstrip("/")
@@ -182,13 +391,16 @@ def contact_count(c):
     return sum(1 for key in ("email", "telefono", "instagram") if str(c.get(key) or "").strip())
 
 def stat_items(c):
+    locations_count = len(clinic_locations(c))
     services_count = len(visible_values(c.get("services")))
     specialties_count = len(visible_values(c.get("specialties")))
     units_count = len(visible_values(c.get("unidades")))
-    specialists_count = len(visible_values(c.get("profesionales")))
+    specialists_count = max(len(visible_values(c.get("profesionales"))), positive_int(c.get("specialists_count")))
     tech_count = len(split_text_list(c.get("tech")))
     contacts = contact_count(c)
     items = []
+    if locations_count > 1:
+        items.append(("Sedes", locations_count))
     if services_count:
         items.append(("Servicios", services_count))
     if specialties_count:
@@ -339,6 +551,18 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .facts dt{font-size:.74rem;text-transform:uppercase;color:var(--coral);font-weight:800;letter-spacing:0}
 .facts dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
 .info-list{display:grid;gap:.38rem}
+.location-list{display:grid;gap:.72rem}
+.location-item{border-top:1px solid var(--line);padding-top:.72rem}
+.location-item:first-child{border-top:0;padding-top:0}
+.location-item h3{font-family:'Source Sans 3',system-ui,sans-serif;font-size:1rem;line-height:1.2;margin:0 0 .15rem;font-weight:800;color:var(--ink)}
+.location-item p{color:var(--muted);margin:.15rem 0 .45rem;overflow-wrap:anywhere}
+.location-actions{display:flex;flex-wrap:wrap;gap:.45rem}
+.mini-action{display:inline-flex;align-items:center;justify-content:center;min-height:1.9rem;padding:.3rem .58rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font-size:.84rem;font-weight:800}
+.mini-action:hover{background:var(--wash);text-decoration:none}
+.transparency-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.transparency-grid div{min-width:0;border-top:1px solid var(--line);padding-top:.55rem}
+.transparency-grid dt{font-size:.72rem;text-transform:uppercase;color:var(--coral);font-weight:800;letter-spacing:0}
+.transparency-grid dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
 .pill-list{display:flex;flex-wrap:wrap;gap:.45rem;list-style:none;padding-left:0!important}
 .pill-list li{font-size:.86rem;padding:.3rem .62rem;border-radius:8px;background:var(--wash);color:var(--green-deep)}
 .contacto{list-style:none;padding-left:0!important}
@@ -353,7 +577,7 @@ footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font
 footer p{max-width:1120px;margin:0 auto}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 @media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.hero-stats,.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
-@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.logo-strip{padding-left:5vw}.facts{grid-template-columns:1fr}.profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;justify-content:space-between;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.logo-strip{padding-left:5vw}.facts,.transparency-grid{grid-template-columns:1fr}.profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;justify-content:space-between;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -390,6 +614,11 @@ FOOTER = """<footer><p><strong>Diuvita</strong> — {tag}. Guía informativa e i
 def attrs(c):
     extra = c.get("cities_extra", [])
     all_cities = "|".join([c["city"]] + extra)
+    locations_text = " ".join(
+        " ".join(visible_values([loc.get("name"), loc.get("city"), loc.get("address")]))
+        for loc in clinic_locations(c)
+    )
+    transparency_text = " ".join(value for _, value in transparency_items(c) if "<a " not in str(value))
     search_parts = [
         c["name"],
         c["city"],
@@ -402,6 +631,12 @@ def attrs(c):
         c.get("email", ""),
         c.get("telefono", ""),
         c.get("instagram", ""),
+        locations_text,
+        transparency_text,
+        c.get("years_in_practice", ""),
+        c.get("specialists_count", ""),
+        c.get("team_credentialing_visible", ""),
+        c.get("public_pricing", ""),
         " ".join(c["specialties"]),
         " ".join(c["services"]),
         " ".join(c.get("unidades", [])),
@@ -556,6 +791,8 @@ def facts_block(c):
     facts = []
     location = []
     seen = set()
+    locations = clinic_locations(c)
+    primary = primary_location(c)
     for value in (c.get("city"), c.get("region"), c.get("country")):
         value = str(value or "").strip()
         key = value.lower()
@@ -564,8 +801,16 @@ def facts_block(c):
             seen.add(key)
     if location:
         facts.append(("Ubicación", h(" · ".join(location))))
-    if c.get("address"):
-        facts.append(("Dirección", h(c["address"])))
+    if len(locations) > 1:
+        facts.append(("Sedes", h(f"{len(locations)} sedes documentadas")))
+    address = first_text(c.get("address"), location_address(primary))
+    if address:
+        maps_url = location_maps_url(primary, c)
+        value = f'<a href="{h(maps_url)}" rel="nofollow noopener" target="_blank">{h(address)}</a>' if maps_url else h(address)
+        facts.append(("Dirección principal", value))
+    reviews_url = location_reviews_url(primary, c)
+    if reviews_url:
+        facts.append(("Valoraciones Google", f'<a href="{h(reviews_url)}" rel="nofollow noopener" target="_blank">Abrir valoraciones</a>'))
     if c.get("web") and external_url(c["web"]):
         url = external_url(c["web"])
         facts.append(("Web oficial", f'<a href="{h(url)}" rel="nofollow noopener" target="_blank">{h(display_url(url))}</a>'))
@@ -584,6 +829,38 @@ def list_section(title, items, list_class="profile-list", section_id=""):
         return ""
     id_attr = f' id="{h(section_id)}"' if section_id else ""
     return f'<section class="profile-block"{id_attr}>{section_heading(title, len(items))}<ul class="{h(list_class)}">' + "".join(f"<li>{h(item)}</li>" for item in items) + "</ul></section>"
+
+def locations_block(c):
+    locations = clinic_locations(c)
+    if not locations:
+        return ""
+    rows = []
+    for index, loc in enumerate(locations):
+        name = first_text(loc.get("name"), f"Sede {index + 1}" if len(locations) > 1 else "Sede principal")
+        address = location_address(loc)
+        maps_url = location_maps_url(loc, c)
+        reviews_url = location_reviews_url(loc, c)
+        detail = location_detail(loc, c)
+        actions = []
+        if maps_url:
+            actions.append(f'<a class="mini-action" href="{h(maps_url)}" rel="nofollow noopener" target="_blank">Google Maps</a>')
+        if reviews_url:
+            actions.append(f'<a class="mini-action" href="{h(reviews_url)}" rel="nofollow noopener" target="_blank">Valoraciones Google</a>')
+        rows.append(
+            '<article class="location-item">'
+            f'<h3>{h(name)}</h3>'
+            f'<p>{h(detail or address or city)}</p>'
+            f'<div class="location-actions">{"".join(actions)}</div>'
+            '</article>'
+        )
+    return '<section class="profile-block" id="sedes">' + section_heading("Sedes y acceso", len(locations)) + '<div class="location-list">' + "".join(rows) + "</div></section>"
+
+def transparency_block(c):
+    items = transparency_items(c)
+    if not items:
+        return ""
+    rows = "".join(f"<div><dt>{h(label)}</dt><dd>{value}</dd></div>" for label, value in items)
+    return f'<section class="profile-block" id="transparencia">{section_heading("Transparencia", len(items))}<dl class="transparency-grid">{rows}</dl></section>'
 
 def tech_block(c):
     items = split_text_list(c.get("tech"))
@@ -626,7 +903,7 @@ def profile_snapshot(c):
         for label, count in items
     ) + "</dl>"
 
-def profile_nav(c, has_contact, has_tech):
+def profile_nav(c, has_contact, has_tech, has_locations, has_transparency):
     items = []
     specs = visible_values(c.get("specialties"))
     services = visible_values(c.get("services"))
@@ -636,12 +913,16 @@ def profile_nav(c, has_contact, has_tech):
         items.append(profile_nav_item("Especialidades", len(specs), "#especialidades"))
     if services:
         items.append(profile_nav_item("Servicios", len(services), "#servicios"))
+    if has_locations:
+        items.append(profile_nav_item("Sedes", len(clinic_locations(c)), "#sedes"))
     if units:
         items.append(profile_nav_item("Unidades", len(units), "#unidades"))
     if has_tech:
         items.append(profile_nav_item("Tecnología", len(split_text_list(c.get("tech"))), "#tecnologia"))
     if professionals:
         items.append(profile_nav_item("Especialistas", len(professionals), "#especialistas"))
+    if has_transparency:
+        items.append(profile_nav_item("Transparencia", len(transparency_items(c)), "#transparencia"))
     if has_contact:
         items.append(profile_nav_item("Contacto", contact_count(c), "#contacto"))
     if not items:
@@ -654,10 +935,12 @@ def ficha(c):
     contacto = contacto_block(c)
     areas = list_section("Áreas de especialidad", c["specialties"], section_id="especialidades")
     servicios = list_section("Servicios", c["services"], section_id="servicios")
+    sedes = locations_block(c)
     unidades = list_section("Unidades y áreas clínicas", c.get("unidades"), section_id="unidades")
     tech = tech_block(c)
     equipo = list_section("Especialistas publicados por la clínica", c.get("profesionales"), section_id="especialistas")
-    nav = profile_nav(c, bool(contacto), bool(tech))
+    transparencia = transparency_block(c)
+    nav = profile_nav(c, bool(contacto), bool(tech), bool(sedes), bool(transparencia))
     snapshot = profile_snapshot(c)
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
@@ -694,9 +977,11 @@ def ficha(c):
 <div class="profile-sections">
 {areas}
 {servicios}
+{sedes}
 {unidades}
 {tech}
 {equipo}
+{transparencia}
 </div>
 {prelim}</main>""" + FOOTER
 

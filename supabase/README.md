@@ -122,6 +122,11 @@ Daniel's non-technical panel guide lives in `docs/DANIEL_ADMIN_GUIDE.md`.
 
 `public.public_clinics_for_site` returns only publishable clinic data (`published` and `preliminary`) for the static site build. In Netlify, set `DIUVITA_DATA_SOURCE=supabase` so `build.py` reads this feed when generating the public pages.
 
+`supabase/migrations/0020_location_transparency_public_feed.sql` extends that
+feed with optional multi-location data, Google Maps links, Google review links
+and transparency fields. The fields live in `clinics.current_data`, so existing
+clinic rows keep working while richer profiles can be edited from `/admin/`.
+
 `supabase/migrations/0005_private_rebuild_hook.sql` adds a private Supabase setting and trigger. Once the build hook URL is stored in `private.app_settings`, public clinic changes ask Netlify to rebuild the static site. The hook URL is not committed to Git and is not exposed to the browser.
 
 `supabase/migrations/0018_batch_public_site_rebuilds.sql` updates that rebuild request so public-site rebuilds can be batched. The default window is 30 minutes and can be adjusted through `private.app_settings` with the key `diuvita_rebuild_batch_minutes`.

@@ -19,6 +19,9 @@ def main():
   <h1>Example Longevity Clinic</h1>
   <p>Medicina preventiva, longevidad, nutrición y medicina del sueño.</p>
   <p>Unidad de Longevidad dirigida por Dra. Laura García Pérez.</p>
+  <p>Más de 20 años de experiencia y equipo de 12 especialistas.</p>
+  <p>Dra. Laura García Pérez, nº colegiada 12345.</p>
+  <p>Precio consulta: 120 €.</p>
   <p>Pruebas disponibles: DEXA, VO2 max, biomarcadores y test epigenético.</p>
   <p>{filler}</p>
   <p>Programa con hipoxia intermitente.</p>
@@ -45,9 +48,17 @@ def main():
     check("Medicina preventiva" in profile["services"], "service detection failed")
     check("Unidad de Longevidad" in profile["units"], "unit detection failed")
     check("Dra. Laura García Pérez" in profile["professionals"], "professional detection failed")
+    check(profile["years_in_practice"] == "más de 20 años", "years in practice detection failed")
+    check(profile["specialists_count"] == 12, "specialist count detection failed")
+    check(profile["team_credentialing_visible"] == "si", "credentialing visibility detection failed")
+    check(profile["public_pricing"] == "si", "public pricing detection failed")
     check("contact.email" in fields, "email claim missing")
     check("units.list" in fields, "unit claim missing")
     check("professionals.published" in fields, "professional claim missing")
+    check("transparency.years_in_practice" in fields, "years claim missing")
+    check("transparency.specialists_count" in fields, "specialist count claim missing")
+    check("team.credentialing_visible" in fields, "credentialing claim missing")
+    check("prices.public_status" in fields, "pricing claim missing")
     check(extraction["rule_decisions"], "rule decisions missing")
 
     regenera_text = (
@@ -72,6 +83,28 @@ def main():
     check(
         all("Dirección Xavier" not in item for item in regenera_professionals),
         "role and next name should not merge",
+    )
+
+    sha_professionals = extract_professionals(
+        "Nuestro equipo Dr. GUILLERMO TORRE Cardiólogo "
+        "Dra. JESSICA SHEPHERD Ginecóloga Contacto"
+    )
+    check("Dr. GUILLERMO TORRE" in sha_professionals, "cardiology role should not merge into name")
+    check("Dra. JESSICA SHEPHERD" in sha_professionals, "gynecology role should not merge into name")
+    check(
+        all("Cardiólogo" not in item and "Ginecóloga" not in item for item in sha_professionals),
+        "medical role should not be part of extracted names",
+    )
+
+    imda_professionals = extract_professionals(
+        "Nuestro equipo Dra. Almudena Nuño Dermatología "
+        "Dr. Francisco Kerdel Unidad de Longevidad Contacto"
+    )
+    check("Dra. Almudena Nuño" in imda_professionals, "dermatology role should not merge into name")
+    check("Dr. Francisco Kerdel" in imda_professionals, "unit section should not merge into name")
+    check(
+        all("Unidad" not in item and "Dermatología" not in item for item in imda_professionals),
+        "unit or role text should not be part of extracted names",
     )
 
     noisy_title_html = b"""

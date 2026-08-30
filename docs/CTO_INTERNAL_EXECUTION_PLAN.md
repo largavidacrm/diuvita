@@ -80,6 +80,9 @@ Already built:
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
 - Internal profile-enrichment review cards for existing clinics.
 - Public clinic pages display richer fields with clearer navigation, section counts, fast profile stats, contact-aware search and more scannable lists.
+- Public clinic pages and the admin editor now allow multi-location clinic
+  profiles, Google Maps links, Google review links and basic transparency
+  fields without forcing a schema migration for every existing clinic.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle now includes a Daniel-facing brief in its JSON output and can optionally print only that brief for unattended logs.
 - Safe CTO shadow cycle has a backlog guard so safe-apply runs do not keep adding review cards when the inbox is already full.
@@ -201,6 +204,8 @@ Build after the clinic loop works:
 4. Programs and program components.
 5. Prices and price history.
 6. Locations and international patient support.
+7. Clinic transparency signals: years in practice, public specialist count,
+   visible professional credentialing and whether prices are public.
 
 Definition of done:
 

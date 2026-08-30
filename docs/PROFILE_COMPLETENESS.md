@@ -8,7 +8,7 @@ the current quality audit expects:
 
 - sufficient summary;
 - official website;
-- address;
+- address or at least one complete public location;
 - email or phone;
 - services;
 - specialties;
@@ -46,3 +46,7 @@ The top-line signal is also shown in `/admin/` as:
 - `Fichas con pendientes`.
 - `Campo más pendiente`;
 - `Siguiente ficha`.
+
+Multi-location clinics are treated as one clinic profile with one or more
+locations. A complete location can satisfy the address check even when the
+legacy top-level address field is empty.

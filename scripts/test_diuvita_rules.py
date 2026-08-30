@@ -14,6 +14,9 @@ def main():
     check(field_risk("specialties.list") == "medium", "specialties should be medium risk")
     check(field_risk("units.list") == "medium", "units should be medium risk")
     check(field_risk("professionals.published") == "medium", "published specialists should be medium risk")
+    check(field_risk("transparency.specialists_count") == "medium", "specialist count should be medium risk")
+    check(field_risk("team.credentialing_visible") == "high", "credentialing visibility should be high risk")
+    check(field_risk("prices.public_status") == "high", "public pricing status should be high risk")
     check(field_risk("prices.initial_consultation") == "high", "prices should be high risk")
     check(field_risk("unknown.field") == "high", "unknown fields should default high")
 

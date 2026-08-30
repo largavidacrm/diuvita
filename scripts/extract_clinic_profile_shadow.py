@@ -37,11 +37,32 @@ EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
 INSTAGRAM_URL_RE = re.compile(r"https?://(?:www\.)?instagram\.com/([a-z0-9._]{2,30})(?:/|\b)", re.I)
 INSTAGRAM_HANDLE_RE = re.compile(r"(?<![\w.+-])@([a-z0-9._]{2,30})(?![\w.-])", re.I)
+YEARS_IN_PRACTICE_RE = re.compile(
+    r"\b(?P<prefix>m[aá]s\s+de|over|more\s+than)?\s*(?P<years>\d{2,3})\s+"
+    r"años\s+(?:de\s+)?(?P<context>experiencia|trayectoria|ejercicio|actividad|pr[aá]ctica)\b",
+    re.I,
+)
+SPECIALISTS_COUNT_RE = re.compile(
+    r"\b(?P<prefix>m[aá]s\s+de|over|more\s+than|equipo\s+de|cuenta\s+con)?\s*"
+    r"(?P<count>\d{1,3})\s+(?:especialistas|profesionales\s+m[eé]dicos|profesionales|m[eé]dicos)\b",
+    re.I,
+)
+TEAM_CREDENTIALING_RE = re.compile(
+    r"\b(?:n[ºo]\s*colegiad[oa]|n[uú]mero\s+de\s+colegiad[oa]|"
+    r"colegiad[oa]\s*(?:n[ºo]|n[uú]mero)|col\.)\b",
+    re.I,
+)
+PUBLIC_PRICING_RE = re.compile(
+    r"(?:precio|tarifa|consulta|programa|bono)[^.]{0,90}(?:€|eur|euros)|"
+    r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
+    re.I,
+)
 NAME_WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{2,}"
 TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora)"
 PROFESSIONAL_RE = re.compile(
     rf"\b(?P<title>{TITLE_PREFIX})\s+(?P<name>{NAME_WORD}(?:\s+{NAME_WORD}){{0,5}})"
 )
+TITLE_SCAN_RE = re.compile(rf"\b(?P<title>{TITLE_PREFIX})\s+")
 TEAM_MARKERS = (
     "nuestro equipo",
     "equipo medico",
@@ -79,24 +100,58 @@ ROLE_START_WORDS = {
     "Administración",
     "Anestesia",
     "Atención",
+    "Cardiología",
+    "Cardiologia",
+    "Cardióloga",
+    "Cardiologa",
+    "Cardiólogo",
+    "Cardiologo",
+    "Cirujana",
+    "Cirujano",
     "Cirugía",
     "Dirección",
+    "Dermatología",
+    "Dermatologia",
+    "Dermatóloga",
+    "Dermatologa",
+    "Dermatólogo",
+    "Dermatologo",
     "Endocrinología",
+    "Endocrinologia",
+    "Endocrinóloga",
+    "Endocrinologa",
+    "Endocrinólogo",
+    "Endocrinologo",
+    "Especialista",
     "Fisioterapia",
     "Flebología",
+    "Flebologia",
     "Gerencia",
     "Gerente",
     "Ginecología",
+    "Ginecologia",
+    "Ginecóloga",
+    "Ginecologa",
+    "Ginecólogo",
+    "Ginecologo",
     "Longevidad",
+    "Médica",
+    "Médico",
     "Medicina",
+    "Medico",
     "Nutrición",
+    "Nutricion",
     "Otorrino",
     "Otorrinolaringología",
+    "Otorrinolaringologia",
     "Psicología",
+    "Psicologia",
     "Responsable",
     "Subdirector",
     "Subdirectora",
     "Técnico",
+    "Unidad",
+    "Unidades",
 }
 TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora"}
 CLINIC_NAME_TERMS = {
@@ -230,18 +285,39 @@ def name_words(raw: str) -> list[str]:
     return re.findall(NAME_WORD, raw)
 
 
-def clean_titled_professional(match: re.Match[str]) -> str:
-    title = normalize_space(match.group("title")).rstrip(".")
+def normalize_professional_title(raw: str) -> str:
+    title = normalize_space(raw).rstrip(".")
     title = "Dr." if title.lower().startswith(("dr", "doctor")) and not title.lower().startswith(("dra", "doctora")) else title
-    title = "Dra." if title.lower().startswith(("dra", "doctora")) else title
+    return "Dra." if title.lower().startswith(("dra", "doctora")) else title
+
+
+def title_name_segment(text: str, start: int) -> str:
+    segment = text[start : start + 180]
+    next_title = TITLE_SCAN_RE.search(segment)
+    if next_title:
+        segment = segment[: next_title.start()]
+    punctuation = re.search(r"[.,;:|]", segment)
+    if punctuation:
+        segment = segment[: punctuation.start()]
+    return segment
+
+
+def clean_titled_name(title_raw: str, name_raw: str) -> str:
+    title = normalize_professional_title(title_raw)
     words = []
-    for word in name_words(match.group("name")):
+    for word in name_words(name_raw):
         if word in ROLE_START_WORDS or word.rstrip(".") in TITLE_WORDS:
             break
         words.append(word)
+        if len(words) >= 6:
+            break
     if len(words) < 2:
         return ""
     return f"{title} {' '.join(words)}"
+
+
+def clean_titled_professional(match: re.Match[str]) -> str:
+    return clean_titled_name(match.group("title"), match.group("name"))
 
 
 def clean_team_professional(raw: str) -> str:
@@ -275,8 +351,8 @@ def extract_contacts(text: str) -> dict[str, list[str]]:
 
 def extract_professionals(text: str) -> list[str]:
     professionals: list[tuple[int, str]] = []
-    for match in PROFESSIONAL_RE.finditer(text):
-        clean = clean_titled_professional(match)
+    for match in TITLE_SCAN_RE.finditer(text):
+        clean = clean_titled_name(match.group("title"), title_name_segment(text, match.end()))
         if clean:
             professionals.append((match.start(), clean))
     team_window = professional_team_window(text)
@@ -286,6 +362,32 @@ def extract_professionals(text: str) -> list[str]:
         if clean:
             professionals.append((team_offset + match.start("name"), clean))
     return unique([name for _, name in sorted(professionals, key=lambda item: item[0])])
+
+
+def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:
+    transparency: dict[str, Any] = {}
+    years_match = YEARS_IN_PRACTICE_RE.search(text)
+    if years_match:
+        years = int(years_match.group("years"))
+        prefix = normalize_space(years_match.group("prefix") or "").lower()
+        label = f"{years} años"
+        if prefix in {"más de", "mas de", "over", "more than"}:
+            label = f"más de {label}"
+        transparency["years_in_practice"] = label
+
+    specialists_match = SPECIALISTS_COUNT_RE.search(text)
+    if specialists_match:
+        count = int(specialists_match.group("count"))
+        if 1 <= count <= 300:
+            transparency["specialists_count"] = count
+
+    if TEAM_CREDENTIALING_RE.search(text):
+        transparency["team_credentialing_visible"] = "si" if professionals else "parcial"
+
+    if PUBLIC_PRICING_RE.search(text):
+        transparency["public_pricing"] = "si"
+
+    return transparency
 
 
 def detect_keywords(text: str) -> dict[str, list[str]]:
@@ -341,6 +443,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
     professionals = extract_professionals(text)
+    transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
     claims: list[dict[str, Any]] = []
 
@@ -358,6 +461,14 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         claims.append(claim("contact.instagram", contacts["instagram"][0], 0.80, source_url))
     if professionals:
         claims.append(claim("professionals.published", professionals[:MAX_PROFESSIONALS], 0.64, source_url))
+    if transparency.get("years_in_practice"):
+        claims.append(claim("transparency.years_in_practice", transparency["years_in_practice"], 0.68, source_url))
+    if transparency.get("specialists_count"):
+        claims.append(claim("transparency.specialists_count", transparency["specialists_count"], 0.68, source_url))
+    if transparency.get("team_credentialing_visible"):
+        claims.append(claim("team.credentialing_visible", transparency["team_credentialing_visible"], 0.62, source_url))
+    if transparency.get("public_pricing"):
+        claims.append(claim("prices.public_status", transparency["public_pricing"], 0.62, source_url))
     for field_path, values in keywords.items():
         if values:
             claims.append(claim(field_path, values, 0.70, source_url))
@@ -368,6 +479,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
     professionals = extract_professionals(text)
+    transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
     name = guess_name(snapshot)
     profile = {
@@ -380,6 +492,10 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
         "specialties": keywords.get("specialties.list", []),
         "units": keywords.get("units.list", []),
         "professionals": professionals[:MAX_PROFESSIONALS],
+        "years_in_practice": transparency.get("years_in_practice"),
+        "specialists_count": transparency.get("specialists_count"),
+        "team_credentialing_visible": transparency.get("team_credentialing_visible"),
+        "public_pricing": transparency.get("public_pricing"),
         "technologies": keywords.get("technologies.list", []),
     }
     return {key: value for key, value in profile.items() if value}

@@ -310,28 +310,92 @@ button:disabled {
   padding: 1rem;
 }
 
-.global-plan-grid {
+.global-plan-orientation {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 0.8rem;
+  align-items: stretch;
+}
+
+.global-plan-focus {
+  min-width: 0;
+  padding: 1.05rem;
+  border: 1px solid rgba(30, 122, 90, 0.28);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.global-plan-focus span,
+.global-plan-section-title {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.global-plan-focus strong {
+  display: block;
+  max-width: 760px;
+  margin-top: 0.2rem;
+  font-size: 1.45rem;
+  line-height: 1.14;
+  overflow-wrap: anywhere;
+}
+
+.global-plan-focus p {
+  max-width: 780px;
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.global-plan-simple {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.7rem;
+}
+
+.global-plan-section-title {
+  margin: 0 0 0.45rem;
 }
 
 .global-plan-roadmap {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 0.65rem;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
 }
 
 .global-plan-lane {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
-  gap: 0.65rem;
+  grid-template-columns: 2.15rem minmax(0, 1fr);
+  gap: 0.75rem;
   align-items: start;
   min-width: 0;
   padding: 0.75rem;
   border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 253, 248, 0.54);
+  background: rgba(255, 253, 248, 0.66);
+}
+
+.global-plan-lane.is-done {
+  border-left-color: var(--green);
+}
+
+.global-plan-lane.is-current {
+  border-color: rgba(30, 122, 90, 0.45);
+  border-left-color: var(--green);
+  background: var(--wash);
+}
+
+.global-plan-lane.is-waiting {
+  border-left-color: var(--amber);
+}
+
+.global-plan-lane.is-later {
+  opacity: 0.78;
 }
 
 .global-plan-step {
@@ -404,13 +468,17 @@ button:disabled {
 
 .global-next-box {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
-  align-items: center;
+  align-items: start;
   padding: 0.9rem;
   border: 1px solid rgba(30, 122, 90, 0.22);
   border-radius: 8px;
-  background: var(--wash);
+  background: var(--panel-strong);
+}
+
+.global-next-box .link-btn {
+  justify-self: start;
 }
 
 .system-grid {
@@ -1234,12 +1302,14 @@ td small {
   .metrics,
   .work-grid,
   .detail-grid,
-    .diff-cols,
-    .review-flow-steps,
-    .global-next-box,
-    .related-review-plan,
-    .version-item,
-    .claim-item,
+  .diff-cols,
+  .review-flow-steps,
+  .global-plan-orientation,
+  .global-plan-simple,
+  .global-next-box,
+  .related-review-plan,
+  .version-item,
+  .claim-item,
   .source-item,
   .rule-item,
   .edit-form {

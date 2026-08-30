@@ -20,12 +20,19 @@ Crear borrador no publica la clínica. Solo crea una ficha interna para editarla
 
 ## Ver el plan global
 
-Arriba del panel verás **Plan global**. Ese bloque resume dónde estamos: fase
-actual, estado de la web pública, presión de la bandeja, automatización,
-fuentes, especialistas y el siguiente trabajo recomendado.
+Arriba del panel verás **Plan global**. Léelo de arriba abajo:
 
-Puedes pulsar **Abrir siguiente** para ir directamente al grupo o tarjeta que el
-panel considera más importante.
+1. **Ahora estás aquí**: te dice en qué fase real estamos, sin obligarte a
+   interpretar números.
+2. **Siguiente clic recomendado**: es el botón que conviene usar primero.
+3. **Ya funciona / Cuello de botella / No activar aún**: separa lo que está
+   resuelto, lo que bloquea avanzar y lo que todavía no conviene automatizar.
+4. **Ruta global**: muestra el camino completo por etapas.
+
+Puedes pulsar **Filtrar grupo** o **Abrir siguiente** para ir directamente al
+grupo o tarjeta que el panel considera más importante. Si ves “control interno”,
+no significa que la web esté rota: significa que toca limpiar revisiones antes
+de subir la autonomía.
 
 ## Entender el estado del sistema
 
@@ -137,7 +144,7 @@ tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
 1. Baja al bloque **Clínicas**.
 2. Busca la clínica por nombre o ciudad.
 3. Pulsa **Editar**.
-4. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, etc.
+4. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, sedes, Google Maps, valoraciones Google y transparencia pública.
 5. Mira el bloque **Validación final**.
 6. El botón de guardar cambia según el estado elegido: **Guardar borrador**,
    **Guardar en revisión**, **Guardar como preliminar** o **Guardar como publicada**.
@@ -146,6 +153,15 @@ tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
 Si eliges **Preliminar** o **Publicada** y todavía hay claims bloqueantes,
 **Validación final** lo marcará como pendiente y el aviso de guardado te lo
 recordará antes de mandar la ficha a la web.
+
+Si una clínica tiene varias ubicaciones, usa **Sedes**. La **Dirección** sigue
+sirviendo como sede principal para fichas simples. En la web pública, la
+dirección se abre en Google Maps; si guardamos el perfil exacto de Google Maps
+o el enlace directo a valoraciones, se usa ese enlace directo.
+
+Los campos de transparencia —años en ejercicio, número de especialistas,
+colegiación visible y precio público— solo deben rellenarse cuando salgan de una
+fuente pública revisable. No son rankings ni recomendaciones.
 
 Si la clínica está como **Publicada** o **Preliminar**, el cambio se manda a la web automáticamente. Puede tardar unos minutos.
 Si está como **Borrador**, **Revisión**, **Descubierta**, **Extraída**, **Verificada** o **Archivada**, se guarda dentro del panel pero no aparece como ficha pública.
