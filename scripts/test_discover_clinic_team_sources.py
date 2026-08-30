@@ -52,6 +52,10 @@ def main():
         clean_candidate_url("https://clinic.example/base/", "/equipo#doctor") == "https://clinic.example/equipo/",
         "candidate URL should be canonicalized",
     )
+    check(
+        clean_candidate_url("https://clinic.example/base/", "/equipo.html#doctor") == "https://clinic.example/equipo.html",
+        "file-like team URLs should not receive a trailing slash",
+    )
 
     clinic = {
         "clinic_id": "00000000-0000-0000-0000-000000000001",

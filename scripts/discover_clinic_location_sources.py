@@ -136,7 +136,10 @@ def clean_candidate_url(base_url: str, href: str) -> str:
         return ""
     if SKIPPED_EXTENSIONS.search(parsed.path):
         return ""
-    return parsed._replace(query="").geturl().rstrip("/") + "/"
+    canonical = parsed._replace(query="").geturl()
+    if re.search(r"\.[a-z0-9]{2,6}$", parsed.path, flags=re.I):
+        return canonical
+    return canonical.rstrip("/") + "/"
 
 
 def score_candidate(url: str, label: str) -> tuple[int, str]:
