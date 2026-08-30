@@ -50,5 +50,6 @@ When Daniel asks Codex to keep advancing the general Diuvita plan without stayin
 - Never expose secrets, credentials, local private files or detailed unpublished enrichment payloads in GitHub.
 - Run checks before committing.
 - Commit cohesive changes with clear messages.
+- Batch pushes to reduce Netlify deploys; avoid small production pushes unless they fix a live issue, unblock Daniel or complete a meaningful batch.
 - Push only when the change is low-risk for production and contains no private/proposed clinic payloads; otherwise leave the commit local and explain the approval needed.
 - End with a concise Spanish summary: completed work, verification, open risks, and the next best step.
