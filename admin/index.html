@@ -1400,8 +1400,8 @@
           .from("review_queue")
           .select("id, job_id, clinic_id, title, review_type, priority, status, payload, created_at")
           .eq("status", "open")
-          .order("priority", { ascending: true })
-          .order("created_at", { ascending: false })
+          .order("priority", { ascending: false })
+          .order("created_at", { ascending: true })
           .limit(100);
 
         if (reviewRows.error || !reviewRows.data || reviewRows.data.length === 0) {
