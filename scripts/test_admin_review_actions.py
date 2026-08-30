@@ -39,6 +39,25 @@ def main() -> None:
         and 'setLinks("reviewCandidateSource", candidateReviewSources(candidate, payload, source));' in index,
         "candidate reviews should show all source URLs",
     )
+    check(
+        'id="reviewProposedLinksBlock"' in index
+        and 'id="reviewCandidateProposedLinks"' in index
+        and "function proposalLinkUrl(value)" in index
+        and "function proposalLinkItems(payload)" in index
+        and "function setProposedLinks(payload)" in index
+        and "setProposedLinks(payload);" in index,
+        "review editor should show proposed links separately",
+    )
+    check(
+        'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
+        and '["maps_url", "Google Maps"]' in index
+        and '["google_reviews_url", "Valoraciones Google"]' in index
+        and '["reviews_url", "Valoraciones Google"]' in index
+        and '["pricing_url", "Página de precios"]' in index,
+        "proposed review links should be safe and cover Maps/reviews/pricing",
+    )
+    css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
+    check(".compact-list small" in css, "proposed link URLs should remain readable on mobile")
     print("OK admin review actions: dismiss keeps context")
 
 

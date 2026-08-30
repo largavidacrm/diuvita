@@ -383,6 +383,10 @@
               <dt>Fuente</dt>
               <dd id="reviewCandidateSource">—</dd>
             </div>
+            <div class="detail-wide hidden" id="reviewProposedLinksBlock">
+              <dt>Enlaces propuestos</dt>
+              <dd id="reviewCandidateProposedLinks">—</dd>
+            </div>
             <div class="detail-wide">
               <dt>Coincidencias en Vitalarga</dt>
               <dd id="reviewCandidateDuplicates">—</dd>
@@ -3478,6 +3482,45 @@
       return candidateList(fields, "profesionales", "professionals");
     }
 
+    function proposalLinkUrl(value) {
+      var clean = text(value).trim();
+      return /^https?:\/\//i.test(clean) ? clean : "";
+    }
+
+    function addProposalLink(items, seen, label, value) {
+      var url = proposalLinkUrl(value);
+      if (!url || seen[url]) return;
+      seen[url] = true;
+      items.push({ label: label, url: url });
+    }
+
+    function proposalLinkItems(payload) {
+      var fields = proposedFields(payload);
+      var items = [];
+      var seen = {};
+      [
+        ["maps_url", "Google Maps"],
+        ["google_maps_url", "Google Maps"],
+        ["google_reviews_url", "Valoraciones Google"],
+        ["reviews_url", "Valoraciones Google"],
+        ["pricing_url", "Página de precios"],
+        ["website", "Web propuesta"],
+        ["web", "Web propuesta"]
+      ].forEach(function (pair) {
+        if (hasOwn(fields, pair[0])) addProposalLink(items, seen, pair[1], fields[pair[0]]);
+      });
+      if (Array.isArray(fields.locations)) {
+        fields.locations.forEach(function (location, index) {
+          if (!location || typeof location !== "object") return;
+          var suffix = text(location.name || location.city || "").trim();
+          var labelSuffix = suffix ? " · " + suffix : " · sede " + (index + 1);
+          addProposalLink(items, seen, "Google Maps" + labelSuffix, location.maps_url || location.google_maps_url || location.map_url);
+          addProposalLink(items, seen, "Valoraciones Google" + labelSuffix, location.google_reviews_url || location.reviews_url || location.valoraciones_url);
+        });
+      }
+      return items;
+    }
+
     function normalizedPersonKey(value) {
       var clean = text(value).split("—")[0].split(" - ")[0].trim().toLowerCase();
       if (clean.normalize) {
@@ -3944,6 +3987,22 @@
       }).join("") + "</ul>";
     }
 
+    function setProposedLinks(payload) {
+      var block = el("reviewProposedLinksBlock");
+      var target = el("reviewCandidateProposedLinks");
+      var links = proposalLinkItems(payload);
+      if (!links.length) {
+        target.textContent = "—";
+        show(block, false);
+        return;
+      }
+      target.innerHTML = '<ul class="compact-list">' + links.map(function (item) {
+        return '<li><a href="' + html(item.url) + '" rel="nofollow noopener" target="_blank">' +
+          html(item.label) + '</a><small>' + html(item.url) + '</small></li>';
+      }).join("") + "</ul>";
+      show(block, true);
+    }
+
     function renderClinics() {
       var clinicsBody = el("clinicsBody");
       var query = trimmed("clinicSearch").toLowerCase();
@@ -4166,6 +4225,7 @@
       } else {
         setLinks("reviewCandidateSource", candidateReviewSources(candidate, payload, source));
       }
+      setProposedLinks(payload);
       setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
       setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : isSourceChange ? [
         "Hash anterior: " + text(payload.previous_hash || "").slice(0, 12),
@@ -4190,6 +4250,8 @@
       activeReview = null;
       show(el("relatedReviewsPanel"), false);
       el("relatedReviewsList").innerHTML = "";
+      show(el("reviewProposedLinksBlock"), false);
+      el("reviewCandidateProposedLinks").textContent = "—";
       show(el("reviewEditor"), false);
     }
 
