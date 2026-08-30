@@ -90,6 +90,9 @@ Already built:
   not by street address.
 - Official clinic websites can now be scanned for direct Google Maps profile
   links and Google review links, creating internal review cards only.
+- Google Maps discovery can also scan a small number of same-site contact,
+  location or clinic-site pages, which improves direct-profile detection
+  without broad crawling or automatic publication.
 - Saved-source extraction now prefers team/about pages when specialists are
   missing, so pages with public professionals are reviewed before generic home
   or service pages for the same clinic.
