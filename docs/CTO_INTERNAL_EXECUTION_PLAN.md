@@ -43,6 +43,7 @@ Already built:
 - Audit events and entity versions for manual edits.
 - `agent_jobs`, `review_queue`, `source_records`, `field_claims`, `human_overrides` and related foundation tables.
 - Admin visibility for clinic version history, protected fields and internal evidence claims.
+- Admin evidence cards show field risk and the current rule decision for each claim.
 - Admin rollback control from clinic version history, with every restore audited as a new version.
 - Candidate reviews now create internal drafts and route Daniel to final validation before publication.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.

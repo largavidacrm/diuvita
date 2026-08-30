@@ -484,6 +484,7 @@
     var activeClinicClaimCount = 0;
     var activeClinicSourceCount = 0;
     var dashboardLoading = false;
+    var dashboardAutomation = {};
     var REVIEW_TYPE_FILTERS = [
       ["", "Todas"],
       ["candidate_clinic", "Clínicas nuevas"],
@@ -496,6 +497,32 @@
       ["high", "Alta"],
       ["medium", "Media"],
       ["low", "Baja"]
+    ];
+    var LOW_RISK_PREFIXES = [
+      "identity.",
+      "location.",
+      "contact.website",
+      "contact.email",
+      "contact.phone",
+      "contact.instagram"
+    ];
+    var MEDIUM_RISK_PREFIXES = [
+      "services.",
+      "specialties.",
+      "units.",
+      "diagnostics.",
+      "programs.",
+      "technologies.",
+      "professionals.published",
+      "team.public_professionals"
+    ];
+    var HIGH_RISK_PREFIXES = [
+      "team.credentials",
+      "prices.",
+      "treatments.",
+      "medical_claims.",
+      "outcomes.",
+      "evidence."
     ];
 
     function el(id) {
@@ -752,6 +779,44 @@
       el("reviewTypeFilter").value = "";
       el("reviewPriorityFilter").value = "";
       renderReviews();
+    }
+
+    function startsWithAny(value, prefixes) {
+      return prefixes.some(function (prefix) {
+        return value.indexOf(prefix) === 0;
+      });
+    }
+
+    function fieldRisk(fieldPath) {
+      var clean = text(fieldPath).trim().toLowerCase();
+      if (startsWithAny(clean, HIGH_RISK_PREFIXES)) return "high";
+      if (startsWithAny(clean, MEDIUM_RISK_PREFIXES)) return "medium";
+      if (startsWithAny(clean, LOW_RISK_PREFIXES)) return "low";
+      return "high";
+    }
+
+    function ruleDecisionForClaim(row) {
+      var risk = fieldRisk(row.field_path);
+      var confidence = Number(row.confidence || 0);
+      var status = text(row.verification_status || "unknown").toLowerCase();
+      var sourceCount = row.source_record_id ? 1 : 0;
+      var threshold = risk === "low" ? 0.9 : risk === "medium" ? 0.93 : 0.98;
+      if (row.human_locked) return { action: "review", risk: risk, confidence: confidence, reason: "campo protegido manualmente" };
+      if (status === "conflict") return { action: "review", risk: risk, confidence: confidence, reason: "evidencia en conflicto" };
+      if (status === "rejected") return { action: "reject", risk: risk, confidence: confidence, reason: "claim rechazado por verificación" };
+      if (confidence < 0.6) return { action: "reject", risk: risk, confidence: confidence, reason: "confianza por debajo del mínimo" };
+      if (!sourceCount) return { action: "review", risk: risk, confidence: confidence, reason: "sin fuente enlazada" };
+      if (status === "proposed" || status === "review" || status === "unknown") {
+        return { action: "review", risk: risk, confidence: confidence, reason: "pendiente de revisión" };
+      }
+      if (status === "stale") return { action: "review", risk: risk, confidence: confidence, reason: "fuente posiblemente antigua" };
+      if (confidence < threshold) return { action: "review", risk: risk, confidence: confidence, reason: "confianza inferior al umbral" };
+      if (risk === "high" && sourceCount < 2) return { action: "review", risk: risk, confidence: confidence, reason: "riesgo alto necesita más fuentes" };
+      if (!dashboardAutomation.auto_publish_enabled) {
+        return { action: "review", risk: risk, confidence: confidence, reason: "auto-publicación apagada" };
+      }
+      if (risk === "low") return { action: "auto_accept", risk: risk, confidence: confidence, reason: "claim de bajo riesgo apto" };
+      return { action: "review", risk: risk, confidence: confidence, reason: "riesgo medio/alto requiere revisión" };
     }
 
     function riskLabel(risk) {
@@ -1021,14 +1086,17 @@
       }
       el("clinicClaimsList").innerHTML = rows.map(function (row) {
         var source = sources[row.source_record_id || ""] || "";
+        var decision = ruleDecisionForClaim(row);
         var sourceHtml = source
           ? '<a href="' + html(source) + '" rel="nofollow noopener" target="_blank">Fuente</a>'
           : '<span>Sin fuente enlazada</span>';
         var locked = row.human_locked ? '<span class="pill danger">Protegido</span>' : "";
         return '<article class="claim-item">' +
           '<div class="claim-main"><strong>' + html(fieldPathLabel(row.field_path)) + '</strong>' +
-          '<p>' + html(compactText(claimValueText(row.value), 220)) + '</p></div>' +
-          '<div class="claim-meta">' + pill(row.verification_status) + '<span class="pill">' + html(pct(row.confidence)) + '</span>' + locked + sourceHtml + '</div>' +
+          '<p>' + html(compactText(claimValueText(row.value), 220)) + '</p>' +
+          '<small>' + html(decision.reason) + '</small></div>' +
+          '<div class="claim-meta">' + riskPill(decision.risk) + actionPill(decision.action) + pill(row.verification_status) +
+          '<span class="pill">' + html(pct(row.confidence)) + '</span>' + locked + sourceHtml + '</div>' +
           '</article>';
       }).join("");
       updateFinalValidation();
@@ -1988,6 +2056,7 @@
         var jobs = summary.jobs || {};
         var evidence = summary.evidence || {};
         var automation = summary.automation || {};
+        dashboardAutomation = automation;
 
         el("metrics").innerHTML = [
           metric("Clínicas", clinics.total || 0),

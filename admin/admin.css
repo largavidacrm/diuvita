@@ -738,6 +738,13 @@ td small {
   line-height: 1.35;
 }
 
+.claim-main small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .claim-meta,
 .source-tags {
   display: flex;

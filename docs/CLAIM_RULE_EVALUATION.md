@@ -13,6 +13,9 @@ already in Supabase and answers:
 
 It does not update clinics, resolve reviews, write claims or publish pages.
 
+The admin evidence cards mirror the same conservative rule context so Daniel can
+see the risk tier and current rule decision while reviewing a clinic.
+
 ## Usage
 
 Current Supabase policy:
