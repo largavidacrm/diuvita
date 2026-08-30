@@ -324,11 +324,19 @@ HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Source+Sans+3:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
 <script data-goatcounter="https://diuvita.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 {jsonld}</head><body>
 <header class="site"><a class="logo" href="/">Diuvita<em>.</em></a>
 <nav><a href="/#buscar">Buscar clínica</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
+"""
+
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<rect width="64" height="64" rx="14" fill="#fffdf8"/>
+<path d="M16 44c16-1 27-12 31-28-16 1-27 12-31 28Z" fill="#1e7a5a"/>
+<circle cx="47" cy="47" r="6" fill="#df6c4b"/>
+</svg>
 """
 
 def head(title, desc, path, jsonld=""):
@@ -674,6 +682,7 @@ if os.path.exists(DIST):
     shutil.rmtree(DIST)
 os.makedirs(DIST)
 open(os.path.join(DIST, "style.css"), "w", encoding="utf-8").write(CSS)
+open(os.path.join(DIST, "favicon.svg"), "w", encoding="utf-8").write(FAVICON_SVG)
 open(os.path.join(DIST, "index.html"), "w", encoding="utf-8").write(index)
 os.makedirs(os.path.join(DIST, "sobre"))
 open(os.path.join(DIST, "sobre", "index.html"), "w", encoding="utf-8").write(SOBRE)
