@@ -1728,6 +1728,40 @@
       return text(value).trim() || "—";
     }
 
+    function claimSourceUrl(source) {
+      if (!source) return "";
+      if (typeof source === "string") return source;
+      return source.source_url || "";
+    }
+
+    function claimSourceTitle(source) {
+      if (!source) return "";
+      if (typeof source === "string") return source;
+      return source.source_title || source.source_url || "";
+    }
+
+    function claimTraceText(row, source, decision) {
+      var parts = [
+        "Motivo: " + (decision.reason || "pendiente de revisión"),
+        "Guardado: " + date(row.created_at)
+      ];
+      var sourceUrl = claimSourceUrl(source);
+      if (sourceUrl) {
+        parts.push("Fuente: " + compactText(claimSourceTitle(source), 80));
+      } else {
+        parts.push("Sin fuente enlazada");
+      }
+      return parts.join(" · ");
+    }
+
+    function claimSourceLinkHtml(source) {
+      var sourceUrl = claimSourceUrl(source);
+      if (!sourceUrl) return '<span>Sin fuente enlazada</span>';
+      var title = claimSourceTitle(source) || sourceUrl;
+      return '<a href="' + html(sourceUrl) + '" rel="nofollow noopener" target="_blank" title="' +
+        html(title) + '">Abrir fuente</a>';
+    }
+
     function renderClinicClaims(rows, sources) {
       var count = Array.isArray(rows) ? rows.length : 0;
       activeClinicClaimCount = count;
@@ -1741,16 +1775,14 @@
         return;
       }
       el("clinicClaimsList").innerHTML = rows.map(function (row) {
-        var source = sources[row.source_record_id || ""] || "";
+        var source = sources[row.source_record_id || ""] || null;
         var decision = ruleDecisionForClaim(row);
-        var sourceHtml = source
-          ? '<a href="' + html(source) + '" rel="nofollow noopener" target="_blank">Fuente</a>'
-          : '<span>Sin fuente enlazada</span>';
+        var sourceHtml = claimSourceLinkHtml(source);
         var locked = row.human_locked ? '<span class="pill danger">Protegido</span>' : "";
         return '<article class="claim-item">' +
           '<div class="claim-main"><strong>' + html(fieldPathLabel(row.field_path)) + '</strong>' +
           '<p>' + html(compactText(claimValueText(row.value), 220)) + '</p>' +
-          '<small>' + html(decision.reason) + '</small></div>' +
+          '<small>' + html(claimTraceText(row, source, decision)) + '</small></div>' +
           '<div class="claim-meta">' + riskPill(decision.risk) + actionPill(decision.action) + pill(row.verification_status) +
           '<span class="pill">' + html(pct(row.confidence)) + '</span>' + locked + sourceHtml + '</div>' +
           '</article>';
@@ -1784,12 +1816,12 @@
       if (sourceIds.length) {
         var sourceResult = await client
           .from("source_records")
-          .select("id, source_url")
+          .select("id, source_url, source_title, retrieved_at")
           .in("id", sourceIds);
         if (requestId !== activeClinicClaimRequest) return;
         if (!sourceResult.error) {
           (sourceResult.data || []).forEach(function (source) {
-            sourceMap[source.id] = source.source_url;
+            sourceMap[source.id] = source;
           });
         }
       }

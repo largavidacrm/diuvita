@@ -24,6 +24,11 @@ def main() -> None:
         "dashboardAutomation = automation",
         "riskPill(decision.risk)",
         "actionPill(decision.action)",
+        "function claimTraceText",
+        "Motivo:",
+        "Guardado:",
+        "Abrir fuente",
+        '.select("id, source_url, source_title, retrieved_at")',
         "function materialChangeItems",
         "Posible impacto",
     ]:

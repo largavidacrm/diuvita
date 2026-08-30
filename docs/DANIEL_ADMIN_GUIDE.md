@@ -61,6 +61,10 @@ Hasta que no guardes, la web pública no cambia.
 
 Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia rechazada, en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión.
 
+En **Evidencias propuestas**, cada claim muestra el motivo de la regla, cuándo
+se guardó y un enlace a la fuente cuando existe. Eso te permite ver de dónde
+sale un dato sin leer información técnica cruda.
+
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
 
 En la tarjeta de revisión verás **Camino de publicación**. Ese bloque recuerda el flujo:

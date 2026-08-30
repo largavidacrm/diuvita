@@ -30,6 +30,10 @@ Code:
 - `scripts/source_snapshot_records.py`
 - `scripts/test_capture_source_snapshot.py`
 
+The admin evidence panel now shows a compact trace for each internal claim:
+rule reason, saved date and linked source title/URL when available. This keeps
+Daniel's review view readable without exposing full extraction payloads.
+
 Examples:
 
 ```bash
@@ -51,5 +55,5 @@ and excerpts in `source_snapshots`; larger evidence should stay outside GitHub.
 
 1. Store external full-page archives outside GitHub only if later needed.
 2. Link every important field claim to the strongest source record.
-3. Show source history beside proposed changes in the admin.
+3. Expand source history beside proposed changes in the admin when Daniel needs deeper audits.
 4. Use snapshot history to measure source volatility before calling expensive AI.
