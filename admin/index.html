@@ -67,6 +67,16 @@
           </div>
           <button class="btn secondary" id="clinicCancelTop" type="button">Cerrar</button>
         </div>
+        <section class="proposal-preview hidden" id="clinicProposalPreview">
+          <div class="proposal-preview-head">
+            <div>
+              <h3>Propuesta cargada</h3>
+              <p id="clinicProposalMeta">Revisa estos cambios antes de guardar.</p>
+            </div>
+            <span class="pill warning">Pendiente de guardar</span>
+          </div>
+          <div class="proposal-diff" id="clinicProposalChanges"></div>
+        </section>
         <form class="edit-form" id="clinicForm">
           <input id="clinicId" name="clinicId" type="hidden">
           <div class="field">
@@ -223,8 +233,19 @@
       <section class="work-grid">
         <section class="panel">
           <div class="panel-head">
-            <h2>Necesitan revisión</h2>
-            <span class="pill" id="reviewCount">0 abiertas</span>
+            <div>
+              <h2>Necesitan revisión</h2>
+              <span class="muted" id="reviewFilterMeta">Sin revisiones abiertas</span>
+            </div>
+            <div class="panel-tools">
+              <select id="reviewTypeFilter" aria-label="Filtrar revisiones">
+                <option value="">Todas</option>
+                <option value="candidate_clinic">Clínicas nuevas</option>
+                <option value="clinic_profile_enrichment">Mejoras de ficha</option>
+                <option value="clinic_quality_audit">Auditorías</option>
+              </select>
+              <span class="pill" id="reviewCount">0 abiertas</span>
+            </div>
           </div>
           <div class="table-wrap">
             <table>
@@ -346,6 +367,7 @@
     var session = null;
     var clinicCache = [];
     var reviewCache = [];
+    var reviewTypeFilter = "";
     var activeClinic = null;
     var activeReview = null;
     var activeClinicReview = null;
@@ -413,6 +435,21 @@
         clinic_profile_enrichment: "Mejora de ficha"
       };
       return labels[type] || type || "Revisión";
+    }
+
+    function reviewSummary(rows) {
+      var counts = {};
+      rows.forEach(function (row) {
+        counts[row.review_type] = (counts[row.review_type] || 0) + 1;
+      });
+      var parts = [
+        ["candidate_clinic", counts.candidate_clinic],
+        ["clinic_profile_enrichment", counts.clinic_profile_enrichment],
+        ["clinic_quality_audit", counts.clinic_quality_audit]
+      ].filter(function (item) { return Number(item[1] || 0) > 0; }).map(function (item) {
+        return item[1] + " " + reviewTypeLabel(item[0]).toLowerCase();
+      });
+      return parts.length ? parts.join(" · ") : "Sin revisiones abiertas";
     }
 
     function emptyRow(target, columns, text) {
@@ -645,6 +682,88 @@
       return candidateList(fields, "profesionales", "professionals");
     }
 
+    function proposalLabel(key) {
+      var labels = {
+        display_name: "Nombre",
+        name: "Nombre",
+        web: "Web",
+        website: "Web",
+        country: "País",
+        city: "Ciudad",
+        region: "Región",
+        address: "Dirección",
+        summary: "Resumen",
+        services: "Servicios",
+        specialties: "Especialidades",
+        unidades: "Unidades / áreas clínicas",
+        profesionales: "Especialistas publicados",
+        tech: "Tecnología",
+        email: "Email",
+        telefono: "Teléfono",
+        instagram: "Instagram"
+      };
+      return labels[key] || key;
+    }
+
+    function currentClinicField(clinic, key) {
+      var data = (clinic && clinic.current_data) || {};
+      var topLevel = {
+        display_name: clinic && clinic.display_name,
+        name: clinic && clinic.display_name,
+        web: clinic && clinic.website,
+        website: clinic && clinic.website,
+        country: clinic && clinic.country,
+        city: clinic && clinic.city,
+        region: clinic && clinic.region,
+        address: clinic && clinic.address,
+        summary: clinic && clinic.summary
+      };
+      if (hasOwn(topLevel, key)) return topLevel[key] || data[key];
+      return data[key];
+    }
+
+    function displayFieldValue(value) {
+      if (Array.isArray(value)) return value.length ? value.join("\n") : "—";
+      var clean = text(value).trim();
+      return clean || "—";
+    }
+
+    function normalizedFieldValue(value) {
+      if (Array.isArray(value)) {
+        return value.map(function (item) { return text(item).trim(); }).filter(Boolean).join("\n").trim();
+      }
+      return text(value).trim();
+    }
+
+    function resetProposalPreview() {
+      show(el("clinicProposalPreview"), false);
+      el("clinicProposalChanges").innerHTML = "";
+      el("clinicProposalMeta").textContent = "Revisa estos cambios antes de guardar.";
+    }
+
+    function renderProposalPreview(payload) {
+      var fields = proposedFields(payload);
+      var rows = Object.keys(fields).filter(function (key) {
+        return proposalListValue(fields[key]);
+      }).map(function (key) {
+        var beforeValue = currentClinicField(activeClinic, key);
+        var afterValue = fields[key];
+        var changed = normalizedFieldValue(beforeValue) !== normalizedFieldValue(afterValue);
+        return '<article class="diff-item' + (changed ? "" : " unchanged") + '">' +
+          '<h4>' + html(proposalLabel(key)) + '</h4>' +
+          '<div class="diff-cols"><div><span>Ahora</span><pre>' + html(displayFieldValue(beforeValue)) + '</pre></div>' +
+          '<div><span>Propuesta</span><pre>' + html(displayFieldValue(afterValue)) + '</pre></div></div>' +
+          '</article>';
+      });
+      el("clinicProposalMeta").textContent = rows.length
+        ? rows.length + " campos propuestos. Revisa antes de guardar."
+        : "No hay campos propuestos para esta ficha.";
+      el("clinicProposalChanges").innerHTML = rows.length
+        ? rows.join("")
+        : '<p class="empty">Sin cambios detectados.</p>';
+      show(el("clinicProposalPreview"), true);
+    }
+
     function sourceList(payload) {
       var urls = [];
       var raw = payload && (payload.source_urls || payload.sources || payload.source_url);
@@ -701,6 +820,26 @@
       }).join("");
     }
 
+    function renderReviews() {
+      var reviewsBody = el("reviewsBody");
+      var rows = reviewCache.filter(function (row) {
+        return !reviewTypeFilter || row.review_type === reviewTypeFilter;
+      });
+      el("reviewCount").textContent = reviewCache.length + " abiertas";
+      el("reviewFilterMeta").textContent = reviewTypeFilter
+        ? rows.length + " de " + reviewTypeLabel(reviewTypeFilter).toLowerCase()
+        : reviewSummary(reviewCache);
+      if (!rows.length) {
+        emptyRow(reviewsBody, 5, reviewCache.length ? "No hay revisiones de este tipo" : "Sin revisiones abiertas");
+        return;
+      }
+      reviewsBody.innerHTML = rows.map(function (row) {
+        return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewTypeLabel(row.review_type)) + "</td><td>" + html(row.priority) + "</td><td>" +
+          date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
+          html(row.id) + '">Revisar</button></td></tr>';
+      }).join("");
+    }
+
     function openClinicEditor(id) {
       activeClinic = clinicCache.find(function (row) { return row.id === id; });
       if (!activeClinic) return;
@@ -728,6 +867,7 @@
       setInput("clinicInstagram", data.instagram);
       setInput("clinicVerification", activeClinic.verification_status || "human_curated");
       setInput("clinicNote", "");
+      resetProposalPreview();
       show(el("clinicEditor"), true);
       el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
       el("clinicName").focus();
@@ -769,6 +909,7 @@
         note.push("Fuentes: " + urls.join(" | "));
       }
       setInput("clinicNote", note.join("\n"));
+      renderProposalPreview(payload);
       toast("Propuesta cargada. Revisa y guarda si quieres publicarla.");
     }
 
@@ -933,20 +1074,14 @@
         .eq("status", "open")
         .order("priority", { ascending: true })
         .order("created_at", { ascending: false })
-        .limit(30);
+        .limit(100);
 
-      var reviewsBody = el("reviewsBody");
       if (reviewRows.error || !reviewRows.data || reviewRows.data.length === 0) {
         reviewCache = [];
-        emptyRow(reviewsBody, 5, "Sin revisiones abiertas");
       } else {
         reviewCache = reviewRows.data;
-        reviewsBody.innerHTML = reviewRows.data.map(function (row) {
-          return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewTypeLabel(row.review_type)) + "</td><td>" + html(row.priority) + "</td><td>" +
-            date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
-            html(row.id) + '">Revisar</button></td></tr>';
-        }).join("");
       }
+      renderReviews();
 
       var jobRows = await client
         .from("agent_jobs")
@@ -1143,6 +1278,10 @@
       el("reviewCreateDraftBtn").addEventListener("click", createClinicDraftFromReview);
       el("reviewDismissBtn").addEventListener("click", dismissReview);
       el("clinicSearch").addEventListener("input", renderClinics);
+      el("reviewTypeFilter").addEventListener("change", function () {
+        reviewTypeFilter = el("reviewTypeFilter").value;
+        renderReviews();
+      });
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));

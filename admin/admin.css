@@ -307,6 +307,15 @@ button:disabled {
   background: #fff;
 }
 
+.panel-tools select {
+  min-width: 170px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0.45rem 0.65rem;
+}
+
 .panel-body {
   padding: 1rem;
 }
@@ -403,6 +412,83 @@ td small {
   display: grid;
   gap: 1rem;
   padding: 1rem;
+}
+
+.proposal-preview {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+  background: #fbf7ee;
+}
+
+.proposal-preview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.proposal-preview h3,
+.diff-item h4 {
+  margin: 0;
+  font-size: 0.96rem;
+}
+
+.proposal-preview p {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+}
+
+.proposal-diff {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.diff-item {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.diff-item.unchanged {
+  opacity: 0.7;
+}
+
+.diff-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.diff-cols span {
+  display: block;
+  margin-bottom: 0.22rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.diff-cols pre {
+  min-height: 3rem;
+  max-height: 13rem;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 0.55rem;
+  color: var(--ink);
+  font-family: "Source Sans 3", system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 .detail-grid {
@@ -504,6 +590,7 @@ td small {
   }
 
   .panel-tools input,
+  .panel-tools select,
   .top-actions .btn {
     flex: 1;
     max-width: none;
@@ -512,6 +599,7 @@ td small {
   .metrics,
   .work-grid,
   .detail-grid,
+  .diff-cols,
   .edit-form {
     grid-template-columns: 1fr;
   }
