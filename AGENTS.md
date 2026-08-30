@@ -13,7 +13,9 @@ When working on this project:
 - Keep the operating mode: Daniel decides; Codex executes and guides.
 - Use `docs/VITALARGA_LIMITES_OPERATIVOS.md` as the project reference for Vitalarga's legal, medical, editorial and publication boundaries.
 - For Google Maps links, prefer the clinic's own Google Business/Profile URL; if no direct link is known, fall back to a clinic-name/city/country search, not a loose street-address search. Direct Google links should remain human-reviewed before publication.
+- Treat Google Maps URLs that look like searches, directions or street-address `/maps/place/` pages as not reviewed unless they contain a strong place identifier or the clinic name itself.
 - On public clinic pages, avoid decorative numeric counters in the location block and avoid generic labels like "Sede 1" or "Sede 2"; use city-based labels when a clinic has multiple locations.
+- In admin location editing, avoid labels like "Sede 1" or "Sede 2"; use "Sede principal" and "Sede adicional" so the UI stays non-ranking and easy to scan.
 
 ## Autonomous CTO mode
 

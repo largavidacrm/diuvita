@@ -328,6 +328,14 @@ Next 10 technical steps:
 24. Clarify blocking-claim next steps. Done locally in `scripts/blocking_claim_brief.py`; it stays read-only and tells Daniel whether to compare evidence or find an official source.
 25. Seed official website sources for visible clinics. Done locally in `scripts/seed_visible_clinic_sources.py` and wired into the safe CTO cycle before source hydration.
 26. Add safe Google-link discovery for clinic websites. Done locally in `scripts/discover_clinic_google_links.py`; it can create review cards for direct Google Maps/profile links without editing or publishing clinic data.
+27. Make specialist review cards easier to triage. Done locally in `/admin/`: the **Especialistas** quick filter now brings cards with more proposed professionals to the top.
+28. Pause new job creation when the review inbox is near the safe-write limit. Done locally in `/admin/`: at five or fewer remaining review slots, the panel asks Daniel to clean existing reviews before adding more work.
+29. Improve team-page specialist extraction. Done locally in `scripts/extract_clinic_profile_shadow.py`: explicit name-role team sections can yield more public professionals without publishing them automatically.
+30. Add a one-click loader for pending specialists in the clinic editor. Done locally in `/admin/`: detected specialists can be loaded into the form, reviewed in the diff and saved only through manual validation.
+31. Flag generic Google Maps links during final validation. Done locally in `/admin/`: search, route or address-like Google links remain pending until a real clinic profile link is reviewed.
+32. Remove numbered labels from the internal location editor. Done locally in `/admin/`: locations are shown as principal/adicional instead of "Sede 1" or "Sede 2".
+33. Tighten Google Maps discovery against address-like proposals. Done locally in `scripts/discover_clinic_google_links.py`: generic-label street-address links are not proposed as clinic profiles unless they carry a strong place identifier.
+34. Add next-click guidance to Daniel's review brief. Done locally in `scripts/daniel_review_brief.py`: the brief now tells Daniel which panel buttons to use first, including the no-new-jobs guard near the review limit.
 
 ## Daniel decision checkpoints
 
