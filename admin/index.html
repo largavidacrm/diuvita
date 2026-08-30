@@ -371,6 +371,7 @@
     var activeClinic = null;
     var activeReview = null;
     var activeClinicReview = null;
+    var dashboardLoading = false;
 
     function el(id) {
       return document.getElementById(id);
@@ -415,6 +416,13 @@
       show(node, true);
       window.clearTimeout(toast.timer);
       toast.timer = window.setTimeout(function () { show(node, false); }, 3600);
+    }
+
+    function setRefreshLoading(loading) {
+      var button = el("refreshBtn");
+      button.disabled = loading;
+      button.textContent = loading ? "Actualizando..." : "Actualizar";
+      button.setAttribute("aria-busy", loading ? "true" : "false");
     }
 
     function metric(label, value) {
@@ -1036,99 +1044,122 @@
       }
     }
 
-    async function loadDashboard() {
+    async function loadDashboard(options) {
+      options = options || {};
+      var manual = options.manual === true;
+      if (dashboardLoading) {
+        if (manual) toast("Ya se está actualizando.");
+        return false;
+      }
+      dashboardLoading = true;
       show(el("refreshBtn"), true);
       show(el("signOutBtn"), true);
-      var summaryResult = await client.rpc("admin_dashboard_summary");
-      if (summaryResult.error) {
-        show(el("appPanel"), false);
-        show(el("loginPanel"), true);
-        el("loginMessage").textContent = "Usuario no autorizado todavía.";
-        show(el("loginMessage"), true);
-        return;
-      }
+      setRefreshLoading(true);
 
-      var summary = summaryResult.data || {};
-      var clinics = summary.clinics || {};
-      var reviews = summary.reviews || {};
-      var jobs = summary.jobs || {};
-      var evidence = summary.evidence || {};
-      var automation = summary.automation || {};
+      try {
+        var summaryResult = await client.rpc("admin_dashboard_summary");
+        if (summaryResult.error) {
+          show(el("appPanel"), false);
+          show(el("refreshBtn"), false);
+          show(el("loginPanel"), true);
+          el("loginMessage").textContent = "Usuario no autorizado todavía.";
+          show(el("loginMessage"), true);
+          if (manual) toast("No se pudo actualizar: usuario no autorizado.");
+          return false;
+        }
 
-      el("metrics").innerHTML = [
-        metric("Clínicas", clinics.total || 0),
-        metric("Publicadas", clinics.published || 0),
-        metric("Revisión", reviews.open || 0),
-        metric("Fuentes", evidence.sources || 0),
-        metric("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada"),
-        metric("Modo sombra", automation.shadow_mode_active === false ? "No" : "Activo")
-      ].join("");
+        var summary = summaryResult.data || {};
+        var clinics = summary.clinics || {};
+        var reviews = summary.reviews || {};
+        var jobs = summary.jobs || {};
+        var evidence = summary.evidence || {};
+        var automation = summary.automation || {};
 
-      el("reviewCount").textContent = (reviews.open || 0) + " abiertas";
-      el("jobCount").textContent = (jobs.queued || 0) + " en cola";
-      el("clinicCount").textContent = (clinics.total || 0) + " fichas";
+        el("metrics").innerHTML = [
+          metric("Clínicas", clinics.total || 0),
+          metric("Publicadas", clinics.published || 0),
+          metric("Revisión", reviews.open || 0),
+          metric("Fuentes", evidence.sources || 0),
+          metric("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada"),
+          metric("Modo sombra", automation.shadow_mode_active === false ? "No" : "Activo")
+        ].join("");
 
-      var reviewRows = await client
-        .from("review_queue")
-        .select("id, job_id, clinic_id, title, review_type, priority, status, payload, created_at")
-        .eq("status", "open")
-        .order("priority", { ascending: true })
-        .order("created_at", { ascending: false })
-        .limit(100);
+        el("reviewCount").textContent = (reviews.open || 0) + " abiertas";
+        el("jobCount").textContent = (jobs.queued || 0) + " en cola";
+        el("clinicCount").textContent = (clinics.total || 0) + " fichas";
 
-      if (reviewRows.error || !reviewRows.data || reviewRows.data.length === 0) {
-        reviewCache = [];
-      } else {
-        reviewCache = reviewRows.data;
-      }
-      renderReviews();
+        var reviewRows = await client
+          .from("review_queue")
+          .select("id, job_id, clinic_id, title, review_type, priority, status, payload, created_at")
+          .eq("status", "open")
+          .order("priority", { ascending: true })
+          .order("created_at", { ascending: false })
+          .limit(100);
 
-      var jobRows = await client
-        .from("agent_jobs")
-        .select("job_type, status, confidence, cost_cents, created_at")
-        .order("created_at", { ascending: false })
-        .limit(8);
+        if (reviewRows.error || !reviewRows.data || reviewRows.data.length === 0) {
+          reviewCache = [];
+        } else {
+          reviewCache = reviewRows.data;
+        }
+        renderReviews();
 
-      var jobsBody = el("jobsBody");
-      if (jobRows.error || !jobRows.data || jobRows.data.length === 0) {
-        emptyRow(jobsBody, 5, "Sin trabajos recientes");
-      } else {
-        jobsBody.innerHTML = jobRows.data.map(function (row) {
-          return "<tr><td>" + html(row.job_type) + "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) + "</td><td>" + money(row.cost_cents) + "</td><td>" + date(row.created_at) + "</td></tr>";
-        }).join("");
-      }
+        var jobRows = await client
+          .from("agent_jobs")
+          .select("job_type, status, confidence, cost_cents, created_at")
+          .order("created_at", { ascending: false })
+          .limit(8);
 
-      var eventRows = await client
-        .from("change_events")
-        .select("event_name, actor_type, actor_id, entity_type, payload, created_at")
-        .order("created_at", { ascending: false })
-        .limit(10);
+        var jobsBody = el("jobsBody");
+        if (jobRows.error || !jobRows.data || jobRows.data.length === 0) {
+          emptyRow(jobsBody, 5, "Sin trabajos recientes");
+        } else {
+          jobsBody.innerHTML = jobRows.data.map(function (row) {
+            return "<tr><td>" + html(row.job_type) + "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) + "</td><td>" + money(row.cost_cents) + "</td><td>" + date(row.created_at) + "</td></tr>";
+          }).join("");
+        }
 
-      var eventsBody = el("eventsBody");
-      if (eventRows.error || !eventRows.data || eventRows.data.length === 0) {
-        el("eventCount").textContent = "0 movimientos";
-        emptyRow(eventsBody, 4, "Sin actividad reciente");
-      } else {
-        el("eventCount").textContent = eventRows.data.length + " movimientos";
-        eventsBody.innerHTML = eventRows.data.map(function (row) {
-          return "<tr><td><strong>" + html(eventLabel(row.event_name)) + "</strong><small>" +
-            html(row.event_name) + "</small></td><td>" + html(eventActor(row)) + "</td><td>" +
-            html(eventDetail(row)) + "</td><td>" + date(row.created_at) + "</td></tr>";
-        }).join("");
-      }
+        var eventRows = await client
+          .from("change_events")
+          .select("event_name, actor_type, actor_id, entity_type, payload, created_at")
+          .order("created_at", { ascending: false })
+          .limit(10);
 
-      var clinicRows = await client
-        .from("clinics")
-        .select("id, slug, canonical_name, display_name, website, country, city, region, address, status, summary, current_data, profile_confidence, verification_status, updated_at")
-        .order("updated_at", { ascending: false })
-        .limit(80);
+        var eventsBody = el("eventsBody");
+        if (eventRows.error || !eventRows.data || eventRows.data.length === 0) {
+          el("eventCount").textContent = "0 movimientos";
+          emptyRow(eventsBody, 4, "Sin actividad reciente");
+        } else {
+          el("eventCount").textContent = eventRows.data.length + " movimientos";
+          eventsBody.innerHTML = eventRows.data.map(function (row) {
+            return "<tr><td><strong>" + html(eventLabel(row.event_name)) + "</strong><small>" +
+              html(row.event_name) + "</small></td><td>" + html(eventActor(row)) + "</td><td>" +
+              html(eventDetail(row)) + "</td><td>" + date(row.created_at) + "</td></tr>";
+          }).join("");
+        }
 
-      if (clinicRows.error || !clinicRows.data || clinicRows.data.length === 0) {
-        clinicCache = [];
-        emptyRow(el("clinicsBody"), 6, "Sin clínicas");
-      } else {
-        clinicCache = clinicRows.data;
-        renderClinics();
+        var clinicRows = await client
+          .from("clinics")
+          .select("id, slug, canonical_name, display_name, website, country, city, region, address, status, summary, current_data, profile_confidence, verification_status, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(80);
+
+        if (clinicRows.error || !clinicRows.data || clinicRows.data.length === 0) {
+          clinicCache = [];
+          emptyRow(el("clinicsBody"), 6, "Sin clínicas");
+        } else {
+          clinicCache = clinicRows.data;
+          renderClinics();
+        }
+
+        if (manual) toast("Panel actualizado.");
+        return true;
+      } catch (error) {
+        console.error("No se pudo actualizar el panel", error);
+        toast("No se pudo actualizar. Revisa la conexión e inténtalo de nuevo.");
+        return false;
+      } finally {
+        dashboardLoading = false;
+        setRefreshLoading(false);
       }
     }
 
@@ -1256,6 +1287,8 @@
     async function signOut() {
       await client.auth.signOut();
       session = null;
+      dashboardLoading = false;
+      setRefreshLoading(false);
       show(el("appPanel"), false);
       show(el("refreshBtn"), false);
       show(el("signOutBtn"), false);
@@ -1291,7 +1324,9 @@
         if (button) openClinicEditor(button.getAttribute("data-edit-clinic"));
       });
       el("signOutBtn").addEventListener("click", signOut);
-      el("refreshBtn").addEventListener("click", loadDashboard);
+      el("refreshBtn").addEventListener("click", function () {
+        loadDashboard({ manual: true });
+      });
 
       var result = await client.auth.getSession();
       session = result.data && result.data.session;
