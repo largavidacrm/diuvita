@@ -73,10 +73,12 @@ export PGSSLMODE=require
   -c "select count(*) as discovery_shadow_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('admin_pick_agent_job', 'admin_complete_discovery_job', 'admin_create_draft_clinic_from_review', 'admin_resolve_review_item', 'admin_fail_agent_job');" \
   -c "select count(*) as candidate_dedupe_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('normalized_url_host', 'admin_candidate_duplicate_matches');" \
   -c "select count(*) as quality_audit_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_complete_quality_audit_job';" \
+  -c "select count(*) as human_field_lock_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'admin_set_clinic_field_locks';" \
   -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'diuvita_build_hook_url' and btrim(value) <> '';" \
   -c "select key, value from private.app_settings where key in ('diuvita_agents_enabled', 'diuvita_auto_publish_enabled', 'diuvita_shadow_review_target') order by key;" \
   -c "select status, count(*) from public.clinics group by status order by status;" \
   -c "select count(*) as open_review_items from public.review_queue where status = 'open';" \
   -c "select count(*) as candidate_source_records from public.source_records where entity_type = 'candidate_clinic';" \
   -c "select count(*) as shadow_field_claims from public.field_claims where agent_name = 'diuvita-shadow-discovery';" \
+  -c "select count(*) as active_human_field_locks from public.human_overrides where locked = true;" \
   -c "select count(*) as queued_jobs from public.agent_jobs where status = 'queued';"

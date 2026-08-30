@@ -172,6 +172,27 @@
             <label for="clinicVerification">Verificación</label>
             <input id="clinicVerification" name="clinicVerification">
           </div>
+          <fieldset class="field field-wide lock-panel">
+            <legend>Campos protegidos</legend>
+            <p id="clinicLockMeta">Sin protecciones cargadas.</p>
+            <div class="lock-grid">
+              <label><input type="checkbox" data-lock-field="profile.name"> Nombre</label>
+              <label><input type="checkbox" data-lock-field="contact.website"> Web</label>
+              <label><input type="checkbox" data-lock-field="summary"> Resumen</label>
+              <label><input type="checkbox" data-lock-field="location.country"> País</label>
+              <label><input type="checkbox" data-lock-field="location.city"> Ciudad</label>
+              <label><input type="checkbox" data-lock-field="location.region"> Región</label>
+              <label><input type="checkbox" data-lock-field="location.address"> Dirección</label>
+              <label><input type="checkbox" data-lock-field="services.list"> Servicios</label>
+              <label><input type="checkbox" data-lock-field="specialties.list"> Especialidades</label>
+              <label><input type="checkbox" data-lock-field="units.list"> Unidades</label>
+              <label><input type="checkbox" data-lock-field="professionals.published"> Especialistas</label>
+              <label><input type="checkbox" data-lock-field="technologies.list"> Tecnología</label>
+              <label><input type="checkbox" data-lock-field="contact.email"> Email</label>
+              <label><input type="checkbox" data-lock-field="contact.phone"> Teléfono</label>
+              <label><input type="checkbox" data-lock-field="contact.instagram"> Instagram</label>
+            </div>
+          </fieldset>
           <div class="field field-wide">
             <label for="clinicNote">Nota interna</label>
             <textarea id="clinicNote" name="clinicNote" rows="2"></textarea>
@@ -384,6 +405,7 @@
     var activeReview = null;
     var activeClinicReview = null;
     var activeClinicVersionRequest = 0;
+    var activeClinicLockRequest = 0;
     var dashboardLoading = false;
 
     function el(id) {
@@ -536,6 +558,88 @@
       }
     }
 
+    function lockBoxes() {
+      return Array.prototype.slice.call(document.querySelectorAll("[data-lock-field]"));
+    }
+
+    function setLockInputsDisabled(disabled) {
+      lockBoxes().forEach(function (box) {
+        box.disabled = disabled;
+      });
+    }
+
+    function selectedClinicLockPaths() {
+      return lockBoxes().filter(function (box) {
+        return box.checked;
+      }).map(function (box) {
+        return box.getAttribute("data-lock-field");
+      });
+    }
+
+    function clearClinicLocks() {
+      lockBoxes().forEach(function (box) {
+        box.checked = false;
+      });
+      el("clinicLockMeta").textContent = "Sin protecciones cargadas.";
+    }
+
+    function lockValueMap() {
+      return {
+        "profile.name": trimmed("clinicName"),
+        "contact.website": trimmed("clinicWebsite"),
+        "location.country": trimmed("clinicCountry"),
+        "location.city": trimmed("clinicCity"),
+        "location.region": trimmed("clinicRegion"),
+        "location.address": trimmed("clinicAddress"),
+        "summary": trimmed("clinicSummary"),
+        "services.list": linesToArray(el("clinicServices").value),
+        "specialties.list": linesToArray(el("clinicSpecialties").value),
+        "units.list": linesToArray(el("clinicUnits").value),
+        "professionals.published": linesToArray(el("clinicProfessionals").value),
+        "technologies.list": trimmed("clinicTech"),
+        "contact.email": trimmed("clinicEmail"),
+        "contact.phone": trimmed("clinicPhone"),
+        "contact.instagram": trimmed("clinicInstagram")
+      };
+    }
+
+    async function loadClinicFieldLocks(clinicId) {
+      var requestId = ++activeClinicLockRequest;
+      clearClinicLocks();
+      setLockInputsDisabled(true);
+      el("clinicLockMeta").textContent = "Cargando campos protegidos.";
+      var result = await client
+        .from("human_overrides")
+        .select("field_path")
+        .eq("clinic_id", clinicId)
+        .eq("entity_type", "clinic")
+        .eq("locked", true);
+      if (requestId !== activeClinicLockRequest) return;
+      setLockInputsDisabled(false);
+      if (result.error) {
+        el("clinicLockMeta").textContent = "No se pudieron cargar los campos protegidos.";
+        return;
+      }
+      var locked = new Set((result.data || []).map(function (row) {
+        return row.field_path;
+      }));
+      lockBoxes().forEach(function (box) {
+        box.checked = locked.has(box.getAttribute("data-lock-field"));
+      });
+      el("clinicLockMeta").textContent = locked.size
+        ? locked.size + " campos protegidos."
+        : "Sin campos protegidos.";
+    }
+
+    async function syncClinicFieldLocks(clinicId) {
+      return client.rpc("admin_set_clinic_field_locks", {
+        p_clinic_id: clinicId,
+        p_field_paths: selectedClinicLockPaths(),
+        p_values: lockValueMap(),
+        p_reason: trimmed("clinicNote") || null
+      });
+    }
+
     function publicStatus(status) {
       var map = {
         published: "publicada",
@@ -561,7 +665,8 @@
         quality_audit_completed: "Auditoría completada",
         clinic_profile_enrichment_proposals_created: "Propuestas de ficha creadas",
         public_site_rebuild_requested: "Publicación solicitada",
-        public_site_rebuild_skipped: "Publicación agrupada"
+        public_site_rebuild_skipped: "Publicación agrupada",
+        clinic_field_locks_updated: "Campos protegidos"
       };
       return labels[name] || name || "Movimiento";
     }
@@ -590,6 +695,9 @@
       }
       if (row.event_name === "clinic_profile_enrichment_proposals_created") {
         return ((payload.inserted || []).length || 0) + " nuevas; " + ((payload.existing || []).length || 0) + " ya estaban";
+      }
+      if (row.event_name === "clinic_field_locks_updated") {
+        return (payload.active_locked_fields || 0) + " campos protegidos";
       }
       if (row.event_name === "agent_job_failed") {
         return payload.error || "Revisar trabajo fallido";
@@ -955,6 +1063,7 @@
       setInput("clinicNote", "");
       resetProposalPreview();
       loadClinicVersions(activeClinic.id);
+      loadClinicFieldLocks(activeClinic.id);
       show(el("clinicEditor"), true);
       el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
       el("clinicName").focus();
@@ -1002,8 +1111,10 @@
 
     function closeClinicEditor() {
       activeClinicVersionRequest++;
+      activeClinicLockRequest++;
       activeClinic = null;
       activeClinicReview = null;
+      setLockInputsDisabled(false);
       show(el("clinicEditor"), false);
     }
 
@@ -1081,9 +1192,10 @@
       setJsonArray(currentData, "unidades", el("clinicUnits").value);
       setJsonArray(currentData, "profesionales", el("clinicProfessionals").value);
 
+      var clinicId = activeClinic.id;
       el("clinicSaveBtn").disabled = true;
       var result = await client.rpc("admin_update_clinic", {
-        p_clinic_id: activeClinic.id,
+        p_clinic_id: clinicId,
         p_display_name: name,
         p_website: trimmed("clinicWebsite") || null,
         p_country: country,
@@ -1097,12 +1209,22 @@
         p_verification_status: trimmed("clinicVerification") || "human_curated",
         p_change_note: trimmed("clinicNote") || null
       });
-      el("clinicSaveBtn").disabled = false;
 
       if (result.error) {
+        el("clinicSaveBtn").disabled = false;
         toast("No se pudo guardar la clínica.");
         return;
       }
+
+      var lockWarning = false;
+      try {
+        var lockResult = await syncClinicFieldLocks(clinicId);
+        lockWarning = Boolean(lockResult && lockResult.error);
+      } catch (error) {
+        console.error("No se pudieron sincronizar los campos protegidos", error);
+        lockWarning = true;
+      }
+      el("clinicSaveBtn").disabled = false;
 
       if (activeClinicReview && activeClinicReview.clinic_id === activeClinic.id) {
         var defaultNote = activeClinicReview.review_type === "clinic_profile_enrichment"
@@ -1117,7 +1239,9 @@
 
       closeClinicEditor();
       await loadDashboard();
-      if (selectedStatus === "published" || selectedStatus === "preliminary") {
+      if (lockWarning) {
+        toast("Clínica guardada, pero no se actualizaron los campos protegidos.");
+      } else if (selectedStatus === "published" || selectedStatus === "preliminary") {
         toast("Clínica guardada. Publicación iniciada.");
       } else {
         toast("Clínica guardada. No está publicada.");

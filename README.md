@@ -31,10 +31,12 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SHADOW_VERIFIER.md`: primer verificador local que desafía claims extraídos antes de reglas/publicación.
 - `docs/SHADOW_REVIEW_SUBMISSION.md`: conexión entre extractor/verificador shadow y tarjetas internas del admin.
 - `docs/ADMIN_DIGEST.md`: resumen interno de CTO para revisiones, jobs y costes registrados.
+- `docs/HUMAN_FIELD_LOCKS.md`: protecciones para campos corregidos manualmente por Daniel.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.
 - `supabase/migrations/0005_private_rebuild_hook.sql`: gancho privado de Supabase para reconstruir Netlify tras cambios publicables.
+- `supabase/migrations/0012_human_field_locks.sql`: función de admin para proteger campos corregidos manualmente.
 - `scripts/export_supabase_seed.py`: exporta las clinicas actuales a SQL para Supabase.
 - `scripts/export_supabase_bootstrap.py`: genera un SQL unico con migracion e importacion inicial.
 - `scripts/apply_supabase_bootstrap.sh`: aplica el bootstrap contra Supabase usando `DATABASE_URL` local.
