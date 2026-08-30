@@ -178,6 +178,31 @@ def split_text_list(value):
         text = text.replace(sep, ",")
     return visible_values(text.split(","))
 
+def contact_count(c):
+    return sum(1 for key in ("email", "telefono", "instagram") if str(c.get(key) or "").strip())
+
+def stat_items(c):
+    services_count = len(visible_values(c.get("services")))
+    specialties_count = len(visible_values(c.get("specialties")))
+    units_count = len(visible_values(c.get("unidades")))
+    specialists_count = len(visible_values(c.get("profesionales")))
+    tech_count = len(split_text_list(c.get("tech")))
+    contacts = contact_count(c)
+    items = []
+    if services_count:
+        items.append(("Servicios", services_count))
+    if specialties_count:
+        items.append(("Especialidades", specialties_count))
+    if units_count:
+        items.append(("Unidades", units_count))
+    if specialists_count:
+        items.append(("Especialistas", specialists_count))
+    if tech_count:
+        items.append(("Tecnología", tech_count))
+    if contacts:
+        items.append(("Contacto", contacts))
+    return items
+
 clinics = [normalize_clinic(c) for c in load_clinics()]
 clinics = [c for c in clinics if c.get("status") in ("publicada", "preliminar")]
 clinics = sort_clinics(clinics)
@@ -257,13 +282,17 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .clear-btn{font:inherit;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);padding:.4rem .7rem;font-weight:800;cursor:pointer}
 .clear-btn:disabled{cursor:not-allowed;opacity:.45}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:1rem}
-.card{position:relative;display:flex;flex-direction:column;min-height:315px;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.card{position:relative;display:flex;flex-direction:column;min-height:365px;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
 .card:hover{transform:translateY(-2px);border-color:#cbd9ce;box-shadow:var(--shadow)}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem;min-height:48px}
 .card .loc{display:block;margin-top:.35rem;color:var(--coral);font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
 .card h3{margin-top:.25rem;font-family:'Fraunces',Georgia,serif;font-size:1.28rem;font-weight:600;line-height:1.12}
 .card h3 a{color:var(--ink)}
 .card p{margin-top:.6rem;color:var(--muted);font-size:.96rem;flex:1}
+.card-signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.85rem}
+.card-signals div{min-width:0;border:1px solid var(--line);border-radius:8px;background:#fff;padding:.45rem .55rem}
+.card-signals dt{color:var(--muted);font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-signals dd{margin:.12rem 0 0;color:var(--green-deep);font-size:1rem;font-weight:800;line-height:1}
 .tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.8rem}
 .tag{display:inline-flex;align-items:center;min-height:1.55rem;font-size:.78rem;padding:.18rem .55rem;border-radius:8px;background:var(--wash);color:var(--green-deep)}
 .badge{display:inline-flex;align-items:center;min-height:1.45rem;font-size:.72rem;padding:.18rem .5rem;border-radius:8px;background:var(--soft);color:var(--muted);font-weight:800;white-space:nowrap}
@@ -278,9 +307,14 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .ficha{max-width:1120px;margin:0 auto;padding:2.1rem 5vw 4rem}
 .crumbs{font-size:.9rem;color:var(--muted);margin-bottom:1.25rem}
 .clinic-intro{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:2rem;align-items:start}
+.clinic-main{min-width:0}
 .clinic-main h1,.ficha>h1{font-family:'Fraunces',Georgia,serif;font-size:3.05rem;font-weight:500;line-height:1.04;text-wrap:balance}
-.ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0}
+.ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0;overflow-wrap:anywhere}
 .ficha .summary{max-width:720px;margin-top:1rem;font-size:1.18rem;color:var(--ink)}
+.profile-snapshot{max-width:760px;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:.55rem;margin-top:1rem}
+.profile-snapshot div{min-width:0;border:1px solid var(--line);border-radius:8px;background:rgba(255,253,248,.88);padding:.55rem .65rem}
+.profile-snapshot dt{color:var(--muted);font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-snapshot dd{margin:.12rem 0 0;color:var(--green-deep);font-size:1.25rem;font-weight:800;line-height:1}
 .profile-jump{display:grid;gap:.45rem;margin-top:1rem}
 .profile-jump-label{color:var(--muted);font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
 .profile-nav{display:flex;flex-wrap:wrap;gap:.45rem}
@@ -313,12 +347,13 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .muted-copy{color:var(--muted)}
 .visit{display:inline-flex;justify-content:center;align-items:center;margin-top:.25rem;background:var(--green);color:#fff;padding:.68rem 1rem;border-radius:8px;font-weight:800;text-align:center}
 .visit:hover{text-decoration:none;background:var(--green-deep)}
+.clinic-side .visit{width:100%}
 .note{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:1rem 1.1rem;font-size:.93rem;color:var(--muted);margin-top:1.4rem}
 footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.9rem;background:rgba(255,253,248,.56)}
 footer p{max-width:1120px;margin:0 auto}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 @media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.hero-stats,.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
-@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.logo-strip{padding-left:5vw}.facts{grid-template-columns:1fr}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.logo-strip{padding-left:5vw}.facts{grid-template-columns:1fr}.profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;justify-content:space-between;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -362,7 +397,11 @@ def attrs(c):
         c.get("region", ""),
         c.get("address", ""),
         c.get("summary", ""),
+        c.get("web", ""),
         c.get("tech", ""),
+        c.get("email", ""),
+        c.get("telefono", ""),
+        c.get("instagram", ""),
         " ".join(c["specialties"]),
         " ".join(c["services"]),
         " ".join(c.get("unidades", [])),
@@ -383,15 +422,32 @@ def logo_img(c, ficha=False):
     cls = "logobox flogo" if ficha else "logobox"
     return f'<span class="{cls}"><img src="/assets/logos/{sub}/{h(fn)}" alt="Logo de {h(c["name"])}" loading="lazy"></span>'
 
+def card_signal_html(c):
+    items = stat_items(c)
+    if not items:
+        return ""
+    featured = []
+    for label, count in items:
+        if label != "Especialidades":
+            featured.append((label, count))
+    if len(featured) < 2:
+        featured = items
+    return '<dl class="card-signals" aria-label="Datos visibles de la ficha">' + "".join(
+        f"<div><dt>{h(label)}</dt><dd>{h(count)}</dd></div>"
+        for label, count in featured[:4]
+    ) + "</dl>"
+
 def card(c):
     badge = '<span class="badge">Preliminar</span>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
     summary = h(c["summary"][:150]) + ("…" if len(c["summary"]) > 150 else "")
+    signals = card_signal_html(c)
     return f'''<article class="card" {attrs(c)}><div class="card-head">{logo_img(c)}{badge}</div>
 <span class="loc">{h(c["city"])}{h(extra)} · {h(c["country"])}</span>
 <h3><a href="/clinica/{h(c["slug"])}/">{h(c["name"])}</a></h3>
 <p>{summary}</p>
+{signals}
 <div class="tags">{tags}</div><a class="card-cta" href="/clinica/{h(c["slug"])}/">Ver ficha</a></article>'''
 
 # --- index ---
@@ -561,6 +617,15 @@ def profile_nav_item(label, count, target):
         f'<span class="profile-nav-count" aria-hidden="true">{h(count)}</span></a>'
     )
 
+def profile_snapshot(c):
+    items = stat_items(c)
+    if not items:
+        return ""
+    return '<dl class="profile-snapshot" aria-label="Resumen rápido de la ficha">' + "".join(
+        f"<div><dt>{h(label)}</dt><dd>{h(count)}</dd></div>"
+        for label, count in items
+    ) + "</dl>"
+
 def profile_nav(c, has_contact, has_tech):
     items = []
     specs = visible_values(c.get("specialties"))
@@ -578,8 +643,7 @@ def profile_nav(c, has_contact, has_tech):
     if professionals:
         items.append(profile_nav_item("Especialistas", len(professionals), "#especialistas"))
     if has_contact:
-        contact_count = sum(1 for key in ("email", "telefono", "instagram") if c.get(key))
-        items.append(profile_nav_item("Contacto", contact_count, "#contacto"))
+        items.append(profile_nav_item("Contacto", contact_count(c), "#contacto"))
     if not items:
         return ""
     return '<div class="profile-jump"><span class="profile-jump-label">En esta ficha</span><nav class="profile-nav" aria-label="Contenido de la ficha">' + "".join(items) + "</nav></div>"
@@ -594,6 +658,7 @@ def ficha(c):
     tech = tech_block(c)
     equipo = list_section("Especialistas publicados por la clínica", c.get("profesionales"), section_id="especialistas")
     nav = profile_nav(c, bool(contacto), bool(tech))
+    snapshot = profile_snapshot(c)
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     city_label = c["city"] + extra
@@ -623,6 +688,7 @@ def ficha(c):
 <section class="clinic-intro"><div class="clinic-main">{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
 <div class="tags">{tags}</div>
 <p class="summary">{h(c["summary"])}</p>
+{snapshot}
 {nav}
 </div>{sidebar_html}</section>
 <div class="profile-sections">
