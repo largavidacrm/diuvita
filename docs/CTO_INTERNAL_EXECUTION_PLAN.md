@@ -50,6 +50,7 @@ Already built:
 - Admin system status shows whether source monitoring is fresh or pending.
 - Admin system status shows source snapshot retention without enabling cleanup.
 - Admin system status shows specialist coverage for visible clinic profiles.
+- Admin system status shows visible-profile completeness without editing clinic data.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
 - Source snapshot retention can be measured read-only before any cleanup policy.
@@ -62,13 +63,14 @@ Already built:
 - Daniel-facing review brief exists in `scripts/daniel_review_brief.py`, read-only and suitable for future notifications.
 - Review maturity can be measured read-only before considering low-risk auto-publish expansion.
 - Published specialist coverage can be measured read-only before creating more team-detail workflows.
+- Visible profile completeness can be measured read-only across summary, contact, services, units, specialists and technology.
 - Stored field claims can be evaluated read-only against publication rules before any policy change.
 - Blocking field claims can be routed into internal quality-review cards without editing clinic data.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
 - Internal profile-enrichment review cards for existing clinics.
-- Public clinic pages display richer fields: contact, services, specialties, units, tech and published specialists.
+- Public clinic pages display richer fields with clearer navigation, section counts and more scannable lists.
 
 Not yet mature:
 
@@ -80,6 +82,7 @@ Not yet mature:
 - Deterministic field rules exist locally, but low-risk auto-approval stays disabled until accuracy is measured.
 - Doctor, pricing, treatment and SEO workflows.
 - Specialist coverage can now be measured, but publication of new professional details still needs manual review.
+- Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
 - Daily/weekly digest.
 - Rollback controls in the admin UI need operational usage, but the restore path now exists.
 - Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.
@@ -275,6 +278,8 @@ Next 10 technical steps:
 14. Show source-monitoring freshness in the admin control center. Done locally in `/admin/`, using source records and latest snapshots.
 15. Turn rejected/conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle.
 16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py` and surfaced in `/admin/`; no cleanup/deletion path is enabled.
+17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/`.
+18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with section counts, a clear "En esta ficha" jump area and lighter profile lists.
 
 ## Daniel decision checkpoints
 
