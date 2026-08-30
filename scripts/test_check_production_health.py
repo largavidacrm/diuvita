@@ -75,6 +75,7 @@ def main():
     check("openSourceTargetBtn" in admin_check["markers"], "admin deployment should include next source button marker")
     check("reviewGuidancePanel" in admin_check["markers"], "admin deployment should include review guidance panel marker")
     check("Paso recomendado" in admin_check["markers"], "admin deployment should include recommended step marker")
+    check("Orden recomendado" in admin_check["markers"], "admin deployment should include clinic workgroup guidance marker")
     check("Campo más pendiente" in admin_check["markers"], "admin deployment should include top pending field marker")
     check("Siguiente ficha" in admin_check["markers"], "admin deployment should include next profile marker")
     check("Siguiente especialistas" in admin_check["markers"], "admin deployment should include specialist next action marker")

@@ -721,6 +721,39 @@ td small {
   gap: 0.55rem;
 }
 
+.related-review-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.7rem;
+  border: 1px solid rgba(30, 122, 90, 0.22);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.related-review-plan span:not(.pill) {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.related-review-plan strong {
+  display: block;
+  margin-top: 0.16rem;
+  line-height: 1.22;
+}
+
+.related-review-counts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
 .rule-item,
 .related-review-item {
   display: grid;
@@ -1121,10 +1154,11 @@ td small {
   .metrics,
   .work-grid,
   .detail-grid,
-  .diff-cols,
-  .review-flow-steps,
-  .version-item,
-  .claim-item,
+    .diff-cols,
+    .review-flow-steps,
+    .related-review-plan,
+    .version-item,
+    .claim-item,
   .source-item,
   .rule-item,
   .edit-form {

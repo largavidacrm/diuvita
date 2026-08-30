@@ -16,6 +16,7 @@ def main() -> None:
 
     for marker in [
         'id="relatedReviewsPanel"',
+        'id="relatedReviewPlan"',
         'id="relatedReviewsList"',
         "function reviewBacklogQuality",
         "function reviewBacklogGuardStatus",
@@ -33,6 +34,11 @@ def main() -> None:
         "function duplicateEnrichmentClinicIds",
         "function isDuplicateEnrichmentReview",
         "function relatedOpenReviews",
+        "function reviewWorkgroupRank",
+        "function sortReviewWorkgroup",
+        "function clinicReviewBundle",
+        "function reviewWorkgroupRecommendation",
+        "function renderRelatedReviewPlan",
         "function renderRelatedReviews",
         "function reviewTypeCell",
         "duplicateClinics",
@@ -41,7 +47,8 @@ def main() -> None:
         "data-review-duplicate",
         "data-related-review-id",
         "Otras revisiones de esta clínica",
-        "tarjetas abiertas relacionadas",
+        "tarjetas abiertas en este grupo",
+        "Orden recomendado",
         "Atascos",
         "Varias propuestas",
         "Duplicados mejoras",
@@ -65,6 +72,8 @@ def main() -> None:
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     for marker in [
         ".related-reviews",
+        ".related-review-plan",
+        ".related-review-counts",
         ".related-review-list",
         ".related-review-item",
     ]:

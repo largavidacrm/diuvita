@@ -341,6 +341,7 @@
               <h3>Otras revisiones de esta clínica</h3>
               <p id="relatedReviewsMeta">Tarjetas abiertas para revisar juntas.</p>
             </div>
+            <div class="related-review-plan" id="relatedReviewPlan"></div>
             <div class="related-review-list" id="relatedReviewsList"></div>
           </section>
           <div class="field">
@@ -2181,19 +2182,76 @@
       });
     }
 
+    function reviewWorkgroupRank(row) {
+      if (isBlockingClaimReview(row)) return 1;
+      if (row.review_type === "source_change_detected") return 2;
+      if (row.review_type === "clinic_profile_enrichment") return 3;
+      if (row.review_type === "clinic_quality_audit") return 4;
+      if (row.review_type === "candidate_clinic") return 5;
+      return 9;
+    }
+
+    function sortReviewWorkgroup(rows) {
+      return (rows || []).slice().sort(function (a, b) {
+        return reviewWorkgroupRank(a) - reviewWorkgroupRank(b) ||
+          Number(b.priority || 0) - Number(a.priority || 0) ||
+          (parseDateValue(a.created_at) || new Date(8640000000000000)) -
+          (parseDateValue(b.created_at) || new Date(8640000000000000));
+      });
+    }
+
+    function clinicReviewBundle(row) {
+      if (!row) return [];
+      return sortReviewWorkgroup([row].concat(relatedOpenReviews(row)));
+    }
+
+    function reviewWorkgroupRecommendation(rows) {
+      rows = rows || [];
+      if (rows.some(isBlockingClaimReview)) {
+        return "Empieza por el claim bloqueante y deja fuera cualquier dato dudoso antes de guardar.";
+      }
+      if (rows.some(function (item) { return item.review_type === "source_change_detected"; })) {
+        return "Empieza por la fuente cambiada y después consolida las mejoras de ficha.";
+      }
+      if (rows.some(function (item) { return item.review_type === "clinic_profile_enrichment"; })) {
+        return "Revisa las mejoras juntas y guarda una sola versión coherente de la ficha.";
+      }
+      return "Revisa estas tarjetas juntas antes de decidir si la ficha se guarda o se cierra.";
+    }
+
+    function renderRelatedReviewPlan(row, bundle) {
+      var node = el("relatedReviewPlan");
+      var counts = [
+        ["Bloqueantes", countWhere(bundle, isBlockingClaimReview)],
+        ["Fuentes", countWhere(bundle, function (item) { return item.review_type === "source_change_detected"; })],
+        ["Mejoras", countWhere(bundle, function (item) { return item.review_type === "clinic_profile_enrichment"; })],
+        ["Auditorías", countWhere(bundle, function (item) { return item.review_type === "clinic_quality_audit" && !isBlockingClaimReview(item); })]
+      ].filter(function (item) { return item[1] > 0; });
+      var chips = counts.map(function (item) {
+        return '<span class="pill' + (item[0] === "Bloqueantes" ? " warning" : "") + '">' +
+          html(item[0] + ": " + item[1]) + '</span>';
+      }).join("");
+      node.innerHTML = '<div><span>Orden recomendado</span><strong>' +
+        html(reviewWorkgroupRecommendation(bundle)) + '</strong></div><div class="related-review-counts">' +
+        chips + '<span class="pill">Actual: ' + html(reviewVisibleLabel(row)) + '</span></div>';
+    }
+
     function renderRelatedReviews(row) {
       var panel = el("relatedReviewsPanel");
       var list = el("relatedReviewsList");
-      var related = relatedOpenReviews(row);
+      var bundle = clinicReviewBundle(row);
+      var related = sortReviewWorkgroup(relatedOpenReviews(row));
       if (!related.length) {
         show(panel, false);
         list.innerHTML = "";
+        el("relatedReviewPlan").innerHTML = "";
         return;
       }
       show(panel, true);
-      el("relatedReviewsMeta").textContent = related.length + (related.length === 1
-        ? " tarjeta abierta relacionada."
-        : " tarjetas abiertas relacionadas.");
+      el("relatedReviewsMeta").textContent = bundle.length + (bundle.length === 1
+        ? " tarjeta abierta en este grupo."
+        : " tarjetas abiertas en este grupo.");
+      renderRelatedReviewPlan(row, bundle);
       list.innerHTML = related.map(function (item) {
         return '<button class="related-review-item" type="button" data-related-review-id="' + html(item.id) + '">' +
           '<strong>' + html(reviewVisibleLabel(item)) + '</strong>' +

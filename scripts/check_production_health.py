@@ -38,6 +38,7 @@ CHECKS = [
             "globalPlanPanel",
             "reviewGuidancePanel",
             "Paso recomendado",
+            "Orden recomendado",
             "Siguiente especialistas",
             "Duplicados mejoras",
             "Grupo por clínica",

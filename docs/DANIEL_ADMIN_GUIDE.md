@@ -64,6 +64,10 @@ El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
 que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
 auditoría, cambio de fuente y mejoras abiertas a la vez.
 
+Dentro de una tarjeta con varias revisiones relacionadas verás **Orden
+recomendado**. Empieza por lo que marque ahí: normalmente claims bloqueantes o
+fuentes cambiadas antes de guardar la ficha final.
+
 El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
 marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la
 bandeja por esa clínica.

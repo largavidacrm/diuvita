@@ -54,3 +54,12 @@ Ejemplos:
 python3 scripts/netlify_ignore_build.py --files docs/CTO_ROADMAP.md scripts/admin_digest.py
 python3 scripts/netlify_ignore_build.py --files admin/index.html
 ```
+
+## Comprobacion en Supabase
+
+```bash
+scripts/check_supabase_rebuild_batching.sh
+```
+
+Esta comprobacion no muestra el build hook privado, solo si existe, si la
+ventana esta configurada y si la funcion de Supabase ya usa esa ventana.

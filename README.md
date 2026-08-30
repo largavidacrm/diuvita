@@ -66,6 +66,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/export_supabase_bootstrap.py`: genera un SQL unico con migracion e importacion inicial.
 - `scripts/apply_supabase_bootstrap.sh`: aplica el bootstrap contra Supabase usando `DATABASE_URL` local.
 - `scripts/check_supabase_foundation.sh`: comprueba recuentos basicos de la base Supabase.
+- `scripts/check_supabase_rebuild_batching.sh`: comprueba si Supabase agrupa peticiones de rebuild a Netlify.
 - `scripts/capture_source_snapshot.py`: captura metadatos, hash y extracto corto de una fuente publica.
 - `scripts/source_snapshot_records.py`: helpers SQL para guardar capturas compactas en Supabase.
 - `scripts/diuvita_rules.py`: motor local de reglas por riesgo de campo.
