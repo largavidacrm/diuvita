@@ -59,7 +59,7 @@ PUBLIC_PRICING_RE = re.compile(
     re.I,
 )
 NAME_WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{2,}"
-TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora)"
+TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora|Lic\.?|Licenciado|Licenciada)"
 PROFESSIONAL_RE = re.compile(
     rf"\b(?P<title>{TITLE_PREFIX})\s+(?P<name>{NAME_WORD}(?:\s+{NAME_WORD}){{0,5}})"
 )
@@ -84,16 +84,23 @@ ROLE_PHRASES = (
     "Gerente/Nutrición",
     "Gerente",
     "Nutrición",
+    "Nutrición funcional",
+    "Nutricionista y experta en Microbiota",
+    "Nutricionista",
     "Subdirectora",
     "Subdirector",
     "Medicina Estética y Longevidad",
     "Medicina Integrativa",
+    "Medicina Interna",
+    "Ginecología regenerativa y Salud integral de la mujer",
+    "Neurofisiólogo clínico",
     "Otorrinolaringología",
     "Otorrino",
     "Anestesia",
     "Flebología",
     "Cirugía Plástica",
     "Atención al Paciente",
+    "Atencion al paciente",
     "Técnico Auxiliar",
     "Responsable RRSS",
 )
@@ -101,6 +108,7 @@ ROLE_START_WORDS = {
     "Administración",
     "Anestesia",
     "Atención",
+    "Atencion",
     "Cardiología",
     "Cardiologia",
     "Cardióloga",
@@ -120,6 +128,8 @@ ROLE_START_WORDS = {
     "Consulta",
     "Cosmética",
     "Cosmetica",
+    "Clínico",
+    "Clinico",
     "Dirección",
     "Dermatología",
     "Dermatologia",
@@ -136,6 +146,8 @@ ROLE_START_WORDS = {
     "Especialista",
     "Estética",
     "Estetica",
+    "Experta",
+    "Experto",
     "Fertilidad",
     "Fisioterapia",
     "Fisioterapeuta",
@@ -150,13 +162,19 @@ ROLE_START_WORDS = {
     "Ginecologa",
     "Ginecólogo",
     "Ginecologo",
+    "Interna",
     "Longevidad",
+    "Microbiota",
     "Médica",
     "Médico",
     "Medicina",
     "Medico",
+    "Mujer",
+    "Neurofisiólogo",
+    "Neurofisiologo",
     "Nutrición",
     "Nutricion",
+    "Nutricionista",
     "Oncológica",
     "Oncologica",
     "Oncología",
@@ -165,6 +183,7 @@ ROLE_START_WORDS = {
     "Otorrino",
     "Otorrinolaringología",
     "Otorrinolaringologia",
+    "Paciente",
     "Psicología",
     "Psicologia",
     "Responsable",
@@ -177,7 +196,7 @@ ROLE_START_WORDS = {
     "Unidad",
     "Unidades",
 }
-TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora"}
+TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora", "Lic", "Licenciado", "Licenciada"}
 CLINIC_NAME_TERMS = {
     "age",
     "center",
@@ -311,8 +330,14 @@ def name_words(raw: str) -> list[str]:
 
 def normalize_professional_title(raw: str) -> str:
     title = normalize_space(raw).rstrip(".")
-    title = "Dr." if title.lower().startswith(("dr", "doctor")) and not title.lower().startswith(("dra", "doctora")) else title
-    return "Dra." if title.lower().startswith(("dra", "doctora")) else title
+    lower = title.lower()
+    if lower.startswith(("dra", "doctora")):
+        return "Dra."
+    if lower.startswith(("dr", "doctor")):
+        return "Dr."
+    if lower.startswith(("lic", "licenciado", "licenciada")):
+        return "Lic."
+    return title
 
 
 def title_name_segment(text: str, start: int) -> str:

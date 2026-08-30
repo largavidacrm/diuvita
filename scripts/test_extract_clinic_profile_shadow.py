@@ -134,6 +134,30 @@ def main():
         "Arvila role/context text should not be part of extracted names",
     )
 
+    kairos_professionals = extract_professionals(
+        "Conoce nuestro equipo Dra. Anna Paola Medicina Estética Regenerativa y Longevidad "
+        "Dra. Marieta Ramírez Ginecología regenerativa y Salud integral de la mujer "
+        "Dr. Manuel Lujan Neurofisiólogo clínico, experto en medicina del sueño. "
+        "Lic. Carolina Toledo Nutrición funcional Dra. Ivanna Gonzalez Medicina Interna "
+        "Lic. María Sanchez Vecino Nutricionista y experta en Microbiota "
+        "Graciela García Atención al paciente Contacto"
+    )
+    check("Dra. Anna Paola" in kairos_professionals, "Kairos doctor should stop before specialty")
+    check("Dra. Marieta Ramírez" in kairos_professionals, "Kairos gynecology role should not merge")
+    check("Dr. Manuel Lujan" in kairos_professionals, "Kairos neurophysiology role should not merge")
+    check("Lic. Carolina Toledo" in kairos_professionals, "Lic. title should be captured")
+    check("Lic. María Sanchez Vecino" in kairos_professionals, "Lic. nutritionist should be captured")
+    check(
+        all(
+            "Neurofisiólogo" not in item
+            and "Medicina" not in item
+            and "Nutricionista" not in item
+            and "Microbiota" not in item
+            for item in kairos_professionals
+        ),
+        "Kairos role/context text should not be part of extracted names",
+    )
+
     noisy_title_html = b"""
 <!doctype html>
 <html>

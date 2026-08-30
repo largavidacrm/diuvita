@@ -71,7 +71,7 @@ That folder is local/ignored by Git.
 ## Current limitations
 
 - It only detects obvious contact details, public specialist names with clear
-  doctor titles or name-role pairs inside explicit team sections, clinical
+  professional titles (`Dr.`, `Dra.`, `Lic.`) or name-role pairs inside explicit team sections, clinical
   units, transparency signals and known longevity keywords.
 - It does not infer years in practice from founding dates yet.
 - It does not fetch or verify Google Maps profiles yet; those links are edited
