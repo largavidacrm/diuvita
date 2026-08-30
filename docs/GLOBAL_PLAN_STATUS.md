@@ -13,7 +13,8 @@ It combines the protected admin digest with the roadmap lanes:
 - growth workflows still waiting for stronger accuracy and lower review load.
 
 The "Siguiente trabajo recomendado" section also includes the first clinic
-workgroup, so Daniel can clear several related review cards in one session.
+workgroup and the first Google Maps/review-link proposal, so Daniel can clear
+several related review cards in one session.
 
 The same executive view is surfaced in `/admin/` as **Plan global**, above the
 detailed system status.

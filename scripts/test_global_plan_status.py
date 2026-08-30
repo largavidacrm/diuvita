@@ -67,6 +67,15 @@ def sample_digest():
             "source_change_reviews": 0,
             "candidate_reviews": 0,
         },
+        "google_link_reviews": {
+            "open_count": 4,
+            "first_review": {
+                "review_type": "clinic_profile_enrichment",
+                "priority": 60,
+                "clinic_name": "Sensabell",
+                "title": "Completar enlaces Google: Sensabell",
+            },
+        },
         "profile_completeness": {
             "visible_clinics": 19,
             "pending_google_maps": 19,
@@ -111,6 +120,7 @@ def main():
     check("Ciclo autónomo: activo en sombra" in output, "shadow cycle line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
+    check("Google Maps propuestos: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps proposed line missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending field missing")
