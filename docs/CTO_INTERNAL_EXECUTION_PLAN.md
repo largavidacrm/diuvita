@@ -231,7 +231,7 @@ Next 10 technical steps:
 4. Add human-lock controls for fields Daniel corrects manually.
 5. Add source snapshot capture for reviewed proposals.
 6. Convert enrichment proposals into `field_claims`, not only review payloads.
-7. Add a deterministic rules module for field risk.
+7. Add a deterministic rules module for field risk. Done locally in `scripts/diuvita_rules.py`; next step is integrating it with extraction and verification jobs.
 8. Build a shadow `EXTRACT_CLINIC_PROFILE` script for one clinic URL.
 9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims.
 10. Add a daily digest card/report for open reviews, failed jobs and costs.
