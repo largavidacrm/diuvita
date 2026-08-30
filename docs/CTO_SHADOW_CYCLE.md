@@ -63,7 +63,8 @@ but avoids printing full evidence payloads, long text digests or large claim lis
 Source monitoring respects cadence by default, so a healthy run may report zero
 checked sources when all sources were recently observed.
 The JSON output also includes a `daniel_brief` block with the simple status,
-next action, review backlog, top missing clinic field and publication guard.
+next action, review backlog, top missing clinic field, next incomplete profile
+to review and publication guard.
 
 For a Daniel-readable run log:
 

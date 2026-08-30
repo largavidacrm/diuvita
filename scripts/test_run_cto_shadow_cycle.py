@@ -140,6 +140,12 @@ def main():
         "reviews_by_type": [{"review_type": "blocking_claim_review", "open_count": 1}],
         "open_reviews": [{"review_type": "blocking_claim_review", "priority": 95}],
         "profile_completeness": {"pending_specialists": 17, "pending_contact": 6},
+        "profile_next_target": {
+            "clinic_name": "Sensabell",
+            "pending_count": 4,
+            "next_pending_field": "Email o teléfono",
+            "open_relevant_reviews": 5,
+        },
     }
     cycle_brief = build_cycle_brief({
         "mode": "dry_run",
@@ -149,10 +155,12 @@ def main():
     check(cycle_brief["status"] == "ok", "clean cycle should be OK")
     check(cycle_brief["next_action"] == "Revisar claim bloqueante", "Daniel brief should keep next action")
     check(cycle_brief["profile_gap"] == "Especialistas · 17 fichas", "Daniel brief should keep top profile gap")
+    check("Sensabell" in cycle_brief["profile_next"], "Daniel brief should keep next profile target")
     check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
     brief_text = format_cycle_brief(cycle_brief)
     check("# Diuvita: resumen CTO automatico" in brief_text, "plain brief title missing")
     check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
+    check("Siguiente ficha: Revisar Sensabell" in brief_text, "plain brief next profile missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",

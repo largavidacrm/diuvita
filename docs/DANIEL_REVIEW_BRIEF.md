@@ -12,6 +12,7 @@ It is designed for future morning or weekly automations. It answers:
 - whether auto-publication is still off;
 - how many visible profiles still have measured public fields pending;
 - which measured public field is missing from the most visible profiles;
+- which incomplete visible profile should be reviewed next;
 - how many visible profiles include published specialists;
 - which missing-specialist profile is the best first review target;
 - whether the review inbox has repeated improvement cards for the same clinic;

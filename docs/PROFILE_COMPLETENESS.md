@@ -19,6 +19,11 @@ the current quality audit expects:
 It does not publish clinics, edit clinic data, resolve review cards or rank
 clinics by quality. The output is an internal operational checklist only.
 
+It also selects one suggested next profile to review. That suggestion is based
+on operational work already waiting in the admin queue first, then number of
+missing measured fields, then published profiles before preliminary profiles.
+It is not a quality ranking.
+
 ## Run
 
 ```bash
@@ -39,3 +44,5 @@ The top-line signal is also shown in `/admin/` as:
 
 - `Fichas completas`;
 - `Fichas con pendientes`.
+- `Campo más pendiente`;
+- `Siguiente ficha`.

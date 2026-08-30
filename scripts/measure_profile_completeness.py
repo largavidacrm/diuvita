@@ -60,14 +60,22 @@ with clinic_rows as (
         then 1
       else 0
     end as technology_count,
-    coalesce(reviews.open_quality_reviews, 0) as open_quality_reviews
+    coalesce(reviews.open_quality_reviews, 0) as open_quality_reviews,
+    coalesce(reviews.open_profile_reviews, 0) as open_profile_reviews,
+    coalesce(reviews.open_source_change_reviews, 0) as open_source_change_reviews,
+    coalesce(reviews.open_relevant_reviews, 0) as open_relevant_reviews
   from public.clinics c
   left join lateral (
-    select count(*) as open_quality_reviews
+    select
+      count(*) filter (where rq.review_type = 'clinic_quality_audit') as open_quality_reviews,
+      count(*) filter (where rq.review_type = 'clinic_profile_enrichment') as open_profile_reviews,
+      count(*) filter (where rq.review_type = 'source_change_detected') as open_source_change_reviews,
+      count(*) filter (
+        where rq.review_type in ('clinic_quality_audit', 'clinic_profile_enrichment', 'source_change_detected')
+      ) as open_relevant_reviews
     from public.review_queue rq
     where rq.clinic_id = c.id
       and rq.status = 'open'
-      and rq.review_type = 'clinic_quality_audit'
   ) reviews on true
   where c.status in ('published', 'preliminary')
 ),
@@ -126,7 +134,16 @@ field_summary as (
   from checks
 ),
 pending_profiles as (
-  select coalesce(jsonb_agg(to_jsonb(items) order by items.status, items.clinic_name), '[]'::jsonb) as data
+  select coalesce(
+    jsonb_agg(
+      to_jsonb(items)
+      order by items.open_relevant_reviews desc,
+        items.pending_count desc,
+        case when items.status = 'published' then 0 else 1 end,
+        items.clinic_name
+    ),
+    '[]'::jsonb
+  ) as data
   from (
     select
       slug,
@@ -135,17 +152,54 @@ pending_profiles as (
       status,
       pending_fields,
       coalesce(array_length(pending_fields, 1), 0) as pending_count,
-      open_quality_reviews
+      pending_fields[1] as next_pending_field,
+      open_quality_reviews,
+      open_profile_reviews,
+      open_source_change_reviews,
+      open_relevant_reviews
     from profile_checks
     where coalesce(array_length(pending_fields, 1), 0) > 0
-    order by status, clinic_name
+    order by open_relevant_reviews desc,
+      coalesce(array_length(pending_fields, 1), 0) desc,
+      case when status = 'published' then 0 else 1 end,
+      clinic_name
     limit {capped_limit}
   ) items
+),
+next_profile_target as (
+  select coalesce(
+    (
+      select to_jsonb(items)
+      from (
+        select
+          slug,
+          clinic_name,
+          city,
+          status,
+          pending_fields,
+          coalesce(array_length(pending_fields, 1), 0) as pending_count,
+          pending_fields[1] as next_pending_field,
+          open_quality_reviews,
+          open_profile_reviews,
+          open_source_change_reviews,
+          open_relevant_reviews
+        from profile_checks
+        where coalesce(array_length(pending_fields, 1), 0) > 0
+        order by open_relevant_reviews desc,
+          coalesce(array_length(pending_fields, 1), 0) desc,
+          case when status = 'published' then 0 else 1 end,
+          clinic_name
+        limit 1
+      ) items
+    ),
+    '{{}}'::jsonb
+  ) as data
 )
 select jsonb_build_object(
   'summary', (select data from summary),
   'field_summary', (select data from field_summary),
   'pending_profiles', (select data from pending_profiles),
+  'next_profile_target', (select data from next_profile_target),
   'generated_at', now()
 );
 """
@@ -170,12 +224,31 @@ def plural(value: int, singular: str, plural_text: str) -> str:
     return singular if value == 1 else plural_text
 
 
+def next_profile_action(report: dict[str, Any]) -> str:
+    target = report.get("next_profile_target") or {}
+    if not isinstance(target, dict) or not target:
+        return "sin ficha pendiente medida"
+    name = str(target.get("clinic_name") or target.get("slug") or "la primera ficha pendiente")
+    pending = as_int(target.get("pending_count"))
+    reviews = as_int(target.get("open_relevant_reviews"))
+    next_field = str(target.get("next_pending_field") or "").strip()
+    if reviews:
+        reason = f"ya tiene {reviews} {plural(reviews, 'revisión abierta relacionada', 'revisiones abiertas relacionadas')}"
+    elif pending:
+        reason = f"tiene {pending} {plural(pending, 'campo pendiente', 'campos pendientes')}"
+    else:
+        reason = "tiene campos pendientes"
+    if next_field:
+        return f"Revisar {name}: {reason}. Primer campo: {next_field}"
+    return f"Revisar {name}: {reason}"
+
+
 def format_pending_profile(row: dict[str, Any]) -> str:
     name = row.get("clinic_name") or row.get("slug") or "sin nombre"
     city = row.get("city") or "sin ciudad"
     status = status_label(str(row.get("status") or ""))
     pending_fields = row.get("pending_fields") or []
-    reviews = as_int(row.get("open_quality_reviews"))
+    reviews = as_int(row.get("open_relevant_reviews"))
     parts = [
         f"{name} · {city}",
         status,
@@ -202,6 +275,9 @@ def format_completeness(report: dict[str, Any]) -> str:
         f"- Con campos pendientes medidos: {pending_profiles} ({pct(pending_profiles, visible)})",
         f"- Con revisión interna de calidad abierta: {as_int(summary.get('with_open_quality_reviews'))}",
         "- Writes data: no",
+        "",
+        "## Siguiente acción",
+        f"- {next_profile_action(report)}",
         "",
         "## Campos medidos",
     ]

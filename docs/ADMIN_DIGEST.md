@@ -58,4 +58,6 @@ This is an operational signal only. It does not fetch sources, change public cli
 
 The digest also includes a read-only top-line completeness signal for visible
 profiles. It uses the same public-field checks as the quality-audit workflow and
-does not rank clinics, edit records or publish changes.
+does not rank clinics, edit records or publish changes. It also suggests one
+next visible profile to review, prioritizing profiles that already have related
+review cards open and then profiles with more measured public fields missing.

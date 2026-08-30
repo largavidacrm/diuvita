@@ -28,6 +28,7 @@ CHECKS = [
             "loadProfileCompleteness",
             "Fichas completas",
             "Campo más pendiente",
+            "Siguiente ficha",
             "Siguiente especialistas",
             "Duplicados mejoras",
             "Freno bandeja",

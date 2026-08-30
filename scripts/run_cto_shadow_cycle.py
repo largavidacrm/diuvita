@@ -18,6 +18,7 @@ from admin_digest import (
     SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
     as_int,
     next_action_label,
+    next_profile_action,
     top_pending_profile_field,
 )
 
@@ -294,12 +295,15 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     if admin_digest:
         next_action = next_action_label(admin_digest)
         profile_gap = top_pending_profile_field(admin_digest)
+        profile_next = next_profile_action(admin_digest)
     elif failed_step:
         next_action = "Revisar el paso detenido"
         profile_gap = "no medido"
+        profile_next = "no medida"
     else:
         next_action = "Sin accion urgente"
         profile_gap = "no medido"
+        profile_next = "no medida"
 
     auto_publish = bool(automation.get("auto_publish_enabled"))
     shadow_mode = bool(automation.get("shadow_mode_active"))
@@ -319,6 +323,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "open_reviews": open_reviews,
         "failed_jobs": failed_jobs,
         "profile_gap": profile_gap,
+        "profile_next": profile_next,
         "publication_guard": publication_guard,
         "shadow_mode": "activo" if shadow_mode else "inactivo",
         "production_health": production_health,
@@ -335,6 +340,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Que mirar primero: {brief.get('next_action')}.",
         f"- Revisiones abiertas: {brief.get('open_reviews')}",
         f"- Campo mas pendiente: {brief.get('profile_gap')}.",
+        f"- Siguiente ficha: {brief.get('profile_next')}.",
         f"- Publicacion: {brief.get('publication_guard')}",
         f"- Modo sombra: {brief.get('shadow_mode')}.",
         f"- Web publica: {brief.get('production_health')}.",

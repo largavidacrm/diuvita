@@ -4,6 +4,7 @@
 from admin_digest import (
     format_digest,
     next_action_label,
+    next_profile_action,
     next_specialist_action,
     review_backlog_guard_status,
     top_pending_profile_field,
@@ -128,10 +129,27 @@ def main():
             "pending_specialists": 17,
             "pending_technology": 5,
         },
+        "profile_next_target": {
+            "slug": "kairos-longevity-clinic",
+            "clinic_name": "Kairos Longevity Clinic",
+            "city": "Madrid",
+            "status": "published",
+            "pending_fields": ["Especialistas publicados", "Tecnología destacada"],
+            "pending_count": 2,
+            "next_pending_field": "Especialistas publicados",
+            "open_quality_reviews": 1,
+            "open_profile_reviews": 2,
+            "open_source_change_reviews": 1,
+            "open_relevant_reviews": 4,
+        },
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
     check(next_specialist_action(digest) == "Revisar Age Reversal: ya tiene 2 revisiones abiertas", "next specialist action missing")
+    check(
+        next_profile_action(digest) == "Revisar Kairos Longevity Clinic: ya tiene 4 revisiones abiertas relacionadas. Primer campo: Especialistas publicados",
+        "next profile action missing",
+    )
     check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
     check(top_pending_profile_field(digest) == "Especialistas · 17 fichas", "top pending profile field missing")
     limited_digest = dict(digest)
@@ -154,6 +172,7 @@ def main():
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist line missing")
     check("Fichas sin campos pendientes medidos: 1/19" in output, "profile completeness missing")
     check("Campo mas pendiente: Especialistas · 17 fichas" in output, "top pending profile field line missing")
+    check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Bajo riesgo: no lista" in output, "maturity signal missing")
     check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")

@@ -725,6 +725,7 @@
         pendingUnits: 0,
         pendingSpecialists: 0,
         pendingTechnology: 0,
+        nextTarget: null,
         unavailable: false
       };
     }
@@ -754,6 +755,18 @@
       });
       if (!fields.length) return "Sin campo pendiente";
       return fields[0].label + " · " + fields[0].count + " fichas";
+    }
+
+    function profileNextTargetLabel(target) {
+      if (!target) return "—";
+      var name = target.clinicName || target.slug || "Ficha pendiente";
+      if (target.openReviewCount) {
+        return name + " · " + target.openReviewCount + (target.openReviewCount === 1 ? " revisión" : " revisiones");
+      }
+      if (target.pendingCount) {
+        return name + " · " + target.pendingCount + (target.pendingCount === 1 ? " campo" : " campos");
+      }
+      return name + " · completar ficha";
     }
 
     function emptyPublicHealth() {
@@ -948,11 +961,22 @@
       return fields;
     }
 
-    async function loadProfileCompleteness() {
+    function profileTargetSort(a, b) {
+      return Number(b.openReviewCount || 0) - Number(a.openReviewCount || 0) ||
+        Number(b.pendingCount || 0) - Number(a.pendingCount || 0) ||
+        (text(a.status) === "published" ? 0 : 1) - (text(b.status) === "published" ? 0 : 1) ||
+        text(a.clinicName || a.slug).localeCompare(text(b.clinicName || b.slug));
+    }
+
+    function reviewMentionsProfileWork(row) {
+      return ["clinic_quality_audit", "clinic_profile_enrichment", "source_change_detected"].indexOf(row.review_type) >= 0;
+    }
+
+    async function loadProfileCompleteness(openReviews) {
       var completeness = emptyProfileCompleteness();
       var result = await client
         .from("clinics")
-        .select("status, website, address, summary, current_data")
+        .select("id, slug, display_name, city, status, website, address, summary, current_data")
         .in("status", ["published", "preliminary"])
         .limit(500);
 
@@ -961,6 +985,8 @@
         return completeness;
       }
 
+      var targets = [];
+      var targetById = {};
       (result.data || []).forEach(function (row) {
         var pending = profilePendingFields(row);
         completeness.visibleClinics += 1;
@@ -969,7 +995,28 @@
         pending.forEach(function (key) {
           completeness[key] += 1;
         });
+        if (pending.length) {
+          var target = {
+            clinicId: row.id,
+            slug: row.slug,
+            clinicName: row.display_name,
+            city: row.city,
+            status: row.status,
+            pendingFields: pending,
+            pendingCount: pending.length,
+            openReviewCount: 0
+          };
+          targets.push(target);
+          targetById[row.id] = target;
+        }
       });
+
+      (openReviews || []).forEach(function (row) {
+        if (!row.clinic_id || !targetById[row.clinic_id] || !reviewMentionsProfileWork(row)) return;
+        targetById[row.clinic_id].openReviewCount += 1;
+      });
+
+      completeness.nextTarget = targets.sort(profileTargetSort)[0] || null;
       return completeness;
     }
 
@@ -1397,6 +1444,7 @@
         systemItem("Fichas completas", completenessLabel, completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Campo más pendiente", topPendingProfileField(completeness), completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
+        systemItem("Siguiente ficha", profileNextTargetLabel(completeness.nextTarget), completeness.nextTarget ? "warning-text" : ""),
         systemItem("Duplicados mejoras", duplicateReviewLabel, backlogQuality.duplicateClinics ? "warning-text" : ""),
         systemItem("Tarjetas duplicadas", duplicateReviewDetail, backlogQuality.duplicateReviews ? "warning-text" : ""),
         systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
@@ -3074,7 +3122,7 @@
         var claimQuality = await loadClaimQuality();
         var sourceMonitoring = await loadSourceMonitoring();
         var specialistCoverage = await loadSpecialistCoverage(reviewCache);
-        var profileCompleteness = await loadProfileCompleteness();
+        var profileCompleteness = await loadProfileCompleteness(reviewCache);
         var publicHealth = await loadPublicHealth();
         renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, reviewCache);
 

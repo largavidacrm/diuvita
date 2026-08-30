@@ -67,7 +67,7 @@ Already built:
 - Daniel-facing review brief exists in `scripts/daniel_review_brief.py`, read-only and suitable for future notifications.
 - Review maturity can be measured read-only before considering low-risk auto-publish expansion.
 - Published specialist coverage can be measured read-only before creating more team-detail workflows.
-- Visible profile completeness can be measured read-only across summary, contact, services, units, specialists and technology.
+- Visible profile completeness can be measured read-only across summary, contact, services, units, specialists and technology, including a next-profile suggestion.
 - Stored field claims can be evaluated read-only against publication rules before any policy change.
 - Blocking field claims can be routed into internal quality-review cards without editing clinic data.
 - Blocking field claims have a read-only Daniel brief so the first manual review target is clearer.
@@ -290,7 +290,7 @@ Next 10 technical steps:
 14. Show source-monitoring freshness in the admin control center. Done locally in `/admin/`, using source records and latest snapshots.
 15. Turn rejected/conflict/source-less claims into internal quality-review cards. Done locally in `scripts/submit_blocking_claim_reviews.py` and included in the safe CTO shadow cycle; `scripts/blocking_claim_brief.py` summarizes those blockers for Daniel without writing data.
 16. Add a read-only source snapshot retention report. Done locally in `scripts/measure_source_snapshot_retention.py` and surfaced in `/admin/`; no cleanup/deletion path is enabled.
-17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/`.
+17. Add a read-only visible-profile completeness report. Done locally in `scripts/measure_profile_completeness.py`, included in the digest/brief and surfaced in `/admin/` with a next-profile suggestion.
 18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with card-level field signals, top-of-profile stats, section counts, a clear "En esta ficha" jump area and lighter profile lists.
 19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
 20. Add a production smoke check. Done locally in `scripts/check_production_health.py`; it reads public URLs only and is separate from local checks.

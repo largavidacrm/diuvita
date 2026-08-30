@@ -81,6 +81,19 @@ def sample_digest():
             "pending_specialists": 17,
             "pending_technology": 5,
         },
+        "profile_next_target": {
+            "slug": "kairos-longevity-clinic",
+            "clinic_name": "Kairos Longevity Clinic",
+            "city": "Madrid",
+            "status": "published",
+            "pending_fields": ["Especialistas publicados", "Tecnología destacada"],
+            "pending_count": 2,
+            "next_pending_field": "Especialistas publicados",
+            "open_quality_reviews": 1,
+            "open_profile_reviews": 2,
+            "open_source_change_reviews": 1,
+            "open_relevant_reviews": 4,
+        },
     }
 
 
@@ -103,6 +116,7 @@ def main():
     check("Crear borrador no publica" in output, "draft safety reminder missing")
     check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
     check("Campo más pendiente: Especialistas · 17 fichas" in output, "top pending profile field missing")
+    check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile action missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")

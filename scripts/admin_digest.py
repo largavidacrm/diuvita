@@ -327,8 +327,13 @@ specialist_next_target as (
     '{{}}'::jsonb
   ) as data
 ),
-visible_profile_checks as (
+visible_profile_base as (
   select
+    c.id,
+    c.slug,
+    c.display_name as clinic_name,
+    c.city,
+    c.status,
     length(btrim(coalesce(c.summary, c.current_data ->> 'summary', ''))) >= 120 as has_summary,
     nullif(btrim(coalesce(c.website, c.current_data ->> 'web', '')), '') is not null as has_website,
     nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is not null as has_address,
@@ -360,9 +365,41 @@ visible_profile_checks as (
       when nullif(btrim(coalesce(c.current_data ->> 'tech', '')), '') is not null
         then 1
       else 0
-    end > 0 as has_technology
+    end > 0 as has_technology,
+    coalesce(reviews.open_quality_reviews, 0) as open_quality_reviews,
+    coalesce(reviews.open_profile_reviews, 0) as open_profile_reviews,
+    coalesce(reviews.open_source_change_reviews, 0) as open_source_change_reviews,
+    coalesce(reviews.open_relevant_reviews, 0) as open_relevant_reviews
   from public.clinics c
+  left join lateral (
+    select
+      count(*) filter (where rq.review_type = 'clinic_quality_audit') as open_quality_reviews,
+      count(*) filter (where rq.review_type = 'clinic_profile_enrichment') as open_profile_reviews,
+      count(*) filter (where rq.review_type = 'source_change_detected') as open_source_change_reviews,
+      count(*) filter (
+        where rq.review_type in ('clinic_quality_audit', 'clinic_profile_enrichment', 'source_change_detected')
+      ) as open_relevant_reviews
+    from public.review_queue rq
+    where rq.clinic_id = c.id
+      and rq.status = 'open'
+  ) reviews on true
   where c.status in ('published', 'preliminary')
+),
+visible_profile_checks as (
+  select
+    *,
+    array_remove(array[
+      case when not has_summary then 'Resumen corto o vacío' end,
+      case when not has_website then 'Web oficial' end,
+      case when not has_address then 'Dirección' end,
+      case when not has_contact then 'Email o teléfono' end,
+      case when not has_services then 'Servicios' end,
+      case when not has_specialties then 'Especialidades' end,
+      case when not has_units then 'Unidades clínicas' end,
+      case when not has_specialists then 'Especialistas publicados' end,
+      case when not has_technology then 'Tecnología destacada' end
+    ], null) as pending_fields
+  from visible_profile_base
 ),
 profile_completeness as (
   select jsonb_build_object(
@@ -402,6 +439,35 @@ profile_completeness as (
     'pending_technology', count(*) filter (where not has_technology)
   ) as data
   from visible_profile_checks
+),
+profile_next_target as (
+  select coalesce(
+    (
+      select to_jsonb(items)
+      from (
+        select
+          slug,
+          clinic_name,
+          city,
+          status,
+          pending_fields,
+          coalesce(array_length(pending_fields, 1), 0) as pending_count,
+          pending_fields[1] as next_pending_field,
+          open_quality_reviews,
+          open_profile_reviews,
+          open_source_change_reviews,
+          open_relevant_reviews
+        from visible_profile_checks
+        where coalesce(array_length(pending_fields, 1), 0) > 0
+        order by open_relevant_reviews desc,
+          coalesce(array_length(pending_fields, 1), 0) desc,
+          case when status = 'published' then 0 else 1 end,
+          clinic_name
+        limit 1
+      ) items
+    ),
+    '{{}}'::jsonb
+  ) as data
 )
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
@@ -418,6 +484,7 @@ select jsonb_build_object(
   'specialist_coverage', (select data from specialist_coverage),
   'specialist_next_target', (select data from specialist_next_target),
   'profile_completeness', (select data from profile_completeness),
+  'profile_next_target', (select data from profile_next_target),
   'generated_at', now()
 );
 """
@@ -508,6 +575,25 @@ def next_specialist_action(digest: dict[str, Any]) -> str:
     return f"Buscar especialistas publicados para {name} solo en fuentes oficiales"
 
 
+def next_profile_action(digest: dict[str, Any]) -> str:
+    target = digest.get("profile_next_target") or {}
+    if not isinstance(target, dict) or not target:
+        return "sin ficha pendiente medida"
+    name = str(target.get("clinic_name") or target.get("slug") or "la primera ficha pendiente")
+    reviews = as_int(target.get("open_relevant_reviews"))
+    pending = as_int(target.get("pending_count"))
+    first_field = str(target.get("next_pending_field") or "").strip()
+    if reviews:
+        reason = f"ya tiene {reviews} {plural(reviews, 'revision abierta relacionada', 'revisiones abiertas relacionadas')}"
+    elif pending:
+        reason = f"tiene {pending} {plural(pending, 'campo pendiente', 'campos pendientes')}"
+    else:
+        reason = "tiene campos pendientes"
+    if first_field:
+        return f"Revisar {name}: {reason}. Primer campo: {first_field}"
+    return f"Revisar {name}: {reason}"
+
+
 def next_action_label(digest: dict[str, Any]) -> str:
     failed = digest.get("recent_failed_jobs") or []
     open_reviews = digest.get("open_reviews") or []
@@ -584,6 +670,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     if completeness_visible:
         output.append(line("Fichas sin campos pendientes medidos", f"{completeness_ready}/{completeness_visible}"))
         output.append(line("Campo mas pendiente", top_pending_profile_field(digest)))
+        output.append(line("Siguiente ficha", next_profile_action(digest)))
     output.append("")
 
     output.append("## Automatizacion")
