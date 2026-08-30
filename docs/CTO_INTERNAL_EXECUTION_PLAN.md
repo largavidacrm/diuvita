@@ -342,6 +342,7 @@ Next 10 technical steps:
 38. Keep public Google Maps links direct-only. Done locally in the static site build: public clinic pages no longer generate generic Google Maps searches, no longer link addresses unless a direct clinic profile URL exists, and keep location blocks free of decorative numeric badges.
 39. Reduce team-page extraction noise. Done locally in `scripts/extract_clinic_profile_shadow.py`: WordPress menus, appointment CTAs and treatment-list tails are filtered before proposing professionals; the Arvila team page now yields 26 clean published professionals in a read-only live check.
 40. Align Google-link discovery with direct-only Maps. Done locally in `scripts/discover_clinic_google_links.py`: clinics with generic stored Maps links remain eligible for discovery until a real clinic-profile URL exists.
+41. Make the global plan panel easier to orient. Done locally in `/admin/`: the panel now opens with three plain checkpoints, `Ahora`, `Bloqueo` and `Después`, before the detailed roadmap.
 
 ## Daniel decision checkpoints
 

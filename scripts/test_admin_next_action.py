@@ -27,15 +27,20 @@ def main() -> None:
         'id="globalPlanWhy"',
         'id="globalPlanNextAction"',
         'id="globalPlanOpenNextBtn"',
+        'id="globalPlanCheckpoints"',
         'id="globalPlanRoadmap"',
         "globalPlanNextReviewId",
         "globalPlanNextGroupId",
         "function globalPlanLane",
+        "function globalPlanCheckpoint",
         "function globalPlanFocusCopy",
         "function globalPlanBottleneckText",
         "function globalPlanNextDetailText",
         "function globalPlanCodexWorkDetail",
         "function globalPlanNowDetail",
+        "function globalPlanBlockerLabel",
+        "function globalPlanBlockerDetail",
+        "function globalPlanAfterText",
         "function locationPlanLabel",
         "globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck)",
         "locationPlanLabel(completeness)",
@@ -54,6 +59,11 @@ def main() -> None:
         "Plan global",
         "Estamos aquí",
         "Tu próximo clic",
+        "Ahora",
+        "Bloqueo",
+        "Después",
+        "Bandeja casi llena",
+        "Después de bajar bandeja",
         "Lo esencial: estado actual, tu próximo clic y lo que queda después.",
         "Estamos en control interno.",
         "Tú ahora",
@@ -88,6 +98,14 @@ def main() -> None:
         check(marker in index, f"missing next-action marker: {marker}")
 
     check("global-plan-step" not in index, "global plan should not render decorative step numbers")
+
+    css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
+    for marker in [
+        ".global-plan-checkpoints",
+        ".global-plan-checkpoint",
+        ".global-plan-checkpoint.is-active",
+    ]:
+        check(marker in css, f"missing global plan checkpoint style: {marker}")
 
     print("OK admin next action: review priority visible")
 

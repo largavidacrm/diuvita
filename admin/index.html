@@ -83,6 +83,9 @@
               <button class="link-btn hidden" id="globalPlanOpenNextBtn" type="button">Abrir siguiente</button>
             </div>
           </div>
+          <div class="global-plan-checkpoints" id="globalPlanCheckpoints">
+            <p class="empty">Cargando ahora, bloqueo y después.</p>
+          </div>
           <div class="global-plan-simple" id="globalPlanGrid">
             <p class="empty">Cargando estado del plan.</p>
           </div>
@@ -1629,6 +1632,14 @@
         '</article>';
     }
 
+    function globalPlanCheckpoint(label, value, detail, state, tone) {
+      return '<article class="global-plan-checkpoint ' + html(state || "") + '">' +
+        '<span>' + html(label) + '</span>' +
+        '<strong class="' + html(tone || "") + '">' + html(value) + '</strong>' +
+        '<p>' + html(detail || "") + '</p>' +
+        '</article>';
+    }
+
     function globalPlanFocusCopy(openCount, failedJobs, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers) {
       if (Number(failedJobs || 0)) {
         return {
@@ -1710,6 +1721,28 @@
       return "Preparar el siguiente bloque técnico sin activar auto-publicación.";
     }
 
+    function globalPlanBlockerLabel(openCount, failedJobs, blockers) {
+      if (Number(failedJobs || 0)) return "Fallos técnicos";
+      if (Number(openCount || 0) >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) return "Bandeja casi llena";
+      if (blockers && blockers.length) return "Autonomía no lista";
+      return "Sin bloqueo crítico";
+    }
+
+    function globalPlanBlockerDetail(openCount, failedJobs, blockers) {
+      if (Number(failedJobs || 0)) return "Primero se revisan trabajos fallidos para no construir sobre datos inestables.";
+      if (Number(openCount || 0) >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) return "Hay que bajar revisiones antes de crear más propuestas internas.";
+      if (blockers && blockers.length) return blockers[0] + ".";
+      return "Se puede seguir avanzando por el carril técnico normal.";
+    }
+
+    function globalPlanAfterText(openCount, candidateOpenCount, specialists, sources) {
+      if (Number(openCount || 0) >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) return "Después de bajar bandeja: generar nuevas propuestas de sedes, Maps y especialistas.";
+      if (candidateOpenCount) return "Después de candidatas: completar ficha y decidir publicación manual.";
+      if (specialists && specialists.withoutSpecialists) return "Después: revisar especialistas detectados y cubrir sedes/precios.";
+      if (sources && sources.needingSourceWork) return "Después: convertir fuentes guardadas en claims útiles.";
+      return "Después: preparar SEO y crecimiento cuando el dato esté maduro.";
+    }
+
     function renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews) {
       if (!el("globalPlanPanel")) return;
       var reviews = summary.reviews || {};
@@ -1747,6 +1780,11 @@
       el("globalPlanUpdated").textContent = "Lo esencial: estado actual, tu próximo clic y lo que queda después.";
       el("globalPlanFocus").textContent = focus.title;
       el("globalPlanWhy").textContent = focus.detail;
+      el("globalPlanCheckpoints").innerHTML = [
+        globalPlanCheckpoint("Ahora", nextClick, globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck), "is-active", openCount ? "warning-text" : ""),
+        globalPlanCheckpoint("Bloqueo", globalPlanBlockerLabel(openCount, failedJobs, blockers), globalPlanBlockerDetail(openCount, failedJobs, blockers), "", failedJobs ? "danger-text" : (openCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5 || blockers.length ? "warning-text" : "")),
+        globalPlanCheckpoint("Después", "Siguiente bloque", globalPlanAfterText(openCount, candidateOpenCount, specialists, sources), "", "")
+      ].join("");
       el("globalPlanGrid").innerHTML = [
         globalPlanItem("Tú ahora", nextClick, globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck), openCount ? "warning-text" : ""),
         globalPlanItem("Freno de bandeja", backlogGuard.label, openCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5 ? "Pausa trabajos nuevos hasta bajar revisiones." : "Todavía hay margen para nuevas tareas útiles.", backlogGuard.tone),
