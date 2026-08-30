@@ -133,6 +133,58 @@ claim_quality as (
     'without_source', count(*) filter (where source_record_id is null)
   ) as data
   from public.field_claims
+),
+monitorable_sources as (
+  select
+    sr.id,
+    coalesce(latest.latest_snapshot_at, sr.retrieved_at) as last_checked_at,
+    nullif(regexp_replace(coalesce(sr.metadata ->> 'monitor_cadence_days', ''), '[^0-9]', '', 'g'), '')::int as explicit_cadence_days,
+    lower(trim(coalesce(sr.metadata ->> 'monitor_tier', ''))) as monitor_tier
+  from public.source_records sr
+  left join lateral (
+    select max(ss.retrieved_at) as latest_snapshot_at
+    from public.source_snapshots ss
+    where ss.source_record_id = sr.id
+  ) latest on true
+  where sr.entity_type = 'clinic'
+    and sr.content_hash is not null
+    and sr.source_url ~* '^https?://'
+),
+source_cadences as (
+  select
+    id,
+    last_checked_at,
+    case
+      when explicit_cadence_days is not null then least(90, greatest(7, explicit_cadence_days))
+      when monitor_tier in ('weekly', 'high', '7', '7d') then 7
+      when monitor_tier in ('slow', 'low', '90', '90d') then 90
+      else 30
+    end as cadence_days
+  from monitorable_sources
+),
+source_monitoring as (
+  select jsonb_build_object(
+    'candidate_sources', count(*),
+    'due_sources', count(*) filter (
+      where last_checked_at is null
+        or last_checked_at + make_interval(days => cadence_days) <= now()
+    ),
+    'never_checked_sources', count(*) filter (where last_checked_at is null),
+    'weekly_sources', count(*) filter (where cadence_days = 7),
+    'standard_sources', count(*) filter (where cadence_days = 30),
+    'slow_sources', count(*) filter (where cadence_days = 90),
+    'custom_sources', count(*) filter (where cadence_days not in (7, 30, 90)),
+    'oldest_last_checked_at', min(last_checked_at),
+    'oldest_due_at', min(last_checked_at + make_interval(days => cadence_days)) filter (
+      where last_checked_at is not null
+        and last_checked_at + make_interval(days => cadence_days) <= now()
+    ),
+    'next_due_at', min(last_checked_at + make_interval(days => cadence_days)) filter (
+      where last_checked_at is not null
+        and last_checked_at + make_interval(days => cadence_days) > now()
+    )
+  ) as data
+  from source_cadences
 )
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
@@ -143,6 +195,7 @@ select jsonb_build_object(
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
   'costs', (select data from costs),
   'claim_quality', (select data from claim_quality),
+  'source_monitoring', (select data from source_monitoring),
   'generated_at', now()
 );
 """
@@ -196,6 +249,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     evidence = summary.get("evidence") or {}
     automation = summary.get("automation") or {}
     costs = digest.get("costs") or {}
+    source_monitoring = digest.get("source_monitoring") or {}
 
     output: list[str] = []
     output.append("# Diuvita CTO digest")
@@ -238,6 +292,26 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Dead letter", as_int(jobs.get("dead_letter"))))
     output.append(line("Coste registrado 24h", as_money(costs.get("last_24h_cents"))))
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
+    output.append("")
+
+    output.append("## Vigilancia de fuentes")
+    due_sources = as_int(source_monitoring.get("due_sources"))
+    output.append(line("Fuentes vigilables", as_int(source_monitoring.get("candidate_sources"))))
+    due_label = "todo reciente" if due_sources == 0 else f"{due_sources} pendientes"
+    output.append(line("Fuentes vencidas ahora", due_label))
+    if due_sources:
+        output.append(line("Mas antigua pendiente", parse_timestamp(source_monitoring.get("oldest_due_at"))))
+    else:
+        output.append(line("Proxima revision prevista", parse_timestamp(source_monitoring.get("next_due_at"))))
+    cadence_parts = [
+        f"{as_int(source_monitoring.get('weekly_sources'))} semanal",
+        f"{as_int(source_monitoring.get('standard_sources'))} estandar",
+        f"{as_int(source_monitoring.get('slow_sources'))} lenta",
+    ]
+    custom_sources = as_int(source_monitoring.get("custom_sources"))
+    if custom_sources:
+        cadence_parts.append(f"{custom_sources} personalizada")
+    output.append(line("Cadencia", " / ".join(cadence_parts)))
     output.append("")
 
     output.append("## Revisiones por tipo")

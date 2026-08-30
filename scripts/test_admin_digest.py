@@ -55,6 +55,18 @@ def main():
             "last_24h_cents": 125,
             "last_7d_cents": 456,
         },
+        "source_monitoring": {
+            "candidate_sources": 39,
+            "due_sources": 0,
+            "never_checked_sources": 0,
+            "weekly_sources": 4,
+            "standard_sources": 32,
+            "slow_sources": 3,
+            "custom_sources": 0,
+            "oldest_last_checked_at": "2026-08-29T10:00:00+00:00",
+            "oldest_due_at": None,
+            "next_due_at": "2026-09-05T10:00:00+00:00",
+        },
     }
     output = format_digest(digest)
     check("# Diuvita CTO digest" in output, "title missing")
@@ -67,6 +79,11 @@ def main():
     check("cambios de fuente: 1 abierta" in output, "source change label missing")
     check("Monarka Clinic" in output, "priority item missing")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
+    check("## Vigilancia de fuentes" in output, "source monitoring section missing")
+    check("Fuentes vigilables: 39" in output, "monitorable source count missing")
+    check("Fuentes vencidas ahora: todo reciente" in output, "fresh source status missing")
+    check("Proxima revision prevista: 2026-09-05 10:00" in output, "next due date missing")
+    check("Cadencia: 4 semanal / 32 estandar / 3 lenta" in output, "cadence mix missing")
     print("OK digest: internal CTO summary")
 
 
