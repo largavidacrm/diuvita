@@ -28,6 +28,9 @@ def main() -> None:
 
     check('<input id="q" type="search"' in source, "home search input should remain")
     check('class="results-section"' in source, "clinic results should remain")
+    check("def card_logo(" in source, "clinic card logos should have a dedicated link helper")
+    check('class="logo-link"' in source, "clinic card logos should be clickable")
+    check('aria-label="Ver ficha de {h(c["name"])}"' in source, "logo links should be accessible")
     print("OK public home: simplified mobile layout")
 
 

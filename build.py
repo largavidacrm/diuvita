@@ -494,6 +494,9 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .badge{display:inline-flex;align-items:center;min-height:1.45rem;font-size:.72rem;padding:.18rem .5rem;border-radius:8px;background:var(--soft);color:var(--muted);font-weight:800;white-space:nowrap}
 .card-cta{align-self:flex-start;margin-top:1rem;padding:.48rem .75rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font-weight:800}
 .card-cta:hover{background:var(--wash);text-decoration:none}
+.logo-link{display:inline-flex;align-self:flex-start;border-radius:8px}
+.logo-link:hover{text-decoration:none}
+.logo-link:focus-visible{outline:3px solid rgba(30,122,90,.25);outline-offset:3px}
 .logobox{height:44px;width:fit-content;max-width:190px;display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:.35rem .65rem;align-self:flex-start}
 .logobox img{max-height:29px;max-width:160px;object-fit:contain;display:block}
 .flogo{height:62px;max-width:255px;margin-bottom:1rem}
@@ -641,6 +644,12 @@ def logo_img(c, ficha=False):
     cls = "logobox flogo" if ficha else "logobox"
     return f'<span class="{cls}"><img src="/assets/logos/{sub}/{h(fn)}" alt="Logo de {h(c["name"])}" loading="lazy"></span>'
 
+def card_logo(c):
+    logo = logo_img(c)
+    if not logo:
+        return ""
+    return f'<a class="logo-link" href="/clinica/{h(c["slug"])}/" aria-label="Ver ficha de {h(c["name"])}">{logo}</a>'
+
 def card_signal_html(c):
     items = stat_items(c)
     if not items:
@@ -662,7 +671,7 @@ def card(c):
     tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
     summary = h(c["summary"][:150]) + ("…" if len(c["summary"]) > 150 else "")
     signals = card_signal_html(c)
-    return f'''<article class="card" {attrs(c)}><div class="card-head">{logo_img(c)}{badge}</div>
+    return f'''<article class="card" {attrs(c)}><div class="card-head">{card_logo(c)}{badge}</div>
 <span class="loc">{h(c["city"])}{h(extra)} · {h(c["country"])}</span>
 <h3><a href="/clinica/{h(c["slug"])}/">{h(c["name"])}</a></h3>
 <p>{summary}</p>
