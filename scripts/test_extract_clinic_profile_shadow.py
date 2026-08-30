@@ -109,6 +109,16 @@ def main():
         "medical role should not be part of extracted names",
     )
 
+    neolife_menu_professionals = extract_professionals(
+        "NUESTRO EQUIPO FRANQUICIAS SUPLEMENTOS ANTIAGING BLOG "
+        "TRATAMIENTOS MÉTODO NEOLIFE CHEQUEOS PREVENTIVOS PROGRAMAS DE SEGUIMIENTO "
+        "TRATAMIENTOS PARA HOMBRE MICROBIOTA NUTRICIÓN BENEFICIOS PILARES NEOLIFE TESTIMONIOS"
+    )
+    check(
+        "TRATAMIENTOS PARA HOMBRE MICROBIOTA" not in neolife_menu_professionals,
+        "uppercase treatment menu should not become a professional",
+    )
+
     imda_professionals = extract_professionals(
         "Nuestro equipo Dra. Almudena Nuño Dermatología "
         "Dr. Francisco Kerdel Unidad de Longevidad Contacto"

@@ -353,6 +353,7 @@ Next 10 technical steps:
 49. Skip source-shadow work for already complete profiles. Done locally in `scripts/submit_source_shadow_reviews.py`: source batches now ignore clinics with no measured gaps before creating any review proposal.
 50. Surface the recommended review group in quick filters. Done locally in `/admin/`: the review inbox now shows a `Grupo recomendado` chip so Daniel can jump into the highest-friction clinic group from the filter row.
 51. Treat explicit locations as their own source-shadow gap. Done locally in `scripts/submit_source_shadow_reviews.py`: location proposals can still surface for multi-sede clinics even when a legacy top-level address already exists.
+52. Suppress uppercase navigation text in professional extraction. Done locally in `scripts/extract_clinic_profile_shadow.py`: a live Neolife read-only check no longer proposes treatment-menu text as a professional.
 
 ## Daniel decision checkpoints
 

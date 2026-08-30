@@ -305,6 +305,19 @@ ROLE_START_WORDS = {
     "Sanguineo",
     "Sesion",
     "Sesión",
+    "Blog",
+    "Beneficios",
+    "Franquicias",
+    "Historia",
+    "Hombre",
+    "Método",
+    "Metodo",
+    "Mujer",
+    "Pilares",
+    "Suplementos",
+    "Testimonios",
+    "Tratamiento",
+    "Tratamientos",
     "Auxiliar",
     "Subdirector",
     "Subdirectora",
@@ -428,6 +441,10 @@ def fold(value: str) -> str:
     return unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii").lower()
 
 
+ROLE_START_KEYS = {fold(word.rstrip(".")) for word in ROLE_START_WORDS}
+TITLE_WORD_KEYS = {fold(word.rstrip(".")) for word in TITLE_WORDS}
+
+
 def canonical_city(value: str) -> str:
     return "Málaga" if value == "Malaga" else value
 
@@ -531,7 +548,8 @@ def clean_titled_name(title_raw: str, name_raw: str) -> str:
     title = normalize_professional_title(title_raw)
     words = []
     for word in name_words(name_raw):
-        if word in ROLE_START_WORDS or word.rstrip(".") in TITLE_WORDS:
+        clean_key = fold(word.rstrip("."))
+        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS:
             break
         words.append(word)
         if len(words) >= 6:
@@ -556,7 +574,8 @@ def clean_team_professional(raw: str) -> str:
         return clean_titled_professional(titled)
     words = []
     for word in name_words(clean):
-        if word in ROLE_START_WORDS or word.rstrip(".") in TITLE_WORDS:
+        clean_key = fold(word.rstrip("."))
+        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS:
             break
         words.append(word)
     if len(words) < 2:

@@ -97,6 +97,8 @@ That folder is local/ignored by Git.
 - It skips common WordPress/navigation text and appointment CTAs before
   extracting team names, so menu items such as treatment names are not proposed
   as professionals.
+- It rejects uppercase navigation words such as treatment, benefits, blog or
+  program labels before treating a name-role pair as a professional.
 - It only detects locations from clear address patterns. It does not invent sede
   names and it does not label locations as `Sede 1` or `Sede 2`.
 - It does not infer years in practice from founding dates yet.
