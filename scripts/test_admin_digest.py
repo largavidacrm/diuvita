@@ -2,6 +2,7 @@
 """Checks for the internal CTO digest formatter."""
 
 from admin_digest import (
+    first_backlog_bottleneck,
     format_digest,
     next_action_label,
     next_profile_action,
@@ -77,6 +78,15 @@ def main():
             "duplicate_enrichment_clinics": 1,
             "duplicate_enrichment_reviews": 2,
         },
+        "review_backlog_first_duplicate_target": {
+            "clinic_slug": "sensabell",
+            "clinic_name": "Sensabell",
+            "city": "Valencia",
+            "clinic_status": "published",
+            "open_count": 2,
+            "max_priority": 60,
+            "oldest_created_at": "2026-08-30T09:00:00+00:00",
+        },
         "recent_failed_jobs": [],
         "claim_quality": {
             "conflict": 0,
@@ -150,6 +160,7 @@ def main():
         next_profile_action(digest) == "Revisar Kairos Longevity Clinic: ya tiene 4 revisiones abiertas relacionadas. Primer campo: Especialistas publicados",
         "next profile action missing",
     )
+    check(first_backlog_bottleneck(digest) == "Ordenar Sensabell: 2 mejoras abiertas", "first backlog bottleneck missing")
     check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
     check(top_pending_profile_field(digest) == "Especialistas · 17 fichas", "top pending profile field missing")
     limited_digest = dict(digest)
@@ -185,6 +196,7 @@ def main():
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
     check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")
+    check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck line missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")
     check("Fuentes vigilables: 39" in output, "monitorable source count missing")
     check("Fuentes vencidas ahora: todo reciente" in output, "fresh source status missing")

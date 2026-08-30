@@ -107,12 +107,21 @@ open_reviews as (
   ) items
 ),
 enrichment_review_groups as (
-  select clinic_id, count(*) as open_count
-  from public.review_queue
-  where status = 'open'
-    and review_type = 'clinic_profile_enrichment'
-    and clinic_id is not null
-  group by clinic_id
+  select
+    rq.clinic_id,
+    c.slug as clinic_slug,
+    c.display_name as clinic_name,
+    c.city,
+    c.status as clinic_status,
+    count(*) as open_count,
+    max(rq.priority) as max_priority,
+    min(rq.created_at) as oldest_created_at
+  from public.review_queue rq
+  left join public.clinics c on c.id = rq.clinic_id
+  where rq.status = 'open'
+    and rq.review_type = 'clinic_profile_enrichment'
+    and rq.clinic_id is not null
+  group by rq.clinic_id, c.slug, c.display_name, c.city, c.status
 ),
 review_backlog_quality as (
   select jsonb_build_object(
@@ -120,6 +129,28 @@ review_backlog_quality as (
     'duplicate_enrichment_reviews', coalesce(sum(open_count) filter (where open_count > 1), 0)
   ) as data
   from enrichment_review_groups
+),
+review_backlog_first_duplicate_target as (
+  select coalesce(
+    (
+      select to_jsonb(items)
+      from (
+        select
+          clinic_slug,
+          clinic_name,
+          city,
+          clinic_status,
+          open_count,
+          max_priority,
+          oldest_created_at
+        from enrichment_review_groups
+        where open_count > 1
+        order by open_count desc, max_priority desc, oldest_created_at asc, clinic_name
+        limit 1
+      ) items
+    ),
+    '{{}}'::jsonb
+  ) as data
 ),
 review_examples_by_type as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
@@ -475,6 +506,7 @@ select jsonb_build_object(
   'reviews_by_type', (select data from reviews_by_type),
   'open_reviews', (select data from open_reviews),
   'review_backlog_quality', (select data from review_backlog_quality),
+  'review_backlog_first_duplicate_target', (select data from review_backlog_first_duplicate_target),
   'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
@@ -633,6 +665,17 @@ def review_backlog_guard_status(digest: dict[str, Any], limit: int = SAFE_WRITE_
     return f"normal: {open_reviews}/{limit} abiertas"
 
 
+def first_backlog_bottleneck(digest: dict[str, Any]) -> str:
+    target = digest.get("review_backlog_first_duplicate_target") or {}
+    if not isinstance(target, dict) or not target:
+        return "sin atascos duplicados medidos"
+    name = str(target.get("clinic_name") or target.get("clinic_slug") or "la primera clinica duplicada")
+    count = as_int(target.get("open_count"))
+    if count:
+        return f"Ordenar {name}: {count} {plural(count, 'mejora abierta', 'mejoras abiertas')}"
+    return f"Ordenar {name}"
+
+
 def format_digest(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
@@ -700,13 +743,16 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
     output.append(line("Siguiente accion", next_action_label(digest)))
     output.append(line("Freno bandeja", review_backlog_guard_status(digest)))
-    output.append(
-        line(
-            "Duplicados mejoras",
-            f"{as_int(backlog_quality.get('duplicate_enrichment_clinics'))} clinicas / "
-            f"{as_int(backlog_quality.get('duplicate_enrichment_reviews'))} tarjetas",
+    duplicate_clinics = as_int(backlog_quality.get("duplicate_enrichment_clinics"))
+    duplicate_reviews = as_int(backlog_quality.get("duplicate_enrichment_reviews"))
+    if duplicate_clinics:
+        output.append(
+            line(
+                "Duplicados mejoras",
+                f"{duplicate_clinics} clinicas / {duplicate_reviews} tarjetas",
+            )
         )
-    )
+        output.append(line("Primer atasco", first_backlog_bottleneck(digest)))
     output.append("")
 
     output.append("## Vigilancia de fuentes")

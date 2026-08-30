@@ -48,6 +48,15 @@ def sample_digest():
             "duplicate_enrichment_clinics": 1,
             "duplicate_enrichment_reviews": 2,
         },
+        "review_backlog_first_duplicate_target": {
+            "clinic_slug": "sensabell",
+            "clinic_name": "Sensabell",
+            "city": "Valencia",
+            "clinic_status": "published",
+            "open_count": 2,
+            "max_priority": 60,
+            "oldest_created_at": "2026-08-30T09:00:00+00:00",
+        },
         "recent_failed_jobs": [],
         "source_monitoring": {
             "due_sources": 0,
@@ -121,6 +130,7 @@ def main():
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
+    check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
 
     production_report = {

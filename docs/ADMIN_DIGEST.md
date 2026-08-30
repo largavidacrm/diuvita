@@ -61,3 +61,6 @@ profiles. It uses the same public-field checks as the quality-audit workflow and
 does not rank clinics, edit records or publish changes. It also suggests one
 next visible profile to review, prioritizing profiles that already have related
 review cards open and then profiles with more measured public fields missing.
+
+When several profile-enrichment cards are open for the same clinic, the digest
+also shows the first duplicate bottleneck to tidy in `/admin/`.

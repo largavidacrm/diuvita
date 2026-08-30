@@ -9,6 +9,7 @@ from typing import Any
 
 from admin_digest import (
     as_int,
+    first_backlog_bottleneck,
     load_digest,
     next_action_label,
     next_profile_action,
@@ -223,6 +224,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Bandeja: {review_backlog_status(digest)}.",
+        f"- Primer atasco: {first_backlog_bottleneck(digest)}.",
         f"- Freno de bandeja: {review_backlog_guard_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",
     ])
