@@ -12,6 +12,10 @@ markers:
 - sitemap;
 - favicon.
 
+The deployed HTML markers also cover the main supervision cues: public profile
+stats, card-level field signals, the admin priority case, duplicate-review
+filtering and the candidate-to-publication flow.
+
 It does not log in, publish clinics, edit Supabase, resolve review cards or
 inspect private data. It is intentionally separate from `scripts/run_local_checks.py`
 because it reads the live website over the network.

@@ -17,17 +17,26 @@ CHECKS = [
     {
         "name": "home",
         "path": "/",
-        "markers": ["Diuvita", "Buscar clínica", "clínicas visibles"],
+        "markers": ["Diuvita", "Buscar clínica", "clínicas visibles", "card-signals"],
     },
     {
         "name": "admin_shell",
         "path": "/admin/",
-        "markers": ["Centro de control", "loadProfileCompleteness", "Fichas completas", "Duplicados mejoras", "Web pública"],
+        "markers": [
+            "Centro de control",
+            "loadProfileCompleteness",
+            "Fichas completas",
+            "Duplicados mejoras",
+            "Web pública",
+            "Caso prioritario",
+            "reviewFlowPanel",
+            "data-review-duplicate",
+        ],
     },
     {
         "name": "public_profile_ux",
         "path": "/clinica/the-long-game/",
-        "markers": ["profile-jump", "section-count", "Especialistas publicados por la clínica"],
+        "markers": ["profile-jump", "profile-snapshot", "section-count", "Especialistas publicados por la clínica"],
     },
     {
         "name": "sitemap",

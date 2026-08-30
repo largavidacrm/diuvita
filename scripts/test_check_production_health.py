@@ -32,8 +32,15 @@ def main():
     check("faltan: Fichas completas" in output, "missing markers should be listed")
     check("profile: Atención · sin respuesta" in output, "error line missing")
     admin_check = [item for item in CHECKS if item["name"] == "admin_shell"][0]
+    home_check = [item for item in CHECKS if item["name"] == "home"][0]
+    profile_check = [item for item in CHECKS if item["name"] == "public_profile_ux"][0]
+    check("card-signals" in home_check["markers"], "home deployment should include card signal marker")
+    check("profile-snapshot" in profile_check["markers"], "profile deployment should include summary stats marker")
     check("Duplicados mejoras" in admin_check["markers"], "admin deployment should include review-backlog marker")
     check("Web pública" in admin_check["markers"], "admin deployment should include public-health marker")
+    check("Caso prioritario" in admin_check["markers"], "admin deployment should include priority case marker")
+    check("reviewFlowPanel" in admin_check["markers"], "admin deployment should include publication-flow marker")
+    check("data-review-duplicate" in admin_check["markers"], "admin deployment should include duplicate filter marker")
     print("OK production health: report is read-only")
 
 
