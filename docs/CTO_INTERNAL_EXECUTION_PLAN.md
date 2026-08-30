@@ -85,7 +85,10 @@ Already built:
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.
 - Admin system status and review inbox show duplicated profile-enrichment review pressure.
+- Admin system status and review inbox show the first clinic workgroup so Daniel can review clustered cards together.
 - Duplicated review pressure has a read-only brief with concrete clinics to start from, and the safe CTO cycle includes that measurement.
+- Blocking-claim briefs now show a plain recommended next step per affected clinic without resolving the claim.
+- Global plan status can be generated as a read-only executive snapshot from real Supabase state.
 
 Not yet mature:
 
@@ -298,6 +301,9 @@ Next 10 technical steps:
 19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
 20. Add a production smoke check. Done locally in `scripts/check_production_health.py`; it reads public URLs only and is separate from local checks.
 21. Surface visible source coverage in the admin control center. Done locally in `/admin/`, showing source coverage, profiles without sources and the next source-support target.
+22. Add a reusable global plan status snapshot. Done locally in `scripts/global_plan_status.py`; it explains the current roadmap phase from real admin/digest state.
+23. Add clinic-workgroup shortcuts and status. Done locally in `/admin/`, `scripts/review_backlog_brief.py`, the Daniel brief and global status so clustered review cards can be handled together.
+24. Clarify blocking-claim next steps. Done locally in `scripts/blocking_claim_brief.py`; it stays read-only and tells Daniel whether to compare evidence, replace a rejected claim or find an official source.
 
 ## Daniel decision checkpoints
 

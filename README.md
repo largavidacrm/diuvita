@@ -43,6 +43,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SOURCE_COVERAGE.md`: medición solo lectura de cobertura de fuentes y claims por ficha visible.
 - `docs/ENRICHMENT_CLAIMS_CAPTURE.md`: captura interna de fuentes y claims desde propuestas de mejora.
 - `docs/CANDIDATE_DRAFT_PROMOTION.md`: herramienta conservadora para convertir candidatas en borradores internos.
+- `docs/BLOCKING_CLAIM_REVIEWS.md`: tarjetas y brief de claims bloqueantes antes de publicar o relajar reglas.
 - `docs/SOURCE_RECORD_HYDRATION.md`: hidratación de evidencias compactas para fuentes guardadas.
 - `docs/SOURCE_CHANGE_MONITORING.md`: primer watcher para detectar cambios en fuentes ya guardadas.
 - `docs/SOURCE_CHANGE_REVIEW_PROCESSING.md`: puente seguro desde fuente cambiada a propuesta interna revisable.
