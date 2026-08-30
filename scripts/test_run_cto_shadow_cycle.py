@@ -76,6 +76,25 @@ def main():
     check("pending_profiles" not in compact_profiles, "full pending profile list should be removed")
     check("pending_fields" in compact_profiles["sample_pending_profiles"][0], "pending fields should be kept")
     check("raw" not in compact_profiles["sample_pending_profiles"][0], "large profile details should be omitted")
+    compact_backlog = compact_summary("review_backlog_brief", {
+        "summary": {"open_reviews": 48},
+        "duplicate_enrichment": [
+            {
+                "clinic_name": "Sensabell",
+                "clinic_slug": "sensabell",
+                "city": "Valencia",
+                "clinic_status": "published",
+                "card_count": 3,
+                "max_priority": 60,
+                "oldest_created_at": "2026-08-30T09:00:00+00:00",
+                "cards": [{"id": "large"}],
+            }
+        ],
+    })
+    check(compact_backlog["duplicate_enrichment_count"] == 1, "duplicate backlog count should be kept")
+    check("duplicate_enrichment" not in compact_backlog, "full duplicate backlog list should be removed")
+    check("card_count" in compact_backlog["sample_duplicate_enrichment"][0], "duplicate count should be kept")
+    check("cards" not in compact_backlog["sample_duplicate_enrichment"][0], "duplicate card details should be omitted")
     compact_digest = compact_summary("admin_digest", {
         "admin_email": "admin@example.test",
         "summary": {"reviews": {"open": 2}},
@@ -197,6 +216,7 @@ def main():
         snapshot_keep_latest=3,
         snapshot_retention_limit=7,
         profile_completeness_limit=11,
+        backlog_brief_limit=4,
         fetch_timeout=7,
         strict_editorial=False,
         plain_brief=False,
@@ -222,6 +242,9 @@ def main():
     profile_step = [step for step in steps if step[0] == "measure_profile_completeness"][0]
     check("--json" in profile_step[1], "profile completeness should be machine readable")
     check("11" in profile_step[1], "profile completeness limit should pass through")
+    backlog_step = [step for step in steps if step[0] == "review_backlog_brief"][0]
+    check("--json" in backlog_step[1], "review backlog brief should be machine readable")
+    check("4" in backlog_step[1], "review backlog brief limit should pass through")
     digest_step = [step for step in steps if step[0] == "admin_digest"][0]
     check("--json" in digest_step[1], "admin digest should be machine readable")
     claim_step = [step for step in steps if step[0] == "evaluate_claim_rules"][0]
@@ -243,6 +266,7 @@ def main():
         snapshot_keep_latest=3,
         snapshot_retention_limit=7,
         profile_completeness_limit=11,
+        backlog_brief_limit=4,
         fetch_timeout=7,
         strict_editorial=True,
         plain_brief=True,

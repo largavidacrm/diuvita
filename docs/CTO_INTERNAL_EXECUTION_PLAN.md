@@ -83,6 +83,7 @@ Already built:
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.
 - Admin system status and review inbox show duplicated profile-enrichment review pressure.
+- Duplicated review pressure has a read-only brief with concrete clinics to start from, and the safe CTO cycle includes that measurement.
 
 Not yet mature:
 

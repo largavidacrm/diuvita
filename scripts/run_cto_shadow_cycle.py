@@ -63,6 +63,15 @@ STEP_ITEM_KEYS = {
         "pending_fields",
         "open_quality_reviews",
     ),
+    "review_backlog_brief": (
+        "clinic_name",
+        "clinic_slug",
+        "city",
+        "clinic_status",
+        "card_count",
+        "max_priority",
+        "oldest_created_at",
+    ),
     "admin_digest": ("title", "review_type", "priority", "clinic_name", "clinic_slug"),
     "submit_source_shadow_reviews": (
         "clinic_slug",
@@ -87,6 +96,7 @@ STEP_LABELS = {
     "submit_blocking_claim_reviews": "claims bloqueantes",
     "measure_source_snapshot_retention": "retencion de evidencias",
     "measure_profile_completeness": "completitud de fichas",
+    "review_backlog_brief": "atascos de bandeja",
     "admin_digest": "resumen interno",
     "evaluate_claim_rules": "reglas de publicacion",
     "check_operational_limits_strict": "limites operativos",
@@ -140,6 +150,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in pending_profiles[:3]
         ]
         compact.pop("pending_profiles", None)
+    duplicate_enrichment = compact.get("duplicate_enrichment")
+    if isinstance(duplicate_enrichment, list):
+        compact["duplicate_enrichment_count"] = len(duplicate_enrichment)
+        compact["sample_duplicate_enrichment"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in duplicate_enrichment[:3]
+        ]
+        compact.pop("duplicate_enrichment", None)
     open_reviews = compact.get("open_reviews")
     if isinstance(open_reviews, list):
         compact["open_reviews_count"] = len(open_reviews)
@@ -444,6 +462,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
         (
+            "review_backlog_brief",
+            ["review_backlog_brief.py", "--limit", str(args.backlog_brief_limit), "--json"],
+            45,
+        ),
+        (
             "admin_digest",
             ["admin_digest.py", "--limit", str(args.digest_limit), "--json"],
             45,
@@ -497,6 +520,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot-keep-latest", type=int, default=3)
     parser.add_argument("--snapshot-retention-limit", type=int, default=8)
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
+    parser.add_argument("--backlog-brief-limit", type=int, default=8)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     parser.add_argument(
         "--production-health",
