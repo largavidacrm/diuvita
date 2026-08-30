@@ -2008,11 +2008,28 @@
       return Boolean(duplicateEnrichmentClinicIds(reviewCache)[row.clinic_id]);
     }
 
+    function reviewProfessionalsCount(row) {
+      if (!row) return 0;
+      if (row.review_type === "candidate_clinic") {
+        return candidateList(candidateFromReview(row), "profesionales", "professionals").length;
+      }
+      if (row.review_type === "clinic_profile_enrichment") {
+        return proposalProfessionals(row.payload || {}).length;
+      }
+      return 0;
+    }
+
+    function reviewProfessionalsBadge(row) {
+      var count = reviewProfessionalsCount(row);
+      if (!count) return "";
+      return ' <span class="pill">' + html(count + (count === 1 ? " especialista" : " especialistas")) + '</span>';
+    }
+
     function reviewTypeCell(row) {
       var extra = isDuplicateEnrichmentReview(row)
         ? ' <span class="pill warning">Varias propuestas</span>'
         : "";
-      return html(reviewVisibleLabel(row)) + extra;
+      return html(reviewVisibleLabel(row)) + extra + reviewProfessionalsBadge(row);
     }
 
     function reviewSummary(rows) {
