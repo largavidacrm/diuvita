@@ -14,6 +14,7 @@ It answers:
 - what the next recommended internal action is;
 - whether agents are in shadow mode;
 - whether low-risk auto-publish is mature enough to discuss;
+- whether the clinic portal has pending access requests, user suggestions or clinic-requested profile changes;
 - whether any jobs failed;
 - whether clinic source monitoring is fresh or due;
 - how many visible profiles have stored source support and hydrated sources;
@@ -58,6 +59,13 @@ The digest includes a read-only "Vigilancia de fuentes" block:
 - `Cadencia`: how many sources are checked weekly, standard monthly, slow quarterly, or with a custom cadence.
 
 This is an operational signal only. It does not fetch sources, change public clinic data, publish clinics, or resolve review cards.
+
+## Clinic portal
+
+The digest includes a read-only "Portal clinicas" block for clinic access
+requests, clinic-originated change requests and user-suggested clinics. It only
+points Daniel to the right manual review queue; it does not approve accounts,
+publish clinic data, send emails or mark medical quality.
 
 ## Profile completeness
 

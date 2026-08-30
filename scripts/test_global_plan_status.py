@@ -108,6 +108,7 @@ def main():
     check("Trazabilidad de fuentes: 11/19 fichas con fuente" in output, "source coverage line missing")
     check("Ciclo autónomo: activo en sombra" in output, "shadow cycle line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
+    check("Portal clínicas: sin solicitudes pendientes" in output, "portal status line missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")
@@ -118,6 +119,29 @@ def main():
     failed = sample_digest()
     failed["summary"]["jobs"] = {"failed": 1, "dead_letter": 0}
     check(plan_phase(failed) == "estabilización técnica", "failed jobs should change phase")
+
+    portal_digest = sample_digest()
+    portal_digest["summary"]["portal"] = {
+        "claim_requests_pending": 1,
+        "change_requests_pending": 1,
+        "active_memberships": 3,
+        "identity_confirmed": 2,
+    }
+    portal_digest["portal_reviews"] = {
+        "claim_access_open": 1,
+        "recommended_clinic_open": 0,
+        "profile_change_open": 1,
+        "open_total": 2,
+    }
+    portal_digest["reviews_by_type"] = [
+        {"review_type": "clinic_claim_request", "open_count": 1},
+        {"review_type": "portal_profile_change", "open_count": 1},
+    ]
+    portal_output = format_global_plan_status(portal_digest, "codex/clinic-portal · abc123")
+    check(plan_phase(portal_digest) == "portal de clínicas y validación manual", "portal should change active phase")
+    check("Portal clínicas: 2 pendientes: 1 acceso, 1 cambio" in portal_output, "portal pending status missing")
+    check("Siguiente portal: Revisar 1 solicitud de acceso" in portal_output, "next portal work missing")
+    check("Revisión principal: Revisar accesos del portal" in portal_output, "portal priority missing")
     print("OK global plan status: roadmap snapshot is readable")
 
 

@@ -96,8 +96,9 @@ Already built:
 - Global plan status can be generated as a read-only executive snapshot from real Supabase state.
 - Clinic claim portal is built locally in an isolated branch: public intake,
   private clinic workspace, manual admin approval and profile-change proposals.
-  It is not active in production until Daniel reviews legal/privacy text and the
-  Supabase migration is applied.
+  The portal signal now appears in the admin digest, Daniel brief and global
+  plan status. It is not active in production until Daniel reviews legal/privacy
+  text and the Supabase migration is applied.
 
 Not yet mature:
 
@@ -320,7 +321,8 @@ Next 10 technical steps:
 25. Seed official website sources for visible clinics. Done locally in `scripts/seed_visible_clinic_sources.py` and wired into the safe CTO cycle before source hydration.
 26. Build a manual clinic portal for recommendations, profile claims and
     clinic-originated change requests. Done locally in an isolated branch with
-    no automatic publication, no document upload and no outbound emails.
+    no automatic publication, no document upload and no outbound emails. Portal
+    requests are also visible in the digest, Daniel brief and global plan status.
 
 ## Daniel decision checkpoints
 

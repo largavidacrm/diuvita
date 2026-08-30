@@ -61,6 +61,19 @@ validación de resultados.
 Una clínica puede proponer contenido, pero no puede editar ni publicar
 directamente.
 
+## Señales internas
+
+Las solicitudes del portal aparecen en `/admin/` y en los resúmenes internos:
+
+- `scripts/admin_digest.py` muestra un bloque "Portal clinicas".
+- `scripts/daniel_review_brief.py` puede poner el portal como primera acción si
+  hay una clínica esperando acceso.
+- `scripts/global_plan_status.py` refleja el portal como carril de validación
+  manual cuando hay solicitudes pendientes.
+
+Estas señales son solo operativas: no aprueban accesos, no editan fichas, no
+envían emails y no publican cambios.
+
 ## Deliberadamente fuera de esta fase
 
 - Subida de CIF, documentos societarios o archivos.

@@ -8,6 +8,7 @@ It is designed for future morning or weekly automations. It answers:
 - what Daniel should review first;
 - which visible review card is the best starting point;
 - a fallback example by review type when the first priority list is limited;
+- whether the clinic portal has access requests, user suggestions or clinic-requested changes pending;
 - how many open cards exist by type;
 - whether auto-publication is still off;
 - how many visible profiles still have measured public fields pending;
@@ -25,8 +26,8 @@ It is designed for future morning or weekly automations. It answers:
 - whether there are open technical failures;
 - optionally, whether the live public website responds correctly.
 
-It does not publish clinics, edit data, resolve reviews, send emails or expose
-review payloads.
+It does not publish clinics, edit data, resolve reviews, approve clinic portal
+access, send emails or expose review payloads.
 
 ## Run
 

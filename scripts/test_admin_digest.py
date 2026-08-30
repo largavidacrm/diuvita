@@ -7,8 +7,10 @@ from admin_digest import (
     format_digest,
     next_action_label,
     next_profile_action,
+    next_portal_action,
     next_source_action,
     next_specialist_action,
+    portal_status,
     review_backlog_guard_status,
     source_coverage_status,
     top_pending_profile_field,
@@ -264,6 +266,52 @@ def main():
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source line missing")
     check("Proxima revision prevista: 2026-09-05 10:00" in output, "next due date missing")
     check("Cadencia: 4 semanal / 32 estandar / 3 lenta" in output, "cadence mix missing")
+
+    portal_digest = {
+        "summary": {
+            "clinics": {"total": 19, "published": 11, "preliminary": 8},
+            "reviews": {"open": 3},
+            "jobs": {"queued": 0, "running": 0, "failed": 0, "dead_letter": 0},
+            "evidence": {},
+            "automation": {
+                "agents_enabled": True,
+                "auto_publish_enabled": False,
+                "shadow_mode_active": True,
+                "shadow_review_target": 200,
+                "candidate_reviews_completed": 13,
+            },
+            "portal": {
+                "claim_requests_pending": 2,
+                "change_requests_pending": 1,
+                "active_memberships": 4,
+                "identity_confirmed": 2,
+            },
+        },
+        "portal_reviews": {
+            "claim_access_open": 1,
+            "recommended_clinic_open": 1,
+            "profile_change_open": 1,
+            "open_total": 3,
+        },
+        "reviews_by_type": [
+            {"review_type": "clinic_claim_request", "open_count": 1},
+            {"review_type": "portal_recommended_clinic", "open_count": 1},
+            {"review_type": "portal_profile_change", "open_count": 1},
+        ],
+        "open_reviews": [],
+        "review_examples_by_type": [],
+        "recent_failed_jobs": [],
+    }
+    portal_output = format_digest(portal_digest)
+    check(next_action_label(portal_digest) == "Revisar accesos del portal", "portal access should be prioritized")
+    check(next_portal_action(portal_digest) == "Revisar 1 solicitud de acceso", "next portal action missing")
+    check(
+        portal_status(portal_digest) == "3 pendientes: 1 acceso, 1 sugerencia, 1 cambio; 2 fichas con datos confirmados por el centro",
+        "portal status missing",
+    )
+    check("## Portal clinicas" in portal_output, "portal section missing")
+    check("Estado: 3 pendientes: 1 acceso, 1 sugerencia, 1 cambio" in portal_output, "portal status line missing")
+    check("Siguiente portal: Revisar 1 solicitud de acceso" in portal_output, "portal next action line missing")
     print("OK digest: internal CTO summary")
 
 

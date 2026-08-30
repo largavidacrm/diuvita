@@ -9,11 +9,13 @@ It combines the protected admin digest with the roadmap lanes:
 - source traceability;
 - shadow automation loop;
 - source monitoring;
+- clinic portal intake and manual validation;
 - specialist/knowledge-graph coverage;
 - growth workflows still waiting for stronger accuracy and lower review load.
 
 The "Siguiente trabajo recomendado" section also includes the first clinic
-workgroup, so Daniel can clear several related review cards in one session.
+workgroup and the next clinic portal action, so Daniel can clear several
+related review cards in one session without approving anything automatically.
 
 The same executive view is surfaced in `/admin/` as **Plan global**, above the
 detailed system status.

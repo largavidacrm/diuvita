@@ -15,9 +15,12 @@ from admin_digest import (
     maturity_blockers,
     next_action_label,
     next_profile_action,
+    next_portal_action,
     next_source_action,
     next_specialist_action,
     parse_timestamp,
+    portal_pending_total,
+    portal_status,
     publication_control_status,
     review_backlog_guard_status,
     source_coverage_status,
@@ -94,6 +97,8 @@ def plan_phase(digest: dict[str, Any]) -> str:
     open_reviews = as_int(reviews.get("open"))
     if failed_jobs:
         return "estabilización técnica"
+    if portal_pending_total(digest):
+        return "portal de clínicas y validación manual"
     if open_reviews >= 45:
         return "centro de control y reducción de bandeja"
     return "centro de control, trazabilidad y ciclo sombra"
@@ -121,6 +126,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Ciclo autónomo: activo en sombra; siguiente acción del sistema: {next_action_label(digest)}.",
         f"- Monitorización: {source_monitoring_status(digest)}.",
         f"- Coste Netlify: publicación {publication_control_status(digest)}.",
+        f"- Portal clínicas: {portal_status(digest)}.",
         f"- Knowledge graph clínico: {specialist_status(digest)}.",
         "- Growth/SEO/outreach: pendiente hasta que la precisión y la bandeja estén más maduras.",
         "",
@@ -129,6 +135,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Grupo por clínica: {first_clinic_workgroup(digest)}.",
         f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Siguiente ficha: {next_profile_action(digest)}.",
+        f"- Siguiente portal: {next_portal_action(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
         f"- Campo más pendiente: {top_pending_profile_field(digest)}.",
         "",
