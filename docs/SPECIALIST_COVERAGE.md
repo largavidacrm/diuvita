@@ -27,6 +27,8 @@ python3 scripts/measure_specialist_coverage.py --json
 
 The same top-line coverage signal is included in `/admin/`,
 `scripts/admin_digest.py` and `scripts/daniel_review_brief.py`.
+The admin review inbox also has an **Especialistas** filter and an
+**Abrir especialistas** shortcut for the next measured specialist target.
 
 Missing-specialist rows are ordered by easiest review path first: open review
 cards, then internal specialist claims, then the remaining visible profiles.

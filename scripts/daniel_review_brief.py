@@ -26,11 +26,11 @@ from submit_discovery_candidates import get_default_admin_email, load_env_file
 
 
 TYPE_LABELS = {
-    "blocking_claim_review": "claims bloqueantes",
-    "candidate_clinic": "clínicas nuevas",
-    "clinic_profile_enrichment": "mejoras de ficha",
-    "source_change_detected": "cambios de fuente",
-    "clinic_quality_audit": "auditorías de calidad",
+    "blocking_claim_review": ("claim bloqueante", "claims bloqueantes"),
+    "candidate_clinic": ("clínica nueva", "clínicas nuevas"),
+    "clinic_profile_enrichment": ("mejora de ficha", "mejoras de ficha"),
+    "source_change_detected": ("cambio de fuente", "cambios de fuente"),
+    "clinic_quality_audit": ("auditoría de calidad", "auditorías de calidad"),
 }
 
 
@@ -43,8 +43,11 @@ def review_counts(digest: dict[str, Any]) -> dict[str, int]:
     return counts
 
 
-def review_label(review_type: str) -> str:
-    return TYPE_LABELS.get(review_type, review_type.replace("_", " "))
+def review_label(review_type: str, count: int) -> str:
+    labels = TYPE_LABELS.get(review_type)
+    if labels:
+        return labels[0] if count == 1 else labels[1]
+    return review_type.replace("_", " ")
 
 
 def plural(value: int, singular: str, plural_text: str) -> str:
@@ -205,7 +208,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
             count = counts.get(review_type)
             if count:
                 output.append(
-                    f"- {count} {review_label(review_type)} {plural(count, 'pendiente', 'pendientes')}."
+                    f"- {count} {review_label(review_type, count)} {plural(count, 'pendiente', 'pendientes')}."
                 )
     else:
         output.append("- No hay tarjetas abiertas.")

@@ -79,6 +79,10 @@ El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
 marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la
 bandeja por esa clínica.
 
+El botón **Abrir especialistas** abre la primera tarjeta relacionada con la
+ficha marcada en **Siguiente especialistas**. Si no hay tarjeta exacta, filtra
+la bandeja por esa clínica y por revisiones de especialistas.
+
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
@@ -110,6 +114,8 @@ se guardó y un enlace a la fuente cuando existe. Eso te permite ver de dónde
 sale un dato sin leer información técnica cruda.
 
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
+Puedes usar el filtro **Especialistas** para ver solo tarjetas que mencionan
+especialistas publicados o profesionales detectados.
 
 En la tarjeta de revisión verás **Camino de publicación**. Ese bloque recuerda el flujo:
 crear borrador interno, completar datos y publicar solo desde el editor de clínica.

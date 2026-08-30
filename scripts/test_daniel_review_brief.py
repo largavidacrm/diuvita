@@ -27,6 +27,7 @@ def sample_digest():
             {"review_type": "clinic_profile_enrichment", "open_count": 12},
             {"review_type": "candidate_clinic", "open_count": 8},
             {"review_type": "blocking_claim_review", "open_count": 1},
+            {"review_type": "source_change_detected", "open_count": 1},
         ],
         "open_reviews": [
             {
@@ -158,8 +159,9 @@ def main():
     check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible case missing")
     check("Acción sugerida por el sistema: Revisar claim bloqueante." in output, "next action missing")
     check("48 revisiones abiertas" in output, "open review count missing")
-    check("1 claims bloqueantes pendiente" in output, "blocking count missing")
+    check("1 claim bloqueante pendiente" in output, "blocking count missing")
     check("8 clínicas nuevas pendientes" in output, "candidate count missing")
+    check("1 cambio de fuente pendiente" in output, "source-change singular missing")
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")

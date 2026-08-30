@@ -376,6 +376,7 @@
                 <option value="blocking_claim_review">Claims bloqueantes</option>
                 <option value="clinic_quality_audit">Auditorías</option>
                 <option value="source_change_detected">Cambios de fuente</option>
+                <option value="specialist_review">Especialistas</option>
               </select>
               <select id="reviewPriorityFilter" aria-label="Filtrar por prioridad">
                 <option value="">Todas las prioridades</option>
@@ -387,6 +388,7 @@
               <button class="btn secondary hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
               <button class="btn secondary hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
               <button class="btn secondary hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
+              <button class="btn secondary hidden" id="openSpecialistTargetBtn" type="button">Abrir especialistas</button>
               <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
               <span class="pill" id="reviewCount">0 abiertas</span>
             </div>
@@ -528,6 +530,7 @@
     var reviewDuplicateFilter = false;
     var reviewClinicGroupFilter = "";
     var sourceCoverageCache = null;
+    var specialistCoverageCache = null;
     var clinicStatusFilter = "";
     var activeClinic = null;
     var activeReview = null;
@@ -551,7 +554,8 @@
       ["clinic_profile_enrichment", "Mejoras"],
       ["blocking_claim_review", "Claims bloqueantes"],
       ["clinic_quality_audit", "Auditorías"],
-      ["source_change_detected", "Fuentes"]
+      ["source_change_detected", "Fuentes"],
+      ["specialist_review", "Especialistas"]
     ];
     var REVIEW_PRIORITY_FILTERS = [
       ["", "Todas"],
@@ -1406,6 +1410,7 @@
     function reviewMatchesType(row, value) {
       if (!value) return true;
       if (value === "blocking_claim_review") return isBlockingClaimReview(row);
+      if (value === "specialist_review") return reviewMentionsSpecialists(row);
       if (value === "clinic_quality_audit") {
         return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row);
       }
@@ -1719,6 +1724,47 @@
       reviewDuplicateFilter = false;
       renderReviews();
       toast("Bandeja filtrada por " + query + ".");
+    }
+
+    function specialistTargetSubject(target) {
+      if (!target) return "especialistas";
+      return target.clinicName || target.slug || "especialistas";
+    }
+
+    function specialistTargetReviewRows(rows) {
+      var target = specialistCoverageCache && specialistCoverageCache.nextTarget;
+      if (!target || !target.clinicId) return [];
+      return (rows || []).filter(function (row) {
+        return row.clinic_id === target.clinicId && reviewMentionsSpecialists(row);
+      });
+    }
+
+    function firstSpecialistTargetReview(rows) {
+      var matches = specialistTargetReviewRows(rows);
+      if (!matches.length) return null;
+      return firstActionReview(matches, 0) || matches.slice().sort(function (a, b) {
+        return Number(b.priority || 0) - Number(a.priority || 0) ||
+          (parseDateValue(a.created_at) || new Date(8640000000000000)) -
+          (parseDateValue(b.created_at) || new Date(8640000000000000));
+      })[0];
+    }
+
+    function openSpecialistTarget() {
+      var target = specialistCoverageCache && specialistCoverageCache.nextTarget;
+      if (!target) return;
+      var match = firstSpecialistTargetReview(reviewCache);
+      if (match) {
+        openReviewEditor(match.id);
+        return;
+      }
+      var query = specialistTargetSubject(target);
+      setInput("reviewSearch", query);
+      el("reviewTypeFilter").value = "specialist_review";
+      el("reviewPriorityFilter").value = "";
+      reviewDuplicateFilter = false;
+      reviewClinicGroupFilter = "";
+      renderReviews();
+      toast("Bandeja filtrada por especialistas de " + query + ".");
     }
 
     function duplicateBacklogTargetLabel(target) {
@@ -3397,6 +3443,8 @@
       var duplicateReview = firstDuplicateReview(reviewCache);
       var sourceReview = firstSourceTargetReview(reviewCache);
       var sourceTarget = sourceCoverageCache && sourceCoverageCache.nextTarget;
+      var specialistReview = firstSpecialistTargetReview(reviewCache);
+      var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
       renderReviewFilterChips();
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
       el("openPriorityReviewBtn").textContent = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "Abrir prioridad";
@@ -3408,6 +3456,10 @@
       el("openSourceTargetBtn").textContent = sourceTarget
         ? (sourceReview ? "Abrir fuente: " : "Filtrar fuente: ") + sourceTargetSubject(sourceTarget)
         : "Abrir fuente";
+      show(el("openSpecialistTargetBtn"), Boolean(specialistTarget));
+      el("openSpecialistTargetBtn").textContent = specialistTarget
+        ? (specialistReview ? "Abrir especialistas: " : "Filtrar especialistas: ") + specialistTargetSubject(specialistTarget)
+        : "Abrir especialistas";
       el("reviewCount").textContent = hasFilters
         ? rows.length + " visibles"
         : reviewCache.length + " abiertas";
@@ -3775,6 +3827,7 @@
         var sourceCoverage = await loadSourceCoverage();
         sourceCoverageCache = sourceCoverage;
         var specialistCoverage = await loadSpecialistCoverage(reviewCache);
+        specialistCoverageCache = specialistCoverage;
         var profileCompleteness = await loadProfileCompleteness(reviewCache);
         var publicHealth = await loadPublicHealth();
         var publicationControl = await loadPublicationControl();
@@ -4017,6 +4070,7 @@
         if (duplicateReview) openReviewEditor(duplicateReview.id);
       });
       el("openSourceTargetBtn").addEventListener("click", openSourceTarget);
+      el("openSpecialistTargetBtn").addEventListener("click", openSpecialistTarget);
       el("globalPlanOpenNextBtn").addEventListener("click", openGlobalPlanNext);
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
