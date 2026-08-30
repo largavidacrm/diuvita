@@ -28,6 +28,12 @@ JSON output for future automations:
 python3 scripts/admin_digest.py --json
 ```
 
+For a less technical, Daniel-facing summary, use:
+
+```bash
+python3 scripts/daniel_review_brief.py
+```
+
 The script reads Supabase connection settings from `.env` and uses the active admin email. It calls the protected `admin_dashboard_summary()` function before reading supporting operational rows.
 
 ## Source monitoring

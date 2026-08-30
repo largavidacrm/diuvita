@@ -35,6 +35,7 @@ TEST_STEPS = [
     ("test: public profile UX", "scripts/test_public_profile_ux.py"),
     ("test: public site assets", "scripts/test_public_site_assets.py"),
     ("test: admin digest", "scripts/test_admin_digest.py"),
+    ("test: Daniel review brief", "scripts/test_daniel_review_brief.py"),
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: enrichment claims", "scripts/test_capture_enrichment_review_claims.py"),
     ("test: blocking claim reviews", "scripts/test_submit_blocking_claim_reviews.py"),
