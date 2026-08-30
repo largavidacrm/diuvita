@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Checks for the internal CTO digest formatter."""
+from pathlib import Path
 
 from admin_digest import (
     first_clinic_workgroup,
@@ -16,6 +17,9 @@ from admin_digest import (
     specialist_review_status,
     top_pending_profile_field,
 )
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def check(condition, message):
@@ -316,6 +320,11 @@ def main():
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
     check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
+    source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
+    check("proposed_google_maps_check = google_maps_profile_url_sql(\"proposed.value\")" in source, "review digest should use direct-only Maps SQL")
+    check("proposed.key in ('maps_url', 'google_maps_url')" in source, "review digest should detect proposed Maps fields")
+    check("proposed.key in ('google_reviews_url', 'reviews_url')" in source, "review digest should still include Google review links")
+    check("where {location_maps_check}" in source, "review digest should use direct-only location Maps SQL")
     check("Especialistas pendientes: 2 tarjetas; 17 especialistas propuestos" in output, "specialist pending line missing")
     check("Grupo por clinica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")

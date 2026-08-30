@@ -3916,16 +3916,10 @@
     }
 
     function reviewHasGoogleLinkProposal(row) {
-      var fields = proposedFields((row && row.payload) || {});
-      if (proposalLinkUrl(fields.maps_url) || proposalLinkUrl(fields.google_maps_url)) return true;
-      if (proposalLinkUrl(fields.google_reviews_url) || proposalLinkUrl(fields.reviews_url)) return true;
-      if (!Array.isArray(fields.locations)) return false;
-      return fields.locations.some(function (location) {
-        if (!location || typeof location !== "object") return false;
-        return Boolean(
-          proposalLinkUrl(location.maps_url || location.google_maps_url || location.map_url) ||
-          proposalLinkUrl(location.google_reviews_url || location.reviews_url || location.valoraciones_url)
-        );
+      return proposalLinkItems((row && row.payload) || {}).some(function (item) {
+        if (item.kind === "maps_url") return isReviewedGoogleMapsProfileUrl(item.url);
+        if (item.kind === "google_reviews_url") return Boolean(proposalLinkUrl(item.url));
+        return false;
       });
     }
 

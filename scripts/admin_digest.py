@@ -51,6 +51,7 @@ def parse_timestamp(value: Any) -> str:
 
 def load_digest(admin_email: str, limit: int, local_env: dict[str, str]) -> dict[str, Any]:
     has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
+    proposed_google_maps_check = google_maps_profile_url_sql("proposed.value")
     location_maps_check = google_maps_profile_url_sql(
         coalesced_jsonb_text_sql("location.value", ("maps_url", "google_maps_url", "map_url"))
     )
@@ -272,8 +273,13 @@ google_link_review_rows as (
           (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
           (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
         ) proposed(key, value)
-        where proposed.key in ('maps_url', 'google_maps_url', 'google_reviews_url', 'reviews_url')
+        where (
+          proposed.key in ('maps_url', 'google_maps_url')
+          and {proposed_google_maps_check}
+        ) or (
+          proposed.key in ('google_reviews_url', 'reviews_url')
           and btrim(proposed.value) ~* '^https?://'
+        )
       )
       or exists (
         select 1
@@ -282,14 +288,12 @@ google_link_review_rows as (
           (case when jsonb_typeof(rq.payload #> '{{proposed_current_data,locations}}') = 'array' then rq.payload #> '{{proposed_current_data,locations}}' else '[]'::jsonb end) ||
           (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
         ) location(value)
-        where coalesce(
-          nullif(btrim(location.value ->> 'maps_url'), ''),
-          nullif(btrim(location.value ->> 'google_maps_url'), ''),
-          nullif(btrim(location.value ->> 'map_url'), ''),
-          nullif(btrim(location.value ->> 'google_reviews_url'), ''),
-          nullif(btrim(location.value ->> 'reviews_url'), ''),
-          nullif(btrim(location.value ->> 'valoraciones_url'), '')
-        ) ~* '^https?://'
+        where {location_maps_check}
+          or coalesce(
+            nullif(btrim(location.value ->> 'google_reviews_url'), ''),
+            nullif(btrim(location.value ->> 'reviews_url'), ''),
+            nullif(btrim(location.value ->> 'valoraciones_url'), '')
+          ) ~* '^https?://'
       )
     )
 ),
