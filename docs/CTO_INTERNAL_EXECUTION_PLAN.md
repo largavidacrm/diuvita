@@ -51,6 +51,7 @@ Already built:
 - Admin system status shows the concrete priority review case, not only the generic next-action category.
 - Admin system status shows whether source monitoring is fresh or pending.
 - Admin system status shows source snapshot retention without enabling cleanup.
+- Admin system status shows source coverage per visible clinic and the next source-support target.
 - Admin system status shows specialist coverage for visible clinic profiles.
 - Admin system status shows visible-profile completeness without editing clinic data.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
@@ -296,6 +297,7 @@ Next 10 technical steps:
 18. Improve public clinic profile UX so collected fields are easier to scan. Done locally with card-level field signals, top-of-profile stats, section counts, a clear "En esta ficha" jump area and lighter profile lists.
 19. Include profile completeness in the safe CTO shadow cycle. Done locally as a read-only cycle step.
 20. Add a production smoke check. Done locally in `scripts/check_production_health.py`; it reads public URLs only and is separate from local checks.
+21. Surface visible source coverage in the admin control center. Done locally in `/admin/`, showing source coverage, profiles without sources and the next source-support target.
 
 ## Daniel decision checkpoints
 

@@ -13,9 +13,9 @@ markers:
 - favicon.
 
 The deployed HTML markers also cover the main supervision cues: public profile
-stats, card-level field signals, the admin priority case, specialist next-review
-cue, duplicate-review filtering, the review backlog guard, related review cards, claim traceability and the
-candidate-to-publication flow.
+stats, card-level field signals, the admin priority case, source-coverage cues,
+specialist next-review cue, duplicate-review filtering, the review backlog guard,
+related review cards, claim traceability and the candidate-to-publication flow.
 
 It does not log in, publish clinics, edit Supabase, resolve review cards or
 inspect private data. It is intentionally separate from `scripts/run_local_checks.py`
