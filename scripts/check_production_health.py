@@ -29,6 +29,7 @@ CHECKS = [
             "Duplicados mejoras",
             "Web pública",
             "Caso prioritario",
+            "openPriorityReviewBtn",
             "reviewFlowPanel",
             "data-review-duplicate",
         ],

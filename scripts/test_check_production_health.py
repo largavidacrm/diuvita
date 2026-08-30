@@ -39,6 +39,7 @@ def main():
     check("Duplicados mejoras" in admin_check["markers"], "admin deployment should include review-backlog marker")
     check("Web pública" in admin_check["markers"], "admin deployment should include public-health marker")
     check("Caso prioritario" in admin_check["markers"], "admin deployment should include priority case marker")
+    check("openPriorityReviewBtn" in admin_check["markers"], "admin deployment should include priority button marker")
     check("reviewFlowPanel" in admin_check["markers"], "admin deployment should include publication-flow marker")
     check("data-review-duplicate" in admin_check["markers"], "admin deployment should include duplicate filter marker")
     print("OK production health: report is read-only")

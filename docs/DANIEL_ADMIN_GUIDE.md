@@ -10,10 +10,11 @@ https://www.diuvita.com/admin/
 
 1. Entra con tu usuario autorizado.
 2. Mira el bloque **Necesitan revisión**.
-3. Pulsa **Revisar** en una propuesta.
-4. Comprueba nombre, web, ciudad, fuente, servicios y especialistas detectados.
-5. Si parece una clínica válida, pulsa **Crear borrador y validar**.
-6. Si no encaja con Diuvita, pulsa **Descartar**.
+3. Si aparece **Abrir prioridad**, úsalo para abrir la revisión más importante.
+4. También puedes pulsar **Revisar** en una propuesta concreta.
+5. Comprueba nombre, web, ciudad, fuente, servicios y especialistas detectados.
+6. Si parece una clínica válida, pulsa **Crear borrador y validar**.
+7. Si no encaja con Diuvita, pulsa **Descartar**.
 
 Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma. El botón de publicar aparece después, al editar esa ficha, dentro de **Validación final**.
 

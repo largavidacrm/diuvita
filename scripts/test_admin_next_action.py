@@ -18,6 +18,8 @@ def main() -> None:
         "function nextActionLabel",
         "function reviewPrimarySubject",
         "function firstActionReview",
+        'id="openPriorityReviewBtn"',
+        "Abrir prioridad",
         "Siguiente acción",
         "Caso prioritario",
         "Revisar claim bloqueante",

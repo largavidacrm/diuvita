@@ -346,6 +346,7 @@
                 <option value="medium">Media</option>
                 <option value="low">Baja</option>
               </select>
+              <button class="btn secondary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
               <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
               <span class="pill" id="reviewCount">0 abiertas</span>
             </div>
@@ -2438,7 +2439,10 @@
       reviewPriorityFilter = el("reviewPriorityFilter").value;
       var rows = reviewCache.filter(reviewMatchesFilters);
       var hasFilters = activeReviewFilters();
+      var nextReview = firstActionReview(reviewCache, 0);
       renderReviewFilterChips();
+      show(el("openPriorityReviewBtn"), Boolean(nextReview));
+      el("openPriorityReviewBtn").textContent = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "Abrir prioridad";
       el("reviewCount").textContent = hasFilters
         ? rows.length + " visibles"
         : reviewCache.length + " abiertas";
@@ -2993,7 +2997,7 @@
       el("reviewPriorityFilter").addEventListener("change", renderReviews);
       el("reviewClearFilters").addEventListener("click", clearReviewFilters);
       el("reviewFilterChips").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-review-type],[data-review-priority]");
+        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate]");
         if (!button) return;
         if (button.hasAttribute("data-review-type")) {
           el("reviewTypeFilter").value = button.getAttribute("data-review-type");
@@ -3005,6 +3009,10 @@
           reviewDuplicateFilter = !reviewDuplicateFilter;
         }
         renderReviews();
+      });
+      el("openPriorityReviewBtn").addEventListener("click", function () {
+        var nextReview = firstActionReview(reviewCache, 0);
+        if (nextReview) openReviewEditor(nextReview.id);
       });
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");

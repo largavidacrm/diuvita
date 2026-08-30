@@ -406,6 +406,13 @@ button:disabled {
   padding: 0.45rem 0.65rem;
 }
 
+#openPriorityReviewBtn {
+  max-width: min(100%, 280px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .panel-body {
   padding: 1rem;
 }
@@ -1018,6 +1025,7 @@ td small {
 
   .panel-tools input,
   .panel-tools select,
+  .panel-tools .btn,
   .top-actions .btn {
     flex: 1;
     max-width: none;
