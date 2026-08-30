@@ -42,15 +42,27 @@ def load_clinic_sources(
     clinic_filter = f"and c.slug = {sql_literal(clinic_slug)}" if clinic_slug else ""
     source_filter = f"and sr.id = {sql_literal(source_id)}::uuid" if source_id else ""
     sql = f"""
-select coalesce(jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.retrieved_at desc), '[]'::jsonb)
+select coalesce(jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.team_source_priority desc, items.retrieved_at desc), '[]'::jsonb)
 from (
   select
     sr.id as source_record_id,
+    sr.source_type,
     sr.source_url,
     sr.source_title,
     sr.retrieved_at,
     cardinality(candidate.pending_fields) as pending_count,
     candidate.pending_fields,
+    'specialists' = any(candidate.pending_fields) as specialists_pending,
+    case
+      when 'specialists' = any(candidate.pending_fields)
+        and (
+          sr.source_type = 'official_team_page'
+          or coalesce(sr.source_title, '') ~* '(^|[^[:alpha:]])(equipo|profesionales|especialistas|doctor|doctora|doctores|doctoras|doctors|team|staff|quienes)([^[:alpha:]]|$)'
+          or sr.source_url ~* '(^|[/_.-])(equipo|equipo-medico|equipo-medicos|cuadro-medico|cuadro-medicos|profesionales|especialistas|doctor|doctora|doctores|doctoras|doctors|team|staff|about|quienes-somos|quienes)([/_.?#-]|$)'
+        )
+        then 1
+      else 0
+    end as team_source_priority,
     c.id as clinic_id,
     c.slug as clinic_slug,
     c.display_name as clinic_name,
@@ -143,7 +155,7 @@ from (
     and c.status <> 'archived'
     {clinic_filter}
     {source_filter}
-  order by cardinality(candidate.pending_fields) desc, has_open_review asc, sr.retrieved_at desc, sr.created_at desc
+  order by cardinality(candidate.pending_fields) desc, has_open_review asc, team_source_priority desc, sr.retrieved_at desc, sr.created_at desc
   limit {max(1, min(100, int(limit)))}
 ) items;
 """
@@ -182,9 +194,12 @@ def process_source(
         "source_record_id": source.get("source_record_id"),
         "clinic_slug": clinic_slug,
         "clinic_name": source.get("clinic_name"),
+        "source_type": source.get("source_type"),
         "source_url": source_url,
         "pending_count": source.get("pending_count") or 0,
         "pending_fields": source.get("pending_fields") or [],
+        "specialists_pending": bool(source.get("specialists_pending")),
+        "team_source_priority": source.get("team_source_priority") or 0,
         "open_review": source.get("open_review"),
         "open_clinic_review": source.get("open_clinic_review"),
     }
@@ -233,9 +248,12 @@ def duplicate_clinic_result(source: dict[str, Any]) -> dict[str, Any]:
         "source_record_id": source.get("source_record_id"),
         "clinic_slug": source.get("clinic_slug"),
         "clinic_name": source.get("clinic_name"),
+        "source_type": source.get("source_type"),
         "source_url": source.get("source_url"),
         "pending_count": source.get("pending_count") or 0,
         "pending_fields": source.get("pending_fields") or [],
+        "specialists_pending": bool(source.get("specialists_pending")),
+        "team_source_priority": source.get("team_source_priority") or 0,
         "status": "skipped",
         "reason": "another source for this clinic is already queued in this batch",
     }

@@ -90,6 +90,9 @@ Already built:
   not by street address.
 - Official clinic websites can now be scanned for direct Google Maps profile
   links and Google review links, creating internal review cards only.
+- Saved-source extraction now prefers team/about pages when specialists are
+  missing, so pages with public professionals are reviewed before generic home
+  or service pages for the same clinic.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
 - Safe CTO shadow cycle now includes a Daniel-facing brief in its JSON output and can optionally print only that brief for unattended logs.
 - Safe CTO shadow cycle has a backlog guard so safe-apply runs stop adding review cards once the inbox enters the near-full zone.

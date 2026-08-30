@@ -39,8 +39,11 @@ def main():
         "clinic_slug": "example-clinic",
         "clinic_name": "Example Clinic",
         "source_url": "https://exampleclinic.test/longevity",
+        "source_type": "website",
         "pending_count": 3,
         "pending_fields": ["contact", "specialists", "technology"],
+        "specialists_pending": True,
+        "team_source_priority": 0,
         "has_open_review": False,
         "has_open_clinic_review": False,
         "open_review": None,
@@ -53,6 +56,8 @@ def main():
     check("profesionales" in result["proposed_fields"], "professional proposal missing")
     check(result["pending_count"] == 3, "pending-count context should be preserved")
     check("specialists" in result["pending_fields"], "pending-field context should be preserved")
+    check(result["specialists_pending"] is True, "specialist priority context should be preserved")
+    check(result["team_source_priority"] == 0, "team source priority should be preserved")
 
     skipped = process_source(
         dict(source, has_open_review=True, open_review={"id": "review-source-1", "title": "Open source review"}),
@@ -106,7 +111,13 @@ def main():
     batch = process_sources(
         [
             dict(source, source_record_id="source-1", source_url="https://exampleclinic.test/one"),
-            dict(source, source_record_id="source-2", source_url="https://exampleclinic.test/two"),
+            dict(
+                source,
+                source_record_id="source-2",
+                source_type="official_team_page",
+                source_url="https://exampleclinic.test/equipo-medico",
+                team_source_priority=1,
+            ),
         ],
         batch_args,
         "admin@example.test",
@@ -116,6 +127,8 @@ def main():
     check(batch[0]["status"] == "ready", "first source in batch should run")
     check(batch[1]["status"] == "skipped", "second source for same clinic should be skipped")
     check("already queued" in batch[1]["reason"], "same-batch skip reason should be readable")
+    check(batch[1]["source_type"] == "official_team_page", "same-batch skip should preserve source type")
+    check(batch[1]["team_source_priority"] == 1, "same-batch skip should preserve team priority")
 
     summary = summarize_results([result, skipped, applied])
     check(summary["sources_seen"] == 3, "summary source count missing")
@@ -138,9 +151,16 @@ def main():
 
     sql = captured.get("sql", "")
     check("pending_fields" in sql, "source batch should measure missing public fields")
-    check("jsonb_agg(to_jsonb(items) order by items.pending_count desc" in sql, "source batch output should preserve priority order")
+    check("jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.team_source_priority desc" in sql, "source batch output should preserve priority order")
     check("cardinality(candidate.pending_fields) desc" in sql, "source batch should prioritize incomplete profiles")
     check("has_open_review asc" in sql, "source batch should prefer sources without open review cards")
+    check("source_type" in sql, "source batch should return source type context")
+    check("specialists_pending" in sql, "source batch should expose specialist gaps")
+    check("team_source_priority" in sql, "source batch should rank team sources")
+    check("official_team_page" in sql, "source batch should recognize official team pages")
+    check("team_source_priority desc" in sql, "source batch should prefer team pages when specialists are pending")
+    check("medical" not in sql.lower(), "source batch should not treat generic medical wording as a team page")
+    check("|medic|" not in sql.lower(), "source batch should not treat generic medic roots as a team page")
     check("open_review" in sql, "source batch should return existing source review context")
     check("open_clinic_review" in sql, "source batch should return existing clinic review context")
     print("OK source shadow reviews: batch is safe")
