@@ -204,11 +204,37 @@ def positive_int(value):
     match = re.search(r"\d+", str(value or ""))
     return int(match.group(0)) if match else 0
 
-def google_maps_search_url(*parts):
-    query = " ".join(visible_values(parts))
-    if not query:
-        return ""
-    return "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(query)
+def is_google_maps_profile_url(value):
+    clean = urllib.parse.unquote_plus(str(value or "").strip()).lower()
+    if not clean:
+        return False
+    if not (
+        ("google." in clean and "/maps" in clean)
+        or "maps.app.goo.gl" in clean
+        or "goo.gl/maps" in clean
+        or "g.page/" in clean
+    ):
+        return False
+    if any(marker in clean for marker in ("/maps/search", "/maps/dir", "google.com/search")):
+        return False
+    has_profile_signal = any(marker in clean for marker in (
+        "/maps/place/",
+        "place_id:",
+        "placeid=",
+        "place_id=",
+        "query_place_id=",
+        "cid=",
+        "ftid=",
+        "maps.app.goo.gl",
+        "goo.gl/maps",
+        "g.page/",
+    ))
+    if not has_profile_signal:
+        return False
+    return not re.search(
+        r"/maps/place/(calle|c/|avenida|av\.|avda\.?|paseo|passeig|plaza|ronda|carretera|road|street|carrer|camino|via)([\s,./-]|$)",
+        clean,
+    )
 
 def location_from_dict(value):
     loc = {
@@ -317,10 +343,7 @@ def location_maps_url(loc, c):
         c.get("maps_url"),
         c.get("google_maps_url"),
     ))
-    if direct:
-        return direct
-    city = location_city(loc, c)
-    return google_maps_search_url(c.get("name"), city, c.get("country"))
+    return direct if is_google_maps_profile_url(direct) else ""
 
 def location_reviews_url(loc, c):
     return external_url(first_text(
@@ -871,11 +894,12 @@ def locations_block(c):
             actions.append(f'<a class="mini-action" href="{h(maps_url)}" rel="nofollow noopener" target="_blank">Google Maps</a>')
         if reviews_url:
             actions.append(f'<a class="mini-action" href="{h(reviews_url)}" rel="nofollow noopener" target="_blank">Valoraciones Google</a>')
+        actions_html = f'<div class="location-actions">{"".join(actions)}</div>' if actions else ""
         rows.append(
             '<article class="location-item">'
             f'<h3>{h(name)}</h3>'
             f'<p>{h(detail or address or location_city(loc, c))}</p>'
-            f'<div class="location-actions">{"".join(actions)}</div>'
+            f'{actions_html}'
             '</article>'
         )
     return '<section class="profile-block" id="sedes">' + section_heading("Sedes y acceso") + '<div class="location-list">' + "".join(rows) + "</div></section>"

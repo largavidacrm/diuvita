@@ -63,7 +63,7 @@ CHECKS = [
     {
         "name": "public_profile_ux",
         "path": "/clinica/the-long-game/",
-        "markers": ["profile-jump", "location-list", "Google Maps", "Especialistas publicados por la clínica"],
+        "markers": ["profile-jump", "location-list", "Sedes y acceso", "Especialistas publicados por la clínica"],
     },
     {
         "name": "sitemap",

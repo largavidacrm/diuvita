@@ -31,6 +31,7 @@ rows. Public and admin labels should avoid numbered labels such as `Sede 1` or
 `Sede 2`; use `Sede principal`, `Sede adicional`, city names or the clinic's own
 published location names.
 
-The Google Maps check follows the project rule: count only a direct-looking
-clinic profile link. Generic searches, directions links and street-address-only
-place URLs stay pending for manual review.
+The Google Maps check follows the project rule: count and publish only a
+direct-looking clinic profile link. Generic searches, directions links and
+street-address-only place URLs stay pending for manual review and are not shown
+as public Google Maps buttons.

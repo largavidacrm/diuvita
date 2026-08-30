@@ -24,6 +24,7 @@ def main() -> None:
         "def location_maps_url(",
         "def location_reviews_url(",
         "def location_detail(",
+        "def is_google_maps_profile_url(",
         "def transparency_items(",
         'f\'<p>{h(detail or address or location_city(loc, c))}</p>\'',
         "def card_signal_html(",
@@ -64,7 +65,6 @@ def main() -> None:
         ".clinic-main{min-width:0}",
         ".ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0;overflow-wrap:anywhere}",
         ".profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}",
-        'return google_maps_search_url(c.get("name"), city, c.get("country"))',
         'c.get("web", "")',
         'c.get("email", "")',
         'c.get("telefono", "")',
@@ -90,6 +90,8 @@ def main() -> None:
         check(removed_marker not in source, f"public profile should not render decorative counters: {removed_marker}")
 
     maps_body = source[source.index("def location_maps_url("):source.index("def location_reviews_url(")]
+    check("is_google_maps_profile_url" in maps_body, "Google Maps links should require direct clinic profile signal")
+    check("google_maps_search_url" not in source, "public profiles should not generate generic Google Maps searches")
     check("location_address" not in maps_body, "Google Maps fallback should use clinic name, not street address")
     check("location_search_name" not in maps_body, "Google Maps fallback should not use location labels")
 

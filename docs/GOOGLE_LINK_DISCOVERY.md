@@ -33,9 +33,10 @@ It does not edit clinic profiles, resolve existing review cards, publish public
 pages or trigger a deploy. Daniel still checks that each link opens the correct
 Google clinic profile before saving it.
 
-Operational rule: the public website should prefer a stored direct Google Maps
-profile link. If none exists yet, the fallback Google Maps link searches by
-clinic name, city and country, not by street address alone.
+Operational rule: the public website should show Google Maps only when a stored
+link looks like the clinic's own Google Business/Profile page. If none exists
+yet, keep Google Maps pending in admin instead of publishing a generic search,
+directions link or street-address link.
 
 Discovery rule: a Google Maps link whose visible text looks only like a street
 address is not enough unless the URL or label also contains the clinic name.

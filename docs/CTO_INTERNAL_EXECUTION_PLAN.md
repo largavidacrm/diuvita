@@ -339,6 +339,7 @@ Next 10 technical steps:
 35. Align Google Maps completeness with the direct-clinic-link rule. Done locally in `/admin/`, `scripts/admin_digest.py` and `scripts/measure_profile_completeness.py`: generic searches, directions links and street-address place URLs stay pending instead of counting as complete.
 36. Add explicit multi-location coverage. Done locally in `scripts/measure_location_coverage.py`: clinics with several stored locations can be audited for per-sede address, clinic Maps profile and Google reviews coverage without writing data.
 37. Teach the shadow extractor to propose explicit locations. Done locally in `scripts/extract_clinic_profile_shadow.py`: clear street/postcode/city address patterns can become `locations` proposals, verified before review and never published automatically.
+38. Keep public Google Maps links direct-only. Done locally in the static site build: public clinic pages no longer generate generic Google Maps searches, no longer link addresses unless a direct clinic profile URL exists, and keep location blocks free of decorative numeric badges.
 
 ## Daniel decision checkpoints
 
