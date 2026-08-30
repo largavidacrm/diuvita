@@ -131,6 +131,7 @@
             </div>
             <span class="pill warning" id="clinicValidationStatus">Pendiente</span>
           </div>
+          <p class="publication-hint" id="clinicPublicationHint">Elige el estado de la ficha.</p>
           <div class="validation-list" id="clinicValidationList"></div>
         </section>
         <form class="edit-form" id="clinicForm">
@@ -1230,6 +1231,34 @@
       };
     }
 
+    function publicVisibilityText(status) {
+      var messages = {
+        published: "Al guardar, esta ficha aparecerá en la web como publicada.",
+        preliminary: "Al guardar, esta ficha aparecerá en la web como preliminar.",
+        draft: "Al guardar, esta ficha seguirá como borrador interno y no aparecerá en la web.",
+        review: "Al guardar, esta ficha seguirá en revisión interna y no aparecerá en la web.",
+        verified: "Al guardar, esta ficha quedará verificada internamente y no aparecerá en la web.",
+        extracted: "Al guardar, esta ficha quedará extraída internamente y no aparecerá en la web.",
+        discovered: "Al guardar, esta ficha seguirá como descubierta internamente y no aparecerá en la web.",
+        archived: "Al guardar, esta ficha quedará archivada y no aparecerá en la web."
+      };
+      return messages[status] || "El estado elegido decide si la ficha aparece en la web.";
+    }
+
+    function updateClinicSaveButtonLabel() {
+      var labels = {
+        published: "Guardar como publicada",
+        preliminary: "Guardar como preliminar",
+        draft: "Guardar borrador",
+        review: "Guardar en revisión",
+        verified: "Guardar verificada",
+        extracted: "Guardar extraída",
+        discovered: "Guardar descubierta",
+        archived: "Guardar archivada"
+      };
+      el("clinicSaveBtn").textContent = labels[trimmed("clinicStatus")] || "Guardar cambios";
+    }
+
     function finalValidationItems() {
       return [
         validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry")),
@@ -1249,6 +1278,9 @@
       });
       var targetStatus = trimmed("clinicStatus");
       var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
+      updateClinicSaveButtonLabel();
+      el("clinicPublicationHint").textContent = publicVisibilityText(targetStatus);
+      el("clinicPublicationHint").className = "publication-hint" + (publicTarget ? " visible-target" : "");
       el("clinicValidationStatus").className = "pill" + (missingRequired.length ? " warning" : "");
       el("clinicValidationStatus").textContent = missingRequired.length ? "Pendiente" : "Lista";
       el("clinicValidationMeta").textContent = publicTarget
