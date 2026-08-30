@@ -22,6 +22,8 @@ def main():
   <h1>Example Clinic</h1>
   <script>window.secret = "ignore";</script>
   <p>Longevity diagnostics and VO2 max testing.</p>
+  <a href="mailto:info@clinic.example">Email</a>
+  <a href="tel:+34 600 111 222">Call</a>
 </body>
 </html>
 """
@@ -36,6 +38,8 @@ def main():
     )
     check(snapshot["source_title"] == "Example Longevity Clinic", "title extraction failed")
     check("VO2 max" in snapshot["text_excerpt"], "readable text missing")
+    check("info@clinic.example" in snapshot["text_excerpt"], "mailto link should be captured")
+    check("+34 600 111 222" in snapshot["text_excerpt"], "tel link should be captured")
     check("window.secret" not in snapshot["text_excerpt"], "script text should be ignored")
     check(len(snapshot["content_sha256"]) == 64, "hash should be sha256")
     check(len(snapshot["text_sha256"]) == 64, "text hash should be sha256")

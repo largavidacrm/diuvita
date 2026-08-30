@@ -18,7 +18,6 @@ from typing import Any
 from urllib.parse import urlparse
 
 from capture_source_snapshot import (
-    DEFAULT_EXCERPT_CHARS,
     FetchResult,
     fetch_url,
     load_from_html_file,
@@ -31,6 +30,7 @@ from diuvita_rules import decide_many
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "data" / "extractions"
+EXTRACTION_EXCERPT_CHARS = 5000
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
@@ -218,7 +218,7 @@ def claim_website(url: str) -> str | None:
 
 
 def extract_from_fetch(result: FetchResult) -> dict[str, Any]:
-    snapshot = snapshot_from_fetch(result, excerpt_chars=DEFAULT_EXCERPT_CHARS)
+    snapshot = snapshot_from_fetch(result, excerpt_chars=EXTRACTION_EXCERPT_CHARS)
     claims = build_claims(snapshot)
     return {
         "workflow": "EXTRACT_CLINIC_PROFILE",

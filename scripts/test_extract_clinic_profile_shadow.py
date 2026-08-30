@@ -10,7 +10,8 @@ def check(condition, message):
 
 
 def main():
-    html = """
+    filler = " ".join(["relleno"] * 260)
+    html = f"""
 <!doctype html>
 <html>
 <head><title>Example Longevity Clinic | Barcelona</title></head>
@@ -19,6 +20,8 @@ def main():
   <p>Medicina preventiva, longevidad, nutrición y medicina del sueño.</p>
   <p>Unidad de Longevidad dirigida por Dra. Laura García Pérez.</p>
   <p>Pruebas disponibles: DEXA, VO2 max, biomarcadores y test epigenético.</p>
+  <p>{filler}</p>
+  <p>Programa con hipoxia intermitente.</p>
   <p>Contacto: info@exampleclinic.test +34 930 111 222 @exampleclinic</p>
 </body>
 </html>
@@ -38,6 +41,7 @@ def main():
     check(profile["emails"] == ["info@exampleclinic.test"], "email extraction failed")
     check(profile["instagram"] == ["@exampleclinic"], "instagram extraction failed")
     check("VO2 max" in profile["technologies"], "technology detection failed")
+    check("Hipoxia intermitente" in profile["technologies"], "later-page technology detection failed")
     check("Medicina preventiva" in profile["services"], "service detection failed")
     check("Unidad de Longevidad" in profile["units"], "unit detection failed")
     check("Dra. Laura García Pérez" in profile["professionals"], "professional detection failed")

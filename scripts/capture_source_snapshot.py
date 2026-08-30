@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +42,11 @@ class ReadableTextParser(HTMLParser):
             self._skip_depth += 1
         if tag == "title":
             self._in_title = True
+        if tag == "a" and not self._skip_depth:
+            href = dict(attrs).get("href") or ""
+            visible = visible_link_value(href)
+            if visible:
+                self.text_parts.append(visible)
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
@@ -79,6 +84,18 @@ class FetchResult:
 
 def normalize_space(value: str) -> str:
     return re.sub(r"\s+", " ", value or "").strip()
+
+
+def visible_link_value(href: str) -> str:
+    clean = normalize_space(unquote(href))
+    lower = clean.lower()
+    if lower.startswith("mailto:"):
+        return clean[7:].split("?", 1)[0].strip()
+    if lower.startswith("tel:"):
+        return clean[4:].split("?", 1)[0].strip()
+    if "instagram.com/" in lower:
+        return clean
+    return ""
 
 
 def now_iso() -> str:

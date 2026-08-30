@@ -17,6 +17,8 @@ The provenance layer stores compact evidence about source pages:
 - Short readable excerpt.
 
 By default Diuvita does not store full external pages in the repo. Compact snapshots are enough for audit trails and safer for copyright, storage and review.
+Readable excerpts include visible text plus contact-style link targets such as
+`mailto:`, `tel:` and Instagram URLs when the page hides them behind icons.
 Supabase also keeps compact historical rows in `source_snapshots`, linked to
 `source_records`.
 

@@ -17,6 +17,11 @@ It reads one public source page and returns:
 
 It does not publish anything.
 
+For extraction, it reads a larger compact excerpt than the provenance snapshot
+and also captures useful hidden contact links such as `mailto:`, `tel:` and
+Instagram profile URLs. This improves internal proposals without storing or
+publishing the full source page.
+
 ## Why this exists
 
 The target architecture needs a stable output shape:
