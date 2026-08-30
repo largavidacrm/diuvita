@@ -14,7 +14,9 @@ source URL
 Current implementation:
 
 - `scripts/submit_shadow_extraction_review.py`
+- `scripts/submit_source_shadow_reviews.py` for saved-source batches
 - `scripts/test_submit_shadow_extraction_review.py`
+- `scripts/test_submit_source_shadow_reviews.py`
 
 It creates `clinic_profile_enrichment` review cards for existing clinics.
 
@@ -40,3 +42,20 @@ python3 scripts/submit_shadow_extraction_review.py \
 ```
 
 Daniel still reviews and saves manually in `/admin/`.
+
+## Batch from saved sources
+
+Dry run:
+
+```bash
+python3 scripts/submit_source_shadow_reviews.py
+```
+
+Create internal cards:
+
+```bash
+python3 scripts/submit_source_shadow_reviews.py --apply
+```
+
+Existing open cards for the same source are skipped unless `--replace-existing`
+is passed.

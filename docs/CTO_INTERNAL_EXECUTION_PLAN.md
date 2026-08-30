@@ -55,6 +55,7 @@ Already built:
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
 - Source-change reviews include material hints for contact, team, services, prices and medical claims.
 - Open source-change reviews can be processed into separate profile-enrichment proposals without editing public clinic data.
+- Saved clinic sources can be processed in batch through shadow extraction/verifier proposals without editing public clinic data.
 - Safe recurring CTO shadow cycle exists in `scripts/run_cto_shadow_cycle.py`.
 - Local safety checks are bundled in `scripts/run_local_checks.py`.
 - Daniel-facing review brief exists in `scripts/daniel_review_brief.py`, read-only and suitable for future notifications.
@@ -73,6 +74,7 @@ Not yet mature:
 - Source snapshots are durable and the watcher now respects monitoring cadence;
   cleanup is still disabled and retention is measured read-only.
 - Extraction and verification exist in shadow mode, but they are not yet independent production workers.
+- Batch source extraction exists as an operator tool, but should remain manual/supervised until review-card volume is comfortable.
 - Deterministic field rules exist locally, but low-risk auto-approval stays disabled until accuracy is measured.
 - Doctor, pricing, treatment and SEO workflows.
 - Daily/weekly digest.

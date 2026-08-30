@@ -9,7 +9,7 @@ The full pass currently covers:
 2. Source snapshot, durable evidence and retention-report helpers.
 3. Operational-limit red flags in source content and generated public pages.
 4. Publication rules and stored-claim rule evaluation.
-5. Shadow extraction, verification and review-card creation.
+5. Shadow extraction, verification, saved-source batches and review-card creation.
 6. Admin review UX checks: filters, actions, publication flow, clinic diffs,
    blocking-claim labels, next-action guidance, claim-rule context, maturity
    status, source monitoring status and snapshot-retention status.

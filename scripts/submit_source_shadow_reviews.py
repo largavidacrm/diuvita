@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""Create internal shadow-extraction review cards from existing clinic sources.
+
+Default mode is dry-run. Apply mode creates or refreshes internal
+clinic_profile_enrichment review cards only; it never edits clinics or publishes
+public pages.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from datetime import datetime, timezone
+from typing import Any, Callable
+from urllib.error import HTTPError, URLError
+
+from capture_source_snapshot import FetchResult, fetch_url
+from extract_clinic_profile_shadow import extract_from_fetch
+from submit_discovery_candidates import get_default_admin_email, load_env_file, run_psql, sql_literal
+from submit_shadow_extraction_review import create_review, review_payload
+from verify_clinic_profile_shadow import verify_extraction
+
+
+BATCH_NAME = "source-shadow-review"
+BATCH_VERSION = "2026-08-30"
+
+
+FetchFn = Callable[..., FetchResult]
+CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool], dict[str, Any]]
+
+
+def today_batch() -> str:
+    return BATCH_NAME + "-" + datetime.now(timezone.utc).date().isoformat()
+
+
+def load_clinic_sources(
+    limit: int,
+    clinic_slug: str | None,
+    source_id: str | None,
+    local_env: dict[str, str],
+) -> list[dict[str, Any]]:
+    clinic_filter = f"and c.slug = {sql_literal(clinic_slug)}" if clinic_slug else ""
+    source_filter = f"and sr.id = {sql_literal(source_id)}::uuid" if source_id else ""
+    sql = f"""
+select coalesce(jsonb_agg(to_jsonb(items) order by items.retrieved_at desc), '[]'::jsonb)
+from (
+  select
+    sr.id as source_record_id,
+    sr.source_url,
+    sr.source_title,
+    sr.retrieved_at,
+    c.id as clinic_id,
+    c.slug as clinic_slug,
+    c.display_name as clinic_name,
+    c.status as clinic_status,
+    exists (
+      select 1
+      from public.review_queue rq
+      where rq.clinic_id = c.id
+        and rq.status = 'open'
+        and rq.review_type = 'clinic_profile_enrichment'
+        and rq.payload ->> 'source_url' = sr.source_url
+    ) as has_open_review
+  from public.source_records sr
+  join public.clinics c on c.id = sr.clinic_id
+  where sr.entity_type = 'clinic'
+    and sr.source_url ~* '^https?://'
+    and c.status <> 'archived'
+    {clinic_filter}
+    {source_filter}
+  order by sr.retrieved_at desc, sr.created_at desc
+  limit {max(1, min(100, int(limit)))}
+) items;
+"""
+    return json.loads(run_psql(sql, local_env) or "[]")
+
+
+def payload_for_source(source: dict[str, Any], verification: dict[str, Any]) -> dict[str, Any]:
+    payload = review_payload(str(source.get("clinic_slug") or ""), verification)
+    warnings = list(payload.get("warnings") or [])
+    warnings.insert(0, "Fuente existente revisada en modo sombra; confirmar antes de guardar.")
+    payload.update({
+        "batch": today_batch(),
+        "batch_name": BATCH_NAME,
+        "batch_version": BATCH_VERSION,
+        "source_record_id": source.get("source_record_id"),
+        "clinic_id": source.get("clinic_id"),
+        "clinic_slug": source.get("clinic_slug"),
+        "clinic_name": source.get("clinic_name"),
+        "source_url": source.get("source_url"),
+        "warnings": warnings,
+    })
+    return payload
+
+
+def process_source(
+    source: dict[str, Any],
+    args: argparse.Namespace,
+    admin_email: str,
+    local_env: dict[str, str],
+    fetcher: FetchFn = fetch_url,
+    review_creator: CreateReviewFn = create_review,
+) -> dict[str, Any]:
+    clinic_slug = str(source.get("clinic_slug") or "")
+    source_url = str(source.get("source_url") or "")
+    result = {
+        "source_record_id": source.get("source_record_id"),
+        "clinic_slug": clinic_slug,
+        "clinic_name": source.get("clinic_name"),
+        "source_url": source_url,
+    }
+
+    if not clinic_slug or not source_url:
+        return {**result, "status": "skipped", "reason": "missing clinic slug or source URL"}
+
+    if source.get("has_open_review") and not args.replace_existing:
+        return {**result, "status": "skipped", "reason": "open enrichment review already exists"}
+
+    try:
+        extraction = extract_from_fetch(fetcher(source_url, timeout=args.timeout))
+        verification = verify_extraction(extraction)
+    except (HTTPError, URLError, TimeoutError, ValueError, OSError) as error:
+        return {**result, "status": "failed", "error": str(error)}
+
+    payload = payload_for_source(source, verification)
+    proposed_fields = payload.get("proposed_fields") or {}
+    result.update({
+        "status": "ready" if proposed_fields else "empty",
+        "proposed_fields": sorted(proposed_fields.keys()),
+        "verification_summary": payload.get("verification_summary") or {},
+    })
+
+    if args.apply and proposed_fields:
+        result["created_review"] = review_creator(
+            clinic_slug,
+            payload,
+            admin_email,
+            local_env,
+            args.replace_existing,
+        )
+    return result
+
+
+def summarize_results(results: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "sources_seen": len(results),
+        "ready": sum(1 for item in results if item.get("status") == "ready"),
+        "empty": sum(1 for item in results if item.get("status") == "empty"),
+        "skipped": sum(1 for item in results if item.get("status") == "skipped"),
+        "failed": sum(1 for item in results if item.get("status") == "failed"),
+        "created_or_updated": sum(1 for item in results if item.get("created_review")),
+    }
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--limit", type=int, default=5)
+    parser.add_argument("--clinic-slug", help="Process sources for one existing clinic.")
+    parser.add_argument("--source-id", help="Process one source_records row.")
+    parser.add_argument("--timeout", type=int, default=15)
+    parser.add_argument("--admin-email", help="Admin email assigned to created review cards.")
+    parser.add_argument("--replace-existing", action="store_true", help="Refresh an existing open review for the same source.")
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Create internal clinic_profile_enrichment review cards. Never publishes or edits clinics.",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.limit < 1:
+        raise SystemExit("--limit must be at least 1.")
+    if args.timeout < 3 or args.timeout > 60:
+        raise SystemExit("--timeout must be between 3 and 60 seconds.")
+
+    local_env = load_env_file()
+    admin_email = args.admin_email or get_default_admin_email(local_env)
+    sources = load_clinic_sources(args.limit, args.clinic_slug, args.source_id, local_env)
+    results = [
+        process_source(source, args, admin_email, local_env)
+        for source in sources
+    ]
+    output = {
+        "mode": "apply" if args.apply else "dry_run",
+        **summarize_results(results),
+        "items": results,
+    }
+    print(json.dumps(output, ensure_ascii=False, indent=2))
+    return 0 if output["failed"] == 0 else 1
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(130)

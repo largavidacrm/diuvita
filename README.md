@@ -32,6 +32,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SHADOW_EXTRACTOR.md`: primer extractor local en modo sombra para convertir una fuente en claims estructurados.
 - `docs/SHADOW_VERIFIER.md`: primer verificador local que desafía claims extraídos antes de reglas/publicación.
 - `docs/SHADOW_REVIEW_SUBMISSION.md`: conexión entre extractor/verificador shadow y tarjetas internas del admin.
+- `docs/SOURCE_SHADOW_REVIEW_BATCH.md`: lote seguro para convertir fuentes ya guardadas en propuestas internas de mejora.
 - `docs/ADMIN_DIGEST.md`: resumen interno de CTO para revisiones, jobs y costes registrados.
 - `docs/DANIEL_REVIEW_BRIEF.md`: resumen accionable en lenguaje simple para que Daniel sepa qué revisar primero.
 - `docs/REVIEW_MATURITY.md`: medición de madurez antes de plantear auto-publicación de bajo riesgo.
@@ -64,6 +65,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/extract_clinic_profile_shadow.py`: extractor inicial de claims de clínica en modo sombra.
 - `scripts/verify_clinic_profile_shadow.py`: verificador inicial de claims extraídos en modo sombra.
 - `scripts/submit_shadow_extraction_review.py`: convierte una extracción verificada en una tarjeta interna revisable.
+- `scripts/submit_source_shadow_reviews.py`: ejecuta extracción/verificación shadow sobre fuentes de clínicas existentes.
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
 - `scripts/daniel_review_brief.py`: imprime un brief de revisión para Daniel, solo lectura y sin payloads técnicos.
 - `scripts/measure_review_maturity.py`: mide si hay suficiente revisión humana antes de relajar reglas.
