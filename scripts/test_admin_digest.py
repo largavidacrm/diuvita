@@ -35,14 +35,20 @@ def main():
                 "review_type": "source_change_detected",
                 "open_count": 1,
                 "oldest_created_at": "2026-08-30T10:00:00+00:00",
+            },
+            {
+                "review_type": "blocking_claim_review",
+                "open_count": 1,
+                "oldest_created_at": "2026-08-30T11:00:00+00:00",
             }
         ],
         "open_reviews": [
             {
-                "review_type": "clinic_profile_enrichment",
-                "priority": 60,
-                "clinic_name": "Monarka Clinic",
-                "title": "Revisar extraccion shadow: Monarka Clinic",
+                "review_type": "blocking_claim_review",
+                "raw_review_type": "clinic_quality_audit",
+                "priority": 85,
+                "clinic_name": "Sensabell",
+                "title": "Revisar claims bloqueantes: Sensabell",
             }
         ],
         "recent_failed_jobs": [],
@@ -77,7 +83,8 @@ def main():
     check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")
     check("mejoras de ficha: 11 abiertas" in output, "review type summary missing")
     check("cambios de fuente: 1 abierta" in output, "source change label missing")
-    check("Monarka Clinic" in output, "priority item missing")
+    check("claims bloqueantes: 1 abierta" in output, "blocking claim label missing")
+    check("Sensabell" in output, "priority item missing")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")
     check("Fuentes vigilables: 39" in output, "monitorable source count missing")

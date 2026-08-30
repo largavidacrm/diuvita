@@ -54,6 +54,19 @@ summary as (
   select public.admin_dashboard_summary() as data
   from claims
 ),
+typed_reviews as (
+  select
+    case
+      when review_type = 'clinic_quality_audit'
+        and payload ->> 'quality_context' = 'blocking_claims'
+        then 'blocking_claim_review'
+      else review_type
+    end as review_type,
+    created_at,
+    updated_at
+  from public.review_queue
+  where status = 'open'
+),
 reviews_by_type as (
   select coalesce(jsonb_agg(to_jsonb(grouped) order by grouped.open_count desc), '[]'::jsonb) as data
   from (
@@ -62,8 +75,7 @@ reviews_by_type as (
       count(*) as open_count,
       min(created_at) as oldest_created_at,
       max(updated_at) as newest_updated_at
-    from public.review_queue
-    where status = 'open'
+    from typed_reviews
     group by review_type
   ) grouped
 ),
@@ -72,7 +84,13 @@ open_reviews as (
   from (
     select
       rq.id,
-      rq.review_type,
+      rq.review_type as raw_review_type,
+      case
+        when rq.review_type = 'clinic_quality_audit'
+          and rq.payload ->> 'quality_context' = 'blocking_claims'
+          then 'blocking_claim_review'
+        else rq.review_type
+      end as review_type,
       rq.title,
       rq.priority,
       rq.created_at,
@@ -211,6 +229,7 @@ def format_review_type(review_type: str) -> str:
         "candidate_clinic": "clinicas candidatas",
         "clinic_profile_enrichment": "mejoras de ficha",
         "clinic_quality_audit": "auditorias de calidad",
+        "blocking_claim_review": "claims bloqueantes",
         "source_change_detected": "cambios de fuente",
     }
     return labels.get(review_type, review_type.replace("_", " "))
