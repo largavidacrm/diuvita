@@ -149,6 +149,7 @@ def format_review_type(review_type: str) -> str:
         "candidate_clinic": "clinicas candidatas",
         "clinic_profile_enrichment": "mejoras de ficha",
         "clinic_quality_audit": "auditorias de calidad",
+        "source_change_detected": "cambios de fuente",
     }
     return labels.get(review_type, review_type.replace("_", " "))
 
@@ -201,10 +202,12 @@ def format_digest(digest: dict[str, Any]) -> str:
     review_types = digest.get("reviews_by_type") or []
     if review_types:
         for item in review_types:
+            open_count = as_int(item.get("open_count"))
+            open_word = "abierta" if open_count == 1 else "abiertas"
             output.append(
                 line(
                     format_review_type(str(item.get("review_type") or "")),
-                    f"{as_int(item.get('open_count'))} abiertas; mas antigua {parse_timestamp(item.get('oldest_created_at'))}",
+                    f"{open_count} {open_word}; mas antigua {parse_timestamp(item.get('oldest_created_at'))}",
                 )
             )
     else:

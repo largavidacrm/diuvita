@@ -30,6 +30,11 @@ def main():
                 "review_type": "clinic_profile_enrichment",
                 "open_count": 11,
                 "oldest_created_at": "2026-08-29T22:00:00+00:00",
+            },
+            {
+                "review_type": "source_change_detected",
+                "open_count": 1,
+                "oldest_created_at": "2026-08-30T10:00:00+00:00",
             }
         ],
         "open_reviews": [
@@ -51,6 +56,7 @@ def main():
     check("Clinicas totales: 19" in output, "clinic count missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("mejoras de ficha: 11 abiertas" in output, "review type summary missing")
+    check("cambios de fuente: 1 abierta" in output, "source change label missing")
     check("Monarka Clinic" in output, "priority item missing")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     print("OK digest: internal CTO summary")
