@@ -94,6 +94,10 @@ Already built:
 - Duplicated review pressure has a read-only brief with concrete clinics to start from, and the safe CTO cycle includes that measurement.
 - Blocking-claim briefs now show a plain recommended next step per affected clinic without resolving the claim.
 - Global plan status can be generated as a read-only executive snapshot from real Supabase state.
+- Clinic claim portal is built locally in an isolated branch: public intake,
+  private clinic workspace, manual admin approval and profile-change proposals.
+  It is not active in production until Daniel reviews legal/privacy text and the
+  Supabase migration is applied.
 
 Not yet mature:
 
@@ -107,6 +111,8 @@ Not yet mature:
 - Specialist coverage can now be measured, but publication of new professional details still needs manual review.
 - Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
 - Daily/weekly digest and notification cadence.
+- Clinic portal production activation, including legal/privacy review, Supabase
+  Auth email settings and the future decision on document uploads.
 - Rollback controls in the admin UI need operational usage, but the restore path and preview now exist.
 - Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.
 
@@ -312,6 +318,9 @@ Next 10 technical steps:
 23. Add clinic-workgroup shortcuts and status. Done locally in `/admin/`, `scripts/review_backlog_brief.py`, the Daniel brief and global status so clustered review cards can be handled together.
 24. Clarify blocking-claim next steps. Done locally in `scripts/blocking_claim_brief.py`; it stays read-only and tells Daniel whether to compare evidence or find an official source.
 25. Seed official website sources for visible clinics. Done locally in `scripts/seed_visible_clinic_sources.py` and wired into the safe CTO cycle before source hydration.
+26. Build a manual clinic portal for recommendations, profile claims and
+    clinic-originated change requests. Done locally in an isolated branch with
+    no automatic publication, no document upload and no outbound emails.
 
 ## Daniel decision checkpoints
 

@@ -102,7 +102,7 @@ def load_clinics():
 
 def normalize_clinic(clinic):
     clinic = dict(clinic)
-    for key in ("slug", "name", "city", "country", "address", "web", "summary", "status"):
+    for key in ("id", "slug", "name", "city", "country", "address", "web", "summary", "status", "identity_confirmed_at"):
         clinic[key] = clinic.get(key) or ""
     for key in (
         "tech",
@@ -514,7 +514,9 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .card-signals dd{margin:.12rem 0 0;color:var(--green-deep);font-size:1rem;font-weight:800;line-height:1}
 .tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.8rem}
 .tag{display:inline-flex;align-items:center;min-height:1.55rem;font-size:.78rem;padding:.18rem .55rem;border-radius:8px;background:var(--wash);color:var(--green-deep)}
+.card-badges{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.35rem}
 .badge{display:inline-flex;align-items:center;min-height:1.45rem;font-size:.72rem;padding:.18rem .5rem;border-radius:8px;background:var(--soft);color:var(--muted);font-weight:800;white-space:nowrap}
+.badge.confirmed{border:1px solid #cbd9ce;background:var(--wash);color:var(--green-deep)}
 .card-cta{align-self:flex-start;margin-top:1rem;padding:.48rem .75rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font-weight:800}
 .card-cta:hover{background:var(--wash);text-decoration:none}
 .logo-link{display:inline-flex;align-self:flex-start;border-radius:8px}
@@ -546,6 +548,9 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .clinic-side{display:grid;gap:1rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .clinic-side .profile-block{margin-top:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .clinic-side h2{margin-top:0}
+.profile-badges{display:flex;flex-wrap:wrap;gap:.45rem;margin:.65rem 0 .45rem}
+.claim-link{display:inline-flex;align-items:center;justify-content:center;min-height:2.5rem;padding:.55rem .8rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font-weight:800;text-align:center}
+.claim-link:hover{background:var(--wash);text-decoration:none}
 .profile-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.5rem;align-items:start}
 .profile-block{min-width:0;padding:1.05rem 1.1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .profile-section-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.6rem}
@@ -612,7 +617,7 @@ HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <script data-goatcounter="https://vitalarga.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 {jsonld}</head><body>
 <header class="site"><a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
-<nav><a href="/#buscar">Buscar clínica</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
+<nav><a href="/#buscar">Buscar clínica</a><a href="/portal-clinicas/">Portal clínicas</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
 """
 
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -706,8 +711,22 @@ def card_signal_html(c):
         for label, count in featured[:4]
     ) + "</dl>"
 
+def clinic_identity_confirmed(c):
+    return bool(str(c.get("identity_confirmed_at") or "").strip())
+
+def confirmed_badge(c):
+    if not clinic_identity_confirmed(c):
+        return ""
+    return '<span class="badge confirmed">Datos confirmados por el centro</span>'
+
 def card(c):
-    badge = '<span class="badge">Preliminar</span>' if c["status"] == "preliminar" else ""
+    badges = []
+    if c["status"] == "preliminar":
+        badges.append('<span class="badge">Preliminar</span>')
+    identity_badge = confirmed_badge(c)
+    if identity_badge:
+        badges.append(identity_badge)
+    badge = '<span class="card-badges">' + "".join(badges) + "</span>" if badges else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
     summary = h(c["summary"][:150]) + ("…" if len(c["summary"]) > 150 else "")
@@ -796,7 +815,7 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 <div class="resbar"><p class="rescount" id="count"></p><button class="clear-btn" id="clearFilters" type="button">Limpiar filtros</button></div>
 <div class="grid">{allcards}</div>
 <p class="empty-state hidden" id="emptyState">No hay clínicas con esos filtros.</p>
-<div class="note">¿Diriges una clínica de longevidad que no aparece aquí? Escríbenos y la evaluaremos según nuestros <a href="/sobre/">criterios de inclusión</a>. Aparecer en Vitalarga es gratuito — y no se puede pagar.</div>
+<div class="note">¿Diriges una clínica de longevidad o quieres recomendar una que no aparece? Puedes enviar una solicitud desde el <a href="/portal-clinicas/">portal de clínicas</a>. Vitalarga la revisará manualmente antes de tocar la guía.</div>
 </section>{JS}""" + FOOTER
 
 # --- fichas ---
@@ -976,8 +995,11 @@ def ficha(c):
     if c.get("web") and external_url(c["web"]):
         visit_url = external_url(c["web"])
         visit = f'<a class="visit" href="{h(visit_url)}" rel="nofollow noopener" target="_blank">Visitar web oficial ↗</a>'
-    sidebar = datos + contacto + visit
+    claim_url = "/portal-clinicas/?claim=" + urllib.parse.quote(c["slug"])
+    claim = f'<a class="claim-link" href="{h(claim_url)}">Reclamar o corregir esta ficha</a>'
+    sidebar = datos + contacto + visit + claim
     sidebar_html = f'<aside class="clinic-side">{sidebar}</aside>' if sidebar else ""
+    profile_badges = f'<div class="profile-badges">{confirmed_badge(c)}</div>' if clinic_identity_confirmed(c) else ""
     ld_obj = {
         "@context": "https://schema.org", "@type": "MedicalClinic",
         "name": c["name"], "url": c["web"], "address": c["address"],
@@ -995,6 +1017,7 @@ def ficha(c):
     return head(f'{c["name"]} — clínica de longevidad en {c["city"]} | {SITE}', c["summary"][:150], f'/clinica/{c["slug"]}/', ld) + f"""
 <main class="ficha"><p class="crumbs"><a href="/">Vitalarga</a> → <a href="/ciudad/{slugify(c["city"])}/">{h(c["city"])}</a> → {h(c["name"])}</p>
 <section class="clinic-intro"><div class="clinic-main">{logo_img(c, ficha=True)}<h1>{h(c["name"])}</h1><p class="loc">{h(loc)}</p>
+{profile_badges}
 <div class="tags">{tags}</div>
 <p class="summary">{h(c["summary"])}</p>
 {snapshot}
@@ -1166,6 +1189,41 @@ def write_admin():
     open(os.path.join(dest, "index.html"), "w", encoding="utf-8").write(html)
     shutil.copy(os.path.join(src, "admin.css"), os.path.join(dest, "admin.css"))
 
+def portal_clinic_list():
+    return [
+        {
+            "id": c.get("id", ""),
+            "slug": c.get("slug", ""),
+            "name": c.get("name", ""),
+            "city": c.get("city", ""),
+            "country": c.get("country", ""),
+            "web": c.get("web", ""),
+            "identity_confirmed_at": c.get("identity_confirmed_at", ""),
+        }
+        for c in clinics
+    ]
+
+def write_clinic_portal():
+    src = os.path.join(ROOT, "portal-clinicas")
+    if not os.path.isdir(src):
+        return
+    dest = os.path.join(DIST, "portal-clinicas")
+    os.makedirs(dest, exist_ok=True)
+    config = {
+        "supabaseUrl": public_env("SUPABASE_URL"),
+        "supabasePublishableKey": public_env("SUPABASE_PUBLISHABLE_KEY"),
+    }
+    config_json = json.dumps(config, ensure_ascii=False).replace("<", "\\u003c")
+    clinics_json = json.dumps(portal_clinic_list(), ensure_ascii=False).replace("<", "\\u003c")
+    html_doc = open(os.path.join(src, "index.html"), encoding="utf-8").read()
+    html_doc = html_doc.replace("__VITALARGA_PORTAL_CONFIG__", config_json)
+    html_doc = html_doc.replace("__VITALARGA_PORTAL_CLINICS__", clinics_json)
+    open(os.path.join(dest, "index.html"), "w", encoding="utf-8").write(html_doc)
+    for filename in os.listdir(src):
+        if filename == "index.html":
+            continue
+        shutil.copy(os.path.join(src, filename), os.path.join(dest, filename))
+
 # --- write ---
 if os.path.exists(DIST):
     shutil.rmtree(DIST)
@@ -1200,9 +1258,10 @@ for p in posts:
     os.makedirs(d)
     open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(blog_post(p))
 write_admin()
+write_clinic_portal()
 
 # --- sitemap y robots ---
-urls = ["/", "/sobre/", "/blog/"]
+urls = ["/", "/sobre/", "/portal-clinicas/", "/blog/"]
 urls += [f"/{slug}/" for slug in LEGAL_PAGES]
 urls += [f'/clinica/{c["slug"]}/' for c in clinics]
 urls += [f"/ciudad/{slugify(ct)}/" for ct in cities]
