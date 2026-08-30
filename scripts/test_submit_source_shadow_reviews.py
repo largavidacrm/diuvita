@@ -3,7 +3,7 @@
 from argparse import Namespace
 
 from capture_source_snapshot import FetchResult
-from submit_source_shadow_reviews import load_clinic_sources, process_source, process_sources, summarize_results
+from submit_source_shadow_reviews import load_clinic_sources, process_source, process_sources, proposed_field_counts, summarize_results
 
 
 def check(condition, message):
@@ -54,6 +54,7 @@ def main():
     check(result["status"] == "ready", "source should produce a ready review payload")
     check("email" in result["proposed_fields"], "email proposal missing")
     check("profesionales" in result["proposed_fields"], "professional proposal missing")
+    check(result["proposed_field_counts"]["profesionales"] == 1, "professional count should be visible")
     check(result["pending_count"] == 3, "pending-count context should be preserved")
     check("specialists" in result["pending_fields"], "pending-field context should be preserved")
     check(result["specialists_pending"] is True, "specialist priority context should be preserved")
@@ -135,6 +136,11 @@ def main():
     check(summary["ready"] == 2, "summary ready count missing")
     check(summary["skipped"] == 1, "summary skipped count missing")
     check(summary["created_or_updated"] == 1, "summary created count missing")
+    check(
+        proposed_field_counts({"profesionales": ["A", "B"], "telefono": "+34", "tech": ""})
+        == {"profesionales": 2, "telefono": 1, "tech": 0},
+        "proposed field counts should handle lists, scalars and blanks",
+    )
 
     captured = {}
 

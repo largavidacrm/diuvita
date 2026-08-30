@@ -180,6 +180,18 @@ def payload_for_source(source: dict[str, Any], verification: dict[str, Any]) -> 
     return payload
 
 
+def proposed_field_counts(proposed_fields: dict[str, Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for key, value in proposed_fields.items():
+        if isinstance(value, list):
+            counts[key] = len(value)
+        elif value in (None, ""):
+            counts[key] = 0
+        else:
+            counts[key] = 1
+    return counts
+
+
 def process_source(
     source: dict[str, Any],
     args: argparse.Namespace,
@@ -228,6 +240,7 @@ def process_source(
     result.update({
         "status": "ready" if proposed_fields else "empty",
         "proposed_fields": sorted(proposed_fields.keys()),
+        "proposed_field_counts": proposed_field_counts(proposed_fields),
         "verification_summary": payload.get("verification_summary") or {},
     })
 

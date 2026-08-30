@@ -59,6 +59,10 @@ The safe CTO cycle can include this batch when explicitly requested:
 python3 scripts/run_cto_shadow_cycle.py --source-shadow-limit 3
 ```
 
+Dry-run output includes `proposed_field_counts`, so a reviewer can see whether
+the extractor found one professional, many professionals, one phone number, etc.
+without printing the full review payload.
+
 Safety boundaries:
 
 - no clinic records are edited;
