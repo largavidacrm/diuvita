@@ -40,6 +40,7 @@ Already built:
 - Admin visibility for clinic version history, protected fields and internal evidence claims.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
+- Safe recurring CTO shadow cycle exists in `scripts/run_cto_shadow_cycle.py`.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
