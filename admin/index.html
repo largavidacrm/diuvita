@@ -86,7 +86,19 @@
             <span class="pill" id="clinicVersionCount">0 versiones</span>
           </div>
           <div class="version-list" id="clinicVersionList">
-            <p class="empty">Abre una clinica para ver su historial.</p>
+            <p class="empty">Abre una clínica para ver su historial.</p>
+          </div>
+        </section>
+        <section class="evidence-panel" id="clinicEvidencePanel">
+          <div class="evidence-head">
+            <div>
+              <h3>Evidencias propuestas</h3>
+              <p id="clinicEvidenceMeta">Claims internos pendientes de revisión.</p>
+            </div>
+            <span class="pill" id="clinicEvidenceCount">0 claims</span>
+          </div>
+          <div class="claim-list" id="clinicClaimsList">
+            <p class="empty">Abre una clínica para ver sus evidencias.</p>
           </div>
         </section>
         <form class="edit-form" id="clinicForm">
@@ -406,6 +418,7 @@
     var activeClinicReview = null;
     var activeClinicVersionRequest = 0;
     var activeClinicLockRequest = 0;
+    var activeClinicClaimRequest = 0;
     var dashboardLoading = false;
 
     function el(id) {
@@ -466,8 +479,8 @@
 
     function pill(status) {
       var tone = "";
-      if (["failed", "dead_letter", "rejected"].indexOf(status) >= 0) tone = " danger";
-      if (["queued", "review", "preliminary"].indexOf(status) >= 0) tone = " warning";
+      if (["failed", "dead_letter", "rejected", "conflict"].indexOf(status) >= 0) tone = " danger";
+      if (["queued", "review", "preliminary", "stale", "proposed"].indexOf(status) >= 0) tone = " warning";
       return '<span class="pill' + tone + '">' + html(status || "—") + '</span>';
     }
 
@@ -638,6 +651,95 @@
         p_values: lockValueMap(),
         p_reason: trimmed("clinicNote") || null
       });
+    }
+
+    function fieldPathLabel(path) {
+      var labels = {
+        "profile.name": "Nombre",
+        "contact.website": "Web",
+        "location.country": "País",
+        "location.city": "Ciudad",
+        "location.region": "Región",
+        "location.address": "Dirección",
+        "summary": "Resumen",
+        "services.list": "Servicios",
+        "specialties.list": "Especialidades",
+        "units.list": "Unidades",
+        "professionals.published": "Especialistas",
+        "technologies.list": "Tecnología",
+        "contact.email": "Email",
+        "contact.phone": "Teléfono",
+        "contact.instagram": "Instagram"
+      };
+      return labels[path] || path || "Campo";
+    }
+
+    function claimValueText(value) {
+      if (Array.isArray(value)) return value.join(", ");
+      if (value && typeof value === "object") return JSON.stringify(value);
+      return text(value).trim() || "—";
+    }
+
+    function renderClinicClaims(rows, sources) {
+      var count = Array.isArray(rows) ? rows.length : 0;
+      el("clinicEvidenceCount").textContent = count + (count === 1 ? " claim" : " claims");
+      el("clinicEvidenceMeta").textContent = count
+        ? "Últimos claims internos guardados. Vista solo lectura."
+        : "Sin claims internos guardados para esta clínica.";
+      if (!count) {
+        el("clinicClaimsList").innerHTML = '<p class="empty">No hay evidencias internas para esta ficha todavía.</p>';
+        return;
+      }
+      el("clinicClaimsList").innerHTML = rows.map(function (row) {
+        var source = sources[row.source_record_id || ""] || "";
+        var sourceHtml = source
+          ? '<a href="' + html(source) + '" rel="nofollow noopener" target="_blank">Fuente</a>'
+          : '<span>Sin fuente enlazada</span>';
+        var locked = row.human_locked ? '<span class="pill danger">Protegido</span>' : "";
+        return '<article class="claim-item">' +
+          '<div class="claim-main"><strong>' + html(fieldPathLabel(row.field_path)) + '</strong>' +
+          '<p>' + html(compactText(claimValueText(row.value), 220)) + '</p></div>' +
+          '<div class="claim-meta">' + pill(row.verification_status) + '<span class="pill">' + html(pct(row.confidence)) + '</span>' + locked + sourceHtml + '</div>' +
+          '</article>';
+      }).join("");
+    }
+
+    async function loadClinicClaims(clinicId) {
+      var requestId = ++activeClinicClaimRequest;
+      el("clinicEvidenceCount").textContent = "Cargando";
+      el("clinicEvidenceMeta").textContent = "Consultando claims internos.";
+      el("clinicClaimsList").innerHTML = '<p class="empty">Cargando evidencias...</p>';
+      var claimsResult = await client
+        .from("field_claims")
+        .select("id, field_path, value, confidence, verification_status, human_locked, source_record_id, created_at")
+        .eq("clinic_id", clinicId)
+        .order("created_at", { ascending: false })
+        .limit(14);
+      if (requestId !== activeClinicClaimRequest) return;
+      if (claimsResult.error) {
+        el("clinicEvidenceCount").textContent = "No disponible";
+        el("clinicEvidenceMeta").textContent = "No se pudieron cargar las evidencias.";
+        el("clinicClaimsList").innerHTML = '<p class="empty">No se pudieron leer los claims de esta clínica.</p>';
+        return;
+      }
+      var rows = claimsResult.data || [];
+      var sourceIds = rows.map(function (row) {
+        return row.source_record_id;
+      }).filter(Boolean);
+      var sourceMap = {};
+      if (sourceIds.length) {
+        var sourceResult = await client
+          .from("source_records")
+          .select("id, source_url")
+          .in("id", sourceIds);
+        if (requestId !== activeClinicClaimRequest) return;
+        if (!sourceResult.error) {
+          (sourceResult.data || []).forEach(function (source) {
+            sourceMap[source.id] = source.source_url;
+          });
+        }
+      }
+      renderClinicClaims(rows, sourceMap);
     }
 
     function publicStatus(status) {
@@ -1064,6 +1166,7 @@
       resetProposalPreview();
       loadClinicVersions(activeClinic.id);
       loadClinicFieldLocks(activeClinic.id);
+      loadClinicClaims(activeClinic.id);
       show(el("clinicEditor"), true);
       el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
       el("clinicName").focus();
@@ -1112,6 +1215,7 @@
     function closeClinicEditor() {
       activeClinicVersionRequest++;
       activeClinicLockRequest++;
+      activeClinicClaimRequest++;
       activeClinic = null;
       activeClinicReview = null;
       setLockInputsDisabled(false);

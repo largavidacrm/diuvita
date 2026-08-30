@@ -470,7 +470,8 @@ td small {
 }
 
 .proposal-preview-head,
-.version-history-head {
+.version-history-head,
+.evidence-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -479,18 +480,21 @@ td small {
 
 .proposal-preview h3,
 .version-history h3,
+.evidence-panel h3,
 .diff-item h4 {
   margin: 0;
   font-size: 0.96rem;
 }
 
 .proposal-preview p,
-.version-history p {
+.version-history p,
+.evidence-panel p {
   margin: 0.15rem 0 0;
   color: var(--muted);
 }
 
-.version-history {
+.version-history,
+.evidence-panel {
   display: grid;
   gap: 0.8rem;
   padding: 1rem;
@@ -498,12 +502,14 @@ td small {
   background: rgba(255, 253, 248, 0.65);
 }
 
-.version-list {
+.version-list,
+.claim-list {
   display: grid;
   gap: 0.65rem;
 }
 
-.version-item {
+.version-item,
+.claim-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.45rem 0.8rem;
@@ -537,6 +543,31 @@ td small {
 .version-item p {
   grid-column: 1 / -1;
   line-height: 1.35;
+}
+
+.claim-main {
+  min-width: 0;
+}
+
+.claim-main p {
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.claim-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.claim-meta a,
+.claim-meta span:not(.pill) {
+  align-self: center;
+  color: var(--green-deep);
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .proposal-diff {
@@ -700,6 +731,7 @@ td small {
   .detail-grid,
   .diff-cols,
   .version-item,
+  .claim-item,
   .edit-form {
     grid-template-columns: 1fr;
   }
