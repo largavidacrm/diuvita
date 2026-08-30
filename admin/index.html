@@ -683,6 +683,24 @@
       };
     }
 
+    function emptyProfileCompleteness() {
+      return {
+        visibleClinics: 0,
+        withoutPendingFields: 0,
+        withPendingFields: 0,
+        pendingSummary: 0,
+        pendingWebsite: 0,
+        pendingAddress: 0,
+        pendingContact: 0,
+        pendingServices: 0,
+        pendingSpecialties: 0,
+        pendingUnits: 0,
+        pendingSpecialists: 0,
+        pendingTechnology: 0,
+        unavailable: false
+      };
+    }
+
     function parseDateValue(value) {
       if (!value) return null;
       var parsed = new Date(value);
@@ -831,6 +849,64 @@
         ? currentData.profesionales
         : [];
       return values.filter(function (item) { return text(item).trim(); }).length;
+    }
+
+    function countVisibleArray(value) {
+      return Array.isArray(value)
+        ? value.filter(function (item) { return text(item).trim(); }).length
+        : 0;
+    }
+
+    function hasVisibleText() {
+      for (var i = 0; i < arguments.length; i += 1) {
+        if (text(arguments[i]).trim()) return true;
+      }
+      return false;
+    }
+
+    function hasTechnologyValue(value) {
+      if (Array.isArray(value)) return countVisibleArray(value) > 0;
+      return hasVisibleText(value);
+    }
+
+    function profilePendingFields(row) {
+      var data = row.current_data || {};
+      var fields = [];
+      if (text(row.summary || data.summary).trim().length < 120) fields.push("pendingSummary");
+      if (!hasVisibleText(row.website, data.web)) fields.push("pendingWebsite");
+      if (!hasVisibleText(row.address, data.address)) fields.push("pendingAddress");
+      if (!hasVisibleText(data.email, data.telefono, data.phone, data.telephone)) fields.push("pendingContact");
+      if (!countVisibleArray(data.services)) fields.push("pendingServices");
+      if (!countVisibleArray(data.specialties)) fields.push("pendingSpecialties");
+      if (!countVisibleArray(data.unidades)) fields.push("pendingUnits");
+      if (!countVisibleArray(data.profesionales)) fields.push("pendingSpecialists");
+      if (!hasTechnologyValue(data.tech)) fields.push("pendingTechnology");
+      return fields;
+    }
+
+    async function loadProfileCompleteness() {
+      var completeness = emptyProfileCompleteness();
+      var result = await client
+        .from("clinics")
+        .select("status, website, address, summary, current_data")
+        .in("status", ["published", "preliminary"])
+        .limit(500);
+
+      if (result.error) {
+        completeness.unavailable = true;
+        return completeness;
+      }
+
+      (result.data || []).forEach(function (row) {
+        var pending = profilePendingFields(row);
+        completeness.visibleClinics += 1;
+        if (pending.length) completeness.withPendingFields += 1;
+        else completeness.withoutPendingFields += 1;
+        pending.forEach(function (key) {
+          completeness[key] += 1;
+        });
+      });
+      return completeness;
     }
 
     async function loadSpecialistCoverage() {
@@ -988,7 +1064,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, specialistCoverage, openReviews) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, openReviews) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -1027,6 +1103,13 @@
       var specialistMissingLabel = specialists.unavailable
         ? "—"
         : specialists.withoutSpecialists + " pendientes";
+      var completeness = profileCompleteness || emptyProfileCompleteness();
+      var completenessLabel = completeness.unavailable
+        ? "No disponible"
+        : completeness.withoutPendingFields + "/" + completeness.visibleClinics + " fichas";
+      var completenessPendingLabel = completeness.unavailable
+        ? "—"
+        : completeness.withPendingFields + " con pendientes";
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -1046,6 +1129,8 @@
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
         systemItem("Especialistas", specialistLabel, specialists.unavailable || specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Pendientes especialistas", specialistMissingLabel, specialists.withoutSpecialists ? "warning-text" : ""),
+        systemItem("Fichas completas", completenessLabel, completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
+        systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
         systemItem("Fallos", failedJobs, failedJobs ? "danger-text" : ""),
         systemItem("Último trabajo", latestJob ? latestJob.job_type + " · " + date(latestJob.created_at) : "—"),
@@ -2515,7 +2600,8 @@
         var claimQuality = await loadClaimQuality();
         var sourceMonitoring = await loadSourceMonitoring();
         var specialistCoverage = await loadSpecialistCoverage();
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, reviewCache);
+        var profileCompleteness = await loadProfileCompleteness();
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, reviewCache);
 
         var clinicRows = await client
           .from("clinics")

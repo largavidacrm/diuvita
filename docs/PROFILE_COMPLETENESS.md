@@ -34,3 +34,8 @@ python3 scripts/measure_profile_completeness.py --json
 This report supports the safe rule in `docs/DIUVITA_LIMITES_OPERATIVOS.md`:
 missing or weak public information can be detected automatically, but publication
 or correction still goes through Daniel's manual review in `/admin/`.
+
+The top-line signal is also shown in `/admin/` as:
+
+- `Fichas completas`;
+- `Fichas con pendientes`.
