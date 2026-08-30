@@ -12,6 +12,7 @@ When working on this project:
 - State risks plainly before actions that affect production, GitHub, Netlify, Supabase or credentials.
 - Keep the operating mode: Daniel decides; Codex executes and guides.
 - Use `docs/VITALARGA_LIMITES_OPERATIVOS.md` as the project reference for Vitalarga's legal, medical, editorial and publication boundaries.
+- For Google Maps links, prefer the clinic's own Google Business/Profile URL; if no direct link is known, fall back to a clinic-name/city/country search, not a loose street-address search. Direct Google links should remain human-reviewed before publication.
 
 ## Autonomous CTO mode
 
