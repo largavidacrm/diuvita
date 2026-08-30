@@ -63,6 +63,7 @@ scripts/apply_supabase_sql.sh supabase/migrations/0009_promote_candidate_sources
 scripts/apply_supabase_sql.sh supabase/migrations/0010_quality_audit_workflow.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0011_automation_status.sql
 scripts/apply_supabase_sql.sh supabase/migrations/0012_human_field_locks.sql
+scripts/apply_supabase_sql.sh supabase/migrations/0013_quality_audit_detail_fields.sql
 ```
 
 Allow a first admin email after creating the Auth user in Supabase:
@@ -138,6 +139,8 @@ Daniel's non-technical panel guide lives in `docs/DANIEL_ADMIN_GUIDE.md`.
 `supabase/migrations/0011_automation_status.sql` stores safe defaults for automation: agents enabled, auto-publish disabled and a target of 200 reviewed candidates before considering higher autonomy.
 
 `supabase/migrations/0012_human_field_locks.sql` adds admin field locks. When Daniel protects a field from `/admin/`, future agents can still propose evidence but should not overwrite that field automatically.
+
+`supabase/migrations/0013_quality_audit_detail_fields.sql` expands the quality audit so it also flags missing units and highlighted technology.
 
 Local candidate batches can be submitted with:
 

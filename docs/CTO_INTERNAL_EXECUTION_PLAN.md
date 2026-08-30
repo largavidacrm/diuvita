@@ -40,7 +40,7 @@ Already built:
 - Admin visibility for clinic version history, protected fields and internal evidence claims.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
-- Quality audit workflow for incomplete clinic profiles.
+- Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
 - Internal profile-enrichment review cards for existing clinics.
 - Public clinic pages display richer fields: contact, services, specialties, units, tech and published specialists.
 
