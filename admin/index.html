@@ -589,6 +589,54 @@
         '</article>';
     }
 
+    function emptyClaimQuality() {
+      return {
+        conflict: 0,
+        rejected: 0,
+        withoutSource: 0,
+        unavailable: false
+      };
+    }
+
+    async function loadClaimQuality() {
+      var quality = emptyClaimQuality();
+      var result = await client
+        .from("field_claims")
+        .select("verification_status, source_record_id")
+        .limit(2000);
+
+      if (result.error) {
+        quality.unavailable = true;
+        return quality;
+      }
+
+      (result.data || []).forEach(function (row) {
+        var status = text(row.verification_status).toLowerCase();
+        if (status === "conflict") quality.conflict += 1;
+        if (status === "rejected") quality.rejected += 1;
+        if (!row.source_record_id) quality.withoutSource += 1;
+      });
+      return quality;
+    }
+
+    function adminReadinessBlockers(summary, claimQuality) {
+      var automation = summary.automation || {};
+      var jobs = summary.jobs || {};
+      var target = Number(automation.shadow_review_target || 200);
+      var completed = Number(automation.candidate_reviews_completed || 0);
+      var failedJobs = Number(jobs.failed || 0) + Number(jobs.dead_letter || 0);
+      var blockers = [];
+
+      if (completed < target) blockers.push("muestra humana " + completed + "/" + target);
+      if (failedJobs) blockers.push(failedJobs + " trabajos fallidos");
+      if (claimQuality.unavailable) blockers.push("claims no disponibles");
+      if (Number(claimQuality.conflict || 0)) blockers.push(claimQuality.conflict + " claims en conflicto");
+      if (Number(claimQuality.rejected || 0)) blockers.push(claimQuality.rejected + " claims rechazados");
+      if (Number(claimQuality.withoutSource || 0)) blockers.push(claimQuality.withoutSource + " claims sin fuente");
+
+      return blockers;
+    }
+
     function pill(status) {
       var tone = "";
       if (["failed", "dead_letter", "rejected", "conflict"].indexOf(status) >= 0) tone = " danger";
@@ -692,7 +740,7 @@
       show(el("reviewClearFilters"), activeReviewFilters());
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -706,6 +754,7 @@
       var latestEvent = recentEvents && recentEvents.length ? recentEvents[0] : null;
       var completed = Number(automation.candidate_reviews_completed || 0);
       var target = Number(automation.shadow_review_target || 0);
+      var blockers = adminReadinessBlockers(summary, claimQuality || emptyClaimQuality());
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -713,6 +762,8 @@
         systemItem("Agentes", automation.agents_enabled ? "Activos" : "Pausados", automation.agents_enabled ? "" : "warning-text"),
         systemItem("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada", automation.auto_publish_enabled ? "danger-text" : ""),
         systemItem("Modo sombra", automation.shadow_mode_active === false ? "Inactivo" : "Activo"),
+        systemItem("Madurez auto-publicación", blockers.length ? "No lista" : "Lista para Daniel", blockers.length ? "warning-text" : ""),
+        systemItem("Motivo principal", blockers[0] || "Sin bloqueos medidos", blockers.length ? "warning-text" : ""),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
@@ -2167,7 +2218,8 @@
               html(eventDetail(row)) + "</td><td>" + date(row.created_at) + "</td></tr>";
           }).join("");
         }
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || []);
+        var claimQuality = await loadClaimQuality();
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality);
 
         var clinicRows = await client
           .from("clinics")

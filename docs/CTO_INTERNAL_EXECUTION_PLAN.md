@@ -46,6 +46,7 @@ Already built:
 - Admin evidence cards show field risk and the current rule decision for each claim.
 - Admin rollback control from clinic version history, with every restore audited as a new version.
 - Candidate reviews now create internal drafts and route Daniel to final validation before publication.
+- Admin system status shows why auto-publication is or is not mature enough to discuss.
 - Source records can be hydrated with compact hash/excerpt evidence through `scripts/hydrate_source_records.py`.
 - Compact source snapshot history is stored in `source_snapshots`.
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
@@ -258,7 +259,7 @@ Next 10 technical steps:
 8. Build a shadow `EXTRACT_CLINIC_PROFILE` script for one clinic URL. Done locally in `scripts/extract_clinic_profile_shadow.py`; next step is adding an independent verifier.
 9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; review-card wiring exists in `scripts/submit_shadow_extraction_review.py`.
 10. Add a daily digest card/report for open reviews, failed jobs and costs. Done locally in `scripts/admin_digest.py`; next step is turning it into a scheduled notification when Daniel chooses the channel.
-11. Add a read-only review maturity measurement before any auto-publish expansion. Done locally in `scripts/measure_review_maturity.py`; next step is feeding the maturity signal into admin status/digest.
+11. Add a read-only review maturity measurement before any auto-publish expansion. Done locally in `scripts/measure_review_maturity.py`; the signal now appears in the admin status and digest.
 12. Process source-change review cards into profile-enrichment proposals. Done locally in `scripts/process_source_change_reviews.py`; it never edits or publishes clinic data.
 13. Add source-monitoring cadence so the watcher checks due sources instead of repeatedly scanning the same fresh sources. Done locally in `scripts/monitor_source_changes.py`; use `--force` for manual spot checks.
 

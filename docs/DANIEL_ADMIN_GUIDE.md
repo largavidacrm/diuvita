@@ -17,6 +17,17 @@ https://www.diuvita.com/admin/
 
 Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma.
 
+## Entender el estado del sistema
+
+En **Estado del sistema**, mira especialmente:
+
+- **Auto-publicación**: debe seguir **Apagada** hasta que tú decidas lo contrario.
+- **Modo sombra**: significa que los agentes proponen y crean tareas internas, pero no publican solos.
+- **Madurez auto-publicación**: si aparece **No lista**, todavía no conviene automatizar publicaciones.
+- **Motivo principal**: explica en lenguaje corto qué falta, por ejemplo más revisiones humanas o claims con conflicto.
+
+Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
+
 ## Revisar mejoras de una ficha existente
 
 Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que ya existe.
