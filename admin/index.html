@@ -283,12 +283,19 @@
               <span class="muted" id="reviewFilterMeta">Sin revisiones abiertas</span>
             </div>
             <div class="panel-tools">
+              <input id="reviewSearch" type="search" placeholder="Buscar revisión">
               <select id="reviewTypeFilter" aria-label="Filtrar revisiones">
                 <option value="">Todas</option>
                 <option value="candidate_clinic">Clínicas nuevas</option>
                 <option value="clinic_profile_enrichment">Mejoras de ficha</option>
                 <option value="clinic_quality_audit">Auditorías</option>
                 <option value="source_change_detected">Cambios de fuente</option>
+              </select>
+              <select id="reviewPriorityFilter" aria-label="Filtrar por prioridad">
+                <option value="">Todas las prioridades</option>
+                <option value="high">Alta</option>
+                <option value="medium">Media</option>
+                <option value="low">Baja</option>
               </select>
               <span class="pill" id="reviewCount">0 abiertas</span>
             </div>
@@ -414,6 +421,8 @@
     var clinicCache = [];
     var reviewCache = [];
     var reviewTypeFilter = "";
+    var reviewPriorityFilter = "";
+    var reviewSearchQuery = "";
     var activeClinic = null;
     var activeReview = null;
     var activeClinicReview = null;
@@ -509,6 +518,57 @@
         return item[1] + " " + reviewTypeLabel(item[0]).toLowerCase();
       });
       return parts.length ? parts.join(" · ") : "Sin revisiones abiertas";
+    }
+
+    function priorityBand(priority) {
+      var value = Number(priority || 0);
+      if (value >= 90) return "high";
+      if (value >= 50) return "medium";
+      return "low";
+    }
+
+    function priorityLabel(priority) {
+      var band = priorityBand(priority);
+      if (band === "high") return "Alta";
+      if (band === "medium") return "Media";
+      return "Baja";
+    }
+
+    function priorityPill(priority) {
+      var band = priorityBand(priority);
+      var tone = band === "high" ? " danger" : band === "medium" ? " warning" : "";
+      return '<span class="pill' + tone + '">' + html(priorityLabel(priority)) + " · P" + html(priority || 0) + '</span>';
+    }
+
+    function reviewSearchText(row) {
+      var payload = row.payload || {};
+      var candidate = candidateFromReview(row);
+      return [
+        row.title,
+        reviewTypeLabel(row.review_type),
+        row.priority,
+        payload.clinic_name,
+        payload.clinic_city,
+        payload.clinic_country,
+        payload.source_url,
+        candidate.name,
+        candidate.clinic_name,
+        candidate.city,
+        candidate.country,
+        candidate.website,
+        JSON.stringify(payload)
+      ].join(" ").toLowerCase();
+    }
+
+    function activeReviewFilters() {
+      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery);
+    }
+
+    function reviewMatchesFilters(row) {
+      if (reviewTypeFilter && row.review_type !== reviewTypeFilter) return false;
+      if (reviewPriorityFilter && priorityBand(row.priority) !== reviewPriorityFilter) return false;
+      if (reviewSearchQuery && reviewSearchText(row).indexOf(reviewSearchQuery) < 0) return false;
+      return true;
     }
 
     function emptyRow(target, columns, text) {
@@ -1125,19 +1185,23 @@
 
     function renderReviews() {
       var reviewsBody = el("reviewsBody");
-      var rows = reviewCache.filter(function (row) {
-        return !reviewTypeFilter || row.review_type === reviewTypeFilter;
-      });
-      el("reviewCount").textContent = reviewCache.length + " abiertas";
-      el("reviewFilterMeta").textContent = reviewTypeFilter
-        ? rows.length + " de " + reviewTypeLabel(reviewTypeFilter).toLowerCase()
+      reviewSearchQuery = trimmed("reviewSearch").toLowerCase();
+      reviewTypeFilter = el("reviewTypeFilter").value;
+      reviewPriorityFilter = el("reviewPriorityFilter").value;
+      var rows = reviewCache.filter(reviewMatchesFilters);
+      var hasFilters = activeReviewFilters();
+      el("reviewCount").textContent = hasFilters
+        ? rows.length + " visibles"
+        : reviewCache.length + " abiertas";
+      el("reviewFilterMeta").textContent = hasFilters
+        ? rows.length + " de " + reviewCache.length + " abiertas · " + reviewSummary(rows)
         : reviewSummary(reviewCache);
       if (!rows.length) {
-        emptyRow(reviewsBody, 5, reviewCache.length ? "No hay revisiones de este tipo" : "Sin revisiones abiertas");
+        emptyRow(reviewsBody, 5, reviewCache.length ? "No hay revisiones con esos filtros" : "Sin revisiones abiertas");
         return;
       }
       reviewsBody.innerHTML = rows.map(function (row) {
-        return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewTypeLabel(row.review_type)) + "</td><td>" + html(row.priority) + "</td><td>" +
+        return "<tr><td>" + html(row.title) + "</td><td>" + html(reviewTypeLabel(row.review_type)) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
           date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
           html(row.id) + '">Revisar</button></td></tr>';
       }).join("");
@@ -1633,10 +1697,9 @@
       el("reviewCreateDraftBtn").addEventListener("click", createClinicDraftFromReview);
       el("reviewDismissBtn").addEventListener("click", dismissReview);
       el("clinicSearch").addEventListener("input", renderClinics);
-      el("reviewTypeFilter").addEventListener("change", function () {
-        reviewTypeFilter = el("reviewTypeFilter").value;
-        renderReviews();
-      });
+      el("reviewSearch").addEventListener("input", renderReviews);
+      el("reviewTypeFilter").addEventListener("change", renderReviews);
+      el("reviewPriorityFilter").addEventListener("change", renderReviews);
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));

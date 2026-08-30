@@ -343,19 +343,20 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.6rem;
-  min-width: min(100%, 390px);
+  min-width: min(100%, 620px);
 }
 
 .panel-tools input {
-  min-width: 180px;
+  min-width: 160px;
   max-width: 260px;
   padding: 0.45rem 0.65rem;
   background: #fff;
 }
 
 .panel-tools select {
-  min-width: 170px;
+  min-width: 155px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
