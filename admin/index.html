@@ -71,6 +71,9 @@
           <div class="global-plan-grid" id="globalPlanGrid">
             <p class="empty">Cargando estado del plan.</p>
           </div>
+          <div class="global-plan-roadmap" id="globalPlanRoadmap">
+            <p class="empty">Cargando desglose del plan.</p>
+          </div>
           <div class="global-next-box">
             <div>
               <span>Siguiente trabajo recomendado</span>
@@ -1469,6 +1472,23 @@
         '</article>';
     }
 
+    function countOpenReviewsByType(openReviews, type) {
+      return (openReviews || []).filter(function (row) {
+        return row && row.review_type === type;
+      }).length;
+    }
+
+    function globalPlanLane(number, label, status, next, tone) {
+      return '<article class="global-plan-lane">' +
+        '<span class="global-plan-step">' + html(number) + '</span>' +
+        '<div>' +
+          '<span>' + html(label) + '</span>' +
+          '<strong class="' + html(tone || "") + '">' + html(status) + '</strong>' +
+          '<p>' + html(next || "") + '</p>' +
+        '</div>' +
+        '</article>';
+    }
+
     function renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews) {
       if (!el("globalPlanPanel")) return;
       var reviews = summary.reviews || {};
@@ -1492,6 +1512,9 @@
       var nextReview = groupRows.length
         ? firstActionReview(groupRows, 0) || sortReviewWorkgroup(groupRows)[0]
         : firstActionReview(openReviews || [], failedJobs);
+      var candidateOpenCount = countOpenReviewsByType(openReviews, "candidate_clinic");
+      var enrichmentOpenCount = countOpenReviewsByType(openReviews, "clinic_profile_enrichment");
+      var blockingOpenCount = countOpenReviewsByType(openReviews, "blocking_claim_review");
       globalPlanNextReviewId = nextReview && nextReview.id ? nextReview.id : "";
       globalPlanNextGroupId = group && group.clinicId ? group.clinicId : "";
 
@@ -1506,6 +1529,16 @@
         globalPlanItem("Fuentes", sourcePlanLabel(sources), sourceTarget, sources.nextTarget ? "warning-text" : ""),
         globalPlanItem("Especialistas", specialistPlanLabel(specialists), specialistNextTargetLabel(specialists.nextTarget), specialists.nextTarget ? "warning-text" : ""),
         globalPlanItem("Fichas", topPendingProfileField(completeness), profileTarget, completeness.nextTarget ? "warning-text" : "")
+      ].join("");
+      el("globalPlanRoadmap").innerHTML = [
+        globalPlanLane("1", "Base técnica", "Operativa", "Supabase, admin, GitHub y web pública ya están conectados."),
+        globalPlanLane("2", "Control interno", openCount + " revisiones", backlogGuard.label, backlogGuard.tone),
+        globalPlanLane("3", "Fuentes", sourcePlanLabel(sources), sourceTarget, sources.nextTarget ? "warning-text" : ""),
+        globalPlanLane("4", "Candidatas", candidateOpenCount + " abiertas", "Crear borrador solo tras revisión humana.", candidateOpenCount ? "warning-text" : ""),
+        globalPlanLane("5", "Mejorar fichas", enrichmentOpenCount + " mejoras", profileTarget, enrichmentOpenCount ? "warning-text" : ""),
+        globalPlanLane("6", "Especialistas", specialistPlanLabel(specialists), specialistNextTargetLabel(specialists.nextTarget), specialists.nextTarget ? "warning-text" : ""),
+        globalPlanLane("7", "Autonomía", automationPlanLabel(automation), blockers[0] || "Modo sombra hasta medir precisión.", blockers.length ? "warning-text" : ""),
+        globalPlanLane("8", "Growth", blockingOpenCount ? "En espera" : "Pendiente", blockingOpenCount ? "Antes: resolver claims bloqueantes." : "Después: SEO y páginas por ciudad/tratamiento.", blockingOpenCount ? "warning-text" : "")
       ].join("");
       el("globalPlanNextAction").textContent = next;
       el("globalPlanNextDetail").textContent = group
