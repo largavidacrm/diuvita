@@ -850,7 +850,7 @@ def facts_block(c):
         facts.append(("Ubicación", h(" · ".join(location))))
     if len(locations) > 1:
         facts.append(("Sedes", h(f"{len(locations)} sedes documentadas")))
-    address = first_text(c.get("address"), location_address(primary))
+    address = first_text(location_address(primary), c.get("address"))
     if address:
         maps_url = location_maps_url(primary, c)
         value = f'<a href="{h(maps_url)}" rel="nofollow noopener" target="_blank">{h(address)}</a>' if maps_url else h(address)
@@ -970,6 +970,7 @@ def profile_nav(c, has_contact, has_tech, has_locations, has_transparency):
 
 def ficha(c):
     tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
+    locations = clinic_locations(c)
     datos = facts_block(c)
     contacto = contacto_block(c)
     areas = list_section("Áreas de especialidad", c["specialties"], section_id="especialidades")
@@ -983,7 +984,8 @@ def ficha(c):
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     city_label = c["city"] + extra
-    loc = " · ".join(visible_values([city_label, c.get("country"), c.get("address")]))
+    hero_address = c.get("address") if len(locations) <= 1 else ""
+    loc = " · ".join(visible_values([city_label, c.get("country"), hero_address]))
     visit = ""
     if c.get("web") and external_url(c["web"]):
         visit_url = external_url(c["web"])

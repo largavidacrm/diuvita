@@ -31,6 +31,8 @@ def main() -> None:
         "def stat_items(",
         "def contact_count(",
         "def section_heading(",
+        'address = first_text(location_address(primary), c.get("address"))',
+        'hero_address = c.get("address") if len(locations) <= 1 else ""',
         'class="card-signals"',
         'aria-label="Datos visibles de la ficha"',
         'class="profile-jump"',

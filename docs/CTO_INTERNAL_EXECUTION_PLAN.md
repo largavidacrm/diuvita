@@ -344,6 +344,7 @@ Next 10 technical steps:
 40. Align Google-link discovery with direct-only Maps. Done locally in `scripts/discover_clinic_google_links.py`: clinics with generic stored Maps links remain eligible for discovery until a real clinic-profile URL exists.
 41. Make the global plan panel easier to orient. Done locally in `/admin/`: the panel now opens with three plain checkpoints, `Ahora`, `Bloqueo` and `Después`, before the detailed roadmap.
 42. Add compact Google-link discovery output. Done locally in `scripts/discover_clinic_google_links.py`: large dry-runs can now show only ready, empty-with-candidates and failed summaries without flooding the session.
+43. Clean public multisede summaries. Done locally in the static site build: multi-location profiles no longer put every address in the hero or in one `Dirección principal`; the per-sede block carries each address.
 
 ## Daniel decision checkpoints
 
