@@ -41,6 +41,9 @@ against the same completeness gaps used by the admin dashboard, including
 locations, specialists, years in practice, public specialist count, visible
 credentialing and public pricing.
 
+Use `--compact` for real read-only checks when the full verification payload
+would be too noisy.
+
 For extraction, it reads a larger compact excerpt than the provenance snapshot
 and also captures useful hidden contact links such as `mailto:`, `tel:` and
 Instagram profile URLs. This improves internal proposals without storing or

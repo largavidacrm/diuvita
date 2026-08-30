@@ -347,6 +347,7 @@ Next 10 technical steps:
 43. Clean public multisede summaries. Done locally in the static site build: multi-location profiles no longer put every address in the hero or in one `Dirección principal`; the per-sede block carries each address.
 44. Add transparency fields to profile completeness. Done locally in `/admin/`, `scripts/admin_digest.py` and `scripts/measure_profile_completeness.py`: years in practice, public specialist count, visible credentialing and public pricing are now measured as explicit pending/listo signals.
 45. Prioritize transparency gaps in source shadow reviews. Done locally in `scripts/submit_source_shadow_reviews.py`: existing sources are now scored against the same transparency gaps before any review card is created.
+46. Add compact output for source shadow reviews. Done locally in `scripts/submit_source_shadow_reviews.py`: read-only extraction checks can now show useful ready/skipped/failed summaries without exposing large verification payloads.
 
 ## Daniel decision checkpoints
 

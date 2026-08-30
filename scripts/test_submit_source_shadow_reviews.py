@@ -3,7 +3,14 @@
 from argparse import Namespace
 
 from capture_source_snapshot import FetchResult
-from submit_source_shadow_reviews import load_clinic_sources, process_source, process_sources, proposed_field_counts, summarize_results
+from submit_source_shadow_reviews import (
+    compact_output,
+    load_clinic_sources,
+    process_source,
+    process_sources,
+    proposed_field_counts,
+    summarize_results,
+)
 
 
 def check(condition, message):
@@ -136,6 +143,13 @@ def main():
     check(summary["ready"] == 2, "summary ready count missing")
     check(summary["skipped"] == 1, "summary skipped count missing")
     check(summary["created_or_updated"] == 1, "summary created count missing")
+    compact = compact_output({"mode": "dry_run", **summary, "items": [result, skipped, dict(result, status="failed", error="timeout")]})
+    check(compact["writes_data"] is False, "compact dry run should be read-only")
+    check(len(compact["ready_items"]) == 1, "compact output should keep ready items")
+    check(len(compact["skipped_items"]) == 1, "compact output should keep skipped items")
+    check(len(compact["failed_items"]) == 1, "compact output should keep failed items")
+    check("verification_summary" not in compact["ready_items"][0], "compact output should omit verification details")
+    check(compact["ready_items"][0]["proposed_field_counts"]["profesionales"] == 1, "compact output should keep useful counts")
     check(
         proposed_field_counts({"profesionales": ["A", "B"], "telefono": "+34", "tech": ""})
         == {"profesionales": 2, "telefono": 1, "tech": 0},

@@ -351,6 +351,41 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, int]:
     }
 
 
+def compact_item(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "clinic_slug": item.get("clinic_slug"),
+        "clinic_name": item.get("clinic_name"),
+        "source_type": item.get("source_type"),
+        "source_url": item.get("source_url"),
+        "status": item.get("status"),
+        "reason": item.get("reason"),
+        "pending_count": item.get("pending_count"),
+        "pending_fields": item.get("pending_fields") or [],
+        "proposed_fields": item.get("proposed_fields") or [],
+        "proposed_field_counts": item.get("proposed_field_counts") or {},
+        "has_open_review": bool(item.get("open_review")),
+        "has_open_clinic_review": bool(item.get("open_clinic_review")),
+    }
+
+
+def compact_output(output: dict[str, Any]) -> dict[str, Any]:
+    items = output.get("items") if isinstance(output.get("items"), list) else []
+    compact_items = [compact_item(item) for item in items if isinstance(item, dict)]
+    return {
+        "mode": output.get("mode"),
+        "writes_data": output.get("mode") == "apply",
+        "sources_seen": output.get("sources_seen"),
+        "ready": output.get("ready"),
+        "empty": output.get("empty"),
+        "skipped": output.get("skipped"),
+        "failed": output.get("failed"),
+        "created_or_updated": output.get("created_or_updated"),
+        "ready_items": [item for item in compact_items if item.get("status") == "ready"],
+        "skipped_items": [item for item in compact_items if item.get("status") == "skipped"],
+        "failed_items": [item for item in compact_items if item.get("status") == "failed"],
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=5)
@@ -369,6 +404,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Create internal clinic_profile_enrichment review cards. Never publishes or edits clinics.",
     )
+    parser.add_argument("--compact", action="store_true", help="Print a compact summary without full verification details.")
     return parser.parse_args()
 
 
@@ -388,6 +424,8 @@ def main() -> int:
         **summarize_results(results),
         "items": results,
     }
+    if args.compact:
+        output = compact_output(output)
     print(json.dumps(output, ensure_ascii=False, indent=2))
     return 0 if output["failed"] == 0 else 1
 
