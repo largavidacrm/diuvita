@@ -80,7 +80,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/monitor_source_changes.py`: compara hashes de fuentes y crea revisiones internas si cambian.
 - `scripts/process_source_change_reviews.py`: convierte revisiones de fuente cambiada en propuestas internas de mejora.
 - `scripts/measure_source_snapshot_retention.py`: mide si hay capturas antiguas candidatas a limpieza, sin borrar nada.
-- `scripts/run_cto_shadow_cycle.py`: ejecuta el ciclo sombra seguro de CTO.
+- `scripts/run_cto_shadow_cycle.py`: ejecuta el ciclo sombra seguro de CTO; puede incluir chequeo de producción opcional.
 - `scripts/check_production_health.py`: comprueba URLs públicas de producción, sin login ni escrituras.
 - `scripts/run_local_checks.py`: ejecuta pruebas, validación, build y revisión básica del admin.
 - `scripts/apply_supabase_sql.sh`: aplica un SQL concreto contra Supabase.

@@ -79,6 +79,23 @@ def main():
     check("admin_email" not in compact_digest, "admin email should be removed from cycle output")
     check(compact_digest["open_reviews_count"] == 2, "open review count should be kept")
     check("payload" not in compact_digest["sample_open_reviews"][0], "review payload should be omitted")
+    compact_health = compact_summary("check_production_health", {
+        "base_url": "https://www.diuvita.com",
+        "ok": True,
+        "checks": [
+            {
+                "name": "home",
+                "url": "https://www.diuvita.com/",
+                "status": 200,
+                "ok": True,
+                "missing_markers": [],
+                "body": "large",
+            }
+        ],
+    })
+    check(compact_health["checks_count"] == 1, "production health check count should be kept")
+    check("checks" not in compact_health, "full production health checks should be removed")
+    check("body" not in compact_health["sample_checks"][0], "production response bodies should be omitted")
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {
@@ -110,10 +127,14 @@ def main():
         snapshot_retention_limit=7,
         profile_completeness_limit=11,
         fetch_timeout=7,
+        production_health=False,
+        production_base_url="https://www.diuvita.com",
+        production_timeout=7,
     ))
     names = [step[0] for step in steps]
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
+    check("check_production_health" not in names, "production health should be off by default")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
@@ -149,11 +170,18 @@ def main():
         snapshot_retention_limit=7,
         profile_completeness_limit=11,
         fetch_timeout=7,
+        production_health=True,
+        production_base_url="https://www.diuvita.com",
+        production_timeout=7,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")
+    health_step = [step for step in optional_steps if step[0] == "check_production_health"][0]
+    check("--json" in health_step[1], "production health should be machine readable")
+    check("https://www.diuvita.com" in health_step[1], "production health base URL should pass through")
+    check("7" in health_step[1], "production health timeout should pass through")
     print("OK cycle: CTO shadow orchestration")
 
 

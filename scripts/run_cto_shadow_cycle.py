@@ -64,6 +64,7 @@ STEP_ITEM_KEYS = {
         "proposed_fields",
         "created_review",
     ),
+    "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
 }
 
 
@@ -114,6 +115,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in open_reviews[:3]
         ]
         compact.pop("open_reviews", None)
+    checks = compact.get("checks")
+    if isinstance(checks, list):
+        compact["checks_count"] = len(checks)
+        compact["sample_checks"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in checks[:5]
+        ]
+        compact.pop("checks", None)
     return compact
 
 
@@ -244,6 +253,21 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
     ])
+    if args.production_health:
+        steps.append(
+            (
+                "check_production_health",
+                [
+                    "check_production_health.py",
+                    "--base-url",
+                    args.production_base_url,
+                    "--timeout",
+                    str(args.production_timeout),
+                    "--json",
+                ],
+                max(45, args.production_timeout * 6),
+            )
+        )
     return steps
 
 
@@ -265,6 +289,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot-retention-limit", type=int, default=8)
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
     parser.add_argument("--fetch-timeout", type=int, default=12)
+    parser.add_argument(
+        "--production-health",
+        action="store_true",
+        help="Optionally check public production URLs; read-only and network-dependent.",
+    )
+    parser.add_argument("--production-base-url", default="https://www.diuvita.com")
+    parser.add_argument("--production-timeout", type=int, default=12)
     return parser.parse_args()
 
 
@@ -301,6 +332,8 @@ def main() -> int:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:
         raise SystemExit("--fetch-timeout must be between 3 and 60 seconds.")
+    if args.production_timeout < 3 or args.production_timeout > 60:
+        raise SystemExit("--production-timeout must be between 3 and 60 seconds.")
 
     steps = []
     for name, command_args, timeout in build_steps(args):

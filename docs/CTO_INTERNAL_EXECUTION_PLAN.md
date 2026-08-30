@@ -72,6 +72,7 @@ Already built:
 - Internal profile-enrichment review cards for existing clinics.
 - Public clinic pages display richer fields with clearer navigation, section counts and more scannable lists.
 - Production health can be checked read-only for the public site shell, admin shell, sitemap and favicon.
+- Safe CTO shadow cycle can optionally include the read-only production health check.
 
 Not yet mature:
 
@@ -84,7 +85,7 @@ Not yet mature:
 - Doctor, pricing, treatment and SEO workflows.
 - Specialist coverage can now be measured, but publication of new professional details still needs manual review.
 - Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
-- Daily/weekly digest.
+- Daily/weekly digest and notification cadence.
 - Rollback controls in the admin UI need operational usage, but the restore path now exists.
 - Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.
 

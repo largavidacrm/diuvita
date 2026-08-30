@@ -17,6 +17,7 @@ for Daniel instead of implementing, softening or silently discarding the change.
 8. measure visible-profile completeness without editing clinics;
 9. print the admin digest;
 10. evaluate stored claims against publication rules.
+11. optionally check public production URLs without logging in or writing data.
 
 Default mode is dry-run:
 
@@ -48,6 +49,16 @@ The cycle output is compact by default: it keeps counters and small examples,
 but avoids printing full evidence payloads, long text digests or large claim lists.
 Source monitoring respects cadence by default, so a healthy run may report zero
 checked sources when all sources were recently observed.
+
+The production health check is off by default because it reads the live website
+over the network. To include it at the end of a cycle:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --production-health
+```
+
+This step only verifies public pages and expected interface markers. It does not
+log in, change Supabase, publish clinics or resolve review cards.
 
 This script is intended for future scheduled CTO runs once Daniel chooses the
 cadence and notification channel.

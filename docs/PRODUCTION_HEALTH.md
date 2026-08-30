@@ -27,3 +27,13 @@ JSON output:
 ```bash
 python3 scripts/check_production_health.py --json
 ```
+
+## CTO cycle
+
+The safe CTO shadow cycle can include this check as an optional final step:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --production-health
+```
+
+It remains read-only in both dry-run and safe-apply mode.
