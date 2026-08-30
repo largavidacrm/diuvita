@@ -81,6 +81,26 @@ def main():
         "city": "Madrid",
     })["maps_url"].startswith("https://www.google.com/maps/place/"), "place-id Maps links should still be proposed")
 
+    generic_short_link = discover_google_links(
+        "https://exampleclinic.test/",
+        '<a href="https://maps.app.goo.gl/F6Jkg8p4G8toGZrCA">Google Maps</a>',
+    )
+    check(not best_links(generic_short_link, clinic={
+        "display_name": "Example Longevity Clinic",
+        "slug": "example-clinic",
+        "city": "Madrid",
+    }), "generic Google short links should stay pending unless clinic context is visible")
+
+    named_short_link = discover_google_links(
+        "https://exampleclinic.test/",
+        '<a href="https://maps.app.goo.gl/F6Jkg8p4G8toGZrCA">Example Longevity Clinic en Google Maps</a>',
+    )
+    check(best_links(named_short_link, clinic={
+        "display_name": "Example Longevity Clinic",
+        "slug": "example-clinic",
+        "city": "Madrid",
+    })["maps_url"].startswith("https://maps.app.goo.gl/"), "named Google short links should still be proposed")
+
     noisy = discover_google_links(
         "https://exampleclinic.test/",
         """

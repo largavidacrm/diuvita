@@ -336,6 +336,12 @@ def has_direct_place_identifier(candidate: GoogleLinkCandidate) -> bool:
     )
 
 
+def is_ambiguous_short_maps_link(candidate: GoogleLinkCandidate) -> bool:
+    host = google_host(candidate.url)
+    parsed = urlparse(candidate.url)
+    return host == "maps.app.goo.gl" or (host == "goo.gl" and parsed.path.lower().startswith("/maps"))
+
+
 def looks_like_address_label(label: str) -> bool:
     return bool(ADDRESS_LABEL_RE.search(label or ""))
 
@@ -361,6 +367,13 @@ def best_links(candidates: list[GoogleLinkCandidate], clinic: dict[str, Any] | N
                 and kind == "maps_url"
                 and not clinic_name_score(ranked[0], clinic)
                 and (looks_like_address_label(ranked[0].label) or not has_direct_place_identifier(ranked[0]))
+            ):
+                continue
+            if (
+                clinic
+                and kind == "maps_url"
+                and is_ambiguous_short_maps_link(ranked[0])
+                and not clinic_name_score(ranked[0], clinic)
             ):
                 continue
             result[kind] = ranked[0].url

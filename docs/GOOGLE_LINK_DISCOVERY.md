@@ -53,3 +53,9 @@ street-address `/maps/place/` URL instead of a named clinic profile, it is also
 left for manual review. Generic labels are accepted only when the URL has a
 strong direct-place signal such as `place_id`, `cid` or a Google short place
 link.
+
+Extra caution for short links: `maps.app.goo.gl` and `goo.gl/maps` links are not
+proposed from a generic label such as "Google Maps" unless the visible label or
+URL context also includes the clinic name. Those links can hide a simple address
+pin, so they remain pending for Daniel instead of becoming a proposed clinic
+profile link automatically.
