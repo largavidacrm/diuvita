@@ -23,6 +23,12 @@ To focus one clinic:
 python3 scripts/discover_clinic_google_links.py --clinic-slug monarka-clinic --limit 1
 ```
 
+Compact read-only output for large batches:
+
+```bash
+python3 scripts/discover_clinic_google_links.py --limit 19 --compact
+```
+
 Apply mode creates internal `clinic_profile_enrichment` review cards only:
 
 ```bash

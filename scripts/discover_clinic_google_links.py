@@ -541,6 +541,38 @@ def summarize(results: list[dict[str, Any]], apply: bool) -> dict[str, Any]:
     }
 
 
+def compact_summary(summary: dict[str, Any]) -> dict[str, Any]:
+    items = summary.get("items") if isinstance(summary.get("items"), list) else []
+    compact_items = []
+    for item in items:
+        compact_items.append({
+            "clinic_slug": item.get("clinic_slug"),
+            "clinic_name": item.get("clinic_name"),
+            "status": item.get("status"),
+            "proposed_fields": item.get("proposed_fields") or {},
+            "scanned_urls_count": len(item.get("scanned_urls") or []),
+            "candidate_count": len(item.get("google_link_candidates") or []),
+            "fetch_error_count": len(item.get("fetch_errors") or []),
+        })
+    return {
+        "mode": summary.get("mode"),
+        "writes_data": summary.get("writes_data"),
+        "clinics_seen": summary.get("clinics_seen"),
+        "ready": summary.get("ready"),
+        "empty": summary.get("empty"),
+        "failed": summary.get("failed"),
+        "maps_links_found": summary.get("maps_links_found"),
+        "review_links_found": summary.get("review_links_found"),
+        "ready_items": [item for item in compact_items if item.get("status") == "ready"],
+        "empty_with_candidates": [
+            item for item in compact_items
+            if item.get("status") == "empty" and item.get("candidate_count")
+        ],
+        "failed_items": [item for item in compact_items if item.get("status") == "failed"],
+        "safety": summary.get("safety"),
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=10)
@@ -555,6 +587,7 @@ def parse_args() -> argparse.Namespace:
         help="Allow more than one open enrichment card for the same clinic.",
     )
     parser.add_argument("--apply", action="store_true", help="Create internal review cards. Never edits clinics.")
+    parser.add_argument("--compact", action="store_true", help="Print a compact summary without full Google candidate URLs.")
     return parser.parse_args()
 
 
@@ -575,6 +608,8 @@ def main() -> int:
         for clinic in clinics
     ]
     output = summarize(results, args.apply)
+    if args.compact:
+        output = compact_summary(output)
     print(json.dumps(output, ensure_ascii=False, indent=2))
     return 0 if output["failed"] == 0 else 1
 

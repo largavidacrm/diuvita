@@ -7,6 +7,7 @@ from pathlib import Path
 from capture_source_snapshot import FetchResult
 from discover_clinic_google_links import (
     best_links,
+    compact_summary,
     dedupe_google_candidates,
     discover_google_links,
     discover_secondary_pages,
@@ -195,6 +196,33 @@ def main():
     applied = process_clinic(clinic, args, "admin@example.test", {}, fake_fetcher, fake_review_creator)
     check(applied["created_review"]["status"] == "inserted", "apply mode should create a review card")
     check(created, "review creator should be called in apply mode")
+
+    compact = compact_summary({
+        "mode": "dry_run",
+        "writes_data": False,
+        "clinics_seen": 2,
+        "ready": 1,
+        "empty": 1,
+        "failed": 0,
+        "maps_links_found": 1,
+        "review_links_found": 0,
+        "items": [
+            dry_run,
+            {
+                "clinic_slug": "address-only",
+                "clinic_name": "Address Only",
+                "status": "empty",
+                "proposed_fields": {},
+                "scanned_urls": ["https://address-only.example/"],
+                "google_link_candidates": [{"url": "https://www.google.com/maps/place/Calle+1"}],
+                "fetch_errors": [],
+            },
+        ],
+        "safety": "safe",
+    })
+    check(compact["ready_items"][0]["clinic_slug"] == "example-clinic", "compact ready item missing")
+    check(compact["empty_with_candidates"][0]["clinic_slug"] == "address-only", "compact empty candidate item missing")
+    check("google_link_candidates" not in compact["ready_items"][0], "compact output should omit full candidates")
 
     already_complete = dict(clinic, has_google_maps=True, has_google_reviews=True)
     complete = process_clinic(already_complete, args, "admin@example.test", {}, fake_fetcher, fake_review_creator)
