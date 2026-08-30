@@ -23,6 +23,7 @@ Las ampliaciones de fichas existentes deben entrar primero como propuestas inter
 La web publica sigue siendo estatica por ahora. La base tecnica para la siguiente fase esta en:
 
 - `docs/CTO_ROADMAP.md`: plan tecnico por fases.
+- `docs/CTO_INTERNAL_EXECUTION_PLAN.md`: plan operativo interno para avanzar hacia la arquitectura objetivo.
 - `docs/AGENT_WORKFLOWS.md`: primer diseno de workflows agenticos.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.

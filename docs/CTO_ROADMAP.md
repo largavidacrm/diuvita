@@ -15,6 +15,8 @@ Diuvita is currently a small static Netlify site:
 
 This is a good starting point. The next technical goal is not to rebuild the site. The next goal is to make Diuvita agent-ready while keeping the public site stable.
 
+Operational execution plan: see `docs/CTO_INTERNAL_EXECUTION_PLAN.md`. That document is the working plan for unattended CTO runs and should be updated as major milestones are completed.
+
 ## Product principle
 
 AI proposes. AI challenges. Rules decide whether AI may publish. Humans handle exceptions. Everything is reversible.

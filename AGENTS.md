@@ -41,7 +41,7 @@ When blocked, Codex should say exactly what is needed, why it is needed, and wha
 
 When Daniel asks Codex to keep advancing the general Diuvita plan without staying present, use this operating pattern:
 
-- Start from `docs/CTO_ROADMAP.md`, `docs/AGENT_WORKFLOWS.md`, recent git history and current Supabase state.
+- Start from `docs/CTO_INTERNAL_EXECUTION_PLAN.md`, `docs/CTO_ROADMAP.md`, `docs/AGENT_WORKFLOWS.md`, recent git history and current Supabase state.
 - Pick the highest-impact safe task that moves the roadmap forward.
 - Prefer work that can be completed end to end without Daniel: admin UX, scripts, validation, review queues, documentation, data audits and internal proposals.
 - Keep public medical/contact/team data in review proposals unless Daniel explicitly approves publication.
