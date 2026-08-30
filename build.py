@@ -210,12 +210,6 @@ def google_maps_search_url(*parts):
         return ""
     return "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(query)
 
-def location_search_name(loc):
-    name = first_text(loc.get("name"), loc.get("label"), loc.get("sede"))
-    if re.match(r"^sede( principal|\s+\d+)?$", name, flags=re.I):
-        return ""
-    return name
-
 def location_from_dict(value):
     loc = {
         "name": first_text(value.get("name"), value.get("label"), value.get("sede")),
@@ -290,8 +284,8 @@ def clinic_locations(c):
     parts = [part.strip() for part in address.split(" · ") if part.strip()]
     if len(parts) > 1:
         return [
-            {"name": f"Sede {index + 1}", "city": city_from_address(part, c.get("city", "")), "address": part}
-            for index, part in enumerate(parts)
+            {"city": city_from_address(part, c.get("city", "")), "address": part}
+            for part in parts
         ]
     return [{"city": city_from_address(address, c.get("city", "")), "address": address}]
 
@@ -307,6 +301,15 @@ def location_address(loc):
 def location_city(loc, c):
     return first_text(loc.get("city"), c.get("city"))
 
+def location_display_name(loc, c, multiple=False):
+    name = first_text(loc.get("name"), loc.get("label"), loc.get("sede"))
+    if name and not re.match(r"^sede( principal|\s+\d+|\s+en\s+.+)?$", name, flags=re.I):
+        return name
+    city = location_city(loc, c)
+    if multiple and city:
+        return f"Sede en {city}"
+    return "Sede principal" if not multiple else "Sede"
+
 def location_maps_url(loc, c):
     direct = external_url(first_text(
         loc.get("maps_url"),
@@ -317,7 +320,7 @@ def location_maps_url(loc, c):
     if direct:
         return direct
     city = location_city(loc, c)
-    return google_maps_search_url(c.get("name"), location_search_name(loc), city, c.get("country"))
+    return google_maps_search_url(c.get("name"), city, c.get("country"))
 
 def location_reviews_url(loc, c):
     return external_url(first_text(
@@ -856,8 +859,9 @@ def locations_block(c):
     if not locations:
         return ""
     rows = []
-    for index, loc in enumerate(locations):
-        name = first_text(loc.get("name"), f"Sede {index + 1}" if len(locations) > 1 else "Sede principal")
+    multiple = len(locations) > 1
+    for loc in locations:
+        name = location_display_name(loc, c, multiple)
         address = location_address(loc)
         maps_url = location_maps_url(loc, c)
         reviews_url = location_reviews_url(loc, c)

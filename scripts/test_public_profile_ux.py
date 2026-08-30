@@ -19,7 +19,7 @@ def main() -> None:
         "def profile_nav_item(",
         "def clinic_locations(",
         "def locations_block(",
-        "def location_search_name(",
+        "def location_display_name(",
         "def transparency_block(",
         "def location_maps_url(",
         "def location_reviews_url(",
@@ -39,6 +39,7 @@ def main() -> None:
         'id="sedes"',
         'class="location-list"',
         'class="location-actions"',
+        'location_display_name(loc, c, multiple)',
         'Valoraciones Google',
         'id="transparencia"',
         'class="transparency-grid"',
@@ -63,7 +64,7 @@ def main() -> None:
         ".clinic-main{min-width:0}",
         ".ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0;overflow-wrap:anywhere}",
         ".profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}",
-        'return google_maps_search_url(c.get("name"), location_search_name(loc), city, c.get("country"))',
+        'return google_maps_search_url(c.get("name"), city, c.get("country"))',
         'c.get("web", "")',
         'c.get("email", "")',
         'c.get("telefono", "")',
@@ -84,11 +85,13 @@ def main() -> None:
         "profile-snapshot",
         "profile-nav-count",
         "section-count",
+        "Sede {index + 1}",
     ]:
         check(removed_marker not in source, f"public profile should not render decorative counters: {removed_marker}")
 
     maps_body = source[source.index("def location_maps_url("):source.index("def location_reviews_url(")]
     check("location_address" not in maps_body, "Google Maps fallback should use clinic name, not street address")
+    check("location_search_name" not in maps_body, "Google Maps fallback should not use location labels")
 
     print("OK public profile UX: navigation and richer search wired")
 
