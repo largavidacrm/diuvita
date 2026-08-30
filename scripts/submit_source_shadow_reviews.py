@@ -62,7 +62,14 @@ from (
         and rq.status = 'open'
         and rq.review_type = 'clinic_profile_enrichment'
         and rq.payload ->> 'source_url' = sr.source_url
-    ) as has_open_review
+    ) as has_open_review,
+    exists (
+      select 1
+      from public.review_queue rq
+      where rq.clinic_id = c.id
+        and rq.status = 'open'
+        and rq.review_type = 'clinic_profile_enrichment'
+    ) as has_open_clinic_review
   from public.source_records sr
   join public.clinics c on c.id = sr.clinic_id
   cross join lateral (
@@ -156,6 +163,13 @@ def process_source(
     if source.get("has_open_review") and not args.replace_existing:
         return {**result, "status": "skipped", "reason": "open enrichment review already exists"}
 
+    if (
+        source.get("has_open_clinic_review")
+        and not source.get("has_open_review")
+        and not args.allow_multiple_open_clinic_reviews
+    ):
+        return {**result, "status": "skipped", "reason": "open enrichment review already exists for this clinic"}
+
     try:
         extraction = extract_from_fetch(fetcher(source_url, timeout=args.timeout))
         verification = verify_extraction(extraction)
@@ -181,6 +195,46 @@ def process_source(
     return result
 
 
+def duplicate_clinic_result(source: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "source_record_id": source.get("source_record_id"),
+        "clinic_slug": source.get("clinic_slug"),
+        "clinic_name": source.get("clinic_name"),
+        "source_url": source.get("source_url"),
+        "pending_count": source.get("pending_count") or 0,
+        "pending_fields": source.get("pending_fields") or [],
+        "status": "skipped",
+        "reason": "another source for this clinic is already queued in this batch",
+    }
+
+
+def process_sources(
+    sources: list[dict[str, Any]],
+    args: argparse.Namespace,
+    admin_email: str,
+    local_env: dict[str, str],
+    fetcher: FetchFn = fetch_url,
+    review_creator: CreateReviewFn = create_review,
+) -> list[dict[str, Any]]:
+    results = []
+    queued_clinics = set()
+    for source in sources:
+        clinic_slug = str(source.get("clinic_slug") or "")
+        if (
+            clinic_slug
+            and clinic_slug in queued_clinics
+            and not args.allow_multiple_open_clinic_reviews
+        ):
+            results.append(duplicate_clinic_result(source))
+            continue
+
+        result = process_source(source, args, admin_email, local_env, fetcher, review_creator)
+        results.append(result)
+        if clinic_slug and result.get("status") in {"ready", "skipped"}:
+            queued_clinics.add(clinic_slug)
+    return results
+
+
 def summarize_results(results: list[dict[str, Any]]) -> dict[str, int]:
     return {
         "sources_seen": len(results),
@@ -201,6 +255,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--admin-email", help="Admin email assigned to created review cards.")
     parser.add_argument("--replace-existing", action="store_true", help="Refresh an existing open review for the same source.")
     parser.add_argument(
+        "--allow-multiple-open-clinic-reviews",
+        action="store_true",
+        help="Allow more than one open enrichment card for the same clinic.",
+    )
+    parser.add_argument(
         "--apply",
         action="store_true",
         help="Create internal clinic_profile_enrichment review cards. Never publishes or edits clinics.",
@@ -218,10 +277,7 @@ def main() -> int:
     local_env = load_env_file()
     admin_email = args.admin_email or get_default_admin_email(local_env)
     sources = load_clinic_sources(args.limit, args.clinic_slug, args.source_id, local_env)
-    results = [
-        process_source(source, args, admin_email, local_env)
-        for source in sources
-    ]
+    results = process_sources(sources, args, admin_email, local_env)
     output = {
         "mode": "apply" if args.apply else "dry_run",
         **summarize_results(results),

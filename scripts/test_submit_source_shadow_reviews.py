@@ -3,7 +3,7 @@
 from argparse import Namespace
 
 from capture_source_snapshot import FetchResult
-from submit_source_shadow_reviews import load_clinic_sources, process_source, summarize_results
+from submit_source_shadow_reviews import load_clinic_sources, process_source, process_sources, summarize_results
 
 
 def check(condition, message):
@@ -42,8 +42,9 @@ def main():
         "pending_count": 3,
         "pending_fields": ["contact", "specialists", "technology"],
         "has_open_review": False,
+        "has_open_clinic_review": False,
     }
-    args = Namespace(timeout=15, apply=False, replace_existing=False)
+    args = Namespace(timeout=15, apply=False, replace_existing=False, allow_multiple_open_clinic_reviews=False)
     result = process_source(source, args, "admin@example.test", {}, fetcher=fake_fetch)
     check(result["status"] == "ready", "source should produce a ready review payload")
     check("email" in result["proposed_fields"], "email proposal missing")
@@ -61,13 +62,23 @@ def main():
     check(skipped["status"] == "skipped", "existing open review should be skipped by default")
     check("already exists" in skipped["reason"], "skip reason should be readable")
 
+    clinic_skipped = process_source(
+        dict(source, has_open_clinic_review=True),
+        args,
+        "admin@example.test",
+        {},
+        fetcher=fake_fetch,
+    )
+    check(clinic_skipped["status"] == "skipped", "existing clinic review should be skipped by default")
+    check("for this clinic" in clinic_skipped["reason"], "clinic skip reason should be readable")
+
     calls = []
 
     def fake_create_review(clinic_slug, payload, admin_email, local_env, replace_existing):
         calls.append((clinic_slug, payload, admin_email, replace_existing))
         return {"status": "inserted", "id": "review-1"}
 
-    apply_args = Namespace(timeout=15, apply=True, replace_existing=True)
+    apply_args = Namespace(timeout=15, apply=True, replace_existing=True, allow_multiple_open_clinic_reviews=False)
     applied = process_source(
         dict(source, has_open_review=True),
         apply_args,
@@ -78,6 +89,21 @@ def main():
     )
     check(applied["created_review"]["status"] == "inserted", "apply mode should create a review")
     check(calls and calls[0][3] is True, "replace_existing should pass through")
+
+    batch_args = Namespace(timeout=15, apply=False, replace_existing=False, allow_multiple_open_clinic_reviews=False)
+    batch = process_sources(
+        [
+            dict(source, source_record_id="source-1", source_url="https://exampleclinic.test/one"),
+            dict(source, source_record_id="source-2", source_url="https://exampleclinic.test/two"),
+        ],
+        batch_args,
+        "admin@example.test",
+        {},
+        fetcher=fake_fetch,
+    )
+    check(batch[0]["status"] == "ready", "first source in batch should run")
+    check(batch[1]["status"] == "skipped", "second source for same clinic should be skipped")
+    check("already queued" in batch[1]["reason"], "same-batch skip reason should be readable")
 
     summary = summarize_results([result, skipped, applied])
     check(summary["sources_seen"] == 3, "summary source count missing")

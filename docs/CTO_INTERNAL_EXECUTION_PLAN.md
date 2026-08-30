@@ -59,6 +59,7 @@ Already built:
 - Open source-change reviews can be processed into separate profile-enrichment proposals without editing public clinic data.
 - Saved clinic sources can be processed in batch through shadow extraction/verifier proposals without editing public clinic data.
 - Saved-source batches prioritize visible clinics with more measured public fields pending.
+- Saved-source batches avoid multiple open enrichment cards for the same clinic by default.
 - Safe recurring CTO shadow cycle exists in `scripts/run_cto_shadow_cycle.py`.
 - Local safety checks are bundled in `scripts/run_local_checks.py`.
 - Daniel-facing review brief exists in `scripts/daniel_review_brief.py`, read-only and suitable for future notifications.
