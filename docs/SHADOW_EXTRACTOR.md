@@ -44,6 +44,8 @@ credentialing and public pricing.
 When it prepares a review card, it filters proposed form fields against the
 clinic's current gaps, so repeated services or specialties do not become noisy
 review work if those fields are already complete.
+Explicit locations are treated as their own gap, so multi-location evidence is
+not hidden just because the older top-level address field is filled.
 
 Source-shadow batches skip profiles with no measured gaps, which keeps the
 review inbox focused on incomplete records.

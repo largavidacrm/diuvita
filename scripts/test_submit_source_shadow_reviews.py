@@ -160,9 +160,9 @@ def main():
     )
     check(
         filter_proposed_fields_for_pending(
-            {"email": "a@example.test", "services": ["A"], "public_pricing": "si"},
-            ["contact", "public_pricing"],
-        ) == {"email": "a@example.test", "public_pricing": "si"},
+            {"email": "a@example.test", "services": ["A"], "public_pricing": "si", "locations": [{"address": "A"}]},
+            ["contact", "public_pricing", "locations"],
+        ) == {"email": "a@example.test", "public_pricing": "si", "locations": [{"address": "A"}]},
         "source review should keep only fields tied to current gaps",
     )
     check(
@@ -185,6 +185,7 @@ def main():
 
     sql = captured.get("sql", "")
     check("pending_fields" in sql, "source batch should measure missing public fields")
+    check("then 'locations'" in sql, "source batch should include explicit-location gaps")
     check("years_in_practice" in sql, "source batch should include years-in-practice gaps")
     check("specialists_count" in sql, "source batch should include public specialist-count gaps")
     check("team_credentialing_visible" in sql, "source batch should include visible credentialing gaps")

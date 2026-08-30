@@ -30,6 +30,7 @@ CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool]
 
 PENDING_FIELD_TARGETS = {
     "address": {"locations"},
+    "locations": {"locations"},
     "contact": {"email", "telefono", "instagram"},
     "services": {"services"},
     "specialties": {"specialties"},
@@ -133,6 +134,10 @@ from (
       case when length(btrim(coalesce(c.summary, c.current_data ->> 'summary', ''))) < 120 then 'summary' end,
       case when nullif(btrim(coalesce(c.website, c.current_data ->> 'web', '')), '') is null then 'website' end,
       case when nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is null then 'address' end,
+      case
+        when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'locations') = 'array' then c.current_data -> 'locations' else '[]'::jsonb end), 0) = 0
+          then 'locations'
+      end,
       case
         when nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is null
           and nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is null
