@@ -25,9 +25,9 @@ Arriba del panel verás **Plan global**. Léelo de arriba abajo:
 1. **Estamos aquí**: te dice en qué fase real estamos, sin obligarte a
    interpretar números.
 2. **Tu próximo clic**: es el botón que conviene usar primero.
-3. **Tú ahora / Yo puedo seguir con / Datos pendientes / No activar todavía**:
-   separa tu revisión humana, mi trabajo técnico seguro y lo que todavía no
-   conviene automatizar.
+3. **Tú ahora / Freno de bandeja / Yo puedo seguir con / Datos pendientes /
+   No activar todavía**: separa tu revisión humana, el límite operativo, mi
+   trabajo técnico seguro y lo que todavía no conviene automatizar.
 4. **Mapa simple del plan**: muestra el camino completo sin numeritos
    decorativos.
 

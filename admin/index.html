@@ -1571,11 +1571,11 @@
     }
 
     function globalPlanItem(label, value, detail, tone) {
-      return '<article class="global-plan-item">' +
+      return '<div class="global-plan-item">' +
         '<span>' + html(label) + '</span>' +
         '<strong class="' + html(tone || "") + '">' + html(value) + '</strong>' +
         '<p>' + html(detail || "") + '</p>' +
-        '</article>';
+        '</div>';
     }
 
     function countOpenReviewsByType(openReviews, type) {
@@ -1589,11 +1589,9 @@
 
     function globalPlanLane(label, status, next, tone, state) {
       return '<article class="global-plan-lane ' + html(state || "") + '">' +
-        '<div>' +
-          '<span>' + html(label) + '</span>' +
-          '<strong class="' + html(tone || "") + '">' + html(status) + '</strong>' +
-          '<p>' + html(next || "") + '</p>' +
-        '</div>' +
+        '<span>' + html(label) + '</span>' +
+        '<strong class="' + html(tone || "") + '">' + html(status) + '</strong>' +
+        '<p>' + html(next || "") + '</p>' +
         '</article>';
     }
 
@@ -1717,6 +1715,7 @@
       el("globalPlanWhy").textContent = focus.detail;
       el("globalPlanGrid").innerHTML = [
         globalPlanItem("Tú ahora", nextClick, globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck), openCount ? "warning-text" : ""),
+        globalPlanItem("Freno de bandeja", backlogGuard.label, openCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5 ? "Pausa trabajos nuevos hasta bajar revisiones." : "Todavía hay margen para nuevas tareas útiles.", backlogGuard.tone),
         globalPlanItem("Yo puedo seguir con", failedJobs ? "Estabilidad técnica" : "Trabajo seguro", globalPlanCodexWorkDetail(openCount, failedJobs, sources, specialists, completeness), failedJobs ? "danger-text" : ""),
         globalPlanItem("Datos pendientes", "Fuentes + fichas", globalPlanDataDetail(sourcePlanLabel(sources), specialistPlanLabel(specialists), sourceTarget, profileTarget), sources.nextTarget || specialists.nextTarget ? "warning-text" : ""),
         globalPlanItem("No activar todavía", "Autonomía / Growth", blockers.length ? blockers[0] + ". Primero cerramos revisión humana y claims." : "Se deja parado hasta que tú lo decidas.", blockers.length ? "warning-text" : "")

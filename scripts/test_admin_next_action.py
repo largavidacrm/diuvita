@@ -38,6 +38,7 @@ def main() -> None:
         "function globalPlanNowDetail",
         "globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck)",
         "No crees trabajos nuevos.",
+        "Freno de bandeja",
         "function countOpenReviewsByType",
         "function openGlobalPlanNext",
         "function googleLinkReviewRows",
