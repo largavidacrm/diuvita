@@ -17,6 +17,7 @@ def main():
 <body>
   <h1>Example Longevity Clinic</h1>
   <p>Medicina preventiva, longevidad, nutrición y medicina del sueño.</p>
+  <p>Unidad de Longevidad dirigida por Dra. Laura García Pérez.</p>
   <p>Pruebas disponibles: DEXA, VO2 max, biomarcadores y test epigenético.</p>
   <p>Contacto: info@exampleclinic.test +34 930 111 222 @exampleclinic</p>
 </body>
@@ -38,7 +39,11 @@ def main():
     check(profile["instagram"] == ["@exampleclinic"], "instagram extraction failed")
     check("VO2 max" in profile["technologies"], "technology detection failed")
     check("Medicina preventiva" in profile["services"], "service detection failed")
+    check("Unidad de Longevidad" in profile["units"], "unit detection failed")
+    check("Dra. Laura García Pérez" in profile["professionals"], "professional detection failed")
     check("contact.email" in fields, "email claim missing")
+    check("units.list" in fields, "unit claim missing")
+    check("professionals.published" in fields, "professional claim missing")
     check(extraction["rule_decisions"], "rule decisions missing")
     print("OK extraction: shadow clinic profile")
 

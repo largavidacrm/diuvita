@@ -13,6 +13,7 @@ It reads one public source page and returns:
 - Candidate profile hints.
 - Field claims.
 - Rules-engine decisions.
+- Publicly listed specialists and clinical units when they are explicit enough.
 
 It does not publish anything.
 
@@ -47,7 +48,8 @@ That folder is local/ignored by Git.
 
 ## Current limitations
 
-- It only detects obvious contact details and known longevity keywords.
+- It only detects obvious contact details, public specialist names with clear
+  doctor titles, clinical units and known longevity keywords.
 - It should not decide final clinic names from generic page titles.
 - All extracted claims start without independent verifier acceptance.
 - The rules engine therefore sends them to review by default.

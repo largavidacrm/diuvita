@@ -34,6 +34,8 @@ FIELD_MAP = {
     "contact.instagram": "instagram",
     "services.list": "services",
     "specialties.list": "specialties",
+    "units.list": "unidades",
+    "professionals.published": "profesionales",
     "technologies.list": "tech",
 }
 
@@ -113,16 +115,38 @@ def review_payload(clinic_slug: str, verification: dict[str, Any]) -> dict[str, 
     }
 
 
-def create_review(clinic_slug: str, payload: dict[str, Any], admin_email: str, local_env: dict[str, str]) -> dict[str, Any]:
+def create_review(
+    clinic_slug: str,
+    payload: dict[str, Any],
+    admin_email: str,
+    local_env: dict[str, str],
+    replace_existing: bool = False,
+) -> dict[str, Any]:
     if not payload.get("proposed_fields"):
         return {"status": "empty", "slug": clinic_slug}
     source_url = (payload.get("source_urls") or [""])[0]
     sql_payload = json.dumps(payload, ensure_ascii=False)
+    should_replace = "true" if replace_existing else "false"
     sql = f"""
 with target as (
   select id, slug, display_name, city, country, website
   from public.clinics
   where slug = {sql_literal(clinic_slug)}
+),
+payload_input as (
+  select jsonb_strip_nulls(
+    {sql_literal(sql_payload)}::jsonb ||
+    jsonb_build_object(
+      'clinic_id', t.id,
+      'clinic_slug', t.slug,
+      'clinic_name', t.display_name,
+      'clinic_city', t.city,
+      'clinic_country', t.country,
+      'website', t.website,
+      'source_url', {sql_literal(source_url)}
+    )
+  ) as data
+  from target t
 ),
 existing as (
   select rq.id, rq.title
@@ -132,6 +156,17 @@ existing as (
     and rq.status = 'open'
     and rq.payload ->> 'source_url' = {sql_literal(source_url)}
   limit 1
+),
+updated as (
+  update public.review_queue rq
+  set
+    payload = (select data from payload_input),
+    priority = greatest(rq.priority, 60),
+    assigned_to = coalesce(rq.assigned_to, {sql_literal(admin_email)})
+  from existing
+  where {should_replace}
+    and rq.id = existing.id
+  returning rq.id, rq.title
 ),
 inserted as (
   insert into public.review_queue (
@@ -151,28 +186,21 @@ inserted as (
     'current_data',
     60,
     'open',
-    jsonb_strip_nulls(
-      {sql_literal(sql_payload)}::jsonb ||
-      jsonb_build_object(
-        'clinic_id', t.id,
-        'clinic_slug', t.slug,
-        'clinic_name', t.display_name,
-        'clinic_city', t.city,
-        'clinic_country', t.country,
-        'website', t.website,
-        'source_url', {sql_literal(source_url)}
-      )
-    ),
+    p.data,
     {sql_literal(admin_email)}
   from target t
+  cross join payload_input p
   where not exists (select 1 from existing)
   returning id, title
 ),
 resolved as (
+  select 'updated' as status, id, title from updated
+  union all
   select 'inserted' as status, id, title from inserted
   union all
   select 'existing' as status, id, title from existing
-  where not exists (select 1 from inserted)
+    where not exists (select 1 from inserted)
+      and not exists (select 1 from updated)
 )
 select coalesce(jsonb_agg(to_jsonb(resolved.*)), '[]'::jsonb)
 from resolved;

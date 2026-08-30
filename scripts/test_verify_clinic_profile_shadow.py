@@ -17,6 +17,7 @@ def main():
 <head><title>Example Longevity Clinic | Barcelona</title></head>
 <body>
   <p>Example Longevity Clinic offers medicina preventiva and VO2 max.</p>
+  <p>La Unidad de Longevidad está dirigida por Dra. Laura García Pérez.</p>
   <p>Email info@exampleclinic.test and phone +34 930 111 222.</p>
 </body>
 </html>
@@ -45,6 +46,7 @@ def main():
     check(result["summary"]["claims"] >= 4, "expected verified claims")
     check(verdicts[("contact.website", "https://exampleclinic.test")] == "accepted", "website should verify")
     check(verdicts[("contact.email", "info@exampleclinic.test")] == "accepted", "email should verify")
+    check(verdicts[("professionals.published", "['Dra. Laura García Pérez']")] == "accepted", "professional should verify")
     check(verdicts[("contact.email", "wrong@exampleclinic.test")] == "rejected", "wrong email should reject")
     check(result["summary"]["actions"].get("review", 0) >= 1, "auto-publish off should keep review actions")
     print("OK verification: shadow clinic claims")

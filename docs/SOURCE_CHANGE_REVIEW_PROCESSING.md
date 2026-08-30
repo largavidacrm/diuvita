@@ -25,4 +25,6 @@ Safety boundaries:
 - It does not publish pages.
 - It does not resolve the original source-change card.
 - It carries the source-change material hints into the new proposal.
+- If an open proposal already exists for the same clinic and source, apply mode
+  refreshes that proposal instead of creating a duplicate.
 - Daniel still decides whether any extracted change is saved.

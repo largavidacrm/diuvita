@@ -36,6 +36,10 @@ EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
 INSTAGRAM_URL_RE = re.compile(r"https?://(?:www\.)?instagram\.com/([a-z0-9._]{2,30})(?:/|\b)", re.I)
 INSTAGRAM_HANDLE_RE = re.compile(r"(?<![\w.+-])@([a-z0-9._]{2,30})(?![\w.-])", re.I)
+NAME_WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{2,}"
+PROFESSIONAL_RE = re.compile(
+    rf"\b(?:Dr\.?|Dra\.?|Doctor|Doctora)\s+{NAME_WORD}(?:\s+{NAME_WORD}){{1,3}}"
+)
 
 KEYWORD_CATALOG = {
     "services.list": {
@@ -63,6 +67,13 @@ KEYWORD_CATALOG = {
         "Plasmaféresis": ["plasmaféresis", "plasmapheresis"],
         "NAD+": ["nad+"],
         "Ozonoterapia": ["ozonoterapia", "ozone therapy"],
+    },
+    "units.list": {
+        "Unidad de Longevidad": ["unidad de longevidad", "longevity unit"],
+        "Unidad de Medicina Preventiva": ["unidad de medicina preventiva", "preventive medicine unit"],
+        "Unidad del Dolor": ["unidad del dolor", "unidad de dolor", "pain unit"],
+        "Unidad del Sueño": ["unidad del sueño", "unidad de sueño", "sleep unit"],
+        "Unidad de Salud Hormonal": ["unidad hormonal", "unidad de salud hormonal", "hormone unit"],
     },
     "specialties.list": {
         "Longevidad": ["longevidad", "longevity"],
@@ -112,6 +123,10 @@ def extract_contacts(text: str) -> dict[str, list[str]]:
     }
 
 
+def extract_professionals(text: str) -> list[str]:
+    return unique([match.group(0).strip(".,;:") for match in PROFESSIONAL_RE.finditer(text)])
+
+
 def detect_keywords(text: str) -> dict[str, list[str]]:
     lower = text.lower()
     detected: dict[str, list[str]] = {}
@@ -151,6 +166,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     source_url = str(snapshot.get("final_url") or snapshot.get("source_url") or "")
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
+    professionals = extract_professionals(text)
     keywords = detect_keywords(text)
     claims: list[dict[str, Any]] = []
 
@@ -166,6 +182,8 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         claims.append(claim("contact.phone", contacts["phones"][0], 0.78, source_url))
     if contacts["instagram"]:
         claims.append(claim("contact.instagram", contacts["instagram"][0], 0.80, source_url))
+    if professionals:
+        claims.append(claim("professionals.published", professionals[:8], 0.64, source_url))
     for field_path, values in keywords.items():
         if values:
             claims.append(claim(field_path, values, 0.70, source_url))
@@ -175,6 +193,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
 def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
+    professionals = extract_professionals(text)
     keywords = detect_keywords(text)
     profile = {
         "name": guess_name(snapshot) or None,
@@ -184,6 +203,8 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
         "instagram": contacts["instagram"],
         "services": keywords.get("services.list", []),
         "specialties": keywords.get("specialties.list", []),
+        "units": keywords.get("units.list", []),
+        "professionals": professionals[:8],
         "technologies": keywords.get("technologies.list", []),
     }
     return {key: value for key, value in profile.items() if value}

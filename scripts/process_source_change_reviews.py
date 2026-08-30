@@ -106,7 +106,13 @@ def process_review(row: dict[str, Any], args: argparse.Namespace, admin_email: s
         "verification_summary": payload.get("verification_summary") or {},
     }
     if args.apply and proposed_fields:
-        result["created_review"] = create_review(str(change["clinic_slug"]), payload, admin_email, local_env)
+        result["created_review"] = create_review(
+            str(change["clinic_slug"]),
+            payload,
+            admin_email,
+            local_env,
+            replace_existing=True,
+        )
     return result
 
 
