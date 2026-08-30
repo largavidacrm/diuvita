@@ -65,6 +65,7 @@ def main():
     check("Duplicados mejoras" in admin_check["markers"], "admin deployment should include review-backlog marker")
     check("Freno bandeja" in admin_check["markers"], "admin deployment should include review backlog guard marker")
     check("Campo más pendiente" in admin_check["markers"], "admin deployment should include top pending field marker")
+    check("Siguiente especialistas" in admin_check["markers"], "admin deployment should include specialist next action marker")
     check("Web pública" in admin_check["markers"], "admin deployment should include public-health marker")
     check("Caso prioritario" in admin_check["markers"], "admin deployment should include priority case marker")
     check("openPriorityReviewBtn" in admin_check["markers"], "admin deployment should include priority button marker")

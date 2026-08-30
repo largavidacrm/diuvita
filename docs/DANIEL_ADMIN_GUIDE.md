@@ -34,6 +34,7 @@ En **Estado del sistema**, mira especialmente:
 - **Inventario capturas**: resume cuántas capturas antiguas y totales tiene guardadas el sistema.
 - **Especialistas**: muestra cuántas fichas visibles ya tienen especialistas publicados por la clínica.
 - **Pendientes especialistas**: indica cuántas fichas visibles siguen sin ese apartado.
+- **Siguiente especialistas**: señala la ficha más fácil de revisar para completar especialistas porque ya tiene tarjetas o claims internos.
 - **Fichas completas**: muestra cuántas fichas visibles no tienen campos importantes pendientes.
 - **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
 - **Campo más pendiente**: resume qué tipo de dato falta en más fichas visibles.

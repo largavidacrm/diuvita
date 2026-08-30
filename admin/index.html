@@ -704,6 +704,9 @@
         withSpecialists: 0,
         withoutSpecialists: 0,
         totalEntries: 0,
+        withSpecialistClaims: 0,
+        withOpenSpecialistReviews: 0,
+        nextTarget: null,
         unavailable: false
       };
     }
@@ -970,11 +973,39 @@
       return completeness;
     }
 
-    async function loadSpecialistCoverage() {
+    function reviewMentionsSpecialists(row) {
+      var payload = row && row.payload ? row.payload : {};
+      var payloadText = JSON.stringify(payload).toLowerCase();
+      return payload.quality_context === "blocking_claims" ||
+        payloadText.indexOf("missing_professionals") >= 0 ||
+        payloadText.indexOf("profesionales") >= 0 ||
+        payloadText.indexOf("professionals") >= 0;
+    }
+
+    function specialistNextTargetLabel(target) {
+      if (!target) return "—";
+      var name = target.clinicName || target.slug || "Ficha pendiente";
+      if (target.openReviewCount) {
+        return name + " · " + target.openReviewCount + (target.openReviewCount === 1 ? " revisión" : " revisiones");
+      }
+      if (target.specialistClaims) {
+        return name + " · " + target.specialistClaims + (target.specialistClaims === 1 ? " claim" : " claims");
+      }
+      return name + " · buscar fuente oficial";
+    }
+
+    function specialistTargetSort(a, b) {
+      return Number(b.openReviewCount || 0) - Number(a.openReviewCount || 0) ||
+        Number(b.specialistClaims || 0) - Number(a.specialistClaims || 0) ||
+        text(a.status).localeCompare(text(b.status)) ||
+        text(a.clinicName || a.slug).localeCompare(text(b.clinicName || b.slug));
+    }
+
+    async function loadSpecialistCoverage(openReviews) {
       var coverage = emptySpecialistCoverage();
       var result = await client
         .from("clinics")
-        .select("status, current_data")
+        .select("id, slug, display_name, city, status, current_data")
         .in("status", ["published", "preliminary"])
         .limit(500);
 
@@ -983,13 +1014,58 @@
         return coverage;
       }
 
+      var missingTargets = [];
       (result.data || []).forEach(function (row) {
         var entries = countPublishedSpecialists(row.current_data || {});
         coverage.visibleClinics += 1;
         coverage.totalEntries += entries;
         if (entries > 0) coverage.withSpecialists += 1;
-        else coverage.withoutSpecialists += 1;
+        else {
+          coverage.withoutSpecialists += 1;
+          missingTargets.push({
+            clinicId: row.id,
+            slug: row.slug,
+            clinicName: row.display_name,
+            city: row.city,
+            status: row.status,
+            specialistClaims: 0,
+            openReviewCount: 0
+          });
+        }
       });
+
+      var targetById = {};
+      missingTargets.forEach(function (target) {
+        targetById[target.clinicId] = target;
+      });
+
+      var missingIds = missingTargets.map(function (target) { return target.clinicId; }).filter(Boolean);
+      if (missingIds.length) {
+        var claimsResult = await client
+          .from("field_claims")
+          .select("clinic_id, field_path")
+          .in("clinic_id", missingIds)
+          .in("field_path", ["professionals.published", "team.public_professionals"])
+          .limit(1000);
+        if (!claimsResult.error) {
+          (claimsResult.data || []).forEach(function (claim) {
+            if (targetById[claim.clinic_id]) targetById[claim.clinic_id].specialistClaims += 1;
+          });
+        }
+      }
+
+      (openReviews || []).forEach(function (row) {
+        if (!row.clinic_id || !targetById[row.clinic_id] || !reviewMentionsSpecialists(row)) return;
+        targetById[row.clinic_id].openReviewCount += 1;
+      });
+
+      coverage.withSpecialistClaims = missingTargets.filter(function (target) {
+        return target.specialistClaims > 0;
+      }).length;
+      coverage.withOpenSpecialistReviews = missingTargets.filter(function (target) {
+        return target.openReviewCount > 0;
+      }).length;
+      coverage.nextTarget = missingTargets.sort(specialistTargetSort)[0] || null;
       return coverage;
     }
 
@@ -1268,6 +1344,9 @@
       var specialistMissingLabel = specialists.unavailable
         ? "—"
         : specialists.withoutSpecialists + " pendientes";
+      var specialistNextLabel = specialists.unavailable
+        ? "—"
+        : specialistNextTargetLabel(specialists.nextTarget);
       var completeness = profileCompleteness || emptyProfileCompleteness();
       var completenessLabel = completeness.unavailable
         ? "No disponible"
@@ -1314,6 +1393,7 @@
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
         systemItem("Especialistas", specialistLabel, specialists.unavailable || specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Pendientes especialistas", specialistMissingLabel, specialists.withoutSpecialists ? "warning-text" : ""),
+        systemItem("Siguiente especialistas", specialistNextLabel, specialists.nextTarget ? "warning-text" : ""),
         systemItem("Fichas completas", completenessLabel, completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Campo más pendiente", topPendingProfileField(completeness), completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
@@ -2993,7 +3073,7 @@
         }
         var claimQuality = await loadClaimQuality();
         var sourceMonitoring = await loadSourceMonitoring();
-        var specialistCoverage = await loadSpecialistCoverage();
+        var specialistCoverage = await loadSpecialistCoverage(reviewCache);
         var profileCompleteness = await loadProfileCompleteness();
         var publicHealth = await loadPublicHealth();
         renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, specialistCoverage, profileCompleteness, publicHealth, reviewCache);

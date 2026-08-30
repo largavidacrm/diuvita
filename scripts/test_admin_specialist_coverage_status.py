@@ -17,14 +17,23 @@ def main() -> None:
     for marker in [
         "function emptySpecialistCoverage",
         "function countPublishedSpecialists",
+        "function reviewMentionsSpecialists",
+        "function specialistNextTargetLabel",
+        "function specialistTargetSort",
         "function loadSpecialistCoverage",
-        '.select("status, current_data")',
+        '.select("id, slug, display_name, city, status, current_data")',
         '.in("status", ["published", "preliminary"])',
-        "var specialistCoverage = await loadSpecialistCoverage();",
+        '.from("field_claims")',
+        '.in("field_path", ["professionals.published", "team.public_professionals"])',
+        "var specialistCoverage = await loadSpecialistCoverage(reviewCache);",
         "Especialistas",
         "Pendientes especialistas",
+        "Siguiente especialistas",
         "withSpecialists",
         "withoutSpecialists",
+        "withSpecialistClaims",
+        "withOpenSpecialistReviews",
+        "nextTarget",
     ]:
         check(marker in index, f"missing admin specialist coverage marker: {marker}")
 
