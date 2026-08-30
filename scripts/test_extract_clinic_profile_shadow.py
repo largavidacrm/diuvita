@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Basic checks for the shadow clinic profile extractor."""
 from capture_source_snapshot import FetchResult
-from extract_clinic_profile_shadow import extract_from_fetch
+from extract_clinic_profile_shadow import extract_from_fetch, extract_professionals
 
 
 def check(condition, message):
@@ -49,6 +49,30 @@ def main():
     check("units.list" in fields, "unit claim missing")
     check("professionals.published" in fields, "professional claim missing")
     check(extraction["rule_decisions"], "rule decisions missing")
+
+    regenera_text = (
+        "NUESTRO EQUIPO Te acompañamos desde la ciencia y la empatía "
+        "Dra. Délia Vilá Dirección Xavier Carretero Gerente / Nutrición "
+        "Neli Martínez Subdirectora Dra. Andrea Briceño Medicina Estética y Longevidad "
+        "Dr. Ignacio Viza Otorrinolaringología Dr. Marc Bausili Anestesia "
+        "Dra. Emilce Pérez Flebología Dra. Lidia Sánchez Porro Cirugía Plástica "
+        "Jenny Bernal Atención al Paciente Micaela Arenas Técnico Auxiliar "
+        "Marina Martín Responsable RRSS Contáctanos"
+    )
+    regenera_professionals = extract_professionals(regenera_text)
+    check("Dra. Délia Vilá" in regenera_professionals, "titled professional should stop before role")
+    check("Xavier Carretero" in regenera_professionals, "role-paired professional missing")
+    check("Neli Martínez" in regenera_professionals, "non-titled professional missing")
+    check("Dr. Marc Bausili" in regenera_professionals, "next titled professional missing")
+    check("Dra. Lidia Sánchez Porro" in regenera_professionals, "compound surname missing")
+    check("Jenny Bernal" in regenera_professionals, "patient-care team member missing")
+    check("Micaela Arenas" in regenera_professionals, "technical assistant team member missing")
+    check("Marina Martín" in regenera_professionals, "social media team member missing")
+    check(len(regenera_professionals) == 11, "all Regenera-style team entries should be detected")
+    check(
+        all("Dirección Xavier" not in item for item in regenera_professionals),
+        "role and next name should not merge",
+    )
     print("OK extraction: shadow clinic profile")
 
 

@@ -33,6 +33,12 @@ def main() -> None:
         "activeReview.review_type" not in after_close,
         "dismissReview should not read activeReview after closeReviewEditor",
     )
+    check(
+        "function candidateReviewSources" in index
+        and "candidate.source_urls" in index
+        and 'setLinks("reviewCandidateSource", candidateReviewSources(candidate, payload, source));' in index,
+        "candidate reviews should show all source URLs",
+    )
     print("OK admin review actions: dismiss keeps context")
 
 

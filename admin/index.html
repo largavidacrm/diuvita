@@ -3386,6 +3386,26 @@
       return urls.map(function (url) { return text(url).trim(); }).filter(Boolean);
     }
 
+    function candidateReviewSources(candidate, payload, fallback) {
+      var urls = [];
+      function add(raw) {
+        if (Array.isArray(raw)) {
+          raw.forEach(add);
+          return;
+        }
+        var url = text(raw).trim();
+        if (url && urls.indexOf(url) < 0) urls.push(url);
+      }
+      add(candidate && candidate.source_url);
+      add(payload && payload.candidate_source_url);
+      add(candidate && candidate.source_urls);
+      add(candidate && candidate.sources);
+      add(payload && payload.source_urls);
+      add(payload && payload.sources);
+      add(fallback);
+      return urls;
+    }
+
     function setLinks(id, urls) {
       urls = urls || [];
       if (!urls.length) {
@@ -3600,7 +3620,7 @@
       } else if (isSourceChange) {
         setLinks("reviewCandidateSource", [payload.source_url].filter(Boolean));
       } else {
-        setLink("reviewCandidateSource", source);
+        setLinks("reviewCandidateSource", candidateReviewSources(candidate, payload, source));
       }
       setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
       setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : isSourceChange ? [

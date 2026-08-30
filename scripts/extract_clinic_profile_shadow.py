@@ -31,14 +31,86 @@ from diuvita_rules import decide_many
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "data" / "extractions"
 EXTRACTION_EXCERPT_CHARS = 5000
+MAX_PROFESSIONALS = 12
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
 INSTAGRAM_URL_RE = re.compile(r"https?://(?:www\.)?instagram\.com/([a-z0-9._]{2,30})(?:/|\b)", re.I)
 INSTAGRAM_HANDLE_RE = re.compile(r"(?<![\w.+-])@([a-z0-9._]{2,30})(?![\w.-])", re.I)
 NAME_WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{2,}"
+TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora)"
 PROFESSIONAL_RE = re.compile(
-    rf"\b(?:Dr\.?|Dra\.?|Doctor|Doctora)\s+{NAME_WORD}(?:\s+{NAME_WORD}){{1,3}}"
+    rf"\b(?P<title>{TITLE_PREFIX})\s+(?P<name>{NAME_WORD}(?:\s+{NAME_WORD}){{0,5}})"
+)
+TEAM_MARKERS = (
+    "nuestro equipo",
+    "equipo medico",
+    "equipo médico",
+    "equipo profesional",
+)
+TEAM_END_MARKERS = (
+    "contáctanos",
+    "contactanos",
+    "contacto",
+    "menú legal",
+    "menu legal",
+    "©",
+)
+ROLE_PHRASES = (
+    "Dirección",
+    "Gerente / Nutrición",
+    "Gerente/Nutrición",
+    "Gerente",
+    "Nutrición",
+    "Subdirectora",
+    "Subdirector",
+    "Medicina Estética y Longevidad",
+    "Medicina Integrativa",
+    "Otorrinolaringología",
+    "Otorrino",
+    "Anestesia",
+    "Flebología",
+    "Cirugía Plástica",
+    "Atención al Paciente",
+    "Técnico Auxiliar",
+    "Responsable RRSS",
+)
+ROLE_START_WORDS = {
+    "Administración",
+    "Anestesia",
+    "Atención",
+    "Cirugía",
+    "Dirección",
+    "Endocrinología",
+    "Fisioterapia",
+    "Flebología",
+    "Gerencia",
+    "Gerente",
+    "Ginecología",
+    "Longevidad",
+    "Medicina",
+    "Nutrición",
+    "Otorrino",
+    "Otorrinolaringología",
+    "Psicología",
+    "Responsable",
+    "Subdirector",
+    "Subdirectora",
+    "Técnico",
+}
+TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora"}
+
+
+def role_pattern(phrase: str) -> str:
+    escaped = re.escape(phrase)
+    escaped = escaped.replace(r"\ ", r"\s+")
+    return escaped.replace("/", r"\s*/\s*")
+
+
+ROLE_RE_FRAGMENT = "|".join(role_pattern(phrase) for phrase in sorted(ROLE_PHRASES, key=len, reverse=True))
+TEAM_ROLE_PAIR_RE = re.compile(
+    rf"\b(?P<name>(?:{TITLE_PREFIX}\s+)?{NAME_WORD}(?:\s+{NAME_WORD}){{0,3}})\s+"
+    rf"(?P<role>(?i:{ROLE_RE_FRAGMENT}))(?=\s|$)"
 )
 
 KEYWORD_CATALOG = {
@@ -109,6 +181,54 @@ def clean_phone(raw: str) -> str:
     return normalize_space(raw).strip(".,;:")
 
 
+def professional_team_window(text: str) -> str:
+    lower = text.lower()
+    starts = [lower.find(marker) for marker in TEAM_MARKERS if lower.find(marker) >= 0]
+    if not starts:
+        return ""
+    start = min(starts)
+    end_candidates = [
+        lower.find(marker, start + 1)
+        for marker in TEAM_END_MARKERS
+        if lower.find(marker, start + 1) >= 0
+    ]
+    end = min(end_candidates) if end_candidates else len(text)
+    return text[start:end]
+
+
+def name_words(raw: str) -> list[str]:
+    return re.findall(NAME_WORD, raw)
+
+
+def clean_titled_professional(match: re.Match[str]) -> str:
+    title = normalize_space(match.group("title")).rstrip(".")
+    title = "Dr." if title.lower().startswith(("dr", "doctor")) and not title.lower().startswith(("dra", "doctora")) else title
+    title = "Dra." if title.lower().startswith(("dra", "doctora")) else title
+    words = []
+    for word in name_words(match.group("name")):
+        if word in ROLE_START_WORDS or word.rstrip(".") in TITLE_WORDS:
+            break
+        words.append(word)
+    if len(words) < 2:
+        return ""
+    return f"{title} {' '.join(words)}"
+
+
+def clean_team_professional(raw: str) -> str:
+    clean = normalize_space(raw).strip(".,;:")
+    titled = re.match(rf"^(?P<title>{TITLE_PREFIX})\s+(?P<name>.+)$", clean)
+    if titled:
+        return clean_titled_professional(titled)
+    words = []
+    for word in name_words(clean):
+        if word in ROLE_START_WORDS or word.rstrip(".") in TITLE_WORDS:
+            break
+        words.append(word)
+    if len(words) < 2:
+        return ""
+    return " ".join(words[:4])
+
+
 def extract_contacts(text: str) -> dict[str, list[str]]:
     emails = unique(EMAIL_RE.findall(text))
     phones = unique([clean_phone(match.group(0)) for match in PHONE_RE.finditer(text)])
@@ -124,7 +244,18 @@ def extract_contacts(text: str) -> dict[str, list[str]]:
 
 
 def extract_professionals(text: str) -> list[str]:
-    return unique([match.group(0).strip(".,;:") for match in PROFESSIONAL_RE.finditer(text)])
+    professionals: list[tuple[int, str]] = []
+    for match in PROFESSIONAL_RE.finditer(text):
+        clean = clean_titled_professional(match)
+        if clean:
+            professionals.append((match.start(), clean))
+    team_window = professional_team_window(text)
+    team_offset = text.find(team_window) if team_window else 0
+    for match in TEAM_ROLE_PAIR_RE.finditer(team_window):
+        clean = clean_team_professional(match.group("name"))
+        if clean:
+            professionals.append((team_offset + match.start("name"), clean))
+    return unique([name for _, name in sorted(professionals, key=lambda item: item[0])])
 
 
 def detect_keywords(text: str) -> dict[str, list[str]]:
@@ -183,7 +314,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     if contacts["instagram"]:
         claims.append(claim("contact.instagram", contacts["instagram"][0], 0.80, source_url))
     if professionals:
-        claims.append(claim("professionals.published", professionals[:8], 0.64, source_url))
+        claims.append(claim("professionals.published", professionals[:MAX_PROFESSIONALS], 0.64, source_url))
     for field_path, values in keywords.items():
         if values:
             claims.append(claim(field_path, values, 0.70, source_url))
@@ -204,7 +335,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
         "services": keywords.get("services.list", []),
         "specialties": keywords.get("specialties.list", []),
         "units": keywords.get("units.list", []),
-        "professionals": professionals[:8],
+        "professionals": professionals[:MAX_PROFESSIONALS],
         "technologies": keywords.get("technologies.list", []),
     }
     return {key: value for key, value in profile.items() if value}
