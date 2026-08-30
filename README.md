@@ -35,6 +35,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SOURCE_SHADOW_REVIEW_BATCH.md`: lote seguro para convertir fuentes ya guardadas en propuestas internas de mejora.
 - `docs/ADMIN_DIGEST.md`: resumen interno de CTO para revisiones, jobs y costes registrados.
 - `docs/DANIEL_REVIEW_BRIEF.md`: resumen accionable en lenguaje simple para que Daniel sepa qué revisar primero.
+- `docs/GLOBAL_PLAN_STATUS.md`: resumen ejecutivo de dónde está Diuvita dentro del plan global.
 - `docs/REVIEW_MATURITY.md`: medición de madurez antes de plantear auto-publicación de bajo riesgo.
 - `docs/HUMAN_FIELD_LOCKS.md`: protecciones para campos corregidos manualmente por Daniel.
 - `docs/SPECIALIST_COVERAGE.md`: medición solo lectura de cobertura de especialistas publicados.
@@ -72,6 +73,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/submit_source_shadow_reviews.py`: ejecuta extracción/verificación shadow sobre fuentes de clínicas existentes, priorizando fichas incompletas.
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
 - `scripts/daniel_review_brief.py`: imprime un brief de revisión para Daniel, solo lectura y sin payloads técnicos.
+- `scripts/global_plan_status.py`: imprime el estado del plan global en lenguaje ejecutivo, sin escribir datos.
 - `scripts/blocking_claim_brief.py`: resume claims bloqueantes por clínica para revisión manual, solo lectura.
 - `scripts/measure_review_maturity.py`: mide si hay suficiente revisión humana antes de relajar reglas.
 - `scripts/measure_specialist_coverage.py`: mide cobertura de especialistas publicados por clínica, sin editar fichas.
