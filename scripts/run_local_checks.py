@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST_STEPS = [
     ("test: source snapshots", "scripts/test_capture_source_snapshot.py"),
     ("test: durable source rows", "scripts/test_source_snapshot_records.py"),
+    ("test: operational limits", "scripts/test_check_operational_limits.py"),
     ("test: publication rules", "scripts/test_diuvita_rules.py"),
     ("test: claim rule evaluation", "scripts/test_evaluate_claim_rules.py"),
     ("test: shadow extraction", "scripts/test_extract_clinic_profile_shadow.py"),
@@ -91,6 +92,7 @@ def build_steps(skip_build: bool) -> list[CheckStep]:
         CheckStep("python syntax", [sys.executable, "-m", "py_compile", *PYTHON_SCRIPTS], 60),
     ]
     steps.extend(CheckStep(label, [sys.executable, script], 60) for label, script in TEST_STEPS)
+    steps.append(CheckStep("operational limits scan", [sys.executable, "scripts/check_operational_limits.py"], 60))
     steps.append(CheckStep("clinic data validation", [sys.executable, "scripts/validate_data.py"], 60))
     if not skip_build:
         steps.append(CheckStep("static site build", [sys.executable, "build.py"], 120))

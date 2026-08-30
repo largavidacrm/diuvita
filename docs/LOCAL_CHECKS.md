@@ -7,16 +7,18 @@ The full pass currently covers:
 
 1. Python syntax across local scripts.
 2. Source snapshot and durable evidence helpers.
-3. Publication rules and stored-claim rule evaluation.
-4. Shadow extraction, verification and review-card creation.
-5. Admin review UX checks: filters, clinic diffs and claim-rule context.
-6. Admin digest and review-maturity checks.
-7. Enrichment, candidate promotion, source hydration and source monitoring.
-8. Changed-source processing and the safe CTO shadow cycle.
-9. Clinic data validation.
-10. Static site build.
-11. Admin JavaScript syntax.
-12. Whitespace and conflict-marker check.
+3. Operational-limit red flags in public content.
+4. Publication rules and stored-claim rule evaluation.
+5. Shadow extraction, verification and review-card creation.
+6. Admin review UX checks: filters, actions, publication flow, clinic diffs
+   and claim-rule context.
+7. Admin digest and review-maturity checks.
+8. Enrichment, candidate promotion, source hydration and source monitoring.
+9. Changed-source processing and the safe CTO shadow cycle.
+10. Clinic data validation.
+11. Static site build.
+12. Admin JavaScript syntax.
+13. Whitespace and conflict-marker check.
 
 Run:
 

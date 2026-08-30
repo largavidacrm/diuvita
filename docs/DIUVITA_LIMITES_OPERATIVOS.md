@@ -162,3 +162,11 @@ Ante cualquier situación no prevista con posible dimensión legal, médica o
 reputacional, preguntar.
 
 Preguntar de más no tiene coste; implementar o descartar de más, sí.
+
+## Protección técnica
+
+El repositorio incluye `scripts/check_operational_limits.py`, una comprobación
+conservadora para detectar señales obvias de riesgo en contenido público:
+recomendaciones directas, rankings, claims terapéuticos, testimonios o señales
+de publicidad/afiliación. No sustituye la revisión de Daniel, pero ayuda a
+evitar que un texto problemático entre por accidente en el build.

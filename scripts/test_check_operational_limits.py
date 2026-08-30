@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""Checks the public-content operational limits scanner."""
+from pathlib import Path
+
+from check_operational_limits import ROOT, scan_text
+
+
+def check(condition: bool, message: str) -> None:
+    if not condition:
+        raise SystemExit(f"FAIL: {message}")
+
+
+def main() -> None:
+    unsafe = "Estas son las mejores clínicas; te conviene hacerte esta prueba porque revierte el envejecimiento."
+    safe = (
+        "Diuvita no hace rankings de calidad. Una clínica seria no promete "
+        "revertir el envejecimiento ni garantiza resultados milagrosos."
+    )
+
+    check(scan_text(ROOT / "data" / "posts" / "unsafe.md", unsafe), "unsafe public claims should be flagged")
+    check(not scan_text(ROOT / "data" / "posts" / "safe.md", safe), "negated safety wording should be allowed")
+    print("OK operational limits scanner: public red flags detected")
+
+
+if __name__ == "__main__":
+    main()
