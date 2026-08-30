@@ -3,7 +3,10 @@
 
 from global_plan_status import (
     automation_status,
+    codex_can_continue_status,
+    daniel_now_status,
     format_global_plan_status,
+    not_ready_status,
     plan_phase,
     source_monitoring_status,
     specialist_status,
@@ -111,8 +114,15 @@ def main():
     check(automation_status(digest) == "modo sombra activo; auto-publicación apagada", "automation status missing")
     check(specialist_status(digest) == "2/19 fichas con especialistas; 17 pendientes", "specialist status missing")
     check(source_monitoring_status(digest) == "todo reciente; próxima revisión 2026-09-29 09:58", "source monitoring missing")
+    check(daniel_now_status(digest).startswith("Trabajar Sensabell"), "Daniel next step should use clinic workgroup")
+    check(codex_can_continue_status(digest) == "mejorar panel, extractores y checks sin crear tarjetas nuevas", "Codex safe next step missing")
+    check(not_ready_status(digest) == "muestra humana insuficiente: 2/200 candidatas", "not-ready reason missing")
     check("# Vitalarga: estado del plan global" in output, "title missing")
     check("Git: main · abc123 Test commit" in output, "git label missing")
+    check("## Lectura rápida" in output, "quick-read section missing")
+    check("Daniel ahora: Trabajar Sensabell: 5 tarjetas" in output, "Daniel quick action missing")
+    check("Codex puede seguir con: mejorar panel, extractores y checks sin crear tarjetas nuevas" in output, "Codex safe work missing")
+    check("No activar todavía: muestra humana insuficiente: 2/200 candidatas" in output, "not-ready quick line missing")
     check("Fase activa: centro de control y reducción de bandeja" in output, "phase line missing")
     check("Web pública: 11 publicadas y 8 preliminares" in output, "public website line missing")
     check("Bandeja: 48 revisiones abiertas; cerca del freno: 48/50 abiertas" in output, "backlog line missing")

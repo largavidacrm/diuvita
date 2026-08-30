@@ -100,6 +100,49 @@ def plan_phase(digest: dict[str, Any]) -> str:
     return "centro de control, trazabilidad y ciclo sombra"
 
 
+def daniel_now_status(digest: dict[str, Any]) -> str:
+    group = first_clinic_workgroup(digest)
+    if group != "sin grupo por clínica medido":
+        return group
+    action = next_action_label(digest)
+    if action != "Sin accion urgente":
+        return action
+    profile = next_profile_action(digest)
+    if profile != "sin ficha pendiente medida":
+        return profile
+    return "sin acción urgente medida"
+
+
+def codex_can_continue_status(digest: dict[str, Any]) -> str:
+    summary = digest.get("summary") or {}
+    reviews = summary.get("reviews") or {}
+    jobs = summary.get("jobs") or {}
+    open_reviews = as_int(reviews.get("open"))
+    failed_jobs = as_int(jobs.get("failed")) + as_int(jobs.get("dead_letter"))
+    source_coverage = digest.get("source_coverage") or {}
+    specialist_coverage = digest.get("specialist_coverage") or {}
+    profile_completeness = digest.get("profile_completeness") or {}
+
+    if failed_jobs:
+        return "resolver fallos técnicos y volver a medir"
+    if open_reviews >= 45:
+        return "mejorar panel, extractores y checks sin crear tarjetas nuevas"
+    if as_int(source_coverage.get("clinics_needing_source_work")):
+        return "mejorar trazabilidad de fuentes y propuestas internas"
+    if as_int(specialist_coverage.get("without_specialists")):
+        return "priorizar páginas de equipo para especialistas publicados"
+    if as_int(profile_completeness.get("pending_google_maps")):
+        return "preparar revisión de Google Maps de clínica"
+    return "preparar el siguiente bloque técnico sin publicar"
+
+
+def not_ready_status(digest: dict[str, Any]) -> str:
+    blockers = maturity_blockers(digest)
+    if blockers:
+        return blockers[0]
+    return "auto-publicación y growth quedan parados hasta decisión explícita de Daniel"
+
+
 def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
     summary = digest.get("summary") or {}
     reviews = summary.get("reviews") or {}
@@ -109,6 +152,11 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         "",
         f"Generado: {parse_timestamp(digest.get('generated_at') or summary.get('generated_at'))}",
         f"Git: {git_ref or 'no comprobado'}",
+        "",
+        "## Lectura rápida",
+        f"- Daniel ahora: {daniel_now_status(digest)}.",
+        f"- Codex puede seguir con: {codex_can_continue_status(digest)}.",
+        f"- No activar todavía: {not_ready_status(digest)}.",
         "",
         "## Dónde estamos",
         f"- Fase activa: {plan_phase(digest)}.",
