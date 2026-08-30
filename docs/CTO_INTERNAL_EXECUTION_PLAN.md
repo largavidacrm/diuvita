@@ -45,6 +45,7 @@ Already built:
 - First source-change watcher exists in `scripts/monitor_source_changes.py`.
 - Safe recurring CTO shadow cycle exists in `scripts/run_cto_shadow_cycle.py`.
 - Local safety checks are bundled in `scripts/run_local_checks.py`.
+- Review maturity can be measured read-only before considering low-risk auto-publish expansion.
 - Shadow discovery path for clinic candidates.
 - Duplicate hints for candidates.
 - Quality audit workflow for incomplete clinic profiles, including contact, services, units, specialists and technology.
@@ -60,7 +61,7 @@ Not yet mature:
 - Doctor, pricing, treatment and SEO workflows.
 - Daily/weekly digest.
 - Rollback controls in the admin UI need operational usage, but the restore path now exists.
-- Accuracy measurement across 100-200 reviewed items.
+- Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.
 
 ## Execution lanes
 
@@ -244,6 +245,7 @@ Next 10 technical steps:
 8. Build a shadow `EXTRACT_CLINIC_PROFILE` script for one clinic URL. Done locally in `scripts/extract_clinic_profile_shadow.py`; next step is adding an independent verifier.
 9. Build a shadow `VERIFY_CLINIC_PROFILE` script for extracted claims. Done locally in `scripts/verify_clinic_profile_shadow.py`; review-card wiring exists in `scripts/submit_shadow_extraction_review.py`.
 10. Add a daily digest card/report for open reviews, failed jobs and costs. Done locally in `scripts/admin_digest.py`; next step is turning it into a scheduled notification when Daniel chooses the channel.
+11. Add a read-only review maturity measurement before any auto-publish expansion. Done locally in `scripts/measure_review_maturity.py`; next step is feeding the maturity signal into admin status/digest.
 
 ## Daniel decision checkpoints
 

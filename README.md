@@ -31,6 +31,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SHADOW_VERIFIER.md`: primer verificador local que desafía claims extraídos antes de reglas/publicación.
 - `docs/SHADOW_REVIEW_SUBMISSION.md`: conexión entre extractor/verificador shadow y tarjetas internas del admin.
 - `docs/ADMIN_DIGEST.md`: resumen interno de CTO para revisiones, jobs y costes registrados.
+- `docs/REVIEW_MATURITY.md`: medición de madurez antes de plantear auto-publicación de bajo riesgo.
 - `docs/HUMAN_FIELD_LOCKS.md`: protecciones para campos corregidos manualmente por Daniel.
 - `docs/ENRICHMENT_CLAIMS_CAPTURE.md`: captura interna de fuentes y claims desde propuestas de mejora.
 - `docs/CANDIDATE_DRAFT_PROMOTION.md`: herramienta conservadora para convertir candidatas en borradores internos.
@@ -58,6 +59,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/verify_clinic_profile_shadow.py`: verificador inicial de claims extraídos en modo sombra.
 - `scripts/submit_shadow_extraction_review.py`: convierte una extracción verificada en una tarjeta interna revisable.
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
+- `scripts/measure_review_maturity.py`: mide si hay suficiente revisión humana antes de relajar reglas.
 - `scripts/capture_enrichment_review_claims.py`: convierte propuestas internas en `source_records` y `field_claims`.
 - `scripts/promote_candidate_reviews.py`: simula o crea borradores internos desde candidatas revisables.
 - `scripts/hydrate_source_records.py`: completa `source_records` con título, hash y extracto corto.
