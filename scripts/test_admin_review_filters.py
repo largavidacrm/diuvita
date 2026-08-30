@@ -30,10 +30,14 @@ def main() -> None:
         "data-review-type",
         "data-review-priority",
         "data-review-duplicate",
+        "data-review-google-links",
         "data-review-group-clear",
         "reviewDuplicateFilter",
+        "reviewGoogleLinksFilter",
         "reviewClinicGroupFilter",
-        "[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-group-clear]",
+        "function reviewHasGoogleLinkProposal",
+        'filterChip("Google Maps", googleLinkCount, reviewGoogleLinksFilter, { "data-review-google-links": "true" })',
+        "[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-group-clear]",
     ]:
         check(marker in index, f"missing admin review filter marker: {marker}")
 

@@ -610,6 +610,7 @@
     var reviewSearchQuery = "";
     var reviewDuplicateFilter = false;
     var reviewClinicGroupFilter = "";
+    var reviewGoogleLinksFilter = false;
     var sourceCoverageCache = null;
     var specialistCoverageCache = null;
     var clinicStatusFilter = "";
@@ -1721,6 +1722,7 @@
         el("reviewTypeFilter").value = "";
         el("reviewPriorityFilter").value = "";
         reviewDuplicateFilter = false;
+        reviewGoogleLinksFilter = false;
         renderReviews();
       }
       if (globalPlanNextReviewId) {
@@ -1880,6 +1882,7 @@
       el("reviewTypeFilter").value = "";
       el("reviewPriorityFilter").value = "";
       reviewDuplicateFilter = false;
+      reviewGoogleLinksFilter = false;
       renderReviews();
       toast("Bandeja filtrada por " + clinicWorkgroupSubject(group) + ".");
     }
@@ -1920,6 +1923,7 @@
       el("reviewTypeFilter").value = "";
       el("reviewPriorityFilter").value = "";
       reviewDuplicateFilter = false;
+      reviewGoogleLinksFilter = false;
       renderReviews();
       toast("Bandeja filtrada por " + query + ".");
     }
@@ -1961,6 +1965,7 @@
       el("reviewPriorityFilter").value = "";
       reviewDuplicateFilter = false;
       reviewClinicGroupFilter = "";
+      reviewGoogleLinksFilter = false;
       renderReviews();
       toast("Bandeja filtrada por especialistas de " + query + ".");
     }
@@ -2085,12 +2090,14 @@
       var typeBase = reviewCache.filter(function (row) {
         return reviewMatchesClinicGroup(row) &&
           reviewMatchesSearch(row) &&
+          (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row)) &&
           (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
       });
       var priorityBase = reviewCache.filter(function (row) {
         return reviewMatchesClinicGroup(row) &&
           reviewMatchesSearch(row) &&
-          reviewMatchesType(row, reviewTypeFilter);
+          reviewMatchesType(row, reviewTypeFilter) &&
+          (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row));
       });
       var typeChips = REVIEW_TYPE_FILTERS.map(function (filter) {
         var value = filter[0];
@@ -2106,12 +2113,26 @@
         return reviewMatchesClinicGroup(row) &&
           reviewMatchesSearch(row) &&
           reviewMatchesType(row, reviewTypeFilter) &&
-          (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter);
+          (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter) &&
+          (!reviewGoogleLinksFilter || reviewHasGoogleLinkProposal(row));
       });
       var duplicateCount = countWhere(duplicateBase, isDuplicateEnrichmentReview);
       var duplicateChips = duplicateCount || reviewDuplicateFilter
         ? '<div class="filter-chip-row"><strong>Atascos</strong>' +
           filterChip("Varias propuestas", duplicateCount, reviewDuplicateFilter, { "data-review-duplicate": "true" }) +
+          '</div>'
+        : "";
+      var fieldBase = reviewCache.filter(function (row) {
+        return reviewMatchesClinicGroup(row) &&
+          reviewMatchesSearch(row) &&
+          reviewMatchesType(row, reviewTypeFilter) &&
+          (!reviewPriorityFilter || priorityBand(row.priority) === reviewPriorityFilter) &&
+          (!reviewDuplicateFilter || isDuplicateEnrichmentReview(row));
+      });
+      var googleLinkCount = countWhere(fieldBase, reviewHasGoogleLinkProposal);
+      var fieldChips = googleLinkCount || reviewGoogleLinksFilter
+        ? '<div class="filter-chip-row"><strong>Campo</strong>' +
+          filterChip("Google Maps", googleLinkCount, reviewGoogleLinksFilter, { "data-review-google-links": "true" }) +
           '</div>'
         : "";
       var activeGroup = activeClinicWorkgroup();
@@ -2124,6 +2145,7 @@
       container.innerHTML = '<div class="filter-chip-row"><strong>Tipo</strong>' + typeChips + '</div>' +
         '<div class="filter-chip-row"><strong>Prioridad</strong>' + priorityChips + '</div>' +
         duplicateChips +
+        fieldChips +
         groupChips;
       show(el("reviewClearFilters"), activeReviewFilters());
     }
@@ -2294,7 +2316,7 @@
     }
 
     function activeReviewFilters() {
-      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery || reviewDuplicateFilter || reviewClinicGroupFilter);
+      return Boolean(reviewTypeFilter || reviewPriorityFilter || reviewSearchQuery || reviewDuplicateFilter || reviewClinicGroupFilter || reviewGoogleLinksFilter);
     }
 
     function reviewMatchesFilters(row) {
@@ -2302,6 +2324,7 @@
       if (!reviewMatchesType(row, reviewTypeFilter)) return false;
       if (reviewPriorityFilter && priorityBand(row.priority) !== reviewPriorityFilter) return false;
       if (reviewDuplicateFilter && !isDuplicateEnrichmentReview(row)) return false;
+      if (reviewGoogleLinksFilter && !reviewHasGoogleLinkProposal(row)) return false;
       if (!reviewMatchesSearch(row)) return false;
       return true;
     }
@@ -2322,6 +2345,7 @@
       el("reviewPriorityFilter").value = "";
       reviewDuplicateFilter = false;
       reviewClinicGroupFilter = "";
+      reviewGoogleLinksFilter = false;
       renderReviews();
     }
 
@@ -3521,6 +3545,20 @@
       return items;
     }
 
+    function reviewHasGoogleLinkProposal(row) {
+      var fields = proposedFields((row && row.payload) || {});
+      if (proposalLinkUrl(fields.maps_url) || proposalLinkUrl(fields.google_maps_url)) return true;
+      if (proposalLinkUrl(fields.google_reviews_url) || proposalLinkUrl(fields.reviews_url)) return true;
+      if (!Array.isArray(fields.locations)) return false;
+      return fields.locations.some(function (location) {
+        if (!location || typeof location !== "object") return false;
+        return Boolean(
+          proposalLinkUrl(location.maps_url || location.google_maps_url || location.map_url) ||
+          proposalLinkUrl(location.google_reviews_url || location.reviews_url || location.valoraciones_url)
+        );
+      });
+    }
+
     function normalizedPersonKey(value) {
       var clean = text(value).split("—")[0].split(" - ")[0].trim().toLowerCase();
       if (clean.normalize) {
@@ -4682,7 +4720,7 @@
         if (button) openReviewEditor(button.getAttribute("data-related-review-id"));
       });
       el("reviewFilterChips").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-group-clear]");
+        var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-group-clear]");
         if (!button) return;
         if (button.hasAttribute("data-review-type")) {
           el("reviewTypeFilter").value = button.getAttribute("data-review-type");
@@ -4692,6 +4730,9 @@
         }
         if (button.hasAttribute("data-review-duplicate")) {
           reviewDuplicateFilter = !reviewDuplicateFilter;
+        }
+        if (button.hasAttribute("data-review-google-links")) {
+          reviewGoogleLinksFilter = !reviewGoogleLinksFilter;
         }
         if (button.hasAttribute("data-review-group-clear")) {
           reviewClinicGroupFilter = "";
