@@ -281,7 +281,9 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .clinic-main h1,.ficha>h1{font-family:'Fraunces',Georgia,serif;font-size:3.05rem;font-weight:500;line-height:1.04;text-wrap:balance}
 .ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0}
 .ficha .summary{max-width:720px;margin-top:1rem;font-size:1.18rem;color:var(--ink)}
-.profile-nav{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1rem}
+.profile-jump{display:grid;gap:.45rem;margin-top:1rem}
+.profile-jump-label{color:var(--muted);font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
+.profile-nav{display:flex;flex-wrap:wrap;gap:.45rem}
 .profile-nav a{display:inline-flex;align-items:center;gap:.35rem;min-height:1.85rem;padding:.26rem .42rem .26rem .62rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--green-deep);font-size:.84rem;font-weight:800}
 .profile-nav a:hover{background:var(--wash);text-decoration:none}
 .profile-nav-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;min-height:1.35rem;border-radius:8px;background:var(--wash);font-size:.75rem;color:var(--green-deep)}
@@ -290,9 +292,14 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .clinic-side h2{margin-top:0}
 .profile-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1.5rem;align-items:start}
 .profile-block{min-width:0;padding:1.05rem 1.1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
-.ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.22rem;margin:0 0 .55rem}
+.profile-section-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.6rem}
+.ficha h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.22rem;margin:0}
+.section-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.6rem;height:1.6rem;border-radius:8px;background:var(--wash);color:var(--green-deep);font-size:.78rem;font-weight:800}
 .ficha ul{padding-left:1.1rem;color:var(--muted)}
 .profile-block li{margin:.24rem 0}
+.profile-list{list-style:none;padding-left:0!important;display:grid;gap:.52rem;color:var(--muted)}
+.profile-list li{position:relative;margin:0!important;padding-left:1rem;line-height:1.45}
+.profile-list li::before{content:"";position:absolute;left:0;top:.62em;width:.38rem;height:.38rem;border-radius:8px;background:var(--coral)}
 .facts{display:grid;grid-template-columns:1fr;gap:.75rem;margin:.75rem 0 0}
 .facts div{border-top:1px solid var(--line);padding-top:.55rem}
 .facts dt{font-size:.74rem;text-transform:uppercase;color:var(--coral);font-weight:800;letter-spacing:0}
@@ -483,6 +490,12 @@ def status_label(c):
         return "Ficha publicada"
     return str(c.get("status") or "").capitalize()
 
+def section_heading(title, count=None):
+    count_html = ""
+    if count is not None:
+        count_html = f'<span class="section-count" aria-label="{h(count)} elementos">{h(count)}</span>'
+    return f'<div class="profile-section-head"><h2>{h(title)}</h2>{count_html}</div>'
+
 def facts_block(c):
     facts = []
     location = []
@@ -507,21 +520,21 @@ def facts_block(c):
     if not facts:
         return ""
     rows = "".join(f"<div><dt>{h(label)}</dt><dd>{value}</dd></div>" for label, value in facts)
-    return f'<section class="profile-block" id="datos-clave"><h2>Datos clave</h2><dl class="facts">{rows}</dl></section>'
+    return f'<section class="profile-block" id="datos-clave">{section_heading("Datos clave")}<dl class="facts">{rows}</dl></section>'
 
-def list_section(title, items, list_class="info-list", section_id=""):
+def list_section(title, items, list_class="profile-list", section_id=""):
     items = visible_values(items)
     if not items:
         return ""
     id_attr = f' id="{h(section_id)}"' if section_id else ""
-    return f'<section class="profile-block"{id_attr}><h2>{h(title)}</h2><ul class="{h(list_class)}">' + "".join(f"<li>{h(item)}</li>" for item in items) + "</ul></section>"
+    return f'<section class="profile-block"{id_attr}>{section_heading(title, len(items))}<ul class="{h(list_class)}">' + "".join(f"<li>{h(item)}</li>" for item in items) + "</ul></section>"
 
 def tech_block(c):
     items = split_text_list(c.get("tech"))
     if not items:
         return ""
     if len(items) == 1:
-        return f'<section class="profile-block" id="tecnologia"><h2>Tecnología destacada</h2><p class="muted-copy">{h(items[0])}</p></section>'
+        return f'<section class="profile-block" id="tecnologia">{section_heading("Tecnología destacada", len(items))}<p class="muted-copy">{h(items[0])}</p></section>'
     return list_section("Tecnología destacada", items, "pill-list", "tecnologia")
 
 def contacto_block(c):
@@ -539,13 +552,13 @@ def contacto_block(c):
         items.append(f'<li><b>Instagram:</b> <a href="{h(url)}" rel="nofollow noopener" target="_blank">{h(handle)}</a></li>')
     if not items:
         return ""
-    return '<section class="profile-block" id="contacto"><h2>Contacto publicado</h2><ul class="contacto info-list">' + "".join(items) + "</ul></section>"
+    return '<section class="profile-block" id="contacto">' + section_heading("Contacto publicado", len(items)) + '<ul class="contacto info-list">' + "".join(items) + "</ul></section>"
 
 def profile_nav_item(label, count, target):
     return (
         f'<a href="{h(target)}" aria-label="{h(label)}: {h(count)}">'
         f'<span class="profile-nav-label">{h(label)}</span>'
-        f'<span class="profile-nav-count">{h(count)}</span></a>'
+        f'<span class="profile-nav-count" aria-hidden="true">{h(count)}</span></a>'
     )
 
 def profile_nav(c, has_contact, has_tech):
@@ -569,7 +582,7 @@ def profile_nav(c, has_contact, has_tech):
         items.append(profile_nav_item("Contacto", contact_count, "#contacto"))
     if not items:
         return ""
-    return '<nav class="profile-nav" aria-label="Contenido de la ficha">' + "".join(items) + "</nav>"
+    return '<div class="profile-jump"><span class="profile-jump-label">En esta ficha</span><nav class="profile-nav" aria-label="Contenido de la ficha">' + "".join(items) + "</nav></div>"
 
 def ficha(c):
     tags = "".join(f'<span class="tag">{h(s)}</span>' for s in c["specialties"])
