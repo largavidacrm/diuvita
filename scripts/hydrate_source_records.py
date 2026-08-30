@@ -14,6 +14,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 
 from capture_source_snapshot import fetch_url, snapshot_from_fetch
+from source_snapshot_records import insert_source_snapshot_sql, snapshot_storage_path
 from submit_discovery_candidates import load_env_file, run_psql, sql_literal
 
 
@@ -91,6 +92,7 @@ set
   source_title = coalesce({sql_literal(snapshot.get("source_title"))}, source_title),
   retrieved_at = coalesce({sql_literal(snapshot.get("retrieved_at"))}::timestamptz, retrieved_at),
   content_hash = {sql_literal(snapshot.get("content_sha256"))},
+  snapshot_storage_path = {sql_literal(snapshot_storage_path(snapshot))},
   raw_excerpt = {sql_literal(snapshot.get("text_excerpt"))},
   metadata = coalesce(metadata, '{{}}'::jsonb) || {sql_json(snapshot_metadata(snapshot))}
 where id = {sql_literal(record_id)}::uuid
@@ -98,6 +100,7 @@ returning jsonb_build_object(
   'id', id,
   'source_url', source_url,
   'content_hash', content_hash,
+  'snapshot_storage_path', snapshot_storage_path,
   'has_excerpt', raw_excerpt is not null
 );
 """
@@ -152,11 +155,16 @@ def hydrate_record(record: dict[str, Any], args: argparse.Namespace, local_env: 
         }
 
     updated = first_json_line(run_psql(update_source_record_sql(str(record["id"]), snapshot), local_env))
+    snapshot_row = first_json_line(run_psql(
+        insert_source_snapshot_sql(record, snapshot, HYDRATOR_NAME, HYDRATOR_VERSION),
+        local_env,
+    ))
     return {
         "id": record.get("id"),
         "source_url": source_url,
         "status": "updated",
         "updated": updated,
+        "snapshot": snapshot_row,
     }
 
 

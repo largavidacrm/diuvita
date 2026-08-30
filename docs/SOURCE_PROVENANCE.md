@@ -17,12 +17,15 @@ The provenance layer stores compact evidence about source pages:
 - Short readable excerpt.
 
 By default Diuvita does not store full external pages in the repo. Compact snapshots are enough for audit trails and safer for copyright, storage and review.
+Supabase also keeps compact historical rows in `source_snapshots`, linked to
+`source_records`.
 
 ## Current implementation
 
 Code:
 
 - `scripts/capture_source_snapshot.py`
+- `scripts/source_snapshot_records.py`
 - `scripts/test_capture_source_snapshot.py`
 
 Examples:
@@ -39,11 +42,12 @@ Saved snapshots go under:
 data/source_snapshots/
 ```
 
-That folder is local/ignored by Git. Future work can upload snapshot metadata to Supabase `source_records` and keep any larger evidence outside GitHub.
+That folder is local/ignored by Git. Supabase stores compact snapshot metadata
+and excerpts in `source_snapshots`; larger evidence should stay outside GitHub.
 
 ## Next integration points
 
-1. `EXTRACT_CLINIC_PROFILE` should capture a snapshot before extracting claims.
-2. `field_claims.source_record_id` should link every important claim to a source.
-3. The admin UI should show source evidence beside proposed changes.
-4. Monitoring should compare hashes before calling expensive AI.
+1. Store external full-page archives outside GitHub only if later needed.
+2. Link every important field claim to the strongest source record.
+3. Show source history beside proposed changes in the admin.
+4. Use snapshot history to measure source volatility before calling expensive AI.

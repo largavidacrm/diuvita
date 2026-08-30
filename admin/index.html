@@ -1532,6 +1532,7 @@
           metric("Publicadas", clinics.published || 0),
           metric("Revisión", reviews.open || 0),
           metric("Fuentes", evidence.sources || 0),
+          metric("Capturas", evidence.snapshots || 0),
           metric("Auto-publicación", automation.auto_publish_enabled ? "Activa" : "Apagada"),
           metric("Modo sombra", automation.shadow_mode_active === false ? "No" : "Activo")
         ].join("");

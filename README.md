@@ -38,6 +38,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/SOURCE_CHANGE_MONITORING.md`: primer watcher para detectar cambios en fuentes ya guardadas.
 - `docs/CTO_SHADOW_CYCLE.md`: ciclo seguro para encadenar tareas internas repetibles.
 - `docs/LOCAL_CHECKS.md`: comprobaciones locales antes de guardar y subir cambios.
+- `supabase/migrations/0014_source_snapshots.sql`: historial interno de capturas compactas de fuentes.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.
@@ -48,6 +49,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/apply_supabase_bootstrap.sh`: aplica el bootstrap contra Supabase usando `DATABASE_URL` local.
 - `scripts/check_supabase_foundation.sh`: comprueba recuentos basicos de la base Supabase.
 - `scripts/capture_source_snapshot.py`: captura metadatos, hash y extracto corto de una fuente publica.
+- `scripts/source_snapshot_records.py`: helpers SQL para guardar capturas compactas en Supabase.
 - `scripts/diuvita_rules.py`: motor local de reglas por riesgo de campo.
 - `scripts/extract_clinic_profile_shadow.py`: extractor inicial de claims de clínica en modo sombra.
 - `scripts/verify_clinic_profile_shadow.py`: verificador inicial de claims extraídos en modo sombra.

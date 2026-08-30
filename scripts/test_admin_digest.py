@@ -16,7 +16,7 @@ def main():
             "clinics": {"total": 19, "published": 11, "preliminary": 8},
             "reviews": {"open": 12},
             "jobs": {"queued": 2, "running": 1, "failed": 0, "dead_letter": 0},
-            "evidence": {"sources": 7, "claims": 31},
+            "evidence": {"sources": 7, "snapshots": 3, "claims": 31},
             "automation": {
                 "agents_enabled": True,
                 "auto_publish_enabled": False,
@@ -54,6 +54,7 @@ def main():
     output = format_digest(digest)
     check("# Diuvita CTO digest" in output, "title missing")
     check("Clinicas totales: 19" in output, "clinic count missing")
+    check("Capturas guardadas: 3" in output, "snapshot count missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("mejoras de ficha: 11 abiertas" in output, "review type summary missing")
     check("cambios de fuente: 1 abierta" in output, "source change label missing")

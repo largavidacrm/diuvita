@@ -175,6 +175,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Preliminares", as_int(clinics.get("preliminary"))))
     output.append(line("Pendientes de revision", as_int(reviews.get("open"))))
     output.append(line("Fuentes guardadas", as_int(evidence.get("sources"))))
+    output.append(line("Capturas guardadas", as_int(evidence.get("snapshots"))))
     output.append(line("Claims guardados", as_int(evidence.get("claims"))))
     output.append("")
 

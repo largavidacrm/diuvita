@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 TEST_STEPS = [
     ("test: source snapshots", "scripts/test_capture_source_snapshot.py"),
+    ("test: durable source rows", "scripts/test_source_snapshot_records.py"),
     ("test: publication rules", "scripts/test_diuvita_rules.py"),
     ("test: shadow extraction", "scripts/test_extract_clinic_profile_shadow.py"),
     ("test: shadow verification", "scripts/test_verify_clinic_profile_shadow.py"),

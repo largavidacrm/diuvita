@@ -13,6 +13,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 
 from capture_source_snapshot import fetch_url, snapshot_from_fetch
+from source_snapshot_records import insert_source_snapshot_sql
 from submit_discovery_candidates import get_default_admin_email, load_env_file, run_psql, sql_literal
 
 
@@ -177,14 +178,29 @@ def monitor_record(record: dict[str, Any], args: argparse.Namespace, admin_email
         }
 
     change = compare_record(record, snapshot)
+    snapshot_row = None
+    if args.apply:
+        snapshot_row = first_json_line(run_psql(
+            insert_source_snapshot_sql(
+                record,
+                snapshot,
+                WATCHER_NAME,
+                WATCHER_VERSION,
+                {"changed": change["changed"], "hash_type": change["hash_type"]},
+            ),
+            local_env,
+        ))
     if not change["changed"]:
-        return {
+        result = {
             "source_record_id": record.get("id"),
             "source_url": record.get("source_url"),
             "clinic_name": record.get("clinic_name"),
             "status": "unchanged",
             "hash": change["current_hash"][:12],
         }
+        if snapshot_row:
+            result["snapshot"] = snapshot_row
+        return result
 
     result = {
         "source_record_id": record.get("id"),
@@ -195,6 +211,8 @@ def monitor_record(record: dict[str, Any], args: argparse.Namespace, admin_email
         "current_hash": change["current_hash"][:12],
         "hash_type": change["hash_type"],
     }
+    if snapshot_row:
+        result["snapshot"] = snapshot_row
     if args.apply:
         result["review"] = first_json_line(run_psql(create_review_sql(change, admin_email), local_env))
     return result

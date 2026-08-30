@@ -81,6 +81,7 @@ export PGSSLMODE=require
   -c "select count(*) as source_records_missing_hash from public.source_records where content_hash is null and (metadata ->> 'last_hydration_error_at' is null or (metadata ->> 'last_hydration_error_at')::timestamptz < now() - interval '24 hours');" \
   -c "select count(*) as candidate_source_records from public.source_records where entity_type = 'candidate_clinic';" \
   -c "select count(*) as total_field_claims from public.field_claims;" \
+  -c "select count(*) as source_snapshots from public.source_snapshots;" \
   -c "select count(*) as shadow_field_claims from public.field_claims where agent_name = 'diuvita-shadow-discovery';" \
   -c "select count(*) as enrichment_field_claims from public.field_claims where agent_name = 'diuvita-profile-enrichment';" \
   -c "select count(*) as active_human_field_locks from public.human_overrides where locked = true;" \
