@@ -40,5 +40,11 @@ To include a read-only public website check:
 python3 scripts/daniel_review_brief.py --production-health
 ```
 
+When the first action is claims bloqueantes, use the focused read-only brief:
+
+```bash
+python3 scripts/blocking_claim_brief.py
+```
+
 The brief reuses the protected admin digest query and reads Supabase connection
 settings from `.env`.

@@ -71,6 +71,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/submit_source_shadow_reviews.py`: ejecuta extracción/verificación shadow sobre fuentes de clínicas existentes, priorizando fichas incompletas.
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
 - `scripts/daniel_review_brief.py`: imprime un brief de revisión para Daniel, solo lectura y sin payloads técnicos.
+- `scripts/blocking_claim_brief.py`: resume claims bloqueantes por clínica para revisión manual, solo lectura.
 - `scripts/measure_review_maturity.py`: mide si hay suficiente revisión humana antes de relajar reglas.
 - `scripts/measure_specialist_coverage.py`: mide cobertura de especialistas publicados por clínica, sin editar fichas.
 - `scripts/measure_profile_completeness.py`: mide campos públicos pendientes en fichas visibles, sin editar fichas.

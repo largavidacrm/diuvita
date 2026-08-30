@@ -42,6 +42,7 @@ TEST_STEPS = [
     ("test: public site assets", "scripts/test_public_site_assets.py"),
     ("test: admin digest", "scripts/test_admin_digest.py"),
     ("test: Daniel review brief", "scripts/test_daniel_review_brief.py"),
+    ("test: blocking claim brief", "scripts/test_blocking_claim_brief.py"),
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: specialist coverage", "scripts/test_measure_specialist_coverage.py"),
     ("test: profile completeness", "scripts/test_measure_profile_completeness.py"),

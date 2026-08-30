@@ -28,3 +28,15 @@ python3 scripts/submit_blocking_claim_reviews.py --apply
 ```
 
 The safe CTO shadow cycle runs this step after source-change processing.
+
+## Daniel-readable brief
+
+To inspect the current blockers without creating or refreshing cards:
+
+```bash
+python3 scripts/blocking_claim_brief.py
+```
+
+This prints the affected clinics, priority, field names, blocker type, compact
+source host and saved date. It is read-only and designed to make the first
+manual review step easier.
