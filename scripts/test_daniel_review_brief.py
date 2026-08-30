@@ -36,6 +36,14 @@ def sample_digest():
                 "title": "Revisar claims bloqueantes: Sensabell",
             }
         ],
+        "review_examples_by_type": [
+            {
+                "review_type": "blocking_claim_review",
+                "priority": 85,
+                "clinic_name": "Sensabell",
+                "title": "Revisar claims bloqueantes: Sensabell",
+            }
+        ],
         "recent_failed_jobs": [],
         "source_monitoring": {
             "due_sources": 0,
@@ -98,9 +106,16 @@ def main():
 
     hidden_sample_digest = sample_digest()
     hidden_sample_digest["open_reviews"] = []
+    hidden_sample_digest["review_examples_by_type"] = []
     check(
         first_step(hidden_sample_digest)[1] == "Caso visible: abre el filtro Claims bloqueantes en el panel.",
         "missing visible sample should route Daniel to the right filter",
+    )
+    example_digest = sample_digest()
+    example_digest["open_reviews"] = []
+    check(
+        first_step(example_digest)[1] == "Caso visible: Revisar claims bloqueantes: Sensabell.",
+        "type-level review example should guide Daniel when priority list is limited",
     )
     print("OK Daniel brief: review guidance is readable")
 

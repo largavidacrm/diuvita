@@ -117,6 +117,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in open_reviews[:3]
         ]
         compact.pop("open_reviews", None)
+    review_examples = compact.get("review_examples_by_type")
+    if isinstance(review_examples, list):
+        compact["review_examples_by_type_count"] = len(review_examples)
+        compact["sample_review_examples_by_type"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in review_examples[:5]
+        ]
+        compact.pop("review_examples_by_type", None)
     checks = compact.get("checks")
     if isinstance(checks, list):
         compact["checks_count"] = len(checks)

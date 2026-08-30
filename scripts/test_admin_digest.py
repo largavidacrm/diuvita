@@ -51,6 +51,21 @@ def main():
                 "title": "Revisar claims bloqueantes: Sensabell",
             }
         ],
+        "review_examples_by_type": [
+            {
+                "review_type": "blocking_claim_review",
+                "raw_review_type": "clinic_quality_audit",
+                "priority": 85,
+                "clinic_name": "Sensabell",
+                "title": "Revisar claims bloqueantes: Sensabell",
+            },
+            {
+                "review_type": "candidate_clinic",
+                "priority": 90,
+                "clinic_name": "",
+                "title": "Candidata visible",
+            },
+        ],
         "recent_failed_jobs": [],
         "claim_quality": {
             "conflict": 0,
@@ -121,6 +136,7 @@ def main():
     check("cambios de fuente: 1 abierta" in output, "source change label missing")
     check("claims bloqueantes: 1 abierta" in output, "blocking claim label missing")
     check("Sensabell" in output, "priority item missing")
+    check("review_examples_by_type" not in output, "raw example key should not appear in formatted digest")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")

@@ -104,6 +104,51 @@ open_reviews as (
     limit {int(limit)}
   ) items
 ),
+review_examples_by_type as (
+  select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
+  from (
+    select
+      id,
+      raw_review_type,
+      review_type,
+      title,
+      priority,
+      created_at,
+      updated_at,
+      clinic_slug,
+      clinic_name
+    from (
+      select
+        rq.id,
+        rq.review_type as raw_review_type,
+        case
+          when rq.review_type = 'clinic_quality_audit'
+            and rq.payload ->> 'quality_context' = 'blocking_claims'
+            then 'blocking_claim_review'
+          else rq.review_type
+        end as review_type,
+        rq.title,
+        rq.priority,
+        rq.created_at,
+        rq.updated_at,
+        c.slug as clinic_slug,
+        c.display_name as clinic_name,
+        row_number() over (
+          partition by case
+            when rq.review_type = 'clinic_quality_audit'
+              and rq.payload ->> 'quality_context' = 'blocking_claims'
+              then 'blocking_claim_review'
+            else rq.review_type
+          end
+          order by rq.priority desc, rq.created_at asc
+        ) as review_rank
+      from public.review_queue rq
+      left join public.clinics c on c.id = rq.clinic_id
+      where rq.status = 'open'
+    ) ranked
+    where review_rank = 1
+  ) items
+),
 recent_failed_jobs as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.updated_at desc), '[]'::jsonb) as data
   from (
@@ -305,6 +350,7 @@ select jsonb_build_object(
   'summary', (select data from summary),
   'reviews_by_type', (select data from reviews_by_type),
   'open_reviews', (select data from open_reviews),
+  'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
   'costs', (select data from costs),

@@ -7,6 +7,7 @@ It is designed for future morning or weekly automations. It answers:
 
 - what Daniel should review first;
 - which visible review card is the best starting point;
+- a fallback example by review type when the first priority list is limited;
 - how many open cards exist by type;
 - whether auto-publication is still off;
 - how many visible profiles still have measured public fields pending;

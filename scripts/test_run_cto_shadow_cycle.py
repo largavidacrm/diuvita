@@ -75,10 +75,16 @@ def main():
             {"title": "A", "review_type": "candidate_clinic", "priority": 90, "payload": {"large": True}},
             {"title": "B", "review_type": "clinic_quality_audit", "priority": 80, "payload": {"large": True}},
         ],
+        "review_examples_by_type": [
+            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "payload": {"large": True}},
+            {"title": "B", "review_type": "blocking_claim_review", "priority": 85, "payload": {"large": True}},
+        ],
     })
     check("admin_email" not in compact_digest, "admin email should be removed from cycle output")
     check(compact_digest["open_reviews_count"] == 2, "open review count should be kept")
     check("payload" not in compact_digest["sample_open_reviews"][0], "review payload should be omitted")
+    check(compact_digest["review_examples_by_type_count"] == 2, "review example count should be kept")
+    check("payload" not in compact_digest["sample_review_examples_by_type"][0], "review example payload should be omitted")
     compact_health = compact_summary("check_production_health", {
         "base_url": "https://www.diuvita.com",
         "ok": True,

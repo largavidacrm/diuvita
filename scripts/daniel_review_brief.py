@@ -42,6 +42,9 @@ def first_review(digest: dict[str, Any], review_type: str) -> dict[str, Any] | N
     for item in digest.get("open_reviews") or []:
         if item.get("review_type") == review_type:
             return item
+    for item in digest.get("review_examples_by_type") or []:
+        if item.get("review_type") == review_type:
+            return item
     return None
 
 
