@@ -17,7 +17,9 @@ def main():
 <head><title>Example Longevity Clinic | Barcelona</title></head>
 <body>
   <p>Example Longevity Clinic offers medicina preventiva and VO2 max.</p>
-  <p>La Unidad de Longevidad está dirigida por Dra. Laura García Pérez.</p>
+  <p>La Unidad de Longevidad está dirigida por Dra. Laura García Pérez, nº colegiada 12345.</p>
+  <p>Equipo de 12 especialistas con más de 20 años de experiencia.</p>
+  <p>Consulta inicial: 120 euros.</p>
   <p>Sedes: Calle Serrano 100, 28006 Madrid.</p>
   <p>Email info@exampleclinic.test and phone +34 930 111 222.</p>
 </body>
@@ -48,6 +50,10 @@ def main():
     check(verdicts[("contact.website", "https://exampleclinic.test")] == "accepted", "website should verify")
     check(verdicts[("contact.email", "info@exampleclinic.test")] == "accepted", "email should verify")
     check(verdicts[("professionals.published", "['Dra. Laura García Pérez']")] == "accepted", "professional should verify")
+    check(verdicts[("transparency.years_in_practice", "más de 20 años")] == "accepted", "years claim should verify")
+    check(verdicts[("transparency.specialists_count", "12")] == "accepted", "specialist-count claim should verify")
+    check(verdicts[("team.credentialing_visible", "si")] == "accepted", "credentialing signal should verify")
+    check(verdicts[("prices.public_status", "si")] == "accepted", "public-pricing signal should verify")
     check(
         any(claim["field_path"] == "location.locations" and claim["verifier_verdict"] == "accepted" for claim in result["verified_claims"]),
         "location claim should verify when address is explicit",

@@ -5,6 +5,7 @@ from argparse import Namespace
 from capture_source_snapshot import FetchResult
 from submit_source_shadow_reviews import (
     compact_output,
+    filter_proposed_fields_for_pending,
     load_clinic_sources,
     process_source,
     process_sources,
@@ -61,6 +62,8 @@ def main():
     check(result["status"] == "ready", "source should produce a ready review payload")
     check("email" in result["proposed_fields"], "email proposal missing")
     check("profesionales" in result["proposed_fields"], "professional proposal missing")
+    check("services" not in result["proposed_fields"], "source review should not propose already-complete services")
+    check("specialties" not in result["proposed_fields"], "source review should not propose already-complete specialties")
     check(result["proposed_field_counts"]["profesionales"] == 1, "professional count should be visible")
     check(result["pending_count"] == 3, "pending-count context should be preserved")
     check("specialists" in result["pending_fields"], "pending-field context should be preserved")
@@ -154,6 +157,13 @@ def main():
         proposed_field_counts({"profesionales": ["A", "B"], "telefono": "+34", "tech": ""})
         == {"profesionales": 2, "telefono": 1, "tech": 0},
         "proposed field counts should handle lists, scalars and blanks",
+    )
+    check(
+        filter_proposed_fields_for_pending(
+            {"email": "a@example.test", "services": ["A"], "public_pricing": "si"},
+            ["contact", "public_pricing"],
+        ) == {"email": "a@example.test", "public_pricing": "si"},
+        "source review should keep only fields tied to current gaps",
     )
 
     captured = {}

@@ -20,7 +20,9 @@ def main():
 <head><title>Example Longevity Clinic</title></head>
 <body>
   <p>Medicina preventiva, longevidad and VO2 max.</p>
-  <p>Unidad de Longevidad con Dra. Laura García Pérez.</p>
+  <p>Unidad de Longevidad con Dra. Laura García Pérez, nº colegiada 12345.</p>
+  <p>Equipo de 12 especialistas con más de 20 años de experiencia.</p>
+  <p>Consulta inicial: 120 euros.</p>
   <p>Sede principal: Calle Serrano 100, 28006 Madrid.</p>
   <p>Contact: info@exampleclinic.test @exampleclinic</p>
 </body>
@@ -44,6 +46,10 @@ def main():
     check(fields["locations"][0]["address"].startswith("Calle Serrano"), "location field missing")
     check(fields["unidades"] == ["Unidad de Longevidad"], "units field missing")
     check(fields["profesionales"] == ["Dra. Laura García Pérez"], "professionals field missing")
+    check(fields["years_in_practice"] == "más de 20 años", "years-in-practice field missing")
+    check(fields["specialists_count"] == 12, "specialist-count field missing")
+    check(fields["team_credentialing_visible"] == "si", "credentialing field missing")
+    check(fields["public_pricing"] == "si", "public-pricing field missing")
     check("field_claims" in payload, "claims missing")
     check("rule_decisions" in payload, "rule decisions missing")
     signature = inspect.signature(create_review)

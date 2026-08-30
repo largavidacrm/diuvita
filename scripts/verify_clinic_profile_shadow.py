@@ -13,6 +13,17 @@ from urllib.parse import urlparse
 from capture_source_snapshot import normalize_space
 from vitalarga_rules import decide_many
 
+TEAM_CREDENTIALING_SIGNAL_RE = re.compile(
+    r"\b(?:n[ºo]\s*colegiad[oa]|n[uú]mero\s+de\s+colegiad[oa]|"
+    r"colegiad[oa]\s*(?:n[ºo]|n[uú]mero)|col\.)\b",
+    re.I,
+)
+PUBLIC_PRICING_SIGNAL_RE = re.compile(
+    r"(?:precio|tarifa|consulta|programa|bono)[^.]{0,90}(?:€|eur|euros)|"
+    r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
+    re.I,
+)
+
 
 def normalized_text(value: Any) -> str:
     return normalize_space(str(value or "")).lower()
@@ -124,6 +135,20 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"
         confidence = 0.90 if supported else 0.62
+    elif field_path.startswith("transparency."):
+        supported, reason = value_supported(value, haystack)
+        verdict = "accepted" if supported else "review"
+        confidence = 0.90 if supported else 0.62
+    elif field_path == "team.credentialing_visible":
+        if TEAM_CREDENTIALING_SIGNAL_RE.search(haystack):
+            verdict, confidence, reason = "accepted", 0.88, "professional credentialing signal found explicitly"
+        else:
+            verdict, confidence, reason = "review", 0.58, "credentialing signal needs manual review"
+    elif field_path == "prices.public_status":
+        if PUBLIC_PRICING_SIGNAL_RE.search(haystack):
+            verdict, confidence, reason = "accepted", 0.88, "public pricing signal found explicitly"
+        else:
+            verdict, confidence, reason = "review", 0.58, "pricing signal needs manual review"
     elif field_path.startswith(("prices.", "treatments.", "medical_claims.", "outcomes.", "evidence.")):
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"

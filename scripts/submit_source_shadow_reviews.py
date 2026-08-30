@@ -28,6 +28,20 @@ BATCH_VERSION = "2026-08-30"
 FetchFn = Callable[..., FetchResult]
 CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool], dict[str, Any]]
 
+PENDING_FIELD_TARGETS = {
+    "address": {"locations"},
+    "contact": {"email", "telefono", "instagram"},
+    "services": {"services"},
+    "specialties": {"specialties"},
+    "units": {"unidades"},
+    "specialists": {"profesionales"},
+    "technology": {"tech"},
+    "years_in_practice": {"years_in_practice"},
+    "specialists_count": {"specialists_count"},
+    "team_credentialing_visible": {"team_credentialing_visible"},
+    "public_pricing": {"public_pricing"},
+}
+
 
 def today_batch() -> str:
     return BATCH_NAME + "-" + datetime.now(timezone.utc).date().isoformat()
@@ -233,6 +247,22 @@ def proposed_field_counts(proposed_fields: dict[str, Any]) -> dict[str, int]:
     return counts
 
 
+def filter_proposed_fields_for_pending(
+    proposed_fields: dict[str, Any],
+    pending_fields: list[str],
+) -> dict[str, Any]:
+    allowed = set()
+    for field in pending_fields:
+        allowed.update(PENDING_FIELD_TARGETS.get(str(field), set()))
+    if not allowed:
+        return proposed_fields
+    return {
+        key: value
+        for key, value in proposed_fields.items()
+        if key in allowed
+    }
+
+
 def process_source(
     source: dict[str, Any],
     args: argparse.Namespace,
@@ -277,6 +307,10 @@ def process_source(
         return {**result, "status": "failed", "error": str(error)}
 
     payload = payload_for_source(source, verification)
+    payload["proposed_fields"] = filter_proposed_fields_for_pending(
+        payload.get("proposed_fields") or {},
+        source.get("pending_fields") or [],
+    )
     proposed_fields = payload.get("proposed_fields") or {}
     result.update({
         "status": "ready" if proposed_fields else "empty",

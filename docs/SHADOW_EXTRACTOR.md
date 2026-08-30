@@ -41,6 +41,10 @@ against the same completeness gaps used by the admin dashboard, including
 locations, specialists, years in practice, public specialist count, visible
 credentialing and public pricing.
 
+When it prepares a review card, it filters proposed form fields against the
+clinic's current gaps, so repeated services or specialties do not become noisy
+review work if those fields are already complete.
+
 Use `--compact` for real read-only checks when the full verification payload
 would be too noisy.
 
@@ -98,5 +102,8 @@ That folder is local/ignored by Git.
   into identity claims.
 - All extracted claims start without independent verifier acceptance.
 - The rules engine therefore sends them to review by default.
+- Transparency verification is conservative: years/counts must be present in
+  the source text, while public pricing and credentialing rely on explicit price
+  and registration-number signals.
 
 This is intentional. The extractor proposes; it does not decide.
