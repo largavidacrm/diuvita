@@ -63,6 +63,7 @@ def main():
     check("card-signals" in home_check["markers"], "home deployment should include card signal marker")
     check("profile-snapshot" in profile_check["markers"], "profile deployment should include summary stats marker")
     check("Duplicados mejoras" in admin_check["markers"], "admin deployment should include review-backlog marker")
+    check("Grupo por clínica" in admin_check["markers"], "admin deployment should include clinic workgroup marker")
     check("Primer atasco" in admin_check["markers"], "admin deployment should include first backlog target marker")
     check("Freno bandeja" in admin_check["markers"], "admin deployment should include review backlog guard marker")
     check("loadSourceCoverage" in admin_check["markers"], "admin deployment should include source coverage loader marker")

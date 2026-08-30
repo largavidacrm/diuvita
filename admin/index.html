@@ -1550,6 +1550,14 @@
       return target.label + " · " + target.count + (target.count === 1 ? " tarjeta" : " tarjetas");
     }
 
+    function clinicWorkgroupLabel(target) {
+      if (!target) return "—";
+      var detail = target.blockingClaims
+        ? target.blockingClaims + (target.blockingClaims === 1 ? " claim bloqueante" : " claims bloqueantes")
+        : target.count + (target.count === 1 ? " tarjeta" : " tarjetas");
+      return target.label + " · " + detail;
+    }
+
     function reviewBacklogGuardStatus(openCount) {
       var count = Number(openCount || 0);
       var limit = SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
@@ -1728,6 +1736,7 @@
         ? "—"
         : completeness.withPendingFields + " con pendientes";
       var backlogQuality = reviewBacklogQuality(openReviews || []);
+      var clinicWorkgroup = firstClinicWorkgroup(openReviews || []);
       var backlogGuard = reviewBacklogGuardStatus(reviews.open || (openReviews || []).length);
       var duplicateReviewLabel = backlogQuality.duplicateClinics
         ? backlogQuality.duplicateClinics + " clínicas"
@@ -1766,6 +1775,7 @@
         systemItem("Siguiente fuente", sourceCoverageNextLabel, sourceCoverageStatus.nextTarget ? "warning-text" : ""),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
         systemItem("Freno bandeja", backlogGuard.label, backlogGuard.tone),
+        systemItem("Grupo por clínica", clinicWorkgroupLabel(clinicWorkgroup), clinicWorkgroup ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
         systemItem("Especialistas", specialistLabel, specialists.unavailable || specialists.withoutSpecialists ? "warning-text" : ""),

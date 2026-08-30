@@ -36,6 +36,7 @@ CHECKS = [
             "openSourceTargetBtn",
             "Siguiente especialistas",
             "Duplicados mejoras",
+            "Grupo por clínica",
             "Primer atasco",
             "Freno bandeja",
             "Web pública",
