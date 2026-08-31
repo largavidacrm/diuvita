@@ -157,6 +157,7 @@ def production_marker_summary(report: dict[str, Any] | None) -> dict[str, Any]:
     attention = [
         {
             "name": item.get("name"),
+            "url": item.get("url"),
             "status": item.get("status"),
             "missing_markers": item.get("missing_markers") or [],
             "error": item.get("error") or "",
@@ -245,8 +246,16 @@ def format_report(report: dict[str, Any]) -> str:
         lines.append("- La web pública no contiene todos los marcadores esperados.")
         for item in production.get("attention") or []:
             missing = item.get("missing_markers") or []
-            detail = "faltan: " + ", ".join(missing) if missing else item.get("error") or "revisar"
-            lines.append(f"- {item.get('name')}: {detail}")
+            status = item.get("status") if item.get("status") is not None else "sin respuesta"
+            if item.get("error"):
+                detail = "error: " + str(item.get("error"))[:160]
+            elif missing:
+                sample = ", ".join(missing[:8])
+                suffix = "..." if len(missing) > 8 else ""
+                detail = "faltan: " + sample + suffix
+            else:
+                detail = "revisar"
+            lines.append(f"- {item.get('name')}: {status} · {detail} · {item.get('url') or ''}".rstrip())
     lines.extend([
         "",
         "## Lectura rápida",

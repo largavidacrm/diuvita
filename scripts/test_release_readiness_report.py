@@ -60,13 +60,26 @@ def main():
     production = {
         "ok": False,
         "checks": [
-            {"name": "admin_shell", "ok": False, "status": 200, "missing_markers": ["reviewClinicPanel"], "error": ""},
+            {"name": "admin_shell", "url": "https://example.test/admin/", "ok": False, "status": 200, "missing_markers": ["reviewClinicPanel"], "error": ""},
         ],
     }
     production_summary = release.production_marker_summary(production)
     check(production_summary["checked"] is True, "production summary should mark checked")
     check(production_summary["ok"] is False, "production missing marker should need attention")
     check(production_summary["attention"][0]["missing_markers"] == ["reviewClinicPanel"], "missing production marker should be preserved")
+    check(production_summary["attention"][0]["url"] == "https://example.test/admin/", "production URL should be preserved")
+
+    report["production"] = production_summary
+    production_output = release.format_report(report)
+    check("admin_shell: 200 · faltan: reviewClinicPanel · https://example.test/admin/" in production_output, "production detail should include status and URL")
+
+    report["production"] = {
+        "checked": True,
+        "ok": False,
+        "attention": [{"name": "home", "url": "https://example.test/", "status": None, "missing_markers": ["Vitalarga"], "error": "DNS blocked"}],
+    }
+    error_output = release.format_report(report)
+    check("home: sin respuesta · error: DNS blocked · https://example.test/" in error_output, "network errors should be clearer than missing markers")
     print("OK release readiness: local vs production state is reported safely")
 
 
