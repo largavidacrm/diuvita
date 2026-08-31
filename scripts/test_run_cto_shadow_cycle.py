@@ -6,6 +6,7 @@ from run_cto_shadow_cycle import (
     DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP,
     build_cycle_brief,
     build_steps,
+    clinic_visibility_status,
     compact_summary,
     cycle_next_clicks,
     format_cycle_brief,
@@ -255,6 +256,41 @@ def main():
     check("checks" not in compact_freshness, "full public freshness checks should be removed")
     check("missing_examples" not in compact_freshness["sample_checks"][0], "public freshness examples should stay out of cycle output")
     check("page_excerpt" not in compact_freshness["sample_checks"][0], "public freshness page excerpts should be omitted")
+    compact_visibility = compact_summary("clinic_public_visibility_report", {
+        "query": "Monarka",
+        "readiness": {
+            "matches": [
+                {
+                    "slug": "monarka-clinic",
+                    "clinic_name": "Monarka Clinic",
+                    "status": "published",
+                    "updated_at": "2026-08-31T06:47:00+00:00",
+                    "current_data": {"large": True},
+                }
+            ]
+        },
+        "freshness": {
+            "ok": False,
+            "clinic_count": 1,
+            "stale_count": 1,
+            "checks": [
+                {
+                    "slug": "monarka-clinic",
+                    "name": "Monarka Clinic",
+                    "url": "https://www.vitalarga.com/clinica/monarka-clinic/",
+                    "fresh": False,
+                    "missing_markers": 18,
+                    "missing_examples": ["Dra. Example"],
+                }
+            ],
+        },
+    })
+    check(compact_visibility["readiness"]["matches_count"] == 1, "visibility readiness count should be kept")
+    check("current_data" not in compact_visibility["readiness"]["sample_matches"][0], "visibility clinic data should be omitted")
+    check(compact_visibility["freshness"]["stale_count"] == 1, "visibility freshness stale count should be kept")
+    check("missing_examples" not in compact_visibility["freshness"]["sample_checks"][0], "visibility freshness examples should be omitted")
+    visibility_step = {"name": "clinic_public_visibility_report", "ok": True, "summary": compact_visibility}
+    check(clinic_visibility_status(visibility_step) == "1 ficha con desfase", "visibility step status should show stale public page")
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {
@@ -338,6 +374,7 @@ def main():
     check("Siguiente ficha: Revisar Sensabell" in brief_text, "plain brief next profile missing")
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
+    check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",
@@ -367,6 +404,15 @@ def main():
     check(stale_cycle_brief["public_freshness"] == "1 con desfase", "public freshness stale count should be readable")
     check("frescura de la web publica" in stale_cycle_brief["headline"], "freshness failure should name the stopped step")
     check("datos guardados" in stale_cycle_brief["attention"], "freshness attention should explain the cause")
+    visibility_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {"name": "clinic_public_visibility_report", "ok": True, "summary": compact_visibility},
+        ],
+    })
+    check(visibility_cycle_brief["clinic_visibility"] == "1 ficha con desfase", "clinic visibility should enter cycle brief")
+    check("Visibilidad clinica: 1 ficha con desfase" in format_cycle_brief(visibility_cycle_brief), "plain brief should show clinic visibility result")
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -403,6 +449,9 @@ def main():
         public_freshness_slug="",
         public_freshness_clinic="",
         public_freshness_missing_limit=8,
+        clinic_visibility=False,
+        clinic_visibility_clinic="",
+        clinic_visibility_missing_limit=30,
     ))
     names = [step[0] for step in steps]
     check("seed_visible_clinic_sources" in names, "official source seeding step missing")
@@ -413,6 +462,7 @@ def main():
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
     check("check_production_health" not in names, "production health should be off by default")
     check("check_public_site_freshness" not in names, "public freshness should be off by default")
+    check("clinic_public_visibility_report" not in names, "clinic visibility should be off by default")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
@@ -470,6 +520,9 @@ def main():
         public_freshness_slug="",
         public_freshness_clinic="",
         public_freshness_missing_limit=8,
+        clinic_visibility=False,
+        clinic_visibility_clinic="",
+        clinic_visibility_missing_limit=30,
     ))
     google_step = [step for step in google_steps if step[0] == "discover_clinic_google_links"][0]
     check("--apply" in google_step[1], "Google-link discovery should honor safe apply")
@@ -520,6 +573,9 @@ def main():
         public_freshness_slug="monarka-clinic",
         public_freshness_clinic="Monarka",
         public_freshness_missing_limit=5,
+        clinic_visibility=True,
+        clinic_visibility_clinic="",
+        clinic_visibility_missing_limit=30,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
@@ -546,6 +602,12 @@ def main():
     check("monarka-clinic" in freshness_step[1], "public freshness clinic slug should pass through")
     check("Monarka" in freshness_step[1], "public freshness clinic name should pass through")
     check("5" in freshness_step[1], "public freshness missing limit should pass through")
+    visibility_step = [step for step in optional_steps if step[0] == "clinic_public_visibility_report"][0]
+    check(optional_steps.index(health_step) < optional_steps.index(visibility_step), "clinic visibility should run after production health")
+    check(optional_steps.index(visibility_step) < optional_steps.index(freshness_step), "clinic visibility should run before public freshness can stop the cycle")
+    check("--json" in visibility_step[1], "clinic visibility should be machine readable")
+    check("Monarka" in visibility_step[1], "clinic visibility should reuse the normal clinic name")
+    check("30" in visibility_step[1], "clinic visibility missing limit should pass through")
     print("OK cycle: CTO shadow orchestration")
 
 

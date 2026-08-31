@@ -519,6 +519,11 @@ Next 10 technical steps:
     `/admin/`: the review area now has one "Qué hacer ahora" lead with the
     clinic/context name, while secondary buttons stay short and grouped so the
     panel is easier to scan on desktop and mobile.
+99. Wire clinic visibility diagnostics into the CTO cycle. Done locally in
+    `scripts/run_cto_shadow_cycle.py`: optional cycle runs can now include
+    `--clinic-visibility --clinic-visibility-clinic "Monarka"` to explain one
+    clinic's public visibility state without publishing, editing data or
+    exposing long professional/team payloads.
 
 ## Daniel decision checkpoints
 

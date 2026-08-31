@@ -24,7 +24,9 @@ for Daniel instead of implementing, softening or silently discarding the change.
 15. evaluate stored claims against publication rules.
 16. optionally run strict editorial limit checks;
 17. optionally check public production URLs without logging in or writing data.
-18. optionally compare saved public data with deployed clinic pages to detect
+18. optionally explain one clinic's public visibility state without publishing
+    or exposing long team/professional payloads.
+19. optionally compare saved public data with deployed clinic pages to detect
     stale pages.
 
 Default mode is dry-run:
@@ -148,6 +150,16 @@ python3 scripts/run_cto_shadow_cycle.py --public-freshness --public-freshness-cl
 If this step reports a desfase, the data is saved but the static website needs
 the next batched rebuild. It still does not trigger Netlify or publish anything
 by itself.
+
+For a single-clinic explanation, use the combined visibility diagnostic:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --clinic-visibility --clinic-visibility-clinic "Monarka" --plain-brief
+```
+
+This answers whether the clinic is not public, has required blockers, or is
+saved in Supabase but waiting for the next public rebuild. It still does not
+trigger Netlify.
 
 Strict editorial mode is also off by default. To include the more sensitive scan
 for rankings, awards or comparison language:

@@ -133,6 +133,7 @@ STEP_ITEM_KEYS = {
     ),
     "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
     "check_public_site_freshness": ("slug", "name", "url", "fresh", "missing_markers", "error"),
+    "clinic_public_visibility_report": ("slug", "clinic_name", "status", "updated_at"),
 }
 
 
@@ -155,6 +156,7 @@ STEP_LABELS = {
     "check_operational_limits_strict": "limites operativos",
     "check_production_health": "salud de la web publica",
     "check_public_site_freshness": "frescura de la web publica",
+    "clinic_public_visibility_report": "visibilidad publica por clinica",
 }
 
 REVIEW_CARD_CREATING_STEPS = {
@@ -177,6 +179,30 @@ def compact_summary(name: str, summary: Any) -> Any:
         return summary
     compact = dict(summary)
     compact.pop("admin_email", None)
+    if name == "clinic_public_visibility_report":
+        readiness = compact.get("readiness")
+        if isinstance(readiness, dict):
+            matches = [item for item in readiness.get("matches") or [] if isinstance(item, dict)]
+            compact["readiness"] = {
+                "query": readiness.get("query"),
+                "matches_count": len(matches),
+                "sample_matches": [
+                    compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+                    for item in matches[:3]
+                ],
+            }
+        freshness = compact.get("freshness")
+        if isinstance(freshness, dict):
+            checks = [item for item in freshness.get("checks") or [] if isinstance(item, dict)]
+            compact["freshness"] = {
+                "ok": freshness.get("ok"),
+                "clinic_count": freshness.get("clinic_count"),
+                "stale_count": freshness.get("stale_count"),
+                "sample_checks": [
+                    compact_item(item, STEP_ITEM_KEYS.get("check_public_site_freshness", ()))
+                    for item in checks[:3]
+                ],
+            }
     items = compact.get("items")
     if isinstance(items, list):
         compact["items_count"] = len(items)
@@ -360,6 +386,27 @@ def safe_step_summary(step: dict[str, Any] | None) -> dict[str, Any]:
     return summary if isinstance(summary, dict) else {}
 
 
+def clinic_visibility_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    summary = safe_step_summary(step)
+    if not step.get("ok"):
+        return "revisar"
+    readiness = summary.get("readiness") if isinstance(summary.get("readiness"), dict) else {}
+    matches = as_int(readiness.get("matches_count"))
+    if not matches:
+        return "clínica no encontrada"
+    freshness = summary.get("freshness") if isinstance(summary.get("freshness"), dict) else {}
+    stale = as_int(freshness.get("stale_count"))
+    if stale:
+        return f"{stale} ficha con desfase"
+    if freshness.get("ok") is True:
+        return "sin desfase medido"
+    if summary.get("freshness_error"):
+        return "no se pudo comparar web"
+    return "medida"
+
+
 def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     steps = [step for step in output.get("steps") or [] if isinstance(step, dict)]
     failed_step = first_failed_step(steps)
@@ -421,6 +468,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     else:
         stale_count = as_int(freshness_summary.get("stale_count"))
         public_freshness = f"{stale_count} con desfase" if stale_count else "revisar"
+    visibility_step = find_step(steps, "clinic_public_visibility_report")
+    clinic_visibility = clinic_visibility_status(visibility_step)
 
     if admin_digest:
         next_action = next_action_label(admin_digest)
@@ -470,6 +519,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "shadow_mode": "activo" if shadow_mode else "inactivo",
         "production_health": production_health,
         "public_freshness": public_freshness,
+        "clinic_visibility": clinic_visibility,
         "attention": attention,
     }
 
@@ -491,6 +541,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Modo sombra: {brief.get('shadow_mode')}.",
         f"- Web publica: {brief.get('production_health')}.",
         f"- Frescura web: {brief.get('public_freshness')}.",
+        f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
     ]
     if as_int(brief.get("skipped_steps")):
         lines.append(f"- Pasos omitidos: {brief.get('skipped_steps')}")
@@ -683,6 +734,29 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
                 max(45, args.production_timeout * 6),
             )
         )
+    clinic_visibility_query = args.clinic_visibility_clinic.strip()
+    if args.clinic_visibility or clinic_visibility_query:
+        if not clinic_visibility_query:
+            clinic_visibility_query = (args.public_freshness_clinic or args.public_freshness_slug or "").strip()
+        if clinic_visibility_query:
+            steps.append(
+                (
+                    "clinic_public_visibility_report",
+                    [
+                        "clinic_public_visibility_report.py",
+                        "--clinic",
+                        clinic_visibility_query,
+                        "--base-url",
+                        args.production_base_url,
+                        "--timeout",
+                        str(args.production_timeout),
+                        "--missing-limit",
+                        str(args.clinic_visibility_missing_limit),
+                        "--json",
+                    ],
+                    max(45, args.production_timeout * 10),
+                )
+            )
     if args.public_freshness:
         command = [
             "check_public_site_freshness.py",
@@ -754,6 +828,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--public-freshness-clinic", default="", help="Limit public freshness to clinics matching a normal name, city or slug.")
     parser.add_argument("--public-freshness-missing-limit", type=int, default=8)
     parser.add_argument(
+        "--clinic-visibility",
+        action="store_true",
+        help="Optionally explain one clinic's public visibility state; read-only and network-dependent.",
+    )
+    parser.add_argument("--clinic-visibility-clinic", default="", help="Clinic name or slug for the visibility diagnostic.")
+    parser.add_argument("--clinic-visibility-missing-limit", type=int, default=30)
+    parser.add_argument(
         "--strict-editorial",
         action="store_true",
         help="Optionally fail on sensitive ranking/prize/comparison language that needs Daniel.",
@@ -794,6 +875,7 @@ def main() -> int:
         args.source_coverage_limit,
         args.profile_completeness_limit,
         args.public_freshness_missing_limit,
+        args.clinic_visibility_missing_limit,
         args.max_open_reviews_for_safe_writes,
     ) < 0:
         raise SystemExit("limits must be zero or greater.")
@@ -821,6 +903,10 @@ def main() -> int:
         raise SystemExit("--production-timeout must be between 3 and 60 seconds.")
     if args.public_freshness_missing_limit < 1 or args.public_freshness_missing_limit > 30:
         raise SystemExit("--public-freshness-missing-limit must be between 1 and 30.")
+    if args.clinic_visibility_missing_limit < 1 or args.clinic_visibility_missing_limit > 30:
+        raise SystemExit("--clinic-visibility-missing-limit must be between 1 and 30.")
+    if args.clinic_visibility and not (args.clinic_visibility_clinic or args.public_freshness_clinic or args.public_freshness_slug):
+        raise SystemExit("--clinic-visibility needs --clinic-visibility-clinic or a public freshness clinic/slug.")
 
     steps = []
     review_card_writes_allowed = True
