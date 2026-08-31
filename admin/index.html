@@ -582,7 +582,7 @@
         </form>
       </section>
 
-      <section class="work-grid" id="reviewWorkArea">
+      <section class="work-grid review-work-queue" id="reviewWorkArea">
         <section class="panel review-panel" id="reviewListPanel">
           <div class="panel-head review-panel-head">
             <div class="review-title-block">
@@ -994,6 +994,15 @@
 
     function show(node, visible) {
       node.classList.toggle("hidden", !visible);
+    }
+
+    function setReviewWorkMode(mode) {
+      var area = el("reviewWorkArea");
+      if (!area) return;
+      ["review-work-queue", "review-work-decision", "review-work-clinic-edit"].forEach(function (className) {
+        area.classList.remove(className);
+      });
+      area.classList.add("review-work-" + (mode || "queue"));
     }
 
     function storedSidebarCollapsed() {
@@ -5773,10 +5782,23 @@
     }
 
     function reviewSourceJobEligible(row) {
-      return Boolean(row && row.clinic_id && row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row) && reviewMissingFieldTargets(row).length);
+      return Boolean(row && row.clinic_id && !isBlockingClaimReview(row) && (
+        (row.review_type === "clinic_quality_audit" && reviewMissingFieldTargets(row).length) ||
+        reviewNeedsSpecialistSourceHandoff(row)
+      ));
+    }
+
+    function reviewNeedsSpecialistSourceHandoff(row) {
+      return Boolean(row && row.clinic_id &&
+        row.review_type === "clinic_profile_enrichment" &&
+        reviewProfessionalsCount(row) > 0 &&
+        !reviewSpecialistSourceUrls(row).length);
     }
 
     function reviewSourceJobTargets(row, target) {
+      if (reviewNeedsSpecialistSourceHandoff(row)) {
+        return [{ inputId: "clinicProfessionals", label: "Especialistas publicados", key: "profesionales" }];
+      }
       var fallbackTargets = reviewMissingFieldTargets(row);
       var targetList = Array.isArray(target) ? target : target ? [target] : [];
       var focusedTargets = targetList.filter(function (item) {
@@ -5795,7 +5817,8 @@
     function reviewSourceJobContext(row, target) {
       if (!reviewSourceJobEligible(row)) return null;
       var targets = reviewSourceJobTargets(row, target);
-      var targetScope = reviewSourceJobTargetScope(target);
+      var specialistSourceHandoff = reviewNeedsSpecialistSourceHandoff(row);
+      var targetScope = specialistSourceHandoff ? "specialist_source_only" : reviewSourceJobTargetScope(target);
       var example = reviewSourceJobExampleForTargets(targets);
       var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
       var paused = !full && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
@@ -5804,7 +5827,9 @@
         example: example,
         labels: targets.map(function (item) { return item.label.toLowerCase(); }).join(", "),
         targetScope: targetScope,
-        uiRoute: targetScope === "primary_target_first"
+        uiRoute: specialistSourceHandoff
+          ? "review_card_specialist_source_handoff"
+          : targetScope === "primary_target_first"
           ? "manual_review_banner_source_handoff"
           : "review_card_source_handoff",
         paused: full || paused
@@ -7023,11 +7048,14 @@
         ? payload.requested_field_labels.filter(function (item) { return text(item).trim(); })
         : [];
       var targetLabels = primaryLabels.length ? primaryLabels : requestedLabels;
-      var hasHumanSource = Boolean(payload.human_supplied_source || payload.ui_route === "manual_review_banner_source_handoff");
+      var hasHumanSource = Boolean(payload.human_supplied_source ||
+        payload.ui_route === "manual_review_banner_source_handoff" ||
+        payload.ui_route === "review_card_specialist_source_handoff");
       var originParts = [];
       if (hasHumanSource) originParts.push("URL aportada por Daniel");
       if (targetLabels.length) originParts.push("Campo pedido: " + targetLabels.join(", "));
       if (payload.target_scope === "primary_target_first") originParts.push("Alcance: primero el campo activo");
+      if (payload.target_scope === "specialist_source_only") originParts.push("Alcance: solo especialistas");
       el("reviewSourceOrigin").innerHTML = originParts.length
         ? '<span>' + html(originParts.join(" · ")) + '</span>'
         : "";
@@ -8398,6 +8426,7 @@
         show(el("reviewSelectionPanel"), true);
         show(el("reviewClinicPanel"), false);
         show(el("reviewEditor"), false);
+        setReviewWorkMode("queue");
         renderReviews();
       }
     }
@@ -8426,6 +8455,7 @@
       show(el("reviewClinicPanel"), true);
       show(el("reviewSelectionPanel"), false);
       show(el("reviewEditor"), true);
+      setReviewWorkMode("decision");
       renderReviews();
       el("reviewClinicPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -8438,6 +8468,7 @@
       show(el("reviewListPanel"), true);
       show(el("reviewSelectionPanel"), true);
       show(el("jobCreatePanel"), true);
+      setReviewWorkMode("queue");
       renderReviews();
     }
 
@@ -8467,6 +8498,7 @@
       show(el("reviewClinicPanel"), false);
       show(el("reviewSelectionPanel"), false);
       show(el("reviewEditor"), false);
+      setReviewWorkMode("clinic-edit");
       if (reviewType === "clinic_profile_enrichment") applyClinicProposal(payload);
       if (!trimmed("clinicNote")) {
         setInput("clinicNote", reviewType === "clinic_quality_audit"

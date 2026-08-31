@@ -155,6 +155,12 @@ cuidado: primero abre la web oficial y confirma que esos profesionales aparecen
 publicados por la clínica. **Fuente visible** solo significa que el panel tiene
 un enlace para revisar, no que el dato esté aprobado.
 
+Si sabes dónde está la fuente oficial, por ejemplo una página de equipo o
+especialistas de la propia clínica, puedes pegarla en **Dile al agente dónde
+mirar** dentro de esa revisión. El agente usará esa URL solo para preparar una
+nueva propuesta revisable de especialistas; no guarda nombres ni publica nada
+automáticamente.
+
 El filtro rápido **Google Maps** muestra las tarjetas que traen cualquier enlace
 propuesto a Google Maps o a valoraciones de Google, tanto si parece bueno como
 si parece dudoso. Ábrelo, comprueba que el enlace corresponde al perfil real de
@@ -238,6 +244,11 @@ En el lateral, debajo del menú, tienes **Crear trabajo**. El panel avisa cuando
 la bandeja está casi llena. Si el freno está cerca del límite, pausa crear más
 trabajos hasta limpiar revisiones. Así evitamos llenar la bandeja con más
 tarjetas antes de cerrar las que ya existen.
+
+La pantalla de revisión tiene dos momentos. Primero ves la bandeja con sus
+filtros y una columna lateral de selección. Al pulsar **Revisar**, la bandeja se
+oculta y se abre la ficha de la clínica en el centro, con la decisión concreta
+de esa propuesta a la derecha.
 
 ## Revisar mejoras de una ficha existente
 

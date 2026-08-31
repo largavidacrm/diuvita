@@ -397,6 +397,58 @@ def source_candidates(payload: dict[str, Any]) -> list[tuple[str, str]]:
     return values
 
 
+def specialist_source_urls(payload: dict[str, Any]) -> list[str]:
+    candidate = candidate_from_payload(payload)
+    urls: list[str] = []
+
+    def add(value: Any) -> None:
+        if isinstance(value, list):
+            for item in value:
+                add(item)
+            return
+        clean = str(value or "").strip()
+        if clean and clean not in urls:
+            urls.append(clean)
+
+    add(payload.get("source_url"))
+    add(payload.get("source_urls"))
+    add(payload.get("sources"))
+    add(payload.get("candidate_source_url"))
+    add(payload.get("website"))
+    add(candidate.get("source_url"))
+    add(candidate.get("source_urls"))
+    add(candidate.get("sources"))
+    add(candidate.get("website") or candidate.get("web"))
+    return urls
+
+
+def has_specialist_proposal_without_source(row: dict[str, Any], payload: dict[str, Any]) -> bool:
+    if row.get("review_type") != "clinic_profile_enrichment":
+        return False
+    fields = proposed_fields(payload)
+    professionals = fields.get("profesionales") or fields.get("professionals")
+    return count_visible_items(professionals) > 0 and not specialist_source_urls(payload)
+
+
+def specialist_source_job_request(row: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    if not has_specialist_proposal_without_source(row, payload):
+        return {}
+    return {
+        "job_type": "EXTRACT_CLINIC_PROFILE",
+        "status": "operator_supplied_source_required",
+        "from_review_id": row.get("id"),
+        "requested_fields": ["profesionales"],
+        "requested_field_labels": ["Especialistas publicados"],
+        "primary_requested_fields": ["profesionales"],
+        "primary_requested_field_labels": ["Especialistas publicados"],
+        "source_requirement": "official_clinic_team_or_specialist_url",
+        "ui_route": "review_card_specialist_source_handoff",
+        "target_scope": "specialist_source_only",
+        "write_policy": "creates_review_proposal_only",
+        "allowed_output": "review_queue_proposal_only",
+    }
+
+
 def evidence_packet(label: str, value: str, include_values: bool) -> dict[str, Any]:
     parsed = urlparse(value)
     packet = {
@@ -651,6 +703,9 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             "write_policy": "creates_review_proposal_only",
             "allowed_output": "review_queue_proposal_only",
         }
+    specialist_source_request = specialist_source_job_request(row, payload)
+    if specialist_source_request and "source_job_request" not in packet:
+        packet["source_job_request"] = specialist_source_request
     if not include_values:
         packet["safe_default"] = True
     return packet

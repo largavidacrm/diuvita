@@ -244,6 +244,7 @@ def main() -> None:
         and "function reviewSourceJobTargets" in index
         and "function reviewSourceJobTargetScope" in index
         and "function reviewSourceJobContext" in index
+        and "function reviewNeedsSpecialistSourceHandoff" in index
         and "function createReviewSourceJobFor" in index
         and "function createClinicManualReviewSourceJob" in index
         and "function createReviewSourceJob" in index
@@ -325,9 +326,19 @@ def main() -> None:
     )
     check(
         'payload.ui_route === "manual_review_banner_source_handoff"' in index
+        and 'payload.ui_route === "review_card_specialist_source_handoff"' in index
         and "Campo pedido: " in index
         and "Alcance: primero el campo activo" in index,
         "review evidence should explain Daniel-supplied source scope",
+    )
+    check(
+        'row.review_type === "clinic_profile_enrichment"' in index
+        and "reviewProfessionalsCount(row) > 0" in index
+        and "!reviewSpecialistSourceUrls(row).length" in index
+        and '"review_card_specialist_source_handoff"' in index
+        and '"specialist_source_only"' in index
+        and '"Especialistas publicados"' in index,
+        "specialist proposals without a clear source should allow a bounded source handoff",
     )
     check(
         'show(el("jobCreatePanel"), false)' in index
@@ -338,6 +349,14 @@ def main() -> None:
         and 'show(el("reviewActionStrip"), false)' in index
         and 'show(el("reviewCasePanel"), false)' in index,
         "opening a review should hide the queue and show the clinic ficha beside the decision",
+    )
+    check(
+        'class="work-grid review-work-queue" id="reviewWorkArea"' in index
+        and "function setReviewWorkMode" in index
+        and 'setReviewWorkMode("queue")' in index
+        and 'setReviewWorkMode("decision")' in index
+        and 'setReviewWorkMode("clinic-edit")' in index,
+        "review work area should keep explicit queue, decision and clinic-edit layout modes",
     )
     check(
         'show(el("reviewActionStrip"), false);' in index
@@ -398,8 +417,17 @@ def main() -> None:
     check(".work-grid" not in tablet_chunk, "review work area should not collapse before narrow mobile widths")
     check(
         "@media (max-width: 700px)" in css
-        and ".work-grid {\n    grid-template-columns: 1fr;" in css,
+        and ".work-grid.review-work-queue" in css
+        and ".work-grid.review-work-decision" in css
+        and "grid-template-columns: 1fr;" in css,
         "review work area should stack only on narrow mobile screens",
+    )
+    check(
+        ".work-grid.review-work-queue" in css
+        and ".work-grid.review-work-decision" in css
+        and "minmax(420px, 0.78fr) minmax(280px, 0.22fr)" in css
+        and "minmax(360px, 0.95fr) minmax(360px, 1.05fr)" in css,
+        "review queue and selected proposal should use stable desktop columns",
     )
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")

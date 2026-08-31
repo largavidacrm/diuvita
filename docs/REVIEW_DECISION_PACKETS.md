@@ -22,6 +22,11 @@ El contrato principal es:
   `primary_target_first`: primero se pide al agente el campo principal de esa
   revisión manual; solo se usan los demás campos pendientes como fallback cuando
   no hay un campo único claro.
+- Si Daniel aporta una URL oficial desde una tarjeta de especialistas sin
+  fuente clara, la ruta debe conservarse como
+  `review_card_specialist_source_handoff` y el alcance como
+  `specialist_source_only`. Esa URL solo sirve para preparar una nueva propuesta
+  revisable de especialistas.
 - Si esa URL ya generó una propuesta revisable, el paquete de esa propuesta
   conserva `source_job_context`: origen aportado por Daniel, campo pedido,
   alcance, ruta del admin y política de salida. Sin `--include-values`, las URLs
@@ -66,6 +71,8 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - contexto manual de campo, motivo y siguiente paso cuando exista.
 - fuente oficial a pedir o usar como trabajo interno, respetando siempre el
   alcance `primary_target_first` si está presente.
+- fuente oficial de especialistas cuando el alcance sea
+  `specialist_source_only`, sin proponer cambios de otros campos de la ficha.
 - contexto del trabajo de fuente que produjo la propuesta, para saber si nació
   de una URL aportada por Daniel y qué campo debía resolver primero.
 - estado estructurado de Google Maps cuando la propuesta trae ese campo,

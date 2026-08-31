@@ -107,6 +107,12 @@ Operator bridge:
   "manual_review_banner_source_handoff"` so the worker/LLM treats Daniel's URL
   as evidence for the active field first, not as permission to fill every gap in
   the ficha.
+- When Daniel supplies an official team/specialist URL from a specialist review
+  card that has proposed professionals but no clear source, the job should carry
+  `target_scope: "specialist_source_only"` and `ui_route:
+  "review_card_specialist_source_handoff"`. The worker/LLM may use that URL only
+  to prepare a new specialist-focused review proposal; it must not treat the URL
+  as approval to publish or to broaden the card into unrelated fields.
 - `scripts/process_extract_clinic_profile_jobs.py` can process those jobs in
   shadow mode and turn clear findings into a `clinic_profile_enrichment` review
   card.

@@ -81,6 +81,30 @@ def sample_quality_audit_row():
     }
 
 
+def sample_unsourced_specialist_row():
+    return {
+        "id": "specialist-source-1",
+        "title": "Revisar especialistas: Tiara Health",
+        "review_type": "clinic_profile_enrichment",
+        "priority": 85,
+        "created_at": "2026-08-31T12:47:16+00:00",
+        "payload": {
+            "proposed_fields": {
+                "profesionales": ["Dra. Example", "Dr. Example"],
+            },
+        },
+        "clinic": {
+            "id": "clinic-tiara",
+            "slug": "tiara-health",
+            "display_name": "Tiara Health",
+            "city": "Marbella",
+            "country": "España",
+            "status": "preliminary",
+            "current_data": {"profesionales": []},
+        },
+    }
+
+
 def main():
     safe_packet = decision_packet(sample_enrichment_row())
     check(safe_packet["schema_version"] == "review_decision_packet.v1", "schema version missing")
@@ -223,6 +247,19 @@ def main():
     check(
         manual_context["llm_boundary"] == "do_not_invent_values_or_write_field_changes",
         "manual context should keep the LLM boundary explicit",
+    )
+
+    unsourced_specialist_packet = decision_packet(sample_unsourced_specialist_row())
+    source_request = unsourced_specialist_packet["source_job_request"]
+    check(
+        source_request["ui_route"] == "review_card_specialist_source_handoff"
+        and source_request["target_scope"] == "specialist_source_only",
+        "unsourced specialist cards should ask for a specialist-only source handoff",
+    )
+    check(
+        source_request["requested_fields"] == ["profesionales"]
+        and source_request["allowed_output"] == "review_queue_proposal_only",
+        "specialist source handoff should stay bounded and review-only",
     )
 
     claim_packet = decision_packet({

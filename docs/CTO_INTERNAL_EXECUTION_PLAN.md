@@ -966,6 +966,16 @@ Next 10 technical steps:
      reports now expose manual per-card decision items with source presence and
      `safe_to_auto_publish: false`, plus a compact mode that hides professional
      names and URLs while still showing counts, source coverage and next action.
+185. Keep the review workspace visibly sequential. Done locally in `/admin/`:
+     the review area now has explicit queue, decision and clinic-edit layout
+     modes, so the inbox remains a two-column work area on desktop and opening
+     **Revisar** switches to clinic ficha plus one proposal decision instead of
+     a full-width table.
+186. Add specialist source handoff from review cards. Done locally in `/admin/`:
+     specialist proposals without a clear source can accept a Daniel-supplied
+     official team page URL, creating only a bounded specialist review job with
+     `ui_route: "review_card_specialist_source_handoff"` and no permission to
+     publish or update unrelated fields.
 
 ## Daniel decision checkpoints
 
