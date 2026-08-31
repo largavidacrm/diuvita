@@ -261,6 +261,18 @@ def specialist_examples(row: dict[str, Any], limit: int = 3) -> list[str]:
     return clean
 
 
+def specialist_next_step_for_row(row: dict[str, Any]) -> str:
+    claims = as_int(row.get("specialist_claims"))
+    reviews = as_int(row.get("open_review_count"))
+    if reviews and claims:
+        return "revisar las tarjetas abiertas y consolidar una sola ficha"
+    if reviews:
+        return "abrir la revisión existente y comprobar si trae nombres claros"
+    if claims:
+        return "preparar una propuesta revisable desde los nombres internos"
+    return "buscar primero una página pública de equipo"
+
+
 def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> str:
     name = row.get("clinic_name") or row.get("slug") or "sin nombre"
     city = row.get("city") or "sin ciudad"
@@ -280,6 +292,8 @@ def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> st
             parts.append(f"{claims} {plural(claims, 'señal interna sin nombre claro', 'señales internas sin nombre claro')}")
     if reviews:
         parts.append(f"{reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}")
+    if not include_entries:
+        parts.append("siguiente: " + specialist_next_step_for_row(row))
     return "- " + " · ".join(parts)
 
 

@@ -497,6 +497,10 @@ Next 10 technical steps:
     `scripts/clinic_publication_readiness.py` and
     `scripts/check_public_site_freshness.py`: names now match through spaces,
     hyphens and accents, so "Rose Bar" can find "RoseBar".
+94. Add per-clinic specialist next steps. Done locally in
+    `scripts/measure_specialist_coverage.py`: missing-specialist rows now say
+    whether to consolidate open review cards, prepare a proposal from internal
+    names or first find a public team page.
 
 ## Daniel decision checkpoints
 

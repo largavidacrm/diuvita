@@ -8,6 +8,7 @@ from measure_specialist_coverage import (
     next_specialist_action,
     pct,
     prioritized_missing_rows,
+    specialist_next_step_for_row,
     specialist_examples,
 )
 
@@ -73,6 +74,10 @@ def main():
     check("Clínicas con revisión abierta sobre especialistas: 1" in output, "review coverage missing")
     check(prioritized_missing_rows(report)[0]["clinic_name"] == "Clinic C", "missing rows should prioritize open reviews")
     check(next_specialist_action(report) == "Revisar Clinic C: ya tiene 3 revisiones abiertas.", "next specialist action missing")
+    check(
+        specialist_next_step_for_row(report["missing_specialists"][1]) == "revisar las tarjetas abiertas y consolidar una sola ficha",
+        "rows with reviews and claims should route to consolidation",
+    )
     check("Siguiente acción: Revisar Clinic C: ya tiene 3 revisiones abiertas." in output, "next specialist action line missing")
     check("Writes data: no" in output, "read-only signal missing")
     check(clean_specialist_example("Dr. Ibanez Sesion") == "", "session/navigation fragments should not become specialists")
@@ -90,7 +95,7 @@ def main():
     })
     check("2 señales internas sin nombre claro" in noisy_line, "noisy specialist signals should be labeled clearly")
     check(specialist_examples(report["missing_specialists"][0]) == ["Dra. Maria Uno", "Dr. Luis Dos"], "specialist examples missing")
-    check("Clinic A · Madrid · publicada · 2 nombres detectados · ej.: Dra. Maria Uno, Dr. Luis Dos · 1 revisión abierta" in output, "missing clinic line missing")
+    check("Clinic A · Madrid · publicada · 2 nombres detectados · ej.: Dra. Maria Uno, Dr. Luis Dos · 1 revisión abierta · siguiente: revisar las tarjetas abiertas y consolidar una sola ficha" in output, "missing clinic line missing")
     check(output.index("Clinic C") < output.index("Clinic A"), "higher-review missing clinic should be listed first")
     check("Clinic B · Barcelona · preliminar · 5 especialistas" in output, "covered clinic line missing")
     print("OK specialist coverage: report is read-only")

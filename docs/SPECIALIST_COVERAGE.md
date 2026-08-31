@@ -10,6 +10,8 @@ It answers:
 - whether there are detected specialist names waiting in the evidence layer;
 - whether open review cards already mention specialists.
 - which missing-specialist clinic is the best first review target.
+- what to do next for each clinic: consolidate open cards, prepare a review
+  proposal or look for a public team page.
 
 It does not validate credentials, publish names, edit clinics or rank clinics.
 
