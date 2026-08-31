@@ -434,6 +434,11 @@ Next 10 technical steps:
     editor now tells Daniel whether that specific saved ficha is unpublished,
     still unsaved, pending the next public rebuild or already in sync with the
     last known web update.
+79. Clarify candidate vs existing-ficha review context. Done locally in
+    `/admin/`: review cards now explain whether detected data belongs to a
+    candidate that is not yet public or to an existing clinic profile proposal,
+    including why proposed specialists do not appear online until Daniel saves
+    the ficha.
 
 ## Daniel decision checkpoints
 

@@ -50,6 +50,23 @@ def main() -> None:
         "review editor should show proposed links separately",
     )
     check(
+        'id="reviewContextPanel"' in index
+        and 'id="reviewContextTitle"' in index
+        and 'id="reviewContextDetail"' in index
+        and "function reviewContextCopy" in index
+        and "function renderReviewContext" in index
+        and "renderReviewContext(activeReview, payload, blocksDraft);" in index,
+        "review editor should show publication context for every review card",
+    )
+    check(
+        "Candidata: todavía no está en la guía." in index
+        and "Sus datos no aparecerán online hasta crear un borrador" in index
+        and "especialistas propuestos" in index
+        and "Mejora de ficha existente." in index
+        and "La información está recogida como propuesta interna" in index,
+        "candidate and enrichment review context should explain why data is not public yet",
+    )
+    check(
         'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
         and '["maps_url", "Google Maps", "maps_url"]' in index
         and '["google_reviews_url", "Valoraciones Google", "google_reviews_url"]' in index
@@ -79,6 +96,7 @@ def main() -> None:
         "saving grouped proposals should resolve grouped cards and warn on conflicts",
     )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
+    check(".review-context" in css, "review context should be styled")
     check(".compact-list small" in css, "proposed link URLs should remain readable on mobile")
     check(".compact-list em" in css, "proposed link warnings should be styled")
     print("OK admin review actions: dismiss keeps context")

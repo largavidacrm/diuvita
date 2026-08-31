@@ -149,6 +149,13 @@ clicables los enlaces que el sistema cree relevantes: Google Maps, valoraciones
 de Google, página de precios o web propuesta. Es una ayuda de revisión, no una
 aprobación automática.
 
+Al abrir una revisión verás un bloque de contexto arriba. Si dice
+**Candidata**, esa clínica todavía no está en la guía pública aunque tenga
+profesionales detectados; primero se crea un borrador y después se decide si se
+publica. Si dice **Mejora de ficha existente**, la información ya está asociada
+a una clínica conocida, pero sigue pendiente de cargarla en el editor y
+guardarla.
+
 Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
 
 En esas tarjetas verás **Paso recomendado**. No es una decisión automática: te

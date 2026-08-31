@@ -436,6 +436,10 @@
           </div>
           <button class="btn secondary" id="reviewCloseTop" type="button">Cerrar</button>
         </div>
+        <section class="review-context" id="reviewContextPanel">
+          <strong id="reviewContextTitle">Contexto de revisión</strong>
+          <p id="reviewContextDetail">Esta tarjeta no publica nada por sí sola.</p>
+        </section>
         <div class="review-detail">
           <dl class="detail-grid">
             <div>
@@ -2946,6 +2950,60 @@
       return "La publicación final se decide después, en Validación final.";
     }
 
+    function reviewContextCopy(row, payload, blocksDraft) {
+      var count = reviewProfessionalsCount(row);
+      var specialistText = count
+        ? " Tiene " + count + (count === 1 ? " especialista propuesto" : " especialistas propuestos") + " para revisar."
+        : "";
+      if (!row) {
+        return {
+          title: "Contexto de revisión",
+          detail: "Esta tarjeta no publica nada por sí sola."
+        };
+      }
+      if (row.review_type === "candidate_clinic") {
+        if (blocksDraft) {
+          return {
+            title: "Candidata con posible duplicado.",
+            detail: "Todavía no está en la guía. Antes de crear una ficha nueva, revisa las coincidencias y descártala si ya existe." + specialistText
+          };
+        }
+        return {
+          title: "Candidata: todavía no está en la guía.",
+          detail: "Sus datos no aparecerán online hasta crear un borrador, revisar la ficha y guardarla como preliminar o publicada." + specialistText
+        };
+      }
+      if (row.review_type === "clinic_profile_enrichment") {
+        return {
+          title: "Mejora de ficha existente.",
+          detail: "La información está recogida como propuesta interna. Solo llegará a la web si la cargas en el editor, la revisas y guardas la ficha visible." + specialistText
+        };
+      }
+      if (row.review_type === "source_change_detected") {
+        return {
+          title: "Cambio detectado en una fuente.",
+          detail: "La fuente cambió; revisa si afecta a la ficha. La web pública solo cambia si guardas después como preliminar o publicada."
+        };
+      }
+      if (row.review_type === "clinic_quality_audit") {
+        return {
+          title: "Auditoría de ficha existente.",
+          detail: "Esta tarjeta señala campos pendientes. No cambia datos por sí sola; sirve para abrir la ficha, completar lo claro y guardar con validación final."
+        };
+      }
+      return {
+        title: "Contexto de revisión",
+        detail: "Esta tarjeta no publica nada por sí sola."
+      };
+    }
+
+    function renderReviewContext(row, payload, blocksDraft) {
+      var copy = reviewContextCopy(row, payload || {}, blocksDraft);
+      el("reviewContextTitle").textContent = copy.title;
+      el("reviewContextDetail").textContent = copy.detail;
+      show(el("reviewContextPanel"), true);
+    }
+
     function renderReviewFlow(reviewType, blocksDraft) {
       var panel = el("reviewFlowPanel");
       if (!panel) return;
@@ -5299,6 +5357,7 @@
         "Fuente revisada: " + date(payload.retrieved_at)
       ].concat(materialChangeItems(payload)) : candidateList(candidate, "services"));
       setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
+      renderReviewContext(activeReview, payload, blocksDraft);
       renderReviewGuidance(activeReview, payload);
       renderReviewRules(payload);
       renderReviewFlow(activeReview.review_type, blocksDraft);
