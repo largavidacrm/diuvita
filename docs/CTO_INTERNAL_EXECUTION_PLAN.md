@@ -896,6 +896,12 @@ Next 10 technical steps:
      widths and shows a compact right-side placeholder before a proposal is
      selected, so the dashboard does not look like it has fallen back to a
      full-width list.
+171. Preserve source-job scope in generated proposals. Done locally in
+     `scripts/process_extract_clinic_profile_jobs.py`: when Daniel passes an
+     official URL to the agent from a manual review, the resulting internal
+     proposal keeps `primary_requested_fields`, `primary_requested_field_labels`,
+     `target_scope` and `ui_route`, so the future LLM workflow stays focused on
+     the exact field Daniel wanted to inspect.
 
 ## Daniel decision checkpoints
 

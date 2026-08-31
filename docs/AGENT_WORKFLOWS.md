@@ -112,6 +112,10 @@ Operator bridge:
   card.
 - The processor filters proposed fields to the job's `requested_fields`; it does
   not use a useful source as permission to propose unrelated clinic changes.
+- The generated review card must preserve the job's primary-field scope
+  metadata (`primary_requested_fields`, `primary_requested_field_labels`,
+  `target_scope`, `ui_route`) so the next human or LLM step can see why the URL
+  was supplied.
 - Human-supplied URLs are treated as evidence pointers, not approvals. They can
   guide the future LLM/worker, but the only allowed output is a new review
   proposal.

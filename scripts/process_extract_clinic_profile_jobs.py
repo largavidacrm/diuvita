@@ -99,8 +99,31 @@ def first_url(input_data: dict[str, Any]) -> str:
 
 
 def requested_fields(input_data: dict[str, Any]) -> list[str]:
-    fields = [clean_str(item) for item in as_list(input_data.get("requested_fields"))]
+    return clean_string_list(input_data.get("requested_fields"))
+
+
+def clean_string_list(value: Any) -> list[str]:
+    fields = [clean_str(item) for item in as_list(value)]
     return [item for item in fields if item]
+
+
+def primary_requested_fields(input_data: dict[str, Any], fields: list[str]) -> list[str]:
+    primary = clean_string_list(input_data.get("primary_requested_fields"))
+    if primary:
+        return primary
+    if clean_str(input_data.get("target_scope")) == "primary_target_first" and fields:
+        return fields[:1]
+    return []
+
+
+def primary_requested_field_labels(input_data: dict[str, Any], primary_fields: list[str]) -> list[str]:
+    labels = clean_string_list(input_data.get("primary_requested_field_labels"))
+    if labels:
+        return labels
+    requested_labels = clean_string_list(input_data.get("requested_field_labels"))
+    if primary_fields and requested_labels:
+        return requested_labels[: len(primary_fields)]
+    return []
 
 
 def requested_targets(fields: list[str]) -> set[str]:
@@ -128,6 +151,7 @@ def build_payload_for_job(job: dict[str, Any], verification: dict[str, Any]) -> 
     input_data = as_dict(job.get("input"))
     clinic_slug = clean_str(input_data.get("clinic_slug"))
     fields = requested_fields(input_data)
+    primary_fields = primary_requested_fields(input_data, fields)
     payload = review_payload(clinic_slug, verification)
     payload["proposed_fields"] = filter_proposed_fields_for_request(
         as_dict(payload.get("proposed_fields")),
@@ -159,6 +183,10 @@ def build_payload_for_job(job: dict[str, Any], verification: dict[str, Any]) -> 
         "requested_field_labels": [
             clean_str(item) for item in as_list(input_data.get("requested_field_labels")) if clean_str(item)
         ],
+        "primary_requested_fields": primary_fields,
+        "primary_requested_field_labels": primary_requested_field_labels(input_data, primary_fields),
+        "target_scope": clean_str(input_data.get("target_scope")),
+        "ui_route": clean_str(input_data.get("ui_route")),
         "missing_fields": [clean_str(item) for item in as_list(input_data.get("missing_fields")) if clean_str(item)],
         "human_supplied_source": bool(input_data.get("human_supplied_source")),
         "source_job_version": clean_str(input_data.get("source_job_version")),
@@ -205,6 +233,9 @@ def process_job(
         "clinic_name": as_dict(job.get("input")).get("clinic_name"),
         "source_url": source_url,
         "requested_fields": fields,
+        "primary_requested_fields": payload.get("primary_requested_fields") or [],
+        "target_scope": payload.get("target_scope") or "",
+        "ui_route": payload.get("ui_route") or "",
         "missing_fields": payload.get("missing_fields") or [],
         "status": "ready" if proposed_fields else "empty",
         "proposed_fields": sorted(proposed_fields.keys()),
@@ -232,6 +263,9 @@ def compact_result(result: dict[str, Any]) -> dict[str, Any]:
         "clinic_name": result.get("clinic_name"),
         "source_url": result.get("source_url"),
         "requested_fields": result.get("requested_fields") or [],
+        "primary_requested_fields": result.get("primary_requested_fields") or [],
+        "target_scope": result.get("target_scope") or "",
+        "ui_route": result.get("ui_route") or "",
         "missing_fields": result.get("missing_fields") or [],
         "status": result.get("status"),
         "proposed_fields": result.get("proposed_fields") or [],

@@ -54,6 +54,10 @@ def main():
             "source_url": "https://www.tiarahealth.com/our-team-of-experts/",
             "requested_fields": ["profesionales", "unidades"],
             "requested_field_labels": ["Especialistas publicados", "Unidades"],
+            "primary_requested_fields": ["profesionales"],
+            "primary_requested_field_labels": ["Especialistas publicados"],
+            "target_scope": "primary_target_first",
+            "ui_route": "manual_review_banner_source_handoff",
             "missing_fields": ["Especialistas publicados", "Unidades"],
             "from_review_id": "review-1",
             "human_supplied_source": True,
@@ -74,6 +78,9 @@ def main():
     check(result["clinic_slug"] == "tiara-health", "clinic slug should pass through")
     check(result["source_url"].endswith("/our-team-of-experts/"), "source URL should pass through")
     check(result["requested_fields"] == ["profesionales", "unidades"], "requested fields should be preserved")
+    check(result["primary_requested_fields"] == ["profesionales"], "primary requested field should be preserved")
+    check(result["target_scope"] == "primary_target_first", "target scope should be preserved")
+    check(result["ui_route"] == "manual_review_banner_source_handoff", "UI route should be preserved")
     check(result["missing_fields"] == ["Especialistas publicados", "Unidades"], "missing labels should be preserved")
     check("profesionales" in result["proposed_fields"], "professionals should be proposed")
     check("unidades" in result["proposed_fields"], "units should be proposed")
@@ -89,6 +96,10 @@ def main():
     check(payload["from_review_id"] == "review-1", "review link should stay in payload")
     check(payload["requested_fields"] == ["profesionales", "unidades"], "payload should keep requested fields")
     check(payload["requested_field_labels"] == ["Especialistas publicados", "Unidades"], "payload should keep requested labels")
+    check(payload["primary_requested_fields"] == ["profesionales"], "payload should keep primary requested fields")
+    check(payload["primary_requested_field_labels"] == ["Especialistas publicados"], "payload should keep primary requested labels")
+    check(payload["target_scope"] == "primary_target_first", "payload should keep target scope")
+    check(payload["ui_route"] == "manual_review_banner_source_handoff", "payload should keep UI route")
     check(payload["human_supplied_source"] is True, "payload should mark human-supplied source URLs")
     check(payload["operator_intent"].startswith("Daniel indica"), "payload should preserve operator intent")
     check(payload["allowed_output"] == "review_queue_proposal_only", "payload should preserve proposal-only contract")
@@ -120,11 +131,14 @@ def main():
     check(calls and calls[0][3] is True, "replace flag should pass through")
     check(calls and calls[0][4] is True, "multiple-open flag should pass through")
     check(calls and calls[0][1]["from_review_id"] == "review-1", "created review should trace source review")
+    check(calls and calls[0][1]["target_scope"] == "primary_target_first", "created review should keep source scope")
 
     compact = compact_result(applied)
     check("verification_summary" not in compact, "compact result should omit verification details")
     check(compact["writes_data"] is True, "compact result should keep write signal")
     check(compact["created_review"]["id"] == "review-new", "compact result should keep created review id")
+    check(compact["primary_requested_fields"] == ["profesionales"], "compact result should keep primary requested fields")
+    check(compact["target_scope"] == "primary_target_first", "compact result should keep source scope")
 
     check(requested_targets(["specialists", "technology"]) == {"profesionales", "tech"}, "aliases should map to UI fields")
     check(
