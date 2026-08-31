@@ -90,6 +90,8 @@ implementarla.
 
 ## Antes de activar en producción
 
+0. Ejecutar el semáforo local:
+   `python3 scripts/check_clinic_portal_activation.py`.
 1. Revisar el texto legal y de privacidad asociado al portal.
 2. Aplicar `supabase/migrations/0023_clinic_portal.sql`.
 3. Revisar Supabase Auth: emails mágicos, URLs permitidas y remitente.

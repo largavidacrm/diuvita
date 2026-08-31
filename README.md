@@ -27,6 +27,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `docs/VITALARGA_STYLEBOOK.md`: resumen operativo del nuevo stylebook y sus límites de uso.
 - `docs/VITALARGA_LIMITES_OPERATIVOS.md`: limites legales, medicos, editoriales y de publicacion que requieren escalado a Daniel.
 - `docs/CLINIC_PORTAL.md`: flujo de reclamación de fichas, recomendaciones de clínicas y propuestas de cambios, siempre con revisión manual.
+- `docs/CLINIC_PORTAL_ACTIVATION.md`: semáforo interno para preparar la activación del portal sin tocar producción.
 - `docs/AGENT_WORKFLOWS.md`: primer diseno de workflows agenticos.
 - `docs/RULES_ENGINE.md`: reglas deterministas para decidir si un dato se rechaza, se revisa o puede autoaceptarse en el futuro.
 - `docs/CLAIM_RULE_EVALUATION.md`: ensayo de reglas sobre claims ya guardados, sin escribir ni publicar.
@@ -85,6 +86,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/admin_digest.py`: imprime un resumen operativo interno de Supabase, solo lectura.
 - `scripts/daniel_review_brief.py`: imprime un brief de revisión para Daniel, solo lectura y sin payloads técnicos.
 - `scripts/global_plan_status.py`: imprime el estado del plan global en lenguaje ejecutivo, sin escribir datos.
+- `scripts/check_clinic_portal_activation.py`: imprime un semáforo de activación del portal, separando código listo de decisiones manuales.
 - `scripts/blocking_claim_brief.py`: resume claims bloqueantes por clínica para revisión manual, solo lectura.
 - `scripts/measure_review_maturity.py`: mide si hay suficiente revisión humana antes de relajar reglas.
 - `scripts/measure_specialist_coverage.py`: mide cobertura de especialistas publicados por clínica, sin editar fichas.
