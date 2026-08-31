@@ -46,6 +46,31 @@ def sample_enrichment_row():
     }
 
 
+def sample_quality_audit_row():
+    return {
+        "id": "quality-1",
+        "title": "Completar ficha: Tiara Health",
+        "review_type": "clinic_quality_audit",
+        "priority": 85,
+        "created_at": "2026-08-31T12:47:16+00:00",
+        "payload": {
+            "issues": [
+                {"code": "missing_professionals", "label": "Faltan especialistas publicados"},
+                {"code": "missing_contact", "label": "Falta email o teléfono"},
+            ],
+        },
+        "clinic": {
+            "id": "clinic-tiara",
+            "slug": "tiara-health",
+            "display_name": "Tiara Health",
+            "city": "Marbella",
+            "country": "España",
+            "status": "preliminary",
+            "current_data": {},
+        },
+    }
+
+
 def main():
     safe_packet = decision_packet(sample_enrichment_row())
     check(safe_packet["schema_version"] == "review_decision_packet.v1", "schema version missing")
@@ -100,6 +125,25 @@ def main():
     check(
         "persona@example.com" in " ".join(valued_packet["warnings"]),
         "explicit value mode should preserve local warning detail",
+    )
+
+    quality_packet = decision_packet(sample_quality_audit_row())
+    check(not quality_packet["editable_fields"], "quality audit issues should not become direct LLM-editable fields")
+    check(
+        quality_packet["proposed_change"][0]["manual_review_target"]["key"] == "profesionales",
+        "professional quality issue should point to the manual specialists field",
+    )
+    check(
+        [target["key"] for target in quality_packet["manual_review_targets"]] == ["profesionales", "email", "telefono"],
+        "quality audit should expose safe manual review targets",
+    )
+    check(
+        quality_packet["source_job_request"]["requested_fields"] == ["profesionales", "email", "telefono"],
+        "quality audit packet should describe bounded source-job fields",
+    )
+    check(
+        quality_packet["source_job_request"]["write_policy"] == "creates_review_proposal_only",
+        "source-job bridge should stay review-only",
     )
 
     claim_packet = decision_packet({

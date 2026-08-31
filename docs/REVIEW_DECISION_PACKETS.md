@@ -9,6 +9,10 @@ El contrato principal es:
 - Un paquete representa una tarjeta abierta y una sola decisión.
 - Las acciones posibles son siempre `approve`, `reject` o `modify`.
 - `modify` solo puede tocar los campos listados en `editable_fields`.
+- Las auditorías de calidad que solo traen un "campo pendiente" pueden incluir
+  `manual_review_targets`, que apuntan al campo exacto del admin que Daniel debe
+  revisar. Es una ruta de trabajo manual, no un permiso para que el LLM invente
+  valores.
 - La salida por defecto no incluye valores completos, emails, teléfonos crudos
   ni URLs completas de evidencia.
 - El script no resuelve tarjetas, no edita clínicas y no publica páginas.
@@ -44,10 +48,12 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - motivo;
 - advertencias que Daniel debe mirar;
 - propuesta corregida si la acción sugerida es `modify`.
+- campo manual que abrir si la tarjeta es una auditoría sin valores propuestos.
 
 El LLM no debe:
 
 - inventar campos fuera de `editable_fields`;
+- inventar datos para un `manual_review_target`;
 - convertir una advertencia en aprobación automática;
 - resolver la tarjeta;
 - ejecutar escrituras en Supabase;
@@ -73,6 +79,8 @@ sugerencia:
 - corresponde a la misma tarjeta;
 - no trae escrituras, publicación, Supabase, Netlify ni SQL;
 - no modifica campos fuera de `editable_fields`;
+- permite `modify` sin `field_changes` solo si apunta a un
+  `manual_review_target_key` permitido;
 - rechaza modificaciones con Google Maps débil o teléfono dudoso;
 - mantiene la decisión final como revisión humana.
 

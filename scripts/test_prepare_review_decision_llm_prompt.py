@@ -40,6 +40,28 @@ def sample_packet(include_values=False):
     }, include_values=include_values)
 
 
+def sample_quality_packet():
+    return decision_packet({
+        "id": "quality-1",
+        "title": "Completar ficha: Tiara Health",
+        "review_type": "clinic_quality_audit",
+        "payload": {
+            "issues": [
+                {"code": "missing_professionals", "label": "Faltan especialistas publicados"},
+            ],
+        },
+        "clinic": {
+            "id": "clinic-tiara",
+            "slug": "tiara-health",
+            "display_name": "Tiara Health",
+            "city": "Marbella",
+            "country": "España",
+            "status": "preliminary",
+            "current_data": {},
+        },
+    })
+
+
 def main():
     full_packet = sample_packet(include_values=True)
     prompt = build_prompt(full_packet)
@@ -65,6 +87,20 @@ def main():
     check(
         schema["properties"]["field_changes"]["propertyNames"]["enum"] == ["profesionales", "telefono"],
         "field_changes should be limited to editable fields",
+    )
+
+    quality_prompt = build_prompt(sample_quality_packet())
+    check(
+        quality_prompt["packet_digest"]["manual_review_targets"] == [{"key": "profesionales", "label": "Especialistas publicados"}],
+        "prompt digest should keep manual review targets",
+    )
+    check(
+        quality_prompt["expected_response_schema"]["properties"]["manual_review_target_key"]["enum"] == ["profesionales"],
+        "prompt schema should limit manual review targets",
+    )
+    check(
+        "manual_review_targets" in quality_prompt["messages"][1]["content"],
+        "safe prompt should include manual target metadata",
     )
 
     full_prompt = build_prompt(full_packet, allow_full_values=True)

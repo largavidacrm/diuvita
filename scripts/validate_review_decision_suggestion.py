@@ -69,6 +69,7 @@ HIGH_ATTENTION_REVIEW_TYPES = {
     "specialist_review",
 }
 SUGGESTION_CHANGE_KEYS = ("field_changes", "changes", "modified_fields", "proposed_fields")
+SUGGESTION_MANUAL_TARGET_KEYS = ("manual_review_target_key", "manual_target_key", "target_field")
 
 
 def has_value(value: Any) -> bool:
@@ -116,6 +117,17 @@ def editable_field_map(packet: dict[str, Any]) -> dict[str, str]:
     return editable
 
 
+def manual_review_target_map(packet: dict[str, Any]) -> dict[str, str]:
+    targets: dict[str, str] = {}
+    for item in packet.get("manual_review_targets") or []:
+        if not isinstance(item, dict):
+            continue
+        key = canonical_field(item.get("key"))
+        if key:
+            targets[key] = str(item.get("label") or key)
+    return targets
+
+
 def allowed_actions(packet: dict[str, Any]) -> list[str]:
     actions = [normalize_action(item) for item in packet.get("allowed_actions") or DECISION_ACTIONS]
     return [item for item in DECISION_ACTIONS if item in actions]
@@ -126,6 +138,13 @@ def suggestion_changes(suggestion: dict[str, Any]) -> Any:
         if key in suggestion:
             return suggestion.get(key)
     return {}
+
+
+def suggestion_manual_target_key(suggestion: dict[str, Any]) -> str:
+    for key in SUGGESTION_MANUAL_TARGET_KEYS:
+        if key in suggestion and has_value(suggestion.get(key)):
+            return canonical_field(suggestion.get(key))
+    return ""
 
 
 def forbidden_control_paths(value: Any, path: str = "") -> list[str]:
@@ -211,6 +230,10 @@ def validate_suggestion(
         raw_changes = {}
 
     editable = editable_field_map(packet)
+    manual_targets = manual_review_target_map(packet)
+    manual_target_key = suggestion_manual_target_key(suggestion)
+    if manual_target_key and manual_target_key not in manual_targets:
+        errors.append(f"manual review target is not allowed in this packet: {manual_target_key}")
     normalized_changes: dict[str, Any] = {}
     for raw_key, value in raw_changes.items():
         key = canonical_field(raw_key)
@@ -221,8 +244,16 @@ def validate_suggestion(
 
     if action in {"approve", "reject"} and normalized_changes:
         errors.append("field changes are only allowed when action is modify")
+    if action in {"approve", "reject"} and manual_target_key:
+        errors.append("manual review target is only allowed when action is modify")
     if action == "modify" and not normalized_changes:
-        errors.append("modify action requires at least one editable field change")
+        if manual_targets:
+            if not manual_target_key and len(manual_targets) == 1:
+                manual_target_key = next(iter(manual_targets))
+            if not manual_target_key:
+                errors.append("modify action requires field changes or one manual review target")
+        else:
+            errors.append("modify action requires at least one editable field change")
     for key, value in normalized_changes.items():
         errors.extend(field_safety_errors(key, value))
 
@@ -243,6 +274,7 @@ def validate_suggestion(
         "action": action or None,
         "human_required": True,
         "field_change_keys": change_keys,
+        "manual_review_target_key": manual_target_key or None,
         "attention_flags": attention_flags(packet, change_keys),
         "reason": reason,
         "warnings": warnings,

@@ -41,6 +41,27 @@ def sample_packet():
     })
 
 
+def sample_quality_packet(multiple_targets=False):
+    issues = [{"code": "missing_professionals", "label": "Faltan especialistas publicados"}]
+    if multiple_targets:
+        issues.append({"code": "missing_contact", "label": "Falta email o teléfono"})
+    return decision_packet({
+        "id": "quality-1",
+        "title": "Completar ficha: Tiara Health",
+        "review_type": "clinic_quality_audit",
+        "payload": {"issues": issues},
+        "clinic": {
+            "id": "clinic-tiara",
+            "slug": "tiara-health",
+            "display_name": "Tiara Health",
+            "city": "Marbella",
+            "country": "España",
+            "status": "preliminary",
+            "current_data": {},
+        },
+    })
+
+
 def main():
     packet = sample_packet()
     approved = validate_suggestion(packet, {
@@ -119,6 +140,44 @@ def main():
         "action": "modify",
     })
     check(not empty_modify["valid"], "modify should require concrete field changes")
+
+    manual_packet = sample_quality_packet()
+    manual_modify = validate_suggestion(manual_packet, {
+        "review_id": "quality-1",
+        "action": "modify",
+        "reason": "Abrir revisión manual del campo de especialistas.",
+    })
+    check(manual_modify["valid"], "single manual target should allow modify without invented values")
+    check(manual_modify["manual_review_target_key"] == "profesionales", "single manual target should be selected")
+    check(manual_modify["field_change_keys"] == [], "manual review should not carry field changes")
+
+    explicit_manual_modify = validate_suggestion(manual_packet, {
+        "review_id": "quality-1",
+        "action": "modify",
+        "manual_review_target_key": "profesionales",
+        "reason": "Revisar el campo manualmente.",
+    })
+    check(explicit_manual_modify["valid"], "explicit allowed manual target should pass")
+
+    bad_manual_target = validate_suggestion(manual_packet, {
+        "review_id": "quality-1",
+        "action": "modify",
+        "manual_review_target_key": "status",
+    })
+    check(not bad_manual_target["valid"], "unlisted manual target should be blocked")
+
+    approve_manual_target = validate_suggestion(manual_packet, {
+        "review_id": "quality-1",
+        "action": "approve",
+        "manual_review_target_key": "profesionales",
+    })
+    check(not approve_manual_target["valid"], "manual target should not travel with approve")
+
+    ambiguous_manual = validate_suggestion(sample_quality_packet(multiple_targets=True), {
+        "review_id": "quality-1",
+        "action": "modify",
+    })
+    check(not ambiguous_manual["valid"], "multiple manual targets should require one target key")
 
     bad_phone = validate_suggestion(packet, {
         "review_id": "review-1",

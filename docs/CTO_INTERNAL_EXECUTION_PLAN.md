@@ -798,6 +798,13 @@ Next 10 technical steps:
      supplied source, run the shadow extractor/verifier, filter findings to the
      fields requested by that review, create a new enrichment card when useful
      and mark the job completed. It never edits clinic data or publishes.
+153. Preserve manual-review targets for future LLM assistance. Done locally in
+     `scripts/review_proposal_decision_packets.py`,
+     `scripts/prepare_review_decision_llm_prompt.py` and
+     `scripts/validate_review_decision_suggestion.py`: quality-audit cards that
+     only name missing fields now carry safe admin targets and bounded
+     source-job fields, so a future LLM can suggest "open this field manually"
+     without inventing values, writing Supabase data or changing publication.
 
 ## Daniel decision checkpoints
 

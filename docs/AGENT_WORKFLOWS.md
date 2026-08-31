@@ -155,6 +155,10 @@ Required behavior:
   fields, evidence and essential warnings.
 - Include the packet schema version, allowed actions and `editable_fields` so
   automated preparation cannot introduce unrelated clinic changes.
+- For quality-audit cards with no proposed values, include
+  `manual_review_targets` and, when useful, a bounded `source_job_request`.
+  This lets a future LLM suggest the exact manual field or official source job
+  without inventing clinic data.
 - Default output must be safe: no raw proposed values or full evidence URLs.
 - Full values are allowed only with an explicit local operator flag for
   assisted preparation.
@@ -162,6 +166,9 @@ Required behavior:
 - LLM output may suggest or organize the decision, but the card remains
   reviewable and Daniel's action is still `approve`, `reject` or `modify`.
 - `modify` may only change fields listed in that packet's `editable_fields`.
+- If `editable_fields` is empty, `modify` is valid only as a manual-review
+  route to one of the packet's `manual_review_targets`; it must not carry
+  invented `field_changes`.
 - Future LLM suggestions must pass
   `scripts/validate_review_decision_suggestion.py` before they are shown or
   transformed into any review UI state.

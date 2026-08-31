@@ -43,6 +43,11 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
         for item in packet.get("evidence") or []
         if isinstance(item, dict) and item.get("host")
     ]
+    manual_targets = [
+        {"key": item.get("key"), "label": item.get("label")}
+        for item in packet.get("manual_review_targets") or []
+        if isinstance(item, dict) and item.get("key")
+    ]
     return {
         "review_id": packet.get("review_id"),
         "packet_schema_version": packet.get("schema_version") or PACKET_SCHEMA_VERSION,
@@ -52,6 +57,7 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
         "field_count": len(fields),
         "fields": fields,
         "evidence_hosts": evidence_hosts,
+        "manual_review_targets": manual_targets,
         "warning_count": len(packet.get("warnings") or []),
     }
 
@@ -60,6 +66,11 @@ def expected_response_schema(packet: dict[str, Any]) -> dict[str, Any]:
     editable = [
         str(item.get("key"))
         for item in packet.get("editable_fields") or []
+        if isinstance(item, dict) and item.get("key")
+    ]
+    manual_targets = [
+        str(item.get("key"))
+        for item in packet.get("manual_review_targets") or []
         if isinstance(item, dict) and item.get("key")
     ]
     return {
@@ -81,6 +92,10 @@ def expected_response_schema(packet: dict[str, Any]) -> dict[str, Any]:
                 "additionalProperties": True,
                 "default": {},
             },
+            "manual_review_target_key": {
+                "type": "string",
+                "enum": manual_targets,
+            },
         },
     }
 
@@ -91,6 +106,7 @@ def system_prompt() -> str:
         "No publicas, no escribes en Supabase, no resuelves tarjetas y no das acceso a clínicas.",
         "Tu tarea es proponer una única acción para una única tarjeta: approve, reject o modify.",
         "Si propones modify, solo puedes incluir campos listados en editable_fields.",
+        "Si no hay editable_fields pero hay manual_review_targets, puedes proponer modify con manual_review_target_key.",
         "Responde solo JSON válido con el esquema indicado.",
     ])
 

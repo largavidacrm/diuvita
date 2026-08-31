@@ -62,6 +62,24 @@ FIELD_ORDER = [
     "phone_whatsapp",
     "instagram",
 ]
+ADMIN_FIELD_TARGETS = [
+    (("summary", "resumen"), "summary", "Resumen", "clinicSummary"),
+    (("website", "web"), "website", "Web oficial", "clinicWebsite"),
+    (("address", "direcci", "sede"), "address", "Dirección", "clinicAddress"),
+    (("maps", "google maps"), "maps_url", "Google Maps", "clinicMapsUrl"),
+    (("reviews", "valoraciones", "reseñas", "resenas"), "google_reviews_url", "Valoraciones Google", "clinicGoogleReviewsUrl"),
+    (("contact", "contacto", "tel", "phone", "telefono", "email"), "email", "Contacto público", "clinicEmail"),
+    (("contact", "contacto", "tel", "phone", "telefono"), "telefono", "Teléfono principal", "clinicPhone"),
+    (("service", "servicio"), "services", "Servicios", "clinicServices"),
+    (("specialt", "especialidad"), "specialties", "Especialidades", "clinicSpecialties"),
+    (("unit", "unidad"), "unidades", "Unidades", "clinicUnits"),
+    (("professional", "profesional", "specialist", "especialista"), "profesionales", "Especialistas publicados", "clinicProfessionals"),
+    (("technology", "tecnolog"), "tech", "Tecnología", "clinicTech"),
+    (("years", "años", "anos", "trayectoria", "ejercicio"), "years_in_practice", "Años en ejercicio", "clinicYearsInPractice"),
+    (("count", "numero de especialistas", "número de especialistas", "num specialists"), "specialists_count", "Número de especialistas", "clinicSpecialistsCount"),
+    (("credential", "colegi"), "team_credentialing_visible", "Colegiación visible", "clinicTeamCredentialingVisible"),
+    (("price", "precio", "tarifa"), "public_pricing", "Precio público", "clinicPublicPricing"),
+]
 REVIEW_TYPE_LABELS = {
     "candidate_clinic": "Clínica nueva",
     "clinic_profile_enrichment": "Mejora de ficha",
@@ -147,6 +165,23 @@ def redacted_text(value: Any, include_values: bool) -> str:
     clean = URL_RE.sub("[url]", clean)
     clean = EMAIL_RE.sub("[email]", clean)
     return PHONE_TEXT_RE.sub("[telefono]", clean)
+
+
+def manual_review_targets_for_text(value: Any) -> list[dict[str, str]]:
+    haystack = str(value or "").lower()
+    targets: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for needles, key, label, admin_target_id in ADMIN_FIELD_TARGETS:
+        if key in seen:
+            continue
+        if any(needle in haystack for needle in needles):
+            seen.add(key)
+            targets.append({
+                "key": key,
+                "label": label,
+                "admin_target_id": admin_target_id,
+            })
+    return targets
 
 
 def field_values(value: Any) -> list[Any]:
@@ -239,6 +274,35 @@ def ordered_proposed_items(row: dict[str, Any]) -> list[dict[str, Any]]:
         ]
         add("claim_request", "\n".join(str(part) for part in claim_parts if str(part or "").strip()), "Solicitud de ficha")
     return items
+
+
+def manual_review_targets(row: dict[str, Any], item: dict[str, Any]) -> list[dict[str, str]]:
+    if row.get("review_type") != "clinic_quality_audit":
+        return []
+    if not str(item.get("key") or "").startswith("quality_issue"):
+        return []
+    search_value = " ".join(
+        str(part)
+        for part in [
+            item.get("key"),
+            item.get("label"),
+            *nested_text_values(item.get("value")),
+        ]
+        if str(part or "").strip()
+    )
+    return manual_review_targets_for_text(search_value)
+
+
+def dedupe_targets(targets: list[dict[str, str]]) -> list[dict[str, str]]:
+    clean: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for target in targets:
+        key = str(target.get("key") or "").strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        clean.append(target)
+    return clean
 
 
 def source_candidates(payload: dict[str, Any]) -> list[tuple[str, str]]:
@@ -373,15 +437,22 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
     clinic = row.get("clinic") if isinstance(row.get("clinic"), dict) else {}
     proposed_items = ordered_proposed_items(row)
     proposal_fields = []
+    all_manual_targets: list[dict[str, str]] = []
     for item in proposed_items:
         key = item["key"]
-        proposal_fields.append({
+        field_packet = {
             "key": key,
             "label": item["label"],
             "synthetic": is_synthetic_field(key),
             "current": value_packet(None if is_synthetic_field(key) else current_field_value(clinic, key), include_values),
             "proposed": value_packet(item["value"], include_values),
-        })
+        }
+        targets = manual_review_targets(row, item)
+        if targets:
+            field_packet["manual_review_targets"] = targets
+            field_packet["manual_review_target"] = targets[0]
+            all_manual_targets.extend(targets)
+        proposal_fields.append(field_packet)
     payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
     evidence = [evidence_packet(label, value, include_values) for label, value in source_candidates(payload)]
     warnings = warning_items(row, proposed_items, include_values=include_values)
@@ -414,6 +485,17 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             "after_decision": "resolve_current_review_then_advance_to_next_pending",
         },
     }
+    packet_manual_targets = dedupe_targets(all_manual_targets)
+    if packet_manual_targets:
+        packet["manual_review_targets"] = packet_manual_targets
+        packet["source_job_request"] = {
+            "job_type": "EXTRACT_CLINIC_PROFILE",
+            "status": "operator_supplied_source_required",
+            "from_review_id": row.get("id"),
+            "requested_fields": [target["key"] for target in packet_manual_targets],
+            "source_requirement": "official_clinic_url",
+            "write_policy": "creates_review_proposal_only",
+        }
     if not include_values:
         packet["safe_default"] = True
     return packet
