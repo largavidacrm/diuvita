@@ -660,6 +660,13 @@
               <option value="discovered">Descubiertas</option>
               <option value="archived">Archivadas</option>
             </select>
+            <select id="clinicPublishFilter" aria-label="Filtrar clínicas por preparación para publicar">
+              <option value="">Todas las fichas</option>
+              <option value="ready">Sin faltantes obligatorios</option>
+              <option value="needs_work">Con faltantes</option>
+              <option value="visible_pending">Visibles con pendientes</option>
+              <option value="hidden">No visibles</option>
+            </select>
             <span class="pill" id="clinicCount">0 fichas</span>
           </div>
         </div>
@@ -705,6 +712,7 @@
     var specialistCoverageCache = null;
     var publicationControlCache = emptyPublicationControl();
     var clinicStatusFilter = "";
+    var clinicPublishFilter = "";
     var activeClinic = null;
     var activeReview = null;
     var activeClinicReview = null;
@@ -1107,6 +1115,17 @@
           : "Faltan " + missing.length + " puntos";
       return '<div class="publish-cell"><span class="pill warning">' + html(label) +
         '</span><small>' + html(shown) + '</small></div>';
+    }
+
+    function clinicMatchesPublishFilter(row, filter) {
+      if (!filter) return true;
+      var missing = clinicPublicationMissingLabels(row);
+      var visible = isPublicClinicStatus(row.status);
+      if (filter === "ready") return missing.length === 0;
+      if (filter === "needs_work") return missing.length > 0;
+      if (filter === "visible_pending") return visible && missing.length > 0;
+      if (filter === "hidden") return !visible;
+      return true;
     }
 
     function topPendingProfileField(completeness) {
@@ -5172,8 +5191,10 @@
       var clinicsBody = el("clinicsBody");
       var query = trimmed("clinicSearch").toLowerCase();
       clinicStatusFilter = el("clinicStatusFilter").value;
+      clinicPublishFilter = el("clinicPublishFilter").value;
       var rows = clinicCache.filter(function (row) {
         if (clinicStatusFilter && row.status !== clinicStatusFilter) return false;
+        if (!clinicMatchesPublishFilter(row, clinicPublishFilter)) return false;
         if (!query) return true;
         return [
           row.display_name,
@@ -5960,6 +5981,7 @@
       el("reviewDismissBtn").addEventListener("click", dismissReview);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);
+      el("clinicPublishFilter").addEventListener("change", renderClinics);
       el("clinicVersionList").addEventListener("click", function (event) {
         var button = event.target.closest("[data-restore-version]");
         if (!button) return;

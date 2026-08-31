@@ -449,6 +449,10 @@ Next 10 technical steps:
     location proposals as "Sedes detectadas", can be loaded into the form for
     manual review, and still require Daniel to save before anything public
     changes.
+82. Add publication-readiness filtering to the clinic table. Done locally in
+    `/admin/`: Daniel can filter clinic records by no required blockers,
+    missing required fields, visible profiles with pending work, or profiles
+    that are still not public.
 
 ## Daniel decision checkpoints
 
