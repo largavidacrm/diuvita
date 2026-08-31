@@ -13,6 +13,10 @@ El contrato principal es:
   `manual_review_targets`, que apuntan al campo exacto del admin que Daniel debe
   revisar. Es una ruta de trabajo manual, no un permiso para que el LLM invente
   valores.
+- Esas auditorías también pueden incluir `manual_review_context`: un resumen
+  seguro con el título legible, el campo del admin, el motivo pendiente y el
+  paso humano esperado. Sirve para asistencia futura con LLM sin darle permiso
+  para escribir datos ni resolver la tarjeta.
 - La salida por defecto no incluye valores completos, emails, teléfonos crudos
   ni URLs completas de evidencia.
 - El script no resuelve tarjetas, no edita clínicas y no publica páginas.
@@ -49,6 +53,7 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - advertencias que Daniel debe mirar;
 - propuesta corregida si la acción sugerida es `modify`.
 - campo manual que abrir si la tarjeta es una auditoría sin valores propuestos.
+- contexto manual de campo, motivo y siguiente paso cuando exista.
 
 El LLM no debe:
 

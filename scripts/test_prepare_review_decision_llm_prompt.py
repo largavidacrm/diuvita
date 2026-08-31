@@ -95,6 +95,20 @@ def main():
         "prompt digest should keep manual review targets",
     )
     check(
+        quality_prompt["packet_digest"]["display_title"] == "Revisión manual: Tiara Health",
+        "prompt digest should keep the readable manual review title",
+    )
+    check(
+        quality_prompt["packet_digest"]["manual_review_context"]["operator_action"]
+        == "open_admin_target_edit_field_then_save_clinic",
+        "prompt digest should keep the manual operator route",
+    )
+    check(
+        quality_prompt["packet_digest"]["manual_review_context"]["llm_boundary"]
+        == "do_not_invent_values_or_write_field_changes",
+        "prompt digest should keep the no-invention boundary",
+    )
+    check(
         quality_prompt["expected_response_schema"]["properties"]["manual_review_target_key"]["enum"] == ["profesionales"],
         "prompt schema should limit manual review targets",
     )

@@ -48,16 +48,24 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
         for item in packet.get("manual_review_targets") or []
         if isinstance(item, dict) and item.get("key")
     ]
+    manual_context = packet.get("manual_review_context") if isinstance(packet.get("manual_review_context"), dict) else {}
     return {
         "review_id": packet.get("review_id"),
         "packet_schema_version": packet.get("schema_version") or PACKET_SCHEMA_VERSION,
         "clinic_name": clinic.get("name"),
+        "display_title": packet.get("display_title") or packet.get("title"),
         "proposal_type": packet.get("proposal_type"),
         "review_type": packet.get("review_type"),
         "field_count": len(fields),
         "fields": fields,
         "evidence_hosts": evidence_hosts,
         "manual_review_targets": manual_targets,
+        "manual_review_context": {
+            "mode": manual_context.get("mode"),
+            "operator_action": manual_context.get("operator_action"),
+            "after_save": manual_context.get("after_save"),
+            "llm_boundary": manual_context.get("llm_boundary"),
+        } if manual_context else {},
         "warning_count": len(packet.get("warnings") or []),
     }
 

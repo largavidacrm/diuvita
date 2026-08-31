@@ -106,6 +106,13 @@ def review_type_label(value: Any) -> str:
     return REVIEW_TYPE_LABELS.get(str(value or ""), str(value or "Revisión").replace("_", " "))
 
 
+def review_display_title(row: dict[str, Any]) -> str:
+    title = str(row.get("title") or "").strip() or "Revisión abierta"
+    if row.get("review_type") == "clinic_quality_audit":
+        return re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
+    return title
+
+
 def is_synthetic_field(key: Any) -> bool:
     clean = canonical_field(key)
     return clean == "claim_request" or any(clean.startswith(prefix) for prefix in SYNTHETIC_PREFIXES)
@@ -305,6 +312,37 @@ def dedupe_targets(targets: list[dict[str, str]]) -> list[dict[str, str]]:
     return clean
 
 
+def manual_review_context(
+    row: dict[str, Any],
+    proposed_items: list[dict[str, Any]],
+    packet_manual_targets: list[dict[str, str]],
+) -> dict[str, Any]:
+    if row.get("review_type") != "clinic_quality_audit" or not packet_manual_targets:
+        return {}
+    issues: list[dict[str, str]] = []
+    for item in proposed_items:
+        targets = manual_review_targets(row, item)
+        if not targets:
+            continue
+        issue_label = redacted_text(item.get("value"), include_values=False) or str(item.get("label") or "").strip()
+        for target in targets:
+            issues.append({
+                "issue_label": issue_label,
+                "target_key": target["key"],
+                "target_label": target["label"],
+                "admin_target_id": target["admin_target_id"],
+            })
+    return {
+        "mode": "manual_admin_field_review",
+        "display_title": review_display_title(row),
+        "primary_target": packet_manual_targets[0],
+        "issues": issues,
+        "operator_action": "open_admin_target_edit_field_then_save_clinic",
+        "after_save": "resolve_current_review_then_advance_to_next_pending",
+        "llm_boundary": "do_not_invent_values_or_write_field_changes",
+    }
+
+
 def source_candidates(payload: dict[str, Any]) -> list[tuple[str, str]]:
     candidate = candidate_from_payload(payload)
     values: list[tuple[str, str]] = []
@@ -465,6 +503,7 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
         "schema_version": PACKET_SCHEMA_VERSION,
         "review_id": row.get("id"),
         "title": row.get("title"),
+        "display_title": review_display_title(row),
         "decision_scope": "single_review_item",
         "review_type": row.get("review_type"),
         "proposal_type": review_type_label(row.get("review_type")),
@@ -488,6 +527,7 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
     packet_manual_targets = dedupe_targets(all_manual_targets)
     if packet_manual_targets:
         packet["manual_review_targets"] = packet_manual_targets
+        packet["manual_review_context"] = manual_review_context(row, proposed_items, packet_manual_targets)
         packet["source_job_request"] = {
             "job_type": "EXTRACT_CLINIC_PROFILE",
             "status": "operator_supplied_source_required",

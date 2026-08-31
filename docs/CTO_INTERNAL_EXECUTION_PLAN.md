@@ -829,6 +829,13 @@ Next 10 technical steps:
      manual**, the clinic editor shows a compact banner with the exact field,
      the pending issue and a button to refocus that field. Saving still resolves
      only that review card and advances to the next pending proposal.
+158. Carry manual-review context into LLM decision packets. Done locally in
+     `scripts/review_proposal_decision_packets.py` and
+     `scripts/prepare_review_decision_llm_prompt.py`: quality-audit packets now
+     include safe `manual_review_context` metadata with the display title,
+     admin target, issue label, operator route and no-invention boundary. This
+     preserves future LLM assistance without allowing writes or invented field
+     changes.
 
 ## Daniel decision checkpoints
 

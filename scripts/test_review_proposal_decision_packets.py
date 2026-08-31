@@ -128,6 +128,7 @@ def main():
     )
 
     quality_packet = decision_packet(sample_quality_audit_row())
+    check(quality_packet["display_title"] == "Revisión manual: Tiara Health", "quality title should be human-readable")
     check(not quality_packet["editable_fields"], "quality audit issues should not become direct LLM-editable fields")
     check(
         quality_packet["proposed_change"][0]["manual_review_target"]["key"] == "profesionales",
@@ -156,6 +157,24 @@ def main():
     check(
         quality_packet["source_job_request"]["allowed_output"] == "review_queue_proposal_only",
         "source-job bridge should forbid direct profile writes",
+    )
+    manual_context = quality_packet["manual_review_context"]
+    check(manual_context["mode"] == "manual_admin_field_review", "manual context mode missing")
+    check(
+        manual_context["primary_target"]["admin_target_id"] == "clinicProfessionals",
+        "manual context should keep the admin field to open",
+    )
+    check(
+        manual_context["issues"][0]["issue_label"] == "Faltan especialistas publicados",
+        "manual context should keep the pending issue label",
+    )
+    check(
+        manual_context["operator_action"] == "open_admin_target_edit_field_then_save_clinic",
+        "manual context should describe the manual operator route",
+    )
+    check(
+        manual_context["llm_boundary"] == "do_not_invent_values_or_write_field_changes",
+        "manual context should keep the LLM boundary explicit",
     )
 
     claim_packet = decision_packet({
