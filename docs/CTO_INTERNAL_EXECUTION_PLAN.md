@@ -515,6 +515,10 @@ Next 10 technical steps:
     whether a clinic is missing from the public site because it is not public,
     has publication blockers, or is saved in Supabase but waiting for a public
     rebuild. The report stays read-only and groups stale fields by category.
+98. Reduce review quick-action noise in the control center. Done locally in
+    `/admin/`: the review area now has one "Qué hacer ahora" lead with the
+    clinic/context name, while secondary buttons stay short and grouped so the
+    panel is easier to scan on desktop and mobile.
 
 ## Daniel decision checkpoints
 

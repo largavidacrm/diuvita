@@ -872,24 +872,65 @@ button:disabled {
 
 .review-action-strip {
   display: grid;
-  grid-template-columns: minmax(220px, 1.35fr) repeat(3, minmax(140px, 1fr));
-  gap: 0.42rem;
-  padding: 0.6rem 1rem;
+  grid-template-columns: minmax(250px, 1fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: 0.65rem 1rem;
+  padding: 0.7rem 1rem;
   border-bottom: 1px solid var(--line);
   background: #fff;
 }
 
+.review-action-lead {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.review-action-lead span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-action-lead strong {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.98rem;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-action-lead p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.review-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.42rem;
+  min-width: 0;
+}
+
 .review-action-strip .btn {
   min-height: 2rem;
-  width: 100%;
-  max-width: none;
+  width: auto;
+  min-width: 7.6rem;
+  max-width: 11rem;
   padding: 0.34rem 0.58rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.8rem;
   line-height: 1.1;
-  text-align: left;
+  text-align: center;
 }
 
 .review-action-strip .quick-primary {
@@ -1942,13 +1983,21 @@ td small {
 
   .review-action-strip {
     grid-template-columns: 1fr;
-    padding: 0.55rem 0.7rem;
+    padding: 0.65rem 0.7rem;
+  }
+
+  .review-action-lead strong {
+    white-space: normal;
+  }
+
+  .review-action-buttons {
+    justify-content: stretch;
   }
 
   .review-action-strip .btn {
     width: 100%;
     max-width: none;
-    text-align: left;
+    text-align: center;
   }
 
   .publication-banner {

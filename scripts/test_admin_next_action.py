@@ -56,6 +56,13 @@ def main() -> None:
         "function openGoogleLinksTarget",
         'id="openPriorityReviewBtn"',
         'id="openGoogleLinksBtn"',
+        'id="reviewActionTitle"',
+        'id="reviewActionDetail"',
+        "function reviewActionLeadCopy",
+        "Qué hacer ahora",
+        "Abrir prioridad: ",
+        "Trabajar grupo: ",
+        "Acepta solo el perfil real de la clínica",
         "Abrir siguiente",
         "Abrir prioridad",
         "Abrir Google Maps",
@@ -105,6 +112,8 @@ def main() -> None:
         check(marker in index, f"missing next-action marker: {marker}")
 
     check("global-plan-step" not in index, "global plan should not render decorative step numbers")
+    check('"Prioridad · "' not in index, "quick-action buttons should not carry long dynamic labels")
+    check('"Maps · "' not in index, "Google Maps quick action should stay compact")
 
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     for marker in [
@@ -113,6 +122,8 @@ def main() -> None:
         ".global-plan-checkpoint.is-active",
         ".global-plan-details summary",
         ".global-plan-details[open]",
+        ".review-action-lead",
+        ".review-action-buttons",
     ]:
         check(marker in css, f"missing global plan checkpoint style: {marker}")
 

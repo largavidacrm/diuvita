@@ -557,12 +557,19 @@
             <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
           </div>
           <div class="review-action-strip hidden" id="reviewActionStrip">
-            <button class="btn secondary quick-primary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
-            <button class="btn secondary quick-action hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
-            <button class="btn secondary quick-action hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
-            <button class="btn secondary quick-action hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
-            <button class="btn secondary quick-action hidden" id="openGoogleLinksBtn" type="button">Abrir Google Maps</button>
-            <button class="btn secondary quick-action hidden" id="openSpecialistTargetBtn" type="button">Abrir especialistas</button>
+            <div class="review-action-lead">
+              <span>Qué hacer ahora</span>
+              <strong id="reviewActionTitle">Abrir prioridad</strong>
+              <p id="reviewActionDetail">El panel elegirá la primera tarjeta útil.</p>
+            </div>
+            <div class="review-action-buttons">
+              <button class="btn secondary quick-primary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
+              <button class="btn secondary quick-action hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
+              <button class="btn secondary quick-action hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
+              <button class="btn secondary quick-action hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
+              <button class="btn secondary quick-action hidden" id="openGoogleLinksBtn" type="button">Google Maps</button>
+              <button class="btn secondary quick-action hidden" id="openSpecialistTargetBtn" type="button">Especialistas</button>
+            </div>
           </div>
           <div class="review-filter-panel" id="reviewFilterChips" aria-label="Filtros rápidos de revisiones"></div>
           <div class="table-wrap">
@@ -2233,6 +2240,49 @@
       if (match) return match;
       match = rows.find(function (row) { return row.review_type === "clinic_quality_audit"; });
       return match || null;
+    }
+
+    function reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget) {
+      if (nextReview) {
+        return {
+          title: "Abrir prioridad: " + reviewPrimarySubject(nextReview),
+          detail: reviewVisibleLabel(nextReview) + " · prioridad " + priorityLabel(nextReview.priority).toLowerCase()
+        };
+      }
+      if (clinicGroup) {
+        return {
+          title: "Trabajar grupo: " + clinicWorkgroupSubject(clinicGroup),
+          detail: "Varias tarjetas de una misma clínica; revísalas juntas si encajan."
+        };
+      }
+      if (duplicateReview) {
+        return {
+          title: "Ordenar atasco: " + reviewPrimarySubject(duplicateReview),
+          detail: "Hay varias mejoras parecidas; conviene consolidarlas antes de crear más trabajo."
+        };
+      }
+      if (googleLinkReview) {
+        return {
+          title: "Validar Google Maps: " + reviewPrimarySubject(googleLinkReview),
+          detail: "Acepta solo el perfil real de la clínica; búsqueda, ruta o dirección quedan pendientes."
+        };
+      }
+      if (specialistTarget) {
+        return {
+          title: "Revisar especialistas: " + specialistTargetSubject(specialistTarget),
+          detail: "Carga nombres en el editor solo tras revisar la fuente pública."
+        };
+      }
+      if (sourceTarget) {
+        return {
+          title: "Revisar fuente: " + sourceTargetSubject(sourceTarget),
+          detail: "Completa trazabilidad antes de convertir datos internos en ficha visible."
+        };
+      }
+      return {
+        title: "Sin acción prioritaria",
+        detail: "Puedes revisar la bandeja por prioridad o limpiar filtros."
+      };
     }
 
     function enrichmentReviewGroups(rows) {
@@ -5261,34 +5311,37 @@
       var googleLinkReview = firstGoogleLinkReview(reviewCache);
       var specialistReview = firstSpecialistTargetReview(reviewCache);
       var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
+      var actionLead = reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget);
       renderReviewFilterChips();
       show(el("reviewActionStrip"), Boolean(nextReview || clinicGroup || duplicateReview || sourceTarget || googleLinkReview || specialistTarget));
+      el("reviewActionTitle").textContent = actionLead.title;
+      el("reviewActionDetail").textContent = actionLead.detail;
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
-      el("openPriorityReviewBtn").textContent = nextReview ? "Prioridad · " + reviewPrimarySubject(nextReview) : "Prioridad";
+      el("openPriorityReviewBtn").textContent = nextReview ? "Abrir prioridad" : "Prioridad";
       el("openPriorityReviewBtn").title = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "";
       show(el("openClinicGroupBtn"), Boolean(clinicGroup));
-      el("openClinicGroupBtn").textContent = clinicGroup ? "Grupo · " + clinicWorkgroupSubject(clinicGroup) : "Grupo";
+      el("openClinicGroupBtn").textContent = clinicGroup ? "Filtrar grupo" : "Grupo";
       el("openClinicGroupBtn").title = clinicGroup ? "Filtrar grupo: " + clinicWorkgroupSubject(clinicGroup) : "";
       show(el("openDuplicateReviewBtn"), Boolean(duplicateReview));
-      el("openDuplicateReviewBtn").textContent = duplicateReview ? "Atasco · " + reviewPrimarySubject(duplicateReview) : "Atasco";
+      el("openDuplicateReviewBtn").textContent = duplicateReview ? "Abrir atasco" : "Atasco";
       el("openDuplicateReviewBtn").title = duplicateReview ? "Abrir atasco: " + reviewPrimarySubject(duplicateReview) : "";
       show(el("openSourceTargetBtn"), Boolean(sourceTarget));
       el("openSourceTargetBtn").textContent = sourceTarget
-        ? "Fuente · " + sourceTargetSubject(sourceTarget)
+        ? "Abrir fuente"
         : "Fuente";
       el("openSourceTargetBtn").title = sourceTarget
         ? (sourceReview ? "Abrir fuente: " : "Filtrar fuente: ") + sourceTargetSubject(sourceTarget)
         : "";
       show(el("openGoogleLinksBtn"), Boolean(googleLinkReview));
       el("openGoogleLinksBtn").textContent = googleLinkReview
-        ? "Maps · " + reviewPrimarySubject(googleLinkReview)
+        ? "Google Maps"
         : "Abrir Google Maps";
       el("openGoogleLinksBtn").title = googleLinkReview
         ? "Abrir Google Maps: " + reviewPrimarySubject(googleLinkReview)
         : "";
       show(el("openSpecialistTargetBtn"), Boolean(specialistTarget));
       el("openSpecialistTargetBtn").textContent = specialistTarget
-        ? "Especialistas · " + specialistTargetSubject(specialistTarget)
+        ? "Especialistas"
         : "Especialistas";
       el("openSpecialistTargetBtn").title = specialistTarget
         ? (specialistReview ? "Abrir especialistas: " : "Filtrar especialistas: ") + specialistTargetSubject(specialistTarget)
