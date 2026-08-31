@@ -384,6 +384,10 @@ Next 10 technical steps:
     `scripts/check_built_public_profile_ux.py`: after build, every clinic page
     is checked for no decorative location number badges and for clinic-profile
     Google Maps links only.
+67. Clarify specialist coverage reporting. Done locally in
+    `scripts/measure_specialist_coverage.py`: internal specialist signals are
+    shown as detected names, cleaned of role/navigation noise and deduplicated
+    before Daniel sees the next review target.
 
 ## Daniel decision checkpoints
 

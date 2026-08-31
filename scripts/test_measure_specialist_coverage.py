@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """Checks for the read-only specialist coverage report."""
 
-from measure_specialist_coverage import format_coverage, next_specialist_action, pct, prioritized_missing_rows
+from measure_specialist_coverage import (
+    format_coverage,
+    next_specialist_action,
+    pct,
+    prioritized_missing_rows,
+    specialist_examples,
+)
 
 
 def check(condition, message):
@@ -27,6 +33,7 @@ def main():
                 "city": "Madrid",
                 "status": "published",
                 "specialist_claims": 2,
+                "specialist_examples": ["Dra. Maria Uno", "Dr. Luis Dos", "Dr. Luis Dós Fundador"],
                 "open_review_count": 1,
             },
             {
@@ -35,6 +42,7 @@ def main():
                 "city": "Valencia",
                 "status": "published",
                 "specialist_claims": 1,
+                "specialist_examples": ["Dra. Ana Tres"],
                 "open_review_count": 3,
             }
         ],
@@ -46,6 +54,7 @@ def main():
                 "status": "preliminary",
                 "specialist_entries": 5,
                 "specialist_claims": 0,
+                "specialist_examples": [],
                 "open_review_count": 0,
             }
         ],
@@ -58,13 +67,14 @@ def main():
     check("Con especialistas publicados: 1 (25%)" in output, "covered percentage missing")
     check("Sin especialistas publicados: 3 (75%)" in output, "missing percentage missing")
     check("Entradas de especialistas publicadas: 5" in output, "specialist entry count missing")
-    check("Clínicas con claims internos de especialistas: 2" in output, "claim coverage missing")
+    check("Clínicas con nombres internos de especialistas: 2" in output, "claim coverage missing")
     check("Clínicas con revisión abierta sobre especialistas: 1" in output, "review coverage missing")
     check(prioritized_missing_rows(report)[0]["clinic_name"] == "Clinic C", "missing rows should prioritize open reviews")
     check(next_specialist_action(report) == "Revisar Clinic C: ya tiene 3 revisiones abiertas.", "next specialist action missing")
     check("Siguiente acción: Revisar Clinic C: ya tiene 3 revisiones abiertas." in output, "next specialist action line missing")
     check("Writes data: no" in output, "read-only signal missing")
-    check("Clinic A · Madrid · publicada · 2 claims · 1 revisión abierta" in output, "missing clinic line missing")
+    check(specialist_examples(report["missing_specialists"][0]) == ["Dra. Maria Uno", "Dr. Luis Dos"], "specialist examples missing")
+    check("Clinic A · Madrid · publicada · 2 nombres detectados · ej.: Dra. Maria Uno, Dr. Luis Dos · 1 revisión abierta" in output, "missing clinic line missing")
     check(output.index("Clinic C") < output.index("Clinic A"), "higher-review missing clinic should be listed first")
     check("Clinic B · Barcelona · preliminar · 5 especialistas" in output, "covered clinic line missing")
     print("OK specialist coverage: report is read-only")

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import unicodedata
 from typing import Any
 
 from admin_digest import as_int, parse_timestamp
@@ -12,6 +13,51 @@ from submit_discovery_candidates import load_env_file, run_psql
 
 
 PUBLIC_STATUSES = ("published", "preliminary")
+EXAMPLE_STOP_WORDS = {
+    "alicante",
+    "barcelona",
+    "cita",
+    "clinico",
+    "clinica",
+    "clínica",
+    "contacto",
+    "dermatologia",
+    "dermatología",
+    "direccion",
+    "dirección",
+    "equipo",
+    "fisioterapia",
+    "gerente",
+    "fundador",
+    "fundadora",
+    "ginecologia",
+    "ginecología",
+    "longevidad",
+    "madrid",
+    "marbella",
+    "medicina",
+    "medico",
+    "médico",
+    "neurofisiologo",
+    "neurofisiólogo",
+    "nutricion",
+    "nutrición",
+    "oncologia",
+    "oncología",
+    "optica",
+    "óptica",
+    "paciente",
+    "recepcion",
+    "recepción",
+    "responsable",
+    "director",
+    "directora",
+    "sesion",
+    "sesión",
+    "sevilla",
+    "valencia",
+    "zaragoza",
+}
 
 
 def load_coverage(limit: int, local_env: dict[str, str]) -> dict[str, Any]:
@@ -29,13 +75,35 @@ with clinic_rows as (
       else 0
     end as specialist_entries,
     coalesce(claims.claim_count, 0) as specialist_claims,
+    coalesce(claims.specialist_examples, '[]'::jsonb) as specialist_examples,
     coalesce(reviews.open_review_count, 0) as open_review_count
   from public.clinics c
   left join lateral (
-    select count(*) as claim_count
-    from public.field_claims fc
-    where fc.clinic_id = c.id
-      and fc.field_path in ('professionals.published', 'team.public_professionals')
+    select
+      count(*) as claim_count,
+      coalesce(
+        jsonb_agg(specialist_name order by specialist_name) filter (where rn <= 5),
+        '[]'::jsonb
+      ) as specialist_examples
+    from (
+      select
+        specialist_name,
+        row_number() over (order by specialist_name) as rn
+      from (
+        select distinct btrim(item #>> '{{}}') as specialist_name
+        from public.field_claims fc
+        cross join lateral jsonb_array_elements(
+          case
+            when jsonb_typeof(fc.value) = 'array' then fc.value
+            else jsonb_build_array(fc.value)
+          end
+        ) item
+        where fc.clinic_id = c.id
+          and fc.field_path in ('professionals.published', 'team.public_professionals')
+          and fc.verification_status not in ('rejected', 'stale')
+      ) names
+      where specialist_name <> ''
+    ) ranked_names
   ) claims on true
   left join lateral (
     select count(*) as open_review_count
@@ -71,7 +139,7 @@ missing as (
     '[]'::jsonb
   ) as data
   from (
-    select slug, clinic_name, city, status, specialist_claims, open_review_count
+    select slug, clinic_name, city, status, specialist_claims, specialist_examples, open_review_count
     from clinic_rows
     where specialist_entries = 0
     order by open_review_count desc, specialist_claims desc, status, clinic_name
@@ -81,7 +149,7 @@ missing as (
 covered as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.specialist_entries desc, items.clinic_name), '[]'::jsonb) as data
   from (
-    select slug, clinic_name, city, status, specialist_entries, specialist_claims, open_review_count
+    select slug, clinic_name, city, status, specialist_entries, specialist_claims, specialist_examples, open_review_count
     from clinic_rows
     where specialist_entries > 0
     order by specialist_entries desc, clinic_name
@@ -116,6 +184,48 @@ def plural(value: int, singular: str, plural_text: str) -> str:
     return singular if value == 1 else plural_text
 
 
+def fold(value: str) -> str:
+    return unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii").lower()
+
+
+def clean_specialist_example(value: Any) -> str:
+    clean = " ".join(str(value or "").replace(" - ", " — ").split())
+    if not clean:
+        return ""
+    clean = clean.split("—", 1)[0].strip(" ,.;:")
+    words = clean.split()
+    kept: list[str] = []
+    for word in words:
+        key = fold(word.strip(".,;:()[]"))
+        if len(kept) >= 2 and key in EXAMPLE_STOP_WORDS:
+            break
+        kept.append(word)
+    clean = " ".join(kept).strip(" ,.;:")
+    name_words = [word for word in clean.split() if fold(word.strip(".")) not in {"dr", "dra", "doctor", "doctora", "lic"}]
+    if len(name_words) < 2:
+        return ""
+    if any(fold(word.strip(".,;:()[]")) in {"sesion", "cita", "contacto"} for word in name_words):
+        return ""
+    return clean
+
+
+def specialist_examples(row: dict[str, Any], limit: int = 3) -> list[str]:
+    examples = row.get("specialist_examples") or []
+    if not isinstance(examples, list):
+        return []
+    clean = []
+    seen = set()
+    for item in examples:
+        name = clean_specialist_example(item)
+        key = fold(name)
+        if name and key not in seen:
+            clean.append(name)
+            seen.add(key)
+        if len(clean) >= limit:
+            break
+    return clean
+
+
 def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> str:
     name = row.get("clinic_name") or row.get("slug") or "sin nombre"
     city = row.get("city") or "sin ciudad"
@@ -127,7 +237,10 @@ def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> st
         entries = as_int(row.get("specialist_entries"))
         parts.append(f"{entries} {plural(entries, 'especialista', 'especialistas')}")
     if claims:
-        parts.append(f"{claims} {plural(claims, 'claim', 'claims')}")
+        parts.append(f"{claims} {plural(claims, 'nombre detectado', 'nombres detectados')}")
+        examples = specialist_examples(row)
+        if examples:
+            parts.append("ej.: " + ", ".join(examples))
     if reviews:
         parts.append(f"{reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}")
     return "- " + " · ".join(parts)
@@ -157,7 +270,7 @@ def next_specialist_action(report: dict[str, Any]) -> str:
     if reviews:
         return f"Revisar {name}: ya tiene {reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}."
     if claims:
-        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'claim interno', 'claims internos')}."
+        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'nombre detectado', 'nombres detectados')}."
     return f"Buscar especialistas publicados para {name} solo en fuentes oficiales."
 
 
@@ -176,7 +289,7 @@ def format_coverage(report: dict[str, Any]) -> str:
         f"- Con especialistas publicados: {with_specialists} ({pct(with_specialists, visible)})",
         f"- Sin especialistas publicados: {missing} ({pct(missing, visible)})",
         f"- Entradas de especialistas publicadas: {as_int(summary.get('total_specialist_entries'))}",
-        f"- Clínicas con claims internos de especialistas: {as_int(summary.get('clinics_with_specialist_claims'))}",
+        f"- Clínicas con nombres internos de especialistas: {as_int(summary.get('clinics_with_specialist_claims'))}",
         f"- Clínicas con revisión abierta sobre especialistas: {as_int(summary.get('clinics_with_open_specialist_reviews'))}",
         f"- Siguiente acción: {next_specialist_action(report)}",
         "- Writes data: no",
