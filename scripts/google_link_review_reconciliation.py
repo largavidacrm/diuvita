@@ -282,11 +282,45 @@ def format_reconciliation(report: dict[str, Any]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def format_compact_reconciliation(report: dict[str, Any]) -> str:
+    cards = [card for card in report.get("review_cards") or [] if isinstance(card, dict)]
+    summary = report.get("summary") or {}
+    lines = [
+        "# Vitalarga Google link review reconciliation",
+        "",
+        f"Generado: {parse_timestamp(report.get('generated_at'))}",
+        f"Consulta: {report.get('query') or 'todas las tarjetas abiertas'}",
+        "- Writes data: no",
+        f"- Tarjetas: {as_int(summary.get('review_cards'))}",
+        f"- Con perfil directo: {as_int(summary.get('cards_with_direct_maps'))}",
+        f"- Con Maps dudoso: {as_int(summary.get('cards_with_unsafe_maps'))}",
+        f"- Con valoraciones: {as_int(summary.get('cards_with_review_links'))}",
+        "",
+        "## Primeras tarjetas",
+    ]
+    if not cards:
+        lines.append("- No hay tarjetas abiertas con enlaces Google propuestos.")
+        return "\n".join(lines) + "\n"
+    for row in cards[:5]:
+        clinic = row.get("clinic_name") or row.get("clinic_slug") or "sin clínica enlazada"
+        title = row.get("title") or "Revisión interna"
+        lines.append(
+            f"- {clinic}: {title} · "
+            f"{first_status_label(row.get('map_status_counts') or {})}; "
+            f"{as_int(row.get('review_link_count'))} valoraciones · "
+            f"{row.get('next_step')}"
+        )
+    lines.append("")
+    lines.append("Nota: salida compacta sin URLs. Abre la tarjeta en el panel para revisar el enlace real.")
+    return "\n".join(lines) + "\n"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--clinic", default="", help="Normal clinic name, slug or review-title fragment.")
     parser.add_argument("--limit", type=int, default=12)
     parser.add_argument("--json", action="store_true", help="Print raw JSON.")
+    parser.add_argument("--compact", action="store_true", help="Print counts and next steps without URLs.")
     return parser.parse_args()
 
 
@@ -297,6 +331,8 @@ def main() -> int:
     report = load_reconciliation(args.clinic, args.limit, load_env_file())
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
+    elif args.compact:
+        print(format_compact_reconciliation(report), end="")
     else:
         print(format_reconciliation(report), end="")
     return 0

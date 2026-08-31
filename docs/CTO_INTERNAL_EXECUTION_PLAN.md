@@ -727,6 +727,10 @@ Next 10 technical steps:
      ready-to-publish counts, the main required blocker and the next
      publication target, and routes Codex toward Google Maps review work when
      that is the leading publication blocker.
+141. Add compact Google-link reconciliation output. Done locally in
+     `scripts/google_link_review_reconciliation.py`: manual Google Maps review
+     checks can now print counts and next steps without dumping long Google URLs,
+     while the full mode remains available for deliberate link-by-link review.
 
 ## Daniel decision checkpoints
 

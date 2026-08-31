@@ -35,6 +35,12 @@ To inspect open Google-link review cards without creating new work:
 python3 scripts/google_link_review_reconciliation.py
 ```
 
+Compact output hides URLs and keeps only counts plus next steps:
+
+```bash
+python3 scripts/google_link_review_reconciliation.py --compact
+```
+
 To focus one clinic or review-title fragment:
 
 ```bash

@@ -6,6 +6,7 @@ import json
 
 from google_link_review_reconciliation import (
     first_status_label,
+    format_compact_reconciliation,
     format_reconciliation,
     google_link_next_step,
     load_reconciliation,
@@ -81,6 +82,13 @@ def main() -> None:
         "summary": summary,
         "review_cards": [direct, unsafe, review_only],
     })
+    compact_output = format_compact_reconciliation({
+        "query": "",
+        "generated_at": "2026-08-31T08:40:00+00:00",
+        "writes_data": False,
+        "summary": summary,
+        "review_cards": [direct, unsafe, review_only],
+    })
 
     check(summary == {
         "review_cards": 3,
@@ -102,6 +110,12 @@ def main() -> None:
     check("Tarjetas: 3" in output, "summary card count missing")
     check("Estado Maps: parece perfil directo de clínica: 1" in output, "direct output status missing")
     check("Estado Maps: parece dirección suelta; no guardar: 1" in output, "unsafe output status missing")
+    check("Con perfil directo: 1" in compact_output, "compact direct count missing")
+    check("Con Maps dudoso: 1" in compact_output, "compact unsafe count missing")
+    check("Con valoraciones: 3" in compact_output, "compact review count missing")
+    check("Clinic A: Completar enlaces Google: Clinic A" in compact_output, "compact card label missing")
+    check("Nota: salida compacta sin URLs" in compact_output, "compact privacy note missing")
+    check("https://www.google.com/maps" not in compact_output, "compact output should not print Google URLs")
 
     captured = {}
 
