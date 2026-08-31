@@ -565,6 +565,10 @@ Next 10 technical steps:
      `scripts/run_cto_shadow_cycle.py`: optional cycle runs can now include a
      compact Google-link review summary, showing direct-profile readiness or
      unsafe Maps cards without printing long URLs or review payloads.
+109. Compact the review workbench UX. Done locally in `/admin/`: the review
+     panel now shows the recommended action before filters, keeps action titles
+     short, moves long clinic/review names into detail copy and uses a stable
+     button grid that stays readable on mobile.
 
 ## Daniel decision checkpoints
 

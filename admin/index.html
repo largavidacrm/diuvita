@@ -537,6 +537,21 @@
             </div>
             <span class="pill" id="reviewCount">0 abiertas</span>
           </div>
+          <div class="review-action-strip hidden" id="reviewActionStrip">
+            <div class="review-action-lead">
+              <span>Qué hacer ahora</span>
+              <strong id="reviewActionTitle">Abrir prioridad</strong>
+              <p id="reviewActionDetail">El panel elegirá la primera tarjeta útil.</p>
+            </div>
+            <div class="review-action-buttons">
+              <button class="btn secondary quick-primary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
+              <button class="btn secondary quick-action hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
+              <button class="btn secondary quick-action hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
+              <button class="btn secondary quick-action hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
+              <button class="btn secondary quick-action hidden" id="openGoogleLinksBtn" type="button">Google Maps</button>
+              <button class="btn secondary quick-action hidden" id="openSpecialistTargetBtn" type="button">Especialistas</button>
+            </div>
+          </div>
           <div class="review-toolbar">
             <input id="reviewSearch" type="search" placeholder="Buscar revisión">
             <select id="reviewTypeFilter" aria-label="Filtrar revisiones">
@@ -555,21 +570,6 @@
               <option value="low">Baja</option>
             </select>
             <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
-          </div>
-          <div class="review-action-strip hidden" id="reviewActionStrip">
-            <div class="review-action-lead">
-              <span>Qué hacer ahora</span>
-              <strong id="reviewActionTitle">Abrir prioridad</strong>
-              <p id="reviewActionDetail">El panel elegirá la primera tarjeta útil.</p>
-            </div>
-            <div class="review-action-buttons">
-              <button class="btn secondary quick-primary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
-              <button class="btn secondary quick-action hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
-              <button class="btn secondary quick-action hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
-              <button class="btn secondary quick-action hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
-              <button class="btn secondary quick-action hidden" id="openGoogleLinksBtn" type="button">Google Maps</button>
-              <button class="btn secondary quick-action hidden" id="openSpecialistTargetBtn" type="button">Especialistas</button>
-            </div>
           </div>
           <div class="review-filter-panel" id="reviewFilterChips" aria-label="Filtros rápidos de revisiones"></div>
           <div class="table-wrap">
@@ -2247,38 +2247,38 @@
     function reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget) {
       if (nextReview) {
         return {
-          title: "Abrir prioridad: " + reviewPrimarySubject(nextReview),
-          detail: reviewVisibleLabel(nextReview) + " · prioridad " + priorityLabel(nextReview.priority).toLowerCase()
+          title: "Abrir prioridad",
+          detail: reviewPrimarySubject(nextReview) + " · " + reviewVisibleLabel(nextReview) + " · prioridad " + priorityLabel(nextReview.priority).toLowerCase()
         };
       }
       if (clinicGroup) {
         return {
-          title: "Trabajar grupo: " + clinicWorkgroupSubject(clinicGroup),
-          detail: "Varias tarjetas de una misma clínica; revísalas juntas si encajan."
+          title: "Trabajar grupo",
+          detail: clinicWorkgroupSubject(clinicGroup) + ". Varias tarjetas de una misma clínica; revísalas juntas si encajan."
         };
       }
       if (duplicateReview) {
         return {
-          title: "Ordenar atasco: " + reviewPrimarySubject(duplicateReview),
-          detail: "Hay varias mejoras parecidas; conviene consolidarlas antes de crear más trabajo."
+          title: "Ordenar atasco",
+          detail: reviewPrimarySubject(duplicateReview) + ". Hay varias mejoras parecidas; conviene consolidarlas antes de crear más trabajo."
         };
       }
       if (googleLinkReview) {
         return {
-          title: "Validar Google Maps: " + reviewPrimarySubject(googleLinkReview),
-          detail: "Acepta solo el perfil real de la clínica; búsqueda, ruta o dirección quedan pendientes."
+          title: "Validar Google Maps",
+          detail: reviewPrimarySubject(googleLinkReview) + ". Acepta solo el perfil real de la clínica; búsqueda, ruta o dirección quedan pendientes."
         };
       }
       if (specialistTarget) {
         return {
-          title: "Revisar especialistas: " + specialistTargetSubject(specialistTarget),
-          detail: "Carga nombres en el editor solo tras revisar la fuente pública."
+          title: "Revisar especialistas",
+          detail: specialistTargetSubject(specialistTarget) + ". Carga nombres en el editor solo tras revisar la fuente pública."
         };
       }
       if (sourceTarget) {
         return {
-          title: "Revisar fuente: " + sourceTargetSubject(sourceTarget),
-          detail: "Completa trazabilidad antes de convertir datos internos en ficha visible."
+          title: "Revisar fuente",
+          detail: sourceTargetSubject(sourceTarget) + ". Completa trazabilidad antes de convertir datos internos en ficha visible."
         };
       }
       return {

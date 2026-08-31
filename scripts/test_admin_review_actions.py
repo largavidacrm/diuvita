@@ -101,9 +101,19 @@ def main() -> None:
     check(".compact-list em" in css, "proposed link warnings should be styled")
     check("quick-primary" in index and "quick-action" in index, "quick review actions should be classified")
     check("review-action-lead" in index and "review-action-buttons" in index, "quick review actions should have lead copy and grouped buttons")
+    check(
+        index.index('id="reviewActionStrip"') < index.index('id="reviewSearch"'),
+        "recommended review action should appear before search filters",
+    )
+    lead_match = re.search(r"function reviewActionLeadCopy\([\s\S]+?\n    \}", index)
+    check(lead_match is not None, "review action lead copy function missing")
+    check(
+        '"Abrir prioridad: " + reviewPrimarySubject(nextReview)' not in lead_match.group(0),
+        "review action title should not include long dynamic subjects",
+    )
     check(".review-action-strip .quick-primary" in css, "primary quick action should be styled")
-    check("grid-template-columns: minmax(250px, 1fr) minmax(0, 1.4fr)" in css, "quick actions should use a stable lead/buttons grid")
-    check(".review-action-buttons" in css and "justify-content: flex-end" in css, "quick action buttons should be grouped")
+    check("grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr)" in css, "quick actions should use a compact lead/buttons grid")
+    check(".review-action-buttons" in css and "repeat(auto-fit, minmax(8.4rem, 1fr))" in css, "quick action buttons should be gridded")
     check("grid-template-columns: 1fr" in css, "quick actions should stack on mobile")
     print("OK admin review actions: dismiss keeps context")
 

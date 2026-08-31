@@ -63,7 +63,7 @@ def main() -> None:
         "function reviewActionLeadCopy",
         "Qué hacer ahora",
         "Abrir prioridad: ",
-        "Trabajar grupo: ",
+        "Trabajar grupo",
         "Acepta solo el perfil real de la clínica",
         "Abrir siguiente",
         "Abrir prioridad",
