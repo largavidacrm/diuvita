@@ -25,6 +25,8 @@ def main() -> None:
         'id="clinicPendingLocationsPanel"',
         'id="clinicPendingLocationsList"',
         'id="clinicPendingLocationsActions"',
+        "Sedes adicionales",
+        "Sede principal arriba · sin sedes adicionales",
         'id="clinicYearsInPractice"',
         'id="clinicSpecialistsCount"',
         'id="clinicTeamCredentialingVisible"',
@@ -33,8 +35,13 @@ def main() -> None:
         "function locationsToLines",
         "function linesToLocations",
         "function renderLocationEditor",
+        "function readAdditionalLocationEditorRows",
         "function readLocationEditorRows",
         "function currentClinicLocations",
+        "function primaryLocationFromClinic",
+        "function storedClinicLocations",
+        "function primaryLocationFromForm",
+        "function additionalLocationsForEditor",
         "function locationIdentityKey",
         "function currentLocationKeys",
         "function locationDisplayText",
@@ -97,6 +104,7 @@ def main() -> None:
         "/maps/dir",
         "query_place_id=",
         "Transparencia revisada si existe en la web",
+        "La sede principal se edita arriba. Añade otra sede solo si la clínica tiene más ubicaciones.",
         "Añadir sede",
         "Sede principal",
         "Sede adicional",
@@ -105,6 +113,7 @@ def main() -> None:
         check(marker in index, f"missing admin location/transparency marker: {marker}")
 
     check("Sede ' + html(index + 1)" not in index, "location editor should avoid decorative location numbers")
+    check('var rowLabel = index === 0 ? "Sede principal" : "Sede adicional"' not in index, "location editor should not duplicate the primary location row")
 
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     for marker in [

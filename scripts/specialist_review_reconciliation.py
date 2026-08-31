@@ -82,20 +82,49 @@ def review_people(row: dict[str, Any]) -> list[str]:
     return people
 
 
+def annotated_review_cards(cards: list[dict[str, Any]], published_keys: set[str]) -> list[dict[str, Any]]:
+    annotated: list[dict[str, Any]] = []
+    for card in cards:
+        people = review_card_people(card)
+        pending = [
+            person for person in people
+            if normalize_person_key(person) not in published_keys
+        ]
+        already = [
+            person for person in people
+            if normalize_person_key(person) in published_keys
+        ]
+        annotated.append({
+            **card,
+            "professionals_clean": people,
+            "professional_count": len(people),
+            "pending_professionals_from_card": pending,
+            "pending_professional_count": len(pending),
+            "already_published_from_card": already,
+            "already_published_count": len(already),
+            "has_source_url": bool(str(card.get("source_url") or "").strip()),
+        })
+    return annotated
+
+
 def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
     published = clean_person_list(row.get("published_professionals") or [])
-    proposed = review_people(row)
-    internal = clean_person_list(row.get("claim_professionals") or [])
     published_keys = {normalize_person_key(person) for person in published}
+    review_cards = annotated_review_cards(
+        [card for card in row.get("review_cards") or [] if isinstance(card, dict)],
+        published_keys,
+    )
+    proposed = merge_people(*[card.get("professionals_clean") or [] for card in review_cards])
+    internal = clean_person_list(row.get("claim_professionals") or [])
     all_detected = merge_people(proposed, internal)
     pending = [person for person in all_detected if normalize_person_key(person) not in published_keys]
     already = [person for person in all_detected if normalize_person_key(person) in published_keys]
-    review_cards = [card for card in row.get("review_cards") or [] if isinstance(card, dict)]
     result = {
         **row,
         "published_professionals_clean": published,
         "review_professionals_clean": proposed,
         "claim_professionals_clean": internal,
+        "review_cards": review_cards,
         "pending_professionals": pending,
         "already_published_detected": already,
         "published_count": len(published),
@@ -124,6 +153,12 @@ def specialist_reconciliation_next_step(row: dict[str, Any]) -> str:
 
 
 def summarize_clinics(clinics: list[dict[str, Any]]) -> dict[str, int]:
+    cards = [
+        card
+        for row in clinics
+        for card in row.get("review_cards") or []
+        if isinstance(card, dict)
+    ]
     return {
         "clinics": len(clinics),
         "clinics_with_pending_professionals": sum(
@@ -137,6 +172,17 @@ def summarize_clinics(clinics: list[dict[str, Any]]) -> dict[str, int]:
         "review_professionals": sum(as_int(row.get("review_professional_count")) for row in clinics),
         "claim_professionals": sum(as_int(row.get("claim_professional_count")) for row in clinics),
         "pending_professionals": sum(as_int(row.get("pending_professional_count")) for row in clinics),
+        "review_cards_with_source": sum(1 for card in cards if card.get("has_source_url")),
+        "review_cards_without_source": sum(1 for card in cards if not card.get("has_source_url")),
+        "review_cards_with_pending_professionals": sum(
+            1 for card in cards if as_int(card.get("pending_professional_count")) > 0
+        ),
+        "review_cards_already_represented": sum(
+            1
+            for card in cards
+            if as_int(card.get("professional_count")) > 0
+            and as_int(card.get("pending_professional_count")) == 0
+        ),
     }
 
 
@@ -325,13 +371,20 @@ def compact_people(values: list[str], limit: int = 6) -> str:
 def format_review_cards(cards: list[dict[str, Any]], limit: int = 4) -> list[str]:
     lines = []
     for card in cards[:limit]:
-        people = review_card_people(card)
+        people = card.get("professionals_clean") or review_card_people(card)
         title = card.get("title") or "Revisión interna"
-        count = len(people)
+        count = as_int(card.get("professional_count")) or len(people)
+        pending = as_int(card.get("pending_professional_count"))
+        already = as_int(card.get("already_published_count"))
         source = compact_url(card.get("source_url"))
-        source_note = f" · fuente: {source}" if source else ""
+        source_note = f" · fuente: {source}" if source else " · fuente: pendiente"
+        review_note = (
+            f" · nuevos: {pending}; ya en ficha: {already}"
+            if pending or already
+            else ""
+        )
         lines.append(
-            f"  - {title}: {count} {plural(count, 'nombre', 'nombres')} ({compact_people(people, 4)}){source_note}"
+            f"  - {title}: {count} {plural(count, 'nombre', 'nombres')} ({compact_people(people, 4)}){review_note}{source_note}"
         )
     if len(cards) > limit:
         lines.append(f"  - +{len(cards) - limit} tarjetas más")
@@ -350,6 +403,8 @@ def format_reconciliation(report: dict[str, Any]) -> str:
         f"- Clínicas medidas: {as_int(summary.get('clinics') or len(clinics))}",
         f"- Pendientes de decidir: {as_int(summary.get('pending_professionals'))}",
         f"- Tarjetas con especialistas: {as_int(summary.get('review_cards'))}",
+        f"- Tarjetas con fuente clara: {as_int(summary.get('review_cards_with_source'))}/{as_int(summary.get('review_cards'))}",
+        f"- Tarjetas con nombres nuevos: {as_int(summary.get('review_cards_with_pending_professionals'))}",
         "",
     ]
     if not clinics:

@@ -270,10 +270,10 @@
             <input id="clinicGoogleReviewsUrl" name="clinicGoogleReviewsUrl" type="url" placeholder="https://">
           </div>
           <div class="field field-wide">
-            <label>Sedes</label>
+            <label>Sedes adicionales</label>
             <div class="location-editor" id="clinicLocationEditor">
               <div class="location-editor-head">
-                <span id="clinicLocationCount">Sin sedes adicionales</span>
+                <span id="clinicLocationCount">Sede principal arriba · sin sedes adicionales</span>
                 <button class="btn secondary" id="clinicAddLocationBtn" type="button">Añadir sede</button>
               </div>
               <div class="location-rows" id="clinicLocationRows"></div>
@@ -743,6 +743,7 @@
     var activeClinicReview = null;
     var activeClinicReviewIds = [];
     var activeClinicVersions = [];
+    var activePrimaryLocationSeed = null;
     var activeClinicVersionRequest = 0;
     var activeClinicLockRequest = 0;
     var activeClinicClaimRequest = 0;
@@ -3649,6 +3650,71 @@
       return clean.replace(/\s+/g, " ").trim();
     }
 
+    function locationAddressKey(location) {
+      var item = normalizedLocation(location);
+      if (!item) return "";
+      var clean = [item.city, item.address].map(function (part) {
+        return text(part).trim().toLowerCase();
+      }).join("|");
+      if (clean.normalize) clean = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return clean.replace(/\s+/g, " ").trim();
+    }
+
+    function primaryLocationFromClinic(clinic) {
+      var data = (clinic && clinic.current_data) || {};
+      var savedLocations = normalizedLocations(data.locations);
+      var address = (clinic && clinic.address) || data.address;
+      var mapsUrl = data.maps_url || data.google_maps_url;
+      var reviewsUrl = data.google_reviews_url || data.reviews_url;
+      if (address || mapsUrl || reviewsUrl) {
+        return normalizedLocation({
+          name: "Sede principal",
+          city: (clinic && clinic.city) || data.city,
+          address: address,
+          maps_url: mapsUrl,
+          google_reviews_url: reviewsUrl
+        });
+      }
+      return savedLocations[0] || null;
+    }
+
+    function storedClinicLocations(clinic) {
+      var data = (clinic && clinic.current_data) || {};
+      var locations = normalizedLocations(data.locations);
+      if (locations.length) return locations;
+      var primary = primaryLocationFromClinic(clinic);
+      return primary ? [primary] : [];
+    }
+
+    function primaryLocationFromForm() {
+      if (!trimmed("clinicAddress") && !trimmed("clinicMapsUrl") && !trimmed("clinicGoogleReviewsUrl")) return null;
+      return normalizedLocation({
+        name: "Sede principal",
+        city: trimmed("clinicCity"),
+        address: trimmed("clinicAddress"),
+        maps_url: trimmed("clinicMapsUrl"),
+        google_reviews_url: trimmed("clinicGoogleReviewsUrl")
+      });
+    }
+
+    function isSamePrimaryLocation(location, primary) {
+      if (!location || !primary) return false;
+      var locationKey = locationIdentityKey(location);
+      var primaryKey = locationIdentityKey(primary);
+      if (locationKey && primaryKey && locationKey === primaryKey) return true;
+      var locationAddress = locationAddressKey(location);
+      var primaryAddress = locationAddressKey(primary);
+      return Boolean(locationAddress && primaryAddress && locationAddress === primaryAddress);
+    }
+
+    function additionalLocationsForEditor(value) {
+      var locations = normalizedLocations(value);
+      if (!locations.length) return [];
+      var primary = activePrimaryLocationSeed || primaryLocationFromForm();
+      if (isSamePrimaryLocation(locations[0], primary)) return locations.slice(1);
+      return locations;
+    }
+
     function currentLocationKeys() {
       var keys = {};
       currentClinicLocations().forEach(function (location) {
@@ -3819,7 +3885,7 @@
 
     function locationRowHtml(location, index) {
       location = normalizedLocation(location) || {};
-      var rowLabel = index === 0 ? "Sede principal" : "Sede adicional";
+      var rowLabel = "Sede adicional";
       return '<article class="location-row" data-location-row>' +
         '<div class="location-row-head">' +
           '<strong>' + html(rowLabel) + '</strong>' +
@@ -3836,7 +3902,7 @@
       '</article>';
     }
 
-    function readLocationEditorRows() {
+    function readAdditionalLocationEditorRows() {
       return Array.prototype.slice.call(el("clinicLocationRows").querySelectorAll("[data-location-row]")).map(function (row) {
         var item = {};
         Array.prototype.slice.call(row.querySelectorAll("[data-location-field]")).forEach(function (field) {
@@ -3848,34 +3914,45 @@
       }).filter(Boolean);
     }
 
+    function readLocationEditorRows() {
+      return readAdditionalLocationEditorRows();
+    }
+
     function syncLocationEditorTextarea() {
       var rowCount = el("clinicLocationRows").querySelectorAll("[data-location-row]").length;
-      var locations = readLocationEditorRows();
+      var locations = currentClinicLocations(false);
       setInput("clinicLocations", locations.map(locationLine).join("\n"));
-      var count = Math.max(rowCount, locations.length);
+      var count = Math.max(rowCount, readAdditionalLocationEditorRows().length);
+      var primaryLabel = primaryLocationFromForm() ? "Sede principal arriba" : "Sin sede principal";
       el("clinicLocationCount").textContent = count
-        ? count + (count === 1 ? " sede en edición" : " sedes en edición")
-        : "Sin sedes adicionales";
+        ? primaryLabel + " · " + count + (count === 1 ? " adicional" : " adicionales")
+        : primaryLabel + " · sin sedes adicionales";
     }
 
     function renderLocationEditor(value) {
-      var locations = normalizedLocations(value);
+      var locations = additionalLocationsForEditor(value);
       el("clinicLocationRows").innerHTML = locations.length
         ? locations.map(locationRowHtml).join("")
-        : '<p class="empty">Sin sedes adicionales.</p>';
+        : '<p class="empty">La sede principal se edita arriba. Añade otra sede solo si la clínica tiene más ubicaciones.</p>';
       syncLocationEditorTextarea();
     }
 
     function addClinicLocation(location) {
-      var locations = readLocationEditorRows();
+      var locations = readAdditionalLocationEditorRows();
       locations.push(normalizedLocation(location) || {});
       el("clinicLocationRows").innerHTML = locations.map(locationRowHtml).join("");
       syncLocationEditorTextarea();
     }
 
-    function currentClinicLocations() {
-      syncLocationEditorTextarea();
-      return linesToLocations(el("clinicLocations").value);
+    function currentClinicLocations(shouldSync) {
+      var locations = [];
+      var primary = primaryLocationFromForm();
+      if (primary) locations.push(primary);
+      locations = locations.concat(readAdditionalLocationEditorRows());
+      if (shouldSync !== false) {
+        setInput("clinicLocations", locations.map(locationLine).join("\n"));
+      }
+      return locations;
     }
 
     function locationsHaveAddress(value) {
@@ -5037,6 +5114,7 @@
 
     function currentClinicField(clinic, key) {
       var data = (clinic && clinic.current_data) || {};
+      if (key === "locations") return storedClinicLocations(clinic);
       var topLevel = {
         display_name: clinic && clinic.display_name,
         name: clinic && clinic.display_name,
@@ -5627,17 +5705,19 @@
       if (!activeClinic) return;
 
       var data = activeClinic.current_data || {};
+      var primaryLocation = primaryLocationFromClinic(activeClinic);
+      activePrimaryLocationSeed = primaryLocation;
       el("clinicEditorTitle").textContent = activeClinic.display_name || "Editar clínica";
       el("clinicEditorSlug").textContent = activeClinic.slug;
       setInput("clinicId", activeClinic.id);
       setInput("clinicName", activeClinic.display_name || data.name);
       setInput("clinicWebsite", activeClinic.website || data.web);
-      setInput("clinicCity", activeClinic.city || data.city);
+      setInput("clinicCity", activeClinic.city || data.city || (primaryLocation && primaryLocation.city));
       setInput("clinicCountry", activeClinic.country || data.country);
       setInput("clinicRegion", activeClinic.region || data.region);
-      setInput("clinicAddress", activeClinic.address || data.address);
-      setInput("clinicMapsUrl", data.maps_url || data.google_maps_url);
-      setInput("clinicGoogleReviewsUrl", data.google_reviews_url || data.reviews_url);
+      setInput("clinicAddress", activeClinic.address || data.address || (primaryLocation && primaryLocation.address));
+      setInput("clinicMapsUrl", data.maps_url || data.google_maps_url || (primaryLocation && primaryLocation.maps_url));
+      setInput("clinicGoogleReviewsUrl", data.google_reviews_url || data.reviews_url || (primaryLocation && primaryLocation.google_reviews_url));
       renderLocationEditor(data.locations);
       setInput("clinicStatus", activeClinic.status || "review");
       setInput("clinicConfidence", activeClinic.profile_confidence == null ? "" : Math.round(Number(activeClinic.profile_confidence) * 100));
@@ -5737,6 +5817,7 @@
       activeClinic = null;
       activeClinicReview = null;
       activeClinicReviewIds = [];
+      activePrimaryLocationSeed = null;
       activeClinicClaims = [];
       activeClinicClaimSources = {};
       activeClinicClaimCount = 0;

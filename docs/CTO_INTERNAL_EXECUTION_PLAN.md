@@ -613,6 +613,16 @@ Next 10 technical steps:
      `docs/DANIEL_ADMIN_GUIDE.md`: the guide now explains the case-recommended
      review panel, proposal-only specialist rows, the "Pendientes de web
      pública" clinic filter and the meaning of "Pendiente de web".
+120. Add source and duplicate-awareness to specialist reconciliation. Done
+     locally in `scripts/specialist_review_reconciliation.py`: specialist
+     reports now show how many review cards have a clear source, how many cards
+     contain names not yet in the ficha and how many proposed names are already
+     represented, without publishing any professional data.
+121. Simplify location editing in the admin. Done locally in `/admin/`: the
+     primary location now lives in the main address, Google Maps and Google
+     reviews fields, while the location editor shows only additional sedes. The
+     saved structured location data is still preserved for public pages and
+     multi-location clinics.
 
 ## Daniel decision checkpoints
 
