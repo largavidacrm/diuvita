@@ -71,6 +71,7 @@ TEST_STEPS = [
     ("test: team source discovery", "scripts/test_discover_clinic_team_sources.py"),
     ("test: location source discovery", "scripts/test_discover_clinic_location_sources.py"),
     ("test: Google link discovery", "scripts/test_discover_clinic_google_links.py"),
+    ("test: Google link reconciliation", "scripts/test_google_link_review_reconciliation.py"),
     ("test: enrichment claims", "scripts/test_capture_enrichment_review_claims.py"),
     ("test: blocking claim reviews", "scripts/test_submit_blocking_claim_reviews.py"),
     ("test: candidate promotion gate", "scripts/test_promote_candidate_reviews.py"),

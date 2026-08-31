@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
+from google_maps_url_rules import is_direct_google_maps_profile_url, is_google_maps_like_url
+
 ROOT = Path(__file__).resolve().parents[1]
 CLINICS_FILE = ROOT / "data" / "clinics.json"
 LOGOS_FILE = ROOT / "data" / "logos.json"
@@ -28,10 +30,6 @@ OPTIONAL_STRINGS = (
 )
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-ADDRESS_MAP_RE = re.compile(
-    r"/maps/place/(calle|c/|avenida|av\.|avda\.?|paseo|passeig|plaza|ronda|carretera|road|street|carrer|camino|via)([\s,./-]|$)",
-    flags=re.I,
-)
 
 
 def add_error(errors, path, message):
@@ -47,56 +45,6 @@ def valid_url(value):
         return False
     parsed = urlparse(value)
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
-
-
-def decoded_url(value):
-    if not isinstance(value, str):
-        return ""
-    try:
-        from urllib.parse import unquote_plus
-
-        return unquote_plus(value).strip().lower()
-    except Exception:
-        return value.strip().lower()
-
-
-def is_google_maps_like_url(value):
-    clean = decoded_url(value)
-    return bool(
-        ("google." in clean and "/maps" in clean)
-        or "maps.app.goo.gl" in clean
-        or "goo.gl/maps" in clean
-        or "g.page/" in clean
-    )
-
-
-def is_direct_google_maps_profile_url(value):
-    clean = decoded_url(value)
-    if not clean:
-        return False
-    if not is_google_maps_like_url(clean):
-        return False
-    if any(marker in clean for marker in ("/maps/search", "/maps/dir", "google.com/search")):
-        return False
-    if ("?q=" in clean or "&q=" in clean or "?query=" in clean or "&query=" in clean) and "place_id:" not in clean:
-        return False
-    if ADDRESS_MAP_RE.search(clean):
-        return False
-    return any(
-        marker in clean
-        for marker in (
-            "/maps/place/",
-            "place_id:",
-            "placeid=",
-            "place_id=",
-            "query_place_id=",
-            "cid=",
-            "ftid=",
-            "maps.app.goo.gl",
-            "goo.gl/maps",
-            "g.page/",
-        )
-    )
 
 
 def load_json(path, errors):

@@ -29,6 +29,22 @@ Compact read-only output for large batches:
 python3 scripts/discover_clinic_google_links.py --limit 19 --compact
 ```
 
+To inspect open Google-link review cards without creating new work:
+
+```bash
+python3 scripts/google_link_review_reconciliation.py
+```
+
+To focus one clinic or review-title fragment:
+
+```bash
+python3 scripts/google_link_review_reconciliation.py --clinic "Arvila"
+```
+
+That reconciliation report is read-only. It separates direct-looking clinic
+profile links from searches, routes or street-address links, and gives Daniel
+the next manual review step.
+
 Apply mode creates internal `clinic_profile_enrichment` review cards only:
 
 ```bash

@@ -2,8 +2,78 @@
 """Shared conservative rules for clinic Google Maps profile links."""
 from __future__ import annotations
 
+import re
+from urllib.parse import unquote_plus, urlparse
+
 
 GOOGLE_MAPS_PROFILE_KEYS = ("maps_url", "google_maps_url", "map_url")
+ADDRESS_MAP_RE = re.compile(
+    r"/maps/place/(calle|c/|avenida|av\.|avda\.?|paseo|passeig|plaza|ronda|carretera|road|street|carrer|camino|via)([\s,./-]|$)",
+    flags=re.I,
+)
+
+
+def decoded_url(value: object) -> str:
+    if not isinstance(value, str):
+        return ""
+    try:
+        return unquote_plus(value).strip().lower()
+    except Exception:
+        return value.strip().lower()
+
+
+def is_google_maps_like_url(value: object) -> bool:
+    clean = decoded_url(value)
+    return bool(
+        ("google." in clean and "/maps" in clean)
+        or "maps.app.goo.gl" in clean
+        or "goo.gl/maps" in clean
+        or "g.page/" in clean
+    )
+
+
+def is_direct_google_maps_profile_url(value: object) -> bool:
+    clean = decoded_url(value)
+    if not clean:
+        return False
+    if not is_google_maps_like_url(clean):
+        return False
+    if any(marker in clean for marker in ("/maps/search", "/maps/dir", "google.com/search")):
+        return False
+    if ("?q=" in clean or "&q=" in clean or "?query=" in clean or "&query=" in clean) and "place_id:" not in clean:
+        return False
+    if ADDRESS_MAP_RE.search(clean):
+        return False
+    return any(
+        marker in clean
+        for marker in (
+            "/maps/place/",
+            "place_id:",
+            "placeid=",
+            "place_id=",
+            "query_place_id=",
+            "cid=",
+            "ftid=",
+            "maps.app.goo.gl",
+            "goo.gl/maps",
+            "g.page/",
+        )
+    )
+
+
+def google_maps_review_status(value: object) -> str:
+    clean = decoded_url(value)
+    if not clean:
+        return "empty"
+    if not is_google_maps_like_url(clean):
+        return "not_google_maps"
+    if is_direct_google_maps_profile_url(clean):
+        return "direct_profile"
+    if "/maps/search" in clean or "/maps/dir" in clean or "google.com/search" in clean:
+        return "search_or_route"
+    if ADDRESS_MAP_RE.search(clean):
+        return "street_address"
+    return "needs_manual_review"
 
 
 def google_maps_profile_url_sql(value_sql: str) -> str:

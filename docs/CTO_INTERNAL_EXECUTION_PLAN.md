@@ -556,6 +556,11 @@ Next 10 technical steps:
      `scripts/run_cto_shadow_cycle.py`: optional cycle runs can now include a
      compact specialist reconciliation for one clinic or a small visible-clinic
      batch without exposing long professional lists in the automatic log.
+107. Add read-only Google-link review reconciliation. Done locally in
+     `scripts/google_link_review_reconciliation.py`: open Google Maps/review
+     cards can now be inspected for direct clinic-profile links, unsafe
+     search/route/address links and the next manual validation step without
+     editing clinics or creating more review cards.
 
 ## Daniel decision checkpoints
 
