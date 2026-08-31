@@ -2696,10 +2696,22 @@
       return 0;
     }
 
+    function reviewSpecialistSourceUrls(row) {
+      if (!row) return [];
+      var payload = row.payload || {};
+      var candidate = candidateFromReview(row);
+      var fallback = payload.source_url || payload.website || candidate.source_url || candidate.website || candidate.web;
+      return candidateReviewSources(candidate, payload, fallback);
+    }
+
     function reviewProfessionalsBadge(row) {
       var count = reviewProfessionalsCount(row);
       if (!count) return "";
-      return ' <span class="pill">' + html(count + (count === 1 ? " especialista" : " especialistas")) + '</span>';
+      var sourceCount = reviewSpecialistSourceUrls(row).length;
+      var sourcePill = sourceCount
+        ? ' <span class="pill">fuente visible</span>'
+        : ' <span class="pill warning">fuente pendiente</span>';
+      return ' <span class="pill">' + html(count + (count === 1 ? " especialista" : " especialistas")) + '</span>' + sourcePill;
     }
 
     function reviewHasSpecialistProposal(row) {
@@ -2716,7 +2728,10 @@
     function reviewRowDetail(row) {
       var specialistCount = reviewProfessionalsCount(row);
       if (specialistCount) {
-        return "Especialistas propuestos: " + specialistCount + ". Se revisan como propuesta interna; no se publican solos.";
+        var sourceDetail = reviewSpecialistSourceUrls(row).length
+          ? "Fuente visible para revisar."
+          : "Fuente pendiente: revisa la web oficial antes de cargar nombres.";
+        return "Especialistas propuestos: " + specialistCount + ". " + sourceDetail + " No se publican solos.";
       }
       if (reviewHasGoogleLinkProposal(row)) {
         return "Google Maps propuesto. Acepta solo el perfil real de la clínica.";

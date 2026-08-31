@@ -623,6 +623,10 @@ Next 10 technical steps:
      reviews fields, while the location editor shows only additional sedes. The
      saved structured location data is still preserved for public pages and
      multi-location clinics.
+122. Surface source clarity on specialist review rows. Done locally in
+     `/admin/`: review rows with proposed specialists now show whether a source
+     is visible or still pending, so Daniel can prioritize review quality
+     without treating names as automatically publishable.
 
 ## Daniel decision checkpoints
 

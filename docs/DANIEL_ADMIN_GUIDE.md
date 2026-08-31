@@ -112,6 +112,11 @@ explicando que esos nombres son **propuestas internas**. No aparecen en la web
 hasta que abras la tarjeta, revises la fuente pública, cargues la propuesta en
 el editor y guardes la ficha.
 
+Si una tarjeta de especialistas muestra **fuente pendiente**, úsala con más
+cuidado: primero abre la web oficial y confirma que esos profesionales aparecen
+publicados por la clínica. **Fuente visible** solo significa que el panel tiene
+un enlace para revisar, no que el dato esté aprobado.
+
 El filtro rápido **Google Maps** muestra las tarjetas que traen un enlace directo
 propuesto a Google Maps o a valoraciones de Google. Ábrelo, comprueba que el
 enlace corresponde al perfil real de la clínica y solo entonces carga la
