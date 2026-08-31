@@ -573,6 +573,11 @@ Next 10 technical steps:
      `scripts/specialist_review_reconciliation.py`: specialist reports now show
      aggregate pending-name/card counts and compact source URLs per review card,
      so Daniel can see why names are proposed without publishing them.
+111. Make weak Google Maps entries visible before saving. Done locally in
+     `/admin/`: the clinic editor now warns when a Maps field contains a search,
+     route, street-address page or non-Maps URL, focuses the problematic field
+     and blocks saving until it is removed or replaced with the clinic's direct
+     Google Business/Profile URL.
 
 ## Daniel decision checkpoints
 

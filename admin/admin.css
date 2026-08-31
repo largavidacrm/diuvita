@@ -1663,6 +1663,20 @@ td small {
   box-shadow: 0 0 0 3px rgba(166, 129, 62, 0.18);
 }
 
+.field-warning,
+.location-field-warning {
+  margin: 0.12rem 0 0;
+  color: var(--amber);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.location-field-warning {
+  grid-column: 1 / -1;
+  margin-top: -0.32rem;
+}
+
 .publish-cell {
   display: grid;
   gap: 0.22rem;

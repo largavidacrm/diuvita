@@ -263,6 +263,7 @@
           <div class="field">
             <label for="clinicMapsUrl">Google Maps</label>
             <input id="clinicMapsUrl" name="clinicMapsUrl" type="url" placeholder="https://">
+            <p class="field-warning hidden" id="clinicMapsUrlWarning">Pega el perfil de Google Business de la clínica, no una búsqueda, ruta o dirección.</p>
           </div>
           <div class="field">
             <label for="clinicGoogleReviewsUrl">Valoraciones Google</label>
@@ -3603,7 +3604,58 @@
     }
 
     function hasGenericClinicMapsCandidate() {
-      return currentClinicMapsUrls().some(googleMapsUrlNeedsManualReview);
+      return currentClinicMapsUrls().some(function (url) {
+        return Boolean(googleMapsReviewMessage(url));
+      });
+    }
+
+    function googleMapsReviewMessage(value) {
+      var clean = text(value).trim();
+      if (!clean) return "";
+      if (!isGoogleMapsLikeUrl(clean)) return "No parece un enlace de Google Maps.";
+      if (googleMapsUrlNeedsManualReview(clean)) {
+        return "Parece una búsqueda, ruta o dirección. Pega el perfil real de la clínica.";
+      }
+      if (!isReviewedGoogleMapsProfileUrl(clean)) {
+        return "Falta una señal clara de perfil de clínica.";
+      }
+      return "";
+    }
+
+    function focusFirstGenericMapsCandidate() {
+      if (googleMapsReviewMessage(trimmed("clinicMapsUrl"))) {
+        focusPublishField("clinicMapsUrl");
+        return;
+      }
+      var invalidInput = Array.prototype.slice.call(
+        el("clinicLocationRows").querySelectorAll('[data-location-field="maps_url"]')
+      ).find(function (input) {
+        return Boolean(googleMapsReviewMessage(input.value));
+      });
+      if (invalidInput) {
+        invalidInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        invalidInput.focus();
+        invalidInput.classList.add("field-attention");
+        window.setTimeout(function () {
+          invalidInput.classList.remove("field-attention");
+        }, 1600);
+      }
+    }
+
+    function updateClinicMapsWarnings() {
+      var mainMessage = googleMapsReviewMessage(trimmed("clinicMapsUrl"));
+      el("clinicMapsUrlWarning").textContent = mainMessage || "Pega el perfil de Google Business de la clínica, no una búsqueda, ruta o dirección.";
+      show(el("clinicMapsUrlWarning"), Boolean(mainMessage));
+      el("clinicMapsUrl").classList.toggle("field-attention", Boolean(mainMessage));
+      Array.prototype.slice.call(el("clinicLocationRows").querySelectorAll("[data-location-row]")).forEach(function (row) {
+        var input = row.querySelector('[data-location-field="maps_url"]');
+        var warning = row.querySelector("[data-location-maps-warning]");
+        if (!input || !warning) return;
+        var message = googleMapsReviewMessage(input.value);
+        warning.textContent = message;
+        show(warning, Boolean(message));
+        input.classList.toggle("field-attention", Boolean(message));
+      });
     }
 
     function reviewedMapsProfileValue(value) {
@@ -3637,6 +3689,7 @@
           '<label>Ciudad<input data-location-field="city" value="' + html(location.city || "") + '" placeholder="Barcelona"></label>' +
           '<label>Dirección<input data-location-field="address" value="' + html(location.address || "") + '" placeholder="Calle y número"></label>' +
           '<label>Google Maps<input data-location-field="maps_url" type="url" value="' + html(location.maps_url || "") + '" placeholder="https://"></label>' +
+          '<p class="location-field-warning hidden" data-location-maps-warning></p>' +
           '<label>Valoraciones Google<input data-location-field="google_reviews_url" type="url" value="' + html(location.google_reviews_url || "") + '" placeholder="https://"></label>' +
         '</div>' +
       '</article>';
@@ -4213,6 +4266,7 @@
         return item.required && !item.ok;
       });
       updateClinicSaveButtonLabel();
+      updateClinicMapsWarnings();
       renderPublishReadiness(publicItems, targetStatus);
       el("clinicPublicationHint").textContent = publicVisibilityText(targetStatus);
       el("clinicPublicationHint").className = "publication-hint" + (publicTarget ? " visible-target" : "");
@@ -5624,6 +5678,12 @@
 
       var confidence = Math.max(0, Math.min(100, Number(el("clinicConfidence").value || 0))) / 100;
       var selectedStatus = trimmed("clinicStatus");
+      if (hasGenericClinicMapsCandidate()) {
+        updateClinicMapsWarnings();
+        focusFirstGenericMapsCandidate();
+        toast("Google Maps pendiente: pega el perfil real de la clínica, no una búsqueda, ruta o dirección.");
+        return;
+      }
       var missingValidation = missingFinalValidationLabels();
       if ((selectedStatus === "published" || selectedStatus === "preliminary") && missingValidation.length) {
         var shouldContinue = window.confirm(

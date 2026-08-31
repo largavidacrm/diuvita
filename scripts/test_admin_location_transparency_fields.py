@@ -16,6 +16,7 @@ def main() -> None:
 
     for marker in [
         'id="clinicMapsUrl"',
+        'id="clinicMapsUrlWarning"',
         'id="clinicGoogleReviewsUrl"',
         'id="clinicLocationEditor"',
         'id="clinicLocationRows"',
@@ -43,6 +44,9 @@ def main() -> None:
         "function currentClinicMapsUrls",
         "function hasReviewedClinicMapsProfile",
         "function hasGenericClinicMapsCandidate",
+        "function googleMapsReviewMessage",
+        "function focusFirstGenericMapsCandidate",
+        "function updateClinicMapsWarnings",
         "function reviewedMapsProfileValue",
         "function sanitizeLocationMaps",
         "function sanitizedLocationsForSave",
@@ -80,7 +84,12 @@ def main() -> None:
         "\"prices.url\": trimmed(\"clinicPricingUrl\")",
         "Dirección o sede completa",
         "Google Maps de clínica, no dirección suelta",
+        "Pega el perfil de Google Business de la clínica",
+        "Google Maps pendiente: pega el perfil real de la clínica",
         'validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, publicTarget || hasGenericMapsCandidate, "clinicMapsUrl")',
+        "if (hasGenericClinicMapsCandidate())",
+        "focusFirstGenericMapsCandidate();",
+        "updateClinicMapsWarnings();",
         'setJsonText(currentData, "maps_url", reviewedMapsProfileValue(trimmed("clinicMapsUrl")))',
         'setJsonLocations(currentData, "locations", sanitizedLocationsForSave(currentClinicLocations()))',
         'if ((key === "maps_url" || key === "google_maps_url") && !reviewedMapsProfileValue(proposalListValue(fields[key]))) return;',
@@ -103,6 +112,8 @@ def main() -> None:
         ".location-editor-head",
         ".location-row",
         ".location-row-grid",
+        ".field-warning",
+        ".location-field-warning",
     ]:
         check(marker in css, f"missing admin location editor style: {marker}")
 
