@@ -941,6 +941,7 @@
     var SNAPSHOT_RETENTION_DAYS = 180;
     var SNAPSHOT_KEEP_LATEST = 3;
     var SAFE_WRITE_REVIEW_BACKLOG_LIMIT = 50;
+    var SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN = 5;
     var ALL_CONTROL_SECTIONS = "allControlSections";
     var SIDEBAR_STORAGE_KEY = "vitalargaAdminSidebarCollapsed";
     var activeControlSection = "globalPlanPanel";
@@ -2439,6 +2440,14 @@
       return reviewTypeLabel(row && row.review_type);
     }
 
+    function reviewDisplayTitle(row) {
+      var title = text(row && row.title).trim() || "Revisión abierta";
+      if (row && row.review_type === "clinic_quality_audit") {
+        return title.replace(/^Completar ficha:/i, "Revisión manual:");
+      }
+      return title;
+    }
+
     function reviewMatchesType(row, value) {
       if (!value) return true;
       if (value === "blocking_claim_review") return isBlockingClaimReview(row);
@@ -3199,24 +3208,43 @@
       var count = Number(openCount || 0);
       var limit = SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
       if (count >= limit) return { label: "Activo · " + count + "/" + limit, tone: "danger-text" };
-      if (limit - count <= 5) return { label: "Cerca · " + count + "/" + limit, tone: "warning-text" };
+      if (isReviewBacklogPausedForWrites(count)) return { label: "Cerca · " + count + "/" + limit, tone: "warning-text" };
       return { label: "Normal · " + count + "/" + limit, tone: "" };
+    }
+
+    function safeWriteReviewPauseCount() {
+      return Math.max(0, SAFE_WRITE_REVIEW_BACKLOG_LIMIT - SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN);
+    }
+
+    function safeWriteReviewSlots(openCount) {
+      return Math.max(0, safeWriteReviewPauseCount() - Number(openCount || 0));
+    }
+
+    function isReviewBacklogPausedForWrites(openCount) {
+      return Number(openCount || 0) >= safeWriteReviewPauseCount();
+    }
+
+    function safeWriteSlotLabel(openCount) {
+      var slots = safeWriteReviewSlots(openCount);
+      if (slots === 1) return "queda 1 propuesta antes de la pausa preventiva";
+      return "quedan " + slots + " propuestas antes de la pausa preventiva";
     }
 
     function updateJobBacklogHint(openCount) {
       dashboardOpenReviewCount = Number(openCount || 0);
-      var remaining = SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount;
       var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
-      var near = !full && remaining <= 5;
-      var paused = full || near;
+      var paused = !full && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
+      var shortMargin = !full && !paused && safeWriteReviewSlots(dashboardOpenReviewCount) <= 3;
       var node = el("jobBacklogHint");
-      node.className = "job-backlog-hint" + (full ? " danger" : near ? " warning" : "");
+      node.className = "job-backlog-hint" + (full ? " danger" : (paused || shortMargin) ? " warning" : "");
       node.textContent = full
         ? "Freno activo: limpia revisiones antes de crear más trabajos."
-        : near
+        : paused
           ? "Pausa preventiva: limpia revisiones antes de crear más trabajos."
-          : "Bandeja con margen: puedes crear trabajos si aportan valor.";
-      el("jobBtn").disabled = paused;
+          : (shortMargin
+            ? "Margen corto: " + safeWriteSlotLabel(dashboardOpenReviewCount) + "."
+            : "Bandeja con margen: " + safeWriteSlotLabel(dashboardOpenReviewCount) + ".");
+      el("jobBtn").disabled = full || paused;
     }
 
     function updateJobHelp() {
@@ -3312,7 +3340,7 @@
 
     function reviewSubjectCell(row) {
       var detail = reviewRowDetail(row);
-      return '<div class="review-subject-cell"><strong>' + html(row.title || "Revisión abierta") +
+      return '<div class="review-subject-cell"><strong>' + html(reviewDisplayTitle(row)) +
         '</strong>' + (detail ? '<small>' + html(detail) + '</small>' : "") + '</div>';
     }
 
@@ -5537,7 +5565,7 @@
 
     function reviewManualFieldTarget(row, item) {
       if (!row || !item || !reviewCanEditClinicFields(row)) return null;
-      if (item.action !== "Completar en ficha" && item.key.indexOf("quality_issue") !== 0) return null;
+      if (item.action !== "Revisión manual" && item.key.indexOf("quality_issue") !== 0) return null;
       var directTarget = reviewMissingFieldTargetsForText([
         item.key,
         item.label,
@@ -6537,7 +6565,7 @@
       if (key === "locations") return "Cargar sedes y revisar";
       if (key === "profesionales") return "Revisar equipo";
       if (["public_pricing", "pricing_url", "team_credentialing_visible"].indexOf(key) >= 0) return "Revisión humana";
-      if (key.indexOf("quality_issue") === 0) return "Completar en ficha";
+      if (key.indexOf("quality_issue") === 0) return "Revisión manual";
       if (key.indexOf("source_change") === 0) return "Comparar con fuente";
       return "Cargar y revisar";
     }
@@ -6589,7 +6617,7 @@
       }
       if (!items.length && row.review_type === "clinic_quality_audit") {
         issueLabels(payload.issues).forEach(function (item, index) {
-          pushProposalFocusItem(items, seen, row, "quality_issue_" + index, item, "Campo pendiente", "Completar en ficha");
+          pushProposalFocusItem(items, seen, row, "quality_issue_" + index, item, "Campo pendiente", "Revisión manual");
         });
       }
       if (!items.length && row.review_type === "clinic_claim_request") {
@@ -6805,9 +6833,15 @@
       var targets = reviewMissingFieldTargets(row);
       var example = reviewSourceJobExampleForTargets(targets);
       var labels = targets.map(function (item) { return item.label.toLowerCase(); }).join(", ");
+      var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
+      var paused = !full && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
       el("reviewSourceJobMeta").textContent = "Pega " + example.source + " para revisar: " + labels + ".";
       el("reviewSourceJobUrl").placeholder = example.placeholder;
-      el("reviewSourceJobHint").textContent = "El agente/LLM mirará solo esos campos y dejará otra propuesta revisable. No publica ni guarda datos en la ficha.";
+      el("reviewSourceJobHint").textContent = full || paused
+        ? "Pausa preventiva activa: primero limpia revisiones antes de enviar más fuentes al agente."
+        : "El agente/LLM mirará solo esos campos y dejará otra propuesta revisable. " +
+          safeWriteSlotLabel(dashboardOpenReviewCount) + ". No publica ni guarda datos en la ficha.";
+      el("reviewSourceJobBtn").disabled = full || paused;
       setInput("reviewSourceJobUrl", "");
       show(panel, true);
     }
@@ -7059,10 +7093,11 @@
 
     function setReviewDecisionLoading(loading) {
       var approveBlocked = !loading && activeReview && Number(((activeReview.payload || {}).duplicate_probability) || 0) >= 0.9;
+      var sourceJobPaused = !loading && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
       el("reviewApproveBtn").disabled = loading || approveBlocked;
       el("reviewRejectBtn").disabled = loading;
       el("reviewModifyBtn").disabled = loading;
-      el("reviewSourceJobBtn").disabled = loading;
+      el("reviewSourceJobBtn").disabled = loading || sourceJobPaused;
     }
 
     async function approveClinicClaimRequestReview(fields, modified) {
@@ -8061,7 +8096,7 @@
       var duplicateProbability = Number(payload.duplicate_probability || 0);
       var blocksDraft = duplicateProbability >= 0.9;
 
-      el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
+      el("reviewEditorTitle").textContent = reviewDisplayTitle(activeReview);
       el("reviewEditorMeta").textContent = reviewVisibleLabel(activeReview) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
       renderReviewValidationView(activeReview);
       el("reviewApproveBtn").disabled = blocksDraft;
@@ -8540,7 +8575,7 @@
         toast("Freno de bandeja activo. Primero limpia revisiones.");
         return;
       }
-      if (SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount <= 5) {
+      if (isReviewBacklogPausedForWrites(dashboardOpenReviewCount)) {
         updateJobBacklogHint(dashboardOpenReviewCount);
         toast("Pausa preventiva: limpia revisiones antes de crear más trabajos.");
         return;
@@ -8586,7 +8621,7 @@
         requires_human: false
       };
       var result = await client.from("agent_jobs").insert(payload).select("id").single();
-      el("reviewSourceJobBtn").disabled = false;
+      el("reviewSourceJobBtn").disabled = isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
       if (result.error) {
         toast("No se pudo crear el trabajo con esa fuente.");
         return;
@@ -8604,7 +8639,7 @@
         toast("Freno de bandeja activo. Primero limpia revisiones.");
         return;
       }
-      if (SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount <= 5) {
+      if (isReviewBacklogPausedForWrites(dashboardOpenReviewCount)) {
         updateJobBacklogHint(dashboardOpenReviewCount);
         toast("Pausa preventiva: limpia revisiones antes de crear más trabajos.");
         return;

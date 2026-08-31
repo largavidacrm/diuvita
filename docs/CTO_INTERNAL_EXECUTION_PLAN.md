@@ -817,6 +817,13 @@ Next 10 technical steps:
      (for example team/specialists pages), and queue source jobs with explicit
      human-supplied-source metadata, requested field labels and a
      proposal-only output contract.
+156. Make quality-audit field actions explicitly manual. Done locally in
+     `/admin/`: pending-field cards now present **Revisión manual** as the
+     visible action instead of the vague "Completar en ficha" wording, while
+     still opening the clinic editor focused on the exact missing field. The
+     review-source job panel also shows the remaining safe margin before the
+     preventive backlog pause and respects that pause for agent/LLM source
+     jobs.
 
 ## Daniel decision checkpoints
 

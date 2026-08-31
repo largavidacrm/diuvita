@@ -247,10 +247,17 @@ def main() -> None:
         "approve, reject and modify should resolve one proposal and continue the queue",
     )
     check(
-        'item.action !== "Completar en ficha"' in index
+        'item.action !== "Revisión manual"' in index
         and "openClinicEditorForReview(activeReview, targetId || firstReviewMissingFieldTargetId(activeReview))" in index
         and 'el("reviewProposalFocusList").addEventListener("click"' in index,
         "quality audit fields should offer direct manual review into the matching clinic field",
+    )
+    check(
+        '"Completar en ficha"' not in index
+        and "function reviewDisplayTitle" in index
+        and 'title.replace(/^Completar ficha:/i, "Revisión manual:")' in index
+        and 'el("reviewEditorTitle").textContent = reviewDisplayTitle(activeReview)' in index,
+        "quality-audit review UI should say manual review instead of completing a ficha",
     )
     check(
         'show(el("jobCreatePanel"), false)' in index

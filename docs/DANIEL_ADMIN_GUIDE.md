@@ -100,7 +100,7 @@ En **Estado del sistema**, mira especialmente:
 - **Sedes explícitas**: cuenta cuántas sedes están guardadas como sedes separadas y cuántas clínicas son multisede.
 - **Sedes sin Maps**: avisa si alguna sede guardada no tiene enlace a ficha de clínica en Google Maps.
 - **Sedes sin valoraciones**: avisa si alguna sede guardada no tiene enlace directo a valoraciones de Google.
-- **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas.
+- **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas y cuántas propuestas quedan antes de la pausa preventiva.
 - **Reclamaciones de ficha**: solicitudes de una clínica para revisar una ficha; siempre requieren decisión humana.
 - **Grupo por clínica**: señala qué clínica concentra varias tarjetas abiertas para que puedas filtrarlas y abrirlas una por una.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.
@@ -194,9 +194,10 @@ especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
 revises antes de guardar.
 
 Si una auditoría dice que faltan datos pero la fuente está clara, pulsa
-**Revisión manual** para abrir la ficha en el campo pendiente. Si conoces una
-URL oficial donde el agente debe mirar, pégala en **Dile al agente dónde mirar**
-y pulsa **Enviar URL al agente**. Por ejemplo, si faltan especialistas, pega la
+**Revisión manual** dentro del campo pendiente. Ese botón abre la ficha
+directamente en el dato que falta, para que lo edites tú. Si conoces una URL
+oficial donde el agente debe mirar, pégala en **Dile al agente dónde mirar** y
+pulsa **Enviar URL al agente**. Por ejemplo, si faltan especialistas, pega la
 página oficial de equipo o especialistas. Eso crea trabajo interno para
 propuestas revisables, limitado a los campos pendientes de esa tarjeta; no
 guarda ni publica datos.
