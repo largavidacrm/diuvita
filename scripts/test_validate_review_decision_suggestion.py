@@ -149,6 +149,14 @@ def main():
     })
     check(manual_modify["valid"], "single manual target should allow modify without invented values")
     check(manual_modify["manual_review_target_key"] == "profesionales", "single manual target should be selected")
+    check(
+        manual_modify["manual_review_target"] == {
+            "key": "profesionales",
+            "label": "Especialistas publicados",
+            "admin_target_id": "clinicProfessionals",
+        },
+        "validated manual route should keep the admin target",
+    )
     check(manual_modify["field_change_keys"] == [], "manual review should not carry field changes")
 
     explicit_manual_modify = validate_suggestion(manual_packet, {
@@ -172,6 +180,18 @@ def main():
         "manual_review_target_key": "profesionales",
     })
     check(not approve_manual_target["valid"], "manual target should not travel with approve")
+
+    smuggled_source = validate_suggestion(manual_packet, {
+        "review_id": "quality-1",
+        "action": "modify",
+        "manual_review_target_key": "profesionales",
+        "source_url": "https://www.tiarahealth.com/our-team-of-experts/",
+    })
+    check(not smuggled_source["valid"], "LLM suggestions should not smuggle source-job fields")
+    check(
+        "unexpected suggestion key is not allowed: source_url" in smuggled_source["errors"],
+        "unexpected source URL key should be reported",
+    )
 
     ambiguous_manual = validate_suggestion(sample_quality_packet(multiple_targets=True), {
         "review_id": "quality-1",

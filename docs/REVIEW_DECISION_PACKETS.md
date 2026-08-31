@@ -90,10 +90,13 @@ sugerencia:
 
 - usa una acción permitida;
 - corresponde a la misma tarjeta;
+- no introduce claves fuera del esquema permitido;
 - no trae escrituras, publicación, Supabase, Netlify ni SQL;
 - no modifica campos fuera de `editable_fields`;
 - permite `modify` sin `field_changes` solo si apunta a un
   `manual_review_target_key` permitido;
+- devuelve el objetivo manual validado con su `admin_target_id`, para que la UI
+  o una futura capa LLM pueda abrir el campo correcto sin adivinar;
 - rechaza modificaciones con Google Maps débil o teléfono dudoso;
 - mantiene la decisión final como revisión humana.
 

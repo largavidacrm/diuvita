@@ -70,6 +70,21 @@ HIGH_ATTENTION_REVIEW_TYPES = {
 }
 SUGGESTION_CHANGE_KEYS = ("field_changes", "changes", "modified_fields", "proposed_fields")
 SUGGESTION_MANUAL_TARGET_KEYS = ("manual_review_target_key", "manual_target_key", "target_field")
+ALLOWED_SUGGESTION_KEYS = {
+    "action",
+    "field_changes",
+    "changes",
+    "manual_review_target_key",
+    "manual_target_key",
+    "modified_fields",
+    "proposed_fields",
+    "rationale",
+    "reason",
+    "review_id",
+    "target_field",
+    "warnings",
+    "warnings_to_show",
+}
 
 
 def has_value(value: Any) -> bool:
@@ -117,14 +132,18 @@ def editable_field_map(packet: dict[str, Any]) -> dict[str, str]:
     return editable
 
 
-def manual_review_target_map(packet: dict[str, Any]) -> dict[str, str]:
-    targets: dict[str, str] = {}
+def manual_review_target_map(packet: dict[str, Any]) -> dict[str, dict[str, str]]:
+    targets: dict[str, dict[str, str]] = {}
     for item in packet.get("manual_review_targets") or []:
         if not isinstance(item, dict):
             continue
         key = canonical_field(item.get("key"))
         if key:
-            targets[key] = str(item.get("label") or key)
+            targets[key] = {
+                "key": key,
+                "label": str(item.get("label") or key),
+                "admin_target_id": str(item.get("admin_target_id") or ""),
+            }
     return targets
 
 
@@ -162,6 +181,10 @@ def forbidden_control_paths(value: Any, path: str = "") -> list[str]:
             paths.append(child_path)
         paths.extend(forbidden_control_paths(item, child_path))
     return paths
+
+
+def unexpected_suggestion_keys(suggestion: dict[str, Any]) -> list[str]:
+    return sorted(str(key) for key in suggestion if str(key) not in ALLOWED_SUGGESTION_KEYS)
 
 
 def attention_flags(packet: dict[str, Any], change_keys: list[str]) -> list[str]:
@@ -214,6 +237,8 @@ def validate_suggestion(
     suggestion_review_id = str(suggestion.get("review_id") or "").strip()
     if suggestion_review_id and packet_review_id and suggestion_review_id != packet_review_id:
         errors.append("suggestion review_id does not match the packet")
+    for key in unexpected_suggestion_keys(suggestion):
+        errors.append(f"unexpected suggestion key is not allowed: {key}")
 
     action = normalize_action(suggestion.get("action"))
     actions = allowed_actions(packet)
@@ -275,6 +300,7 @@ def validate_suggestion(
         "human_required": True,
         "field_change_keys": change_keys,
         "manual_review_target_key": manual_target_key or None,
+        "manual_review_target": manual_targets.get(manual_target_key) if manual_target_key else None,
         "attention_flags": attention_flags(packet, change_keys),
         "reason": reason,
         "warnings": warnings,

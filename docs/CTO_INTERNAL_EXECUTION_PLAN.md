@@ -906,6 +906,11 @@ Next 10 technical steps:
      chips and clinic-card logos now include a text fallback that appears if an
      approved image asset fails to load, preventing broken-image icons such as
      the Tiara Health case Daniel spotted.
+173. Harden LLM suggestion validation. Done locally in
+     `scripts/validate_review_decision_suggestion.py`: future LLM suggestions
+     now reject unexpected keys such as stray `source_url` fields and return
+     the validated manual admin target when `modify` means opening a field
+     manually, keeping source jobs separate from decision suggestions.
 
 ## Daniel decision checkpoints
 
