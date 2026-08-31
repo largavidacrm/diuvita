@@ -601,6 +601,10 @@ Next 10 technical steps:
      missing publication blocker with a plain-language place to fix it in the
      admin, including the direct-clinic Google Maps rule and blocking-claim
      review step.
+117. Add review-backlog pressure to location coverage. Done locally in
+     `scripts/measure_location_coverage.py`: sede reports now show open review
+     pressure and defer turning internal location detections into new review
+     cards when the bandeja is close to the safe-write limit.
 
 ## Daniel decision checkpoints
 

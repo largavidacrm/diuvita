@@ -7,7 +7,7 @@ import json
 import sys
 from typing import Any
 
-from admin_digest import as_int, parse_timestamp, plural
+from admin_digest import SAFE_WRITE_REVIEW_BACKLOG_LIMIT, as_int, parse_timestamp, plural
 from google_maps_url_rules import coalesced_jsonb_text_sql, google_maps_profile_url_sql
 from submit_discovery_candidates import load_env_file, run_psql
 
@@ -138,6 +138,8 @@ location_checks as (
 	summary as (
 	  select jsonb_build_object(
 	    'visible_clinics', (select count(*) from visible_clinics),
+	    'open_reviews', (select count(*) from public.review_queue where status = 'open'),
+	    'safe_write_limit', {SAFE_WRITE_REVIEW_BACKLOG_LIMIT},
 	    'clinics_with_locations', count(distinct id),
 	    'multi_location_clinics', count(distinct id) filter (where clinic_location_count > 1),
 	    'total_locations', count(*),
@@ -323,7 +325,27 @@ def location_next_step(row: dict[str, Any]) -> str:
     return f"revisar {location} de {clinic}"
 
 
+def location_review_backlog_guard(summary: dict[str, Any]) -> str:
+    open_reviews = as_int(summary.get("open_reviews"))
+    limit = as_int(summary.get("safe_write_limit")) or SAFE_WRITE_REVIEW_BACKLOG_LIMIT
+    if "open_reviews" not in summary:
+        return "sin dato de bandeja"
+    if open_reviews >= limit:
+        return f"freno activo: {open_reviews}/{limit} revisiones abiertas"
+    if limit - open_reviews <= 5:
+        return f"cerca del freno: {open_reviews}/{limit} revisiones abiertas"
+    return f"con margen: {open_reviews}/{limit} revisiones abiertas"
+
+
+def should_defer_location_review_creation(summary: dict[str, Any]) -> bool:
+    if "open_reviews" not in summary:
+        return False
+    limit = as_int(summary.get("safe_write_limit")) or SAFE_WRITE_REVIEW_BACKLOG_LIMIT
+    return as_int(summary.get("open_reviews")) >= limit - 5
+
+
 def next_location_action(report: dict[str, Any]) -> str:
+    summary = report.get("summary") or {}
     target = report.get("next_location_target") or {}
     if isinstance(target, dict) and target:
         clinic = str(target.get("clinic_name") or target.get("slug") or "la primera clínica")
@@ -341,6 +363,11 @@ def next_location_action(report: dict[str, Any]) -> str:
     if claim:
         clinic = str(claim.get("clinic_name") or claim.get("slug") or "la primera clínica")
         count = as_int(claim.get("location_claim_count"))
+        if should_defer_location_review_creation(summary):
+            return (
+                f"Bajar bandeja antes de crear propuestas de sedes: {clinic} tiene "
+                f"{count} {plural(count, 'sede detectada interna', 'sedes detectadas internas')}"
+            )
         return f"Preparar revisión de sedes para {clinic}: {count} {plural(count, 'sede detectada interna', 'sedes detectadas internas')}"
     return "sin sedes pendientes medidas"
 
@@ -383,17 +410,21 @@ def format_location_proposal_row(row: dict[str, Any]) -> str:
     )
 
 
-def format_location_claim_row(row: dict[str, Any]) -> str:
+def format_location_claim_row(row: dict[str, Any], summary: dict[str, Any] | None = None) -> str:
     clinic = row.get("clinic_name") or row.get("slug") or "sin nombre"
     city = row.get("clinic_city") or "sin ciudad"
     status = status_label(str(row.get("status") or ""))
     detected = as_int(row.get("location_claim_count"))
     claims = as_int(row.get("claim_count"))
+    if summary and should_defer_location_review_creation(summary):
+        next_step = "siguiente: esperar; primero bajar la bandeja de revisión"
+    else:
+        next_step = "siguiente: convertir en propuesta revisable cuando haya espacio en la bandeja"
     return (
         f"- {clinic} · {city} · {status} · "
         f"{detected} {plural(detected, 'sede detectada interna', 'sedes detectadas internas')} · "
         f"{claims} {plural(claims, 'evidencia', 'evidencias')} · "
-        "siguiente: convertir en propuesta revisable cuando haya espacio en la bandeja"
+        f"{next_step}"
     )
 
 
@@ -419,6 +450,7 @@ def format_location_coverage(report: dict[str, Any]) -> str:
         f"- Sedes con dirección: {address_ready}/{total_locations} ({pct(address_ready, total_locations)})",
         f"- Sedes con Google Maps de clínica: {maps_ready}/{total_locations} ({pct(maps_ready, total_locations)})",
         f"- Sedes con valoraciones Google: {reviews_ready}/{total_locations} ({pct(reviews_ready, total_locations)})",
+        f"- Bandeja de revisión: {location_review_backlog_guard(summary)}",
         f"- Clínicas con sedes propuestas en bandeja: {as_int(summary.get('clinics_with_location_proposals'))}",
         f"- Sedes propuestas en bandeja: {as_int(summary.get('proposed_location_rows'))}",
         f"- Clínicas con sedes detectadas internas: {as_int(summary.get('clinics_with_location_claims'))}",
@@ -443,7 +475,7 @@ def format_location_coverage(report: dict[str, Any]) -> str:
     if not claim_rows:
         lines.append("- No hay sedes detectadas en evidencias internas.")
     for row in claim_rows:
-        lines.append(format_location_claim_row(row))
+        lines.append(format_location_claim_row(row, summary))
     lines.append("")
     lines.append("Nota: este informe no publica, no edita clínicas y no ordena clínicas por calidad.")
     return "\n".join(lines) + "\n"

@@ -10,9 +10,11 @@ from measure_location_coverage import (
     format_location_row,
     location_name,
     location_next_step,
+    location_review_backlog_guard,
     next_location_action,
     pct,
     safe_limit,
+    should_defer_location_review_creation,
 )
 
 
@@ -26,6 +28,8 @@ def main():
         "generated_at": "2026-08-30T20:20:00+00:00",
         "summary": {
             "visible_clinics": 4,
+            "open_reviews": 40,
+            "safe_write_limit": 50,
             "clinics_with_locations": 2,
             "multi_location_clinics": 1,
             "total_locations": 3,
@@ -101,6 +105,8 @@ def main():
     check(safe_limit(0) == 1, "limit should have a lower bound")
     check(safe_limit(250) == 100, "limit should have an upper bound")
     check(pct(1, 4) == "25%", "percentage formatting missing")
+    check(location_review_backlog_guard(report["summary"]) == "con margen: 40/50 revisiones abiertas", "backlog guard label missing")
+    check(not should_defer_location_review_creation(report["summary"]), "base report should allow location review creation")
     check(location_name(report["pending_locations"][1]) == "Sede adicional", "fallback label should avoid numbering")
     check(
         next_location_action(report)
@@ -118,6 +124,7 @@ def main():
     check("Sedes medidas: 3" in output, "location count missing")
     check("Sedes con Google Maps de clínica: 1/3 (33%)" in output, "Maps coverage missing")
     check("Sedes con valoraciones Google: 0/3 (0%)" in output, "reviews coverage missing")
+    check("Bandeja de revisión: con margen: 40/50 revisiones abiertas" in output, "backlog guard output missing")
     check("Clínicas con sedes propuestas en bandeja: 1" in output, "location proposal clinic count missing")
     check("Sedes propuestas en bandeja: 2" in output, "location proposal count missing")
     check("Clínicas con sedes detectadas internas: 1" in output, "location claim clinic count missing")
@@ -147,6 +154,20 @@ def main():
     check(
         next_location_action(claims_only_report) == "Preparar revisión de sedes para Clinic D: 2 sedes detectadas internas",
         "next action should fall back to internal location claims",
+    )
+    backlogged_report = dict(claims_only_report, summary=dict(report["summary"], open_reviews=48))
+    check(
+        location_review_backlog_guard(backlogged_report["summary"]) == "cerca del freno: 48/50 revisiones abiertas",
+        "near-limit backlog guard missing",
+    )
+    check(should_defer_location_review_creation(backlogged_report["summary"]), "near-limit report should defer new cards")
+    check(
+        next_location_action(backlogged_report) == "Bajar bandeja antes de crear propuestas de sedes: Clinic D tiene 2 sedes detectadas internas",
+        "backlogged next action should defer location review creation",
+    )
+    check(
+        "primero bajar la bandeja" in format_location_claim_row(report["pending_location_claims"][0], backlogged_report["summary"]),
+        "backlogged claim row should explain deferred proposal creation",
     )
     check("Sede 1" not in output and "Sede 2" not in output, "location output should avoid numbered labels")
     address_row = dict(report["pending_locations"][0], pending_fields=["Dirección", "Google Maps de clínica"])
