@@ -9,7 +9,8 @@ It answers:
 - whether the inbox is close to the safe-write backlog guard;
 - how many profile-enrichment cards are open;
 - which clinics concentrate several open review cards across review types;
-- the recommended order inside each clinic group;
+- the recommended order inside each clinic group, including human-only clinic
+  claim requests before ordinary source or profile work;
 - which clinics have several profile-enrichment cards open at the same time;
 - which duplicate group is the best first manual review target.
 
@@ -30,3 +31,7 @@ python3 scripts/review_backlog_brief.py --json
 
 This is most useful when `Freno bandeja` is close to active or when `/admin/`
 shows duplicated profile-enrichment pressure.
+
+Clinic claim requests remain review-only signals. The brief can tell Daniel
+where they are, but it does not verify identity, grant access, edit clinic data
+or resolve the review card.

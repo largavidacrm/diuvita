@@ -653,6 +653,13 @@ Next 10 technical steps:
      `phone`/`telephone` to `telefono`, and saving is stopped until suspicious
      contact values are corrected or removed. This prevents IDs such as medical
      registration numbers from being closed as public phone data.
+127. Surface clinic claim requests as human-only review work. Done locally in
+     `/admin/`, `scripts/admin_digest.py`, `scripts/daniel_review_brief.py` and
+     `scripts/review_backlog_brief.py`: `clinic_claim_request` cards now have a
+     dedicated filter, priority path and plain safety copy explaining that they
+     do not verify identity, grant access, edit clinic data or publish anything.
+     They open the existing clinic context for Daniel's decision instead of
+     being treated like draft-creation cards.
 
 ## Daniel decision checkpoints
 

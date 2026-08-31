@@ -205,6 +205,7 @@ review_clinic_workgroups as (
         and coalesce(rq.payload ->> 'quality_context', '') <> 'blocking_claims'
     ) as quality_reviews,
     count(*) filter (where rq.review_type = 'clinic_profile_enrichment') as enrichment_reviews,
+    count(*) filter (where rq.review_type = 'clinic_claim_request') as claim_request_reviews,
     count(*) filter (where rq.review_type = 'source_change_detected') as source_change_reviews,
     count(*) filter (where rq.review_type = 'candidate_clinic') as candidate_reviews,
     max(rq.priority) as max_priority,
@@ -229,6 +230,7 @@ review_first_clinic_workgroup as (
           blocking_claim_reviews,
           quality_reviews,
           enrichment_reviews,
+          claim_request_reviews,
           source_change_reviews,
           candidate_reviews,
           max_priority,
@@ -236,6 +238,7 @@ review_first_clinic_workgroup as (
         from review_clinic_workgroups
         order by
           blocking_claim_reviews desc,
+          claim_request_reviews desc,
           open_count desc,
           max_priority desc,
           oldest_created_at asc,
@@ -1080,6 +1083,7 @@ def format_review_type(review_type: str) -> str:
         "clinic_profile_enrichment": "mejoras de ficha",
         "clinic_quality_audit": "auditorias de calidad",
         "blocking_claim_review": "claims bloqueantes",
+        "clinic_claim_request": "reclamaciones de ficha",
         "source_change_detected": "cambios de fuente",
     }
     return labels.get(review_type, review_type.replace("_", " "))
@@ -1175,6 +1179,7 @@ def first_clinic_workgroup(digest: dict[str, Any]) -> str:
     parts = []
     for key, singular, plural_text in [
         ("blocking_claim_reviews", "claim bloqueante", "claims bloqueantes"),
+        ("claim_request_reviews", "reclamación de ficha", "reclamaciones de ficha"),
         ("enrichment_reviews", "mejora", "mejoras"),
         ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
         ("quality_reviews", "auditoría", "auditorías"),
@@ -1301,6 +1306,8 @@ def next_action_label(digest: dict[str, Any]) -> str:
         return "Revisar fallos recientes"
     if reviews_by_type.get("blocking_claim_review"):
         return "Revisar claim bloqueante"
+    if reviews_by_type.get("clinic_claim_request"):
+        return "Revisar reclamación de ficha"
     if any(item.get("review_type") == "candidate_clinic" and as_int(item.get("priority")) >= 90 for item in open_reviews):
         return "Validar candidatas"
     if reviews_by_type.get("candidate_clinic"):

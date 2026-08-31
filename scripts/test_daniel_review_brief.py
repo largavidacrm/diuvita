@@ -182,6 +182,28 @@ def main():
     counts = review_counts(digest)
 
     check(counts["blocking_claim_review"] == 1, "blocking-claim count missing")
+    claim_digest = sample_digest()
+    claim_digest["summary"]["reviews"]["open"] = 3
+    claim_digest["reviews_by_type"] = [
+        {"review_type": "clinic_claim_request", "open_count": 1}
+    ]
+    claim_digest["open_reviews"] = [
+        {
+            "review_type": "clinic_claim_request",
+            "priority": 96,
+            "clinic_name": "Monarka Clinic",
+            "title": "Reclamar ficha: Monarka Clinic",
+        }
+    ]
+    claim_digest["review_examples_by_type"] = list(claim_digest["open_reviews"])
+    claim_digest["review_first_clinic_workgroup"] = {}
+    claim_output = format_brief(claim_digest)
+    check(first_step(claim_digest)[0] == "Primero revisa reclamaciones de ficha.", "claim-request first step missing")
+    check("1 reclamación de ficha pendiente" in claim_output, "claim-request count missing")
+    check(
+        "No confirma identidad, no da acceso y no cambia datos por sí sola." in claim_output,
+        "claim-request safety wording missing",
+    )
     check(first_step(digest)[0] == "Primero baja un grupo repetido.", "near-limit clinic groups should be first")
     check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")

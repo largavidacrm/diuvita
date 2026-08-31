@@ -32,6 +32,8 @@ def main() -> None:
         "reviewProfessionalsCount(b) - reviewProfessionalsCount(a)",
         'value="blocking_claim_review"',
         '["blocking_claim_review", "Claims bloqueantes"]',
+        'value="clinic_claim_request"',
+        '["clinic_claim_request", "Reclamaciones"]',
         "data-review-type",
         "data-review-priority",
         "data-review-duplicate",

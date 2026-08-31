@@ -75,6 +75,7 @@ review_type_summary as (
             then 'claims bloqueantes'
           when review_type = 'clinic_quality_audit' then 'auditorias de calidad'
           when review_type = 'clinic_profile_enrichment' then 'mejoras de ficha'
+          when review_type = 'clinic_claim_request' then 'reclamaciones de ficha'
           when review_type = 'candidate_clinic' then 'clinicas candidatas'
           when review_type = 'source_change_detected' then 'cambios de fuente'
           else review_type
@@ -133,6 +134,7 @@ clinic_workgroups as (
       to_jsonb(items)
       order by
         items.blocking_claim_reviews desc,
+        items.claim_request_reviews desc,
         items.card_count desc,
         items.max_priority desc,
         items.oldest_created_at asc
@@ -156,6 +158,7 @@ clinic_workgroups as (
           and coalesce(payload ->> 'quality_context', '') <> 'blocking_claims'
       ) as quality_reviews,
       count(*) filter (where review_type = 'clinic_profile_enrichment') as enrichment_reviews,
+      count(*) filter (where review_type = 'clinic_claim_request') as claim_request_reviews,
       count(*) filter (where review_type = 'source_change_detected') as source_change_reviews,
       count(*) filter (where review_type = 'candidate_clinic') as candidate_reviews,
       max(priority) as max_priority,
@@ -173,10 +176,11 @@ clinic_workgroups as (
           case
             when review_type = 'clinic_quality_audit'
               and payload ->> 'quality_context' = 'blocking_claims' then 1
-            when review_type = 'source_change_detected' then 2
-            when review_type = 'clinic_profile_enrichment' then 3
-            when review_type = 'clinic_quality_audit' then 4
-            when review_type = 'candidate_clinic' then 5
+            when review_type = 'clinic_claim_request' then 2
+            when review_type = 'source_change_detected' then 3
+            when review_type = 'clinic_profile_enrichment' then 4
+            when review_type = 'clinic_quality_audit' then 5
+            when review_type = 'candidate_clinic' then 6
             else 9
           end,
           priority desc,
@@ -187,6 +191,7 @@ clinic_workgroups as (
     group by clinic_id, clinic_name, clinic_slug, city, clinic_status
     order by
       blocking_claim_reviews desc,
+      claim_request_reviews desc,
       card_count desc,
       max_priority desc,
       oldest_created_at asc
@@ -239,6 +244,7 @@ def review_type_label(review_type: Any) -> str:
     labels = {
         "clinic_quality_audit": "auditoría",
         "clinic_profile_enrichment": "mejora",
+        "clinic_claim_request": "reclamación de ficha",
         "candidate_clinic": "clínica candidata",
         "source_change_detected": "cambio de fuente",
     }
@@ -262,6 +268,8 @@ def workgroup_order(row: dict[str, Any]) -> str:
     steps = []
     if as_int(row.get("blocking_claim_reviews")):
         steps.append("claims bloqueantes")
+    if as_int(row.get("claim_request_reviews")):
+        steps.append("reclamaciones")
     if as_int(row.get("source_change_reviews")):
         steps.append("fuentes cambiadas")
     if as_int(row.get("enrichment_reviews")):
@@ -276,6 +284,8 @@ def workgroup_order(row: dict[str, Any]) -> str:
 def workgroup_recommendation(row: dict[str, Any]) -> str:
     if as_int(row.get("blocking_claim_reviews")):
         return "primero quitar o corregir datos dudosos"
+    if as_int(row.get("claim_request_reviews")):
+        return "escalar a Daniel antes de cambiar datos"
     if as_int(row.get("source_change_reviews")):
         return "primero revisar qué cambió en la fuente"
     if as_int(row.get("enrichment_reviews")):
@@ -293,6 +303,7 @@ def format_clinic_workgroup(row: dict[str, Any]) -> str:
     parts = []
     for key, singular, plural_text in [
         ("blocking_claim_reviews", "claim bloqueante", "claims bloqueantes"),
+        ("claim_request_reviews", "reclamación", "reclamaciones"),
         ("enrichment_reviews", "mejora", "mejoras"),
         ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
         ("quality_reviews", "auditoría", "auditorías"),
@@ -331,6 +342,13 @@ def first_backlog_action(report: dict[str, Any]) -> str:
             f"Revisar {name}: {cards} {plural(cards, 'tarjeta', 'tarjetas')}, "
             f"empezando por claims bloqueantes"
         )
+    claim_workgroups = [
+        row for row in workgroups if as_int(row.get("claim_request_reviews"))
+    ]
+    if claim_workgroups:
+        first = claim_workgroups[0]
+        name = first.get("clinic_name") or first.get("clinic_slug") or "la primera reclamación"
+        return f"Revisar {name}: reclamación de ficha pendiente; Daniel decide antes de cambiar datos"
     duplicates = report.get("duplicate_enrichment") or []
     if duplicates:
         first = duplicates[0]

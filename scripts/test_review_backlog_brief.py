@@ -108,10 +108,23 @@ def main():
     check(safe_limit(100) == 50, "limit should have an upper bound")
     check(compact_lookup_key("Clínica Sensabell") == "clinicasensabell", "compact query should remove accents and spaces")
     check(review_type_label("clinic_profile_enrichment") == "mejora", "review type label missing")
+    check(review_type_label("clinic_claim_request") == "reclamación de ficha", "claim-request label missing")
     check(
         format_workgroup_card(report["clinic_workgroups"][0]["cards"][0])
         == "  - Revisar Sensabell: auditoría · P85 · creada 2026-08-30 08:30",
         "workgroup card formatting missing",
+    )
+    check(
+        format_workgroup_card(
+            {
+                "title": "Reclamar ficha: Monarka Clinic",
+                "review_type": "clinic_claim_request",
+                "priority": 96,
+                "created_at": "2026-08-31T13:58:00+00:00",
+            }
+        )
+        == "  - Reclamar ficha: Monarka Clinic: reclamación de ficha · P96 · creada 2026-08-31 13:58",
+        "claim-request card formatting missing",
     )
     check(backlog_guard(report["summary"]) == "cerca del freno: 48/50 abiertas", "guard label missing")
     check(
@@ -130,6 +143,42 @@ def main():
         format_clinic_workgroup(report["clinic_workgroups"][0])
         == "- Sensabell · Valencia · publicada · 5 tarjetas · 1 claim bloqueante / 3 mejoras / 1 auditoría · P85 · más antigua 2026-08-30 08:30 · orden: claims bloqueantes -> mejoras -> auditorías · primero quitar o corregir datos dudosos",
         "clinic workgroup formatting missing",
+    )
+    claim_group = {
+        "clinic_name": "Monarka Clinic",
+        "clinic_slug": "monarka-clinic",
+        "city": "Madrid",
+        "clinic_status": "published",
+        "card_count": 2,
+        "blocking_claim_reviews": 0,
+        "claim_request_reviews": 1,
+        "quality_reviews": 0,
+        "enrichment_reviews": 0,
+        "source_change_reviews": 1,
+        "candidate_reviews": 0,
+        "max_priority": 96,
+        "oldest_created_at": "2026-08-31T13:58:00+00:00",
+    }
+    check(workgroup_order(claim_group) == "reclamaciones -> fuentes cambiadas", "claim-request order missing")
+    check(
+        workgroup_recommendation(claim_group) == "escalar a Daniel antes de cambiar datos",
+        "claim-request recommendation missing",
+    )
+    check(
+        format_clinic_workgroup(claim_group)
+        == "- Monarka Clinic · Madrid · publicada · 2 tarjetas · 1 reclamación / 1 cambio de fuente · P96 · más antigua 2026-08-31 13:58 · orden: reclamaciones -> fuentes cambiadas · escalar a Daniel antes de cambiar datos",
+        "claim-request workgroup formatting missing",
+    )
+    check(
+        first_backlog_action(
+            {
+                "summary": {"open_reviews": 2, "safe_write_limit": 50},
+                "clinic_workgroups": [claim_group],
+                "duplicate_enrichment": [{"clinic_name": "Neleva", "card_count": 2}],
+            }
+        )
+        == "Revisar Monarka Clinic: reclamación de ficha pendiente; Daniel decide antes de cambiar datos",
+        "claim-request action should come before duplicate-only cleanup",
     )
     check("# Vitalarga: atascos de bandeja" in output, "title missing")
     check("Revisiones abiertas: 48" in output, "open count missing")

@@ -157,6 +157,20 @@ Early mode:
 - Shadow only.
 - Produce proposed output but do not update public pages.
 
+## REVIEW_CLINIC_CLAIM_REQUEST
+
+Purpose: route clinic-profile claim requests to Daniel as a human decision.
+
+Required behavior:
+
+- Create or show a `clinic_claim_request` review card for the requested clinic.
+- Do not verify identity automatically.
+- Do not grant account access automatically.
+- Do not edit clinic data automatically.
+- Do not publish any profile change from the claim request alone.
+- Keep the card open until Daniel decides whether to request proof, accept the
+  claim operationally or close it.
+
 ## NOTIFY_DIGEST
 
 Purpose: avoid noisy notifications.

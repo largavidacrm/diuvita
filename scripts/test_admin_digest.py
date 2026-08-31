@@ -6,6 +6,7 @@ from admin_digest import (
     first_clinic_workgroup,
     first_backlog_bottleneck,
     format_digest,
+    format_review_type,
     google_link_review_status,
     location_coverage_status,
     next_action_label,
@@ -259,6 +260,35 @@ def main():
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
+    claim_request_digest = dict(digest)
+    claim_request_digest["reviews_by_type"] = [
+        {"review_type": "clinic_claim_request", "open_count": 1}
+    ]
+    claim_request_digest["open_reviews"] = [
+        {
+            "review_type": "clinic_claim_request",
+            "priority": 96,
+            "clinic_name": "Monarka Clinic",
+            "title": "Reclamar ficha: Monarka Clinic",
+        }
+    ]
+    claim_request_digest["review_first_clinic_workgroup"] = {
+        "clinic_name": "Monarka Clinic",
+        "open_count": 1,
+        "blocking_claim_reviews": 0,
+        "claim_request_reviews": 1,
+        "quality_reviews": 0,
+        "enrichment_reviews": 0,
+        "source_change_reviews": 0,
+        "candidate_reviews": 0,
+    }
+    check(format_review_type("clinic_claim_request") == "reclamaciones de ficha", "claim-request label missing")
+    check(next_action_label(claim_request_digest) == "Revisar reclamación de ficha", "claim request should be next before candidates")
+    check(
+        first_clinic_workgroup(claim_request_digest)
+        == "Trabajar Monarka Clinic: 1 tarjeta (1 reclamación de ficha)",
+        "claim request should be visible in clinic workgroup detail",
+    )
     check(next_specialist_action(digest) == "Revisar Age Reversal: ya tiene 2 revisiones abiertas", "next specialist action missing")
     claim_only_digest = dict(digest)
     claim_only_digest["specialist_next_target"] = dict(digest["specialist_next_target"], open_review_count=0)

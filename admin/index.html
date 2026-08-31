@@ -645,6 +645,7 @@
               <option value="candidate_clinic">Clínicas nuevas</option>
               <option value="clinic_profile_enrichment">Mejoras de ficha</option>
               <option value="blocking_claim_review">Claims bloqueantes</option>
+              <option value="clinic_claim_request">Reclamaciones</option>
               <option value="clinic_quality_audit">Auditorías</option>
               <option value="source_change_detected">Cambios de fuente</option>
               <option value="specialist_review">Especialistas</option>
@@ -849,6 +850,7 @@
       ["candidate_clinic", "Clínicas nuevas"],
       ["clinic_profile_enrichment", "Mejoras"],
       ["blocking_claim_review", "Claims bloqueantes"],
+      ["clinic_claim_request", "Reclamaciones"],
       ["clinic_quality_audit", "Auditorías"],
       ["source_change_detected", "Fuentes"],
       ["specialist_review", "Especialistas"]
@@ -2182,6 +2184,7 @@
         candidate_clinic: "Clínica nueva",
         clinic_quality_audit: "Auditoría de calidad",
         clinic_profile_enrichment: "Mejora de ficha",
+        clinic_claim_request: "Reclamación de ficha",
         source_change_detected: "Cambio de fuente"
       };
       return labels[type] || type || "Revisión";
@@ -2190,6 +2193,10 @@
     function isBlockingClaimReview(row) {
       var payload = (row && row.payload) || {};
       return row && row.review_type === "clinic_quality_audit" && payload.quality_context === "blocking_claims";
+    }
+
+    function isClinicClaimRequestReview(row) {
+      return row && row.review_type === "clinic_claim_request";
     }
 
     function reviewVisibleLabel(row) {
@@ -2211,6 +2218,7 @@
       rows = Array.isArray(rows) ? rows : [];
       if (Number(failedJobs || 0)) return "Revisar fallos";
       if (rows.some(isBlockingClaimReview)) return "Revisar claim bloqueante";
+      if (rows.some(isClinicClaimRequestReview)) return "Revisar reclamación";
       if (rows.some(function (row) { return row.review_type === "candidate_clinic" && Number(row.priority || 0) >= 90; })) {
         return "Validar candidatas";
       }
@@ -2425,7 +2433,10 @@
       var completeness = profileCompleteness || emptyProfileCompleteness();
       var site = publicHealth || emptyPublicHealth();
       var publication = publicationControl || emptyPublicationControl();
-      var group = firstClinicWorkgroup(openReviews || []);
+      var claimRequest = firstClinicClaimRequestReview(openReviews || []);
+      var hasBlockingClaim = (openReviews || []).some(isBlockingClaimReview);
+      var preferClaimRequest = claimRequest && !hasBlockingClaim && !failedJobs;
+      var group = preferClaimRequest ? null : firstClinicWorkgroup(openReviews || []);
       var sourceTarget = sourceCoverageTargetLabel(sources.nextTarget);
       var profileTarget = profileNextTargetLabel(completeness.nextTarget);
       var next = nextActionLabel(openReviews || [], failedJobs);
@@ -2438,6 +2449,10 @@
       var blockingOpenCount = countOpenReviewsByType(openReviews, "blocking_claim_review");
       var focus = globalPlanFocusCopy(openCount, failedJobs, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers);
       var nextClick = group ? "Trabajar " + clinicWorkgroupSubject(group) : next;
+      var nextDetail = globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount);
+      if (preferClaimRequest && !group) {
+        nextDetail = "Abre la reclamación, revisa quién la solicita y decide el siguiente paso sin conceder acceso ni cambiar la ficha automáticamente.";
+      }
       var bottleneck = globalPlanBottleneckText(openCount, group, blockers, sourceTarget, specialists);
       globalPlanNextReviewId = nextReview && nextReview.id ? nextReview.id : "";
       globalPlanNextGroupId = group && group.clinicId ? group.clinicId : "";
@@ -2453,7 +2468,7 @@
         globalPlanCheckpoint("Después", "Siguiente bloque", globalPlanAfterText(openCount, candidateOpenCount, specialists, sources), "", "")
       ].join("");
       el("globalPlanGrid").innerHTML = [
-        globalPlanRoleCard("Tu foco", nextClick, globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount), openCount ? "warning-text" : ""),
+        globalPlanRoleCard("Tu foco", nextClick, nextDetail, openCount ? "warning-text" : ""),
         globalPlanRoleCard("Trabajo Codex", failedJobs ? "Estabilidad técnica" : "Mejoras seguras", globalPlanCodexWorkDetail(openCount, failedJobs, sources, specialists, completeness), failedJobs ? "danger-text" : ""),
         globalPlanRoleCard("Parado", "Autonomía / Growth", blockers.length ? blockers[0] + ". No se activa sin tu decisión." : "Sin urgencia; se mantiene apagado hasta que tú lo decidas.", blockers.length ? "warning-text" : "")
       ].join("");
@@ -2467,8 +2482,8 @@
         globalPlanLane("Growth", "Después", blockingOpenCount ? "Primero resolver claims bloqueantes y bandeja." : "SEO y páginas por ciudad/tratamiento cuando los datos estén maduros.", blockingOpenCount ? "warning-text" : "", "is-later")
       ].join("");
       el("globalPlanNextAction").textContent = nextClick;
-      el("globalPlanNextDetail").textContent = globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount);
-      el("globalPlanOpenNextBtn").textContent = group ? "Filtrar grupo" : "Abrir siguiente";
+      el("globalPlanNextDetail").textContent = nextDetail;
+      el("globalPlanOpenNextBtn").textContent = group ? "Filtrar grupo" : (preferClaimRequest ? "Abrir reclamación" : "Abrir siguiente");
       show(el("globalPlanOpenNextBtn"), Boolean(globalPlanNextReviewId || globalPlanNextGroupId));
     }
 
@@ -2507,6 +2522,8 @@
       if (Number(failedJobs || 0) || !rows.length) return null;
       var match = rows.find(isBlockingClaimReview);
       if (match) return match;
+      match = firstClinicClaimRequestReview(rows);
+      if (match) return match;
       match = rows.find(function (row) { return row.review_type === "candidate_clinic" && Number(row.priority || 0) >= 90; });
       if (match) return match;
       match = rows.find(function (row) { return row.review_type === "source_change_detected"; });
@@ -2517,8 +2534,18 @@
       return match || null;
     }
 
+    function firstClinicClaimRequestReview(rows) {
+      return (rows || []).find(isClinicClaimRequestReview) || null;
+    }
+
     function reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget) {
       if (nextReview) {
+        if (isClinicClaimRequestReview(nextReview)) {
+          return {
+            title: "Revisar reclamación",
+            detail: reviewPrimarySubject(nextReview) + " · solicitud de clínica; no confirma identidad ni cambia datos."
+          };
+        }
         return {
           title: "Abrir prioridad",
           detail: reviewPrimarySubject(nextReview) + " · " + reviewVisibleLabel(nextReview) + " · prioridad " + priorityLabel(nextReview.priority).toLowerCase()
@@ -2630,6 +2657,7 @@
             label: reviewPrimarySubject(row),
             count: 0,
             blockingClaims: 0,
+            claimRequests: 0,
             maxPriority: 0,
             oldestCreatedAt: row.created_at || null,
             rows: []
@@ -2638,6 +2666,7 @@
         grouped[row.clinic_id].count += 1;
         grouped[row.clinic_id].rows.push(row);
         if (isBlockingClaimReview(row)) grouped[row.clinic_id].blockingClaims += 1;
+        if (isClinicClaimRequestReview(row)) grouped[row.clinic_id].claimRequests += 1;
         grouped[row.clinic_id].maxPriority = Math.max(grouped[row.clinic_id].maxPriority, Number(row.priority || 0));
         var currentOldest = parseDateValue(grouped[row.clinic_id].oldestCreatedAt);
         var rowDate = parseDateValue(row.created_at);
@@ -2647,6 +2676,7 @@
         return grouped[key];
       }).sort(function (a, b) {
         return Number(b.blockingClaims || 0) - Number(a.blockingClaims || 0) ||
+          Number(b.claimRequests || 0) - Number(a.claimRequests || 0) ||
           Number(b.count || 0) - Number(a.count || 0) ||
           Number(b.maxPriority || 0) - Number(a.maxPriority || 0) ||
           (parseDateValue(a.oldestCreatedAt) || new Date(8640000000000000)) -
@@ -2669,6 +2699,7 @@
       var rows = (group && group.rows) || [];
       return {
         blocking: countWhere(rows, isBlockingClaimReview),
+        claimRequests: countWhere(rows, isClinicClaimRequestReview),
         sources: countWhere(rows, function (row) { return row.review_type === "source_change_detected"; }),
         improvements: countWhere(rows, function (row) { return row.review_type === "clinic_profile_enrichment"; }),
         audits: countWhere(rows, function (row) { return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row); }),
@@ -2680,6 +2711,7 @@
       var counts = reviewWorkgroupTypeCounts(group);
       var steps = [];
       if (counts.blocking) steps.push("claims bloqueantes");
+      if (counts.claimRequests) steps.push("reclamaciones");
       if (counts.sources) steps.push("fuentes cambiadas");
       if (counts.improvements) steps.push("mejoras de ficha");
       if (counts.audits) steps.push("auditorías");
@@ -2707,6 +2739,7 @@
       ];
       [
         ["Bloqueantes", counts.blocking, "warning"],
+        ["Reclamaciones", counts.claimRequests, "warning"],
         ["Fuentes", counts.sources, ""],
         ["Mejoras", counts.improvements, ""],
         ["Auditorías", counts.audits, ""],
@@ -2890,6 +2923,8 @@
       if (!target) return "—";
       var detail = target.blockingClaims
         ? target.blockingClaims + (target.blockingClaims === 1 ? " claim bloqueante" : " claims bloqueantes")
+        : target.claimRequests
+          ? target.claimRequests + (target.claimRequests === 1 ? " reclamación" : " reclamaciones")
         : target.count + (target.count === 1 ? " tarjeta" : " tarjetas");
       return target.label + " · " + detail;
     }
@@ -3000,6 +3035,9 @@
       if (isBlockingClaimReview(row)) {
         return "Hay datos dudosos o sin fuente suficiente; primero corregir o dejar fuera.";
       }
+      if (isClinicClaimRequestReview(row)) {
+        return "Solicitud de clínica: no confirma identidad ni cambia datos; Daniel decide el siguiente paso.";
+      }
       if (isDuplicateEnrichmentReview(row)) {
         return "Varias mejoras abiertas para la misma clínica; conviene consolidarlas.";
       }
@@ -3017,6 +3055,7 @@
         ["Clínica nueva", countWhere(rows, function (row) { return row.review_type === "candidate_clinic"; })],
         ["Mejora de ficha", countWhere(rows, function (row) { return row.review_type === "clinic_profile_enrichment"; })],
         ["Claim bloqueante", countWhere(rows, isBlockingClaimReview)],
+        ["Reclamación de ficha", countWhere(rows, isClinicClaimRequestReview)],
         ["Auditoría de calidad", countWhere(rows, function (row) { return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row); })],
         ["Cambio de fuente", countWhere(rows, function (row) { return row.review_type === "source_change_detected"; })]
       ].filter(function (item) { return Number(item[1] || 0) > 0; }).map(function (item) {
@@ -3433,6 +3472,7 @@
     function dismissButtonLabel(reviewType) {
       if (reviewType === "candidate_clinic") return "Descartar candidata";
       if (reviewType === "source_change_detected") return "Marcar revisado";
+      if (reviewType === "clinic_claim_request") return "Cerrar reclamación";
       if (reviewType === "clinic_quality_audit") return "Cerrar auditoría";
       return "Descartar propuesta";
     }
@@ -3442,6 +3482,7 @@
         candidate_clinic: "Candidata descartada tras revisión manual.",
         clinic_profile_enrichment: "Propuesta descartada tras revisión manual.",
         clinic_quality_audit: "Auditoría cerrada sin cambios en la ficha.",
+        clinic_claim_request: "Reclamación cerrada sin cambios en la ficha.",
         source_change_detected: "Cambio de fuente revisado; no requiere edición."
       };
       return notes[reviewType] || "Revisión cerrada sin cambios.";
@@ -3449,6 +3490,7 @@
 
     function primaryReviewButtonLabel(reviewType, blocksDraft) {
       if (reviewType === "candidate_clinic") return blocksDraft ? "Duplicado probable" : "Crear borrador y validar";
+      if (reviewType === "clinic_claim_request") return "Abrir ficha";
       if (reviewType === "source_change_detected") return "Revisar ficha";
       return "Editar clínica";
     }
@@ -3460,6 +3502,9 @@
       }
       if (reviewType === "source_change_detected") {
         return "Abrirá el editor de la clínica. La web solo cambia si guardas como preliminar o publicada.";
+      }
+      if (reviewType === "clinic_claim_request") {
+        return "Abrirá la ficha para revisar contexto. No confirma identidad, no da acceso y no cambia datos.";
       }
       if (reviewType === "clinic_quality_audit" || reviewType === "clinic_profile_enrichment") {
         return "Abrirá el editor de la clínica. Revisa la propuesta y decide el estado en Validación final.";
@@ -3500,6 +3545,12 @@
         return {
           title: "Cambio detectado en una fuente.",
           detail: "La fuente cambió; revisa si afecta a la ficha. La web pública solo cambia si guardas después como preliminar o publicada."
+        };
+      }
+      if (row.review_type === "clinic_claim_request") {
+        return {
+          title: "Reclamación de ficha.",
+          detail: "Solicitud de una clínica pendiente de verificación humana. No confirma identidad, no da acceso y no cambia datos por sí sola."
         };
       }
       if (row.review_type === "clinic_quality_audit") {
@@ -3553,6 +3604,13 @@
           ["1", "Abrir ficha", "Revisa qué cambió en la fuente."],
           ["2", "Ajustar datos", "Edita solo lo que esté claro."],
           ["3", "Guardar", "Publica solo si el estado es visible."]
+        ];
+      } else if (reviewType === "clinic_claim_request") {
+        meta = "Solicitud de clínica: siempre requiere decisión humana.";
+        steps = [
+          ["1", "Ver solicitud", "Comprueba qué ficha se reclama."],
+          ["2", "Confirmar identidad", "Daniel decide si pide prueba, concede acceso o rechaza."],
+          ["3", "Cerrar tarjeta", "Resuelve o descarta solo después de decidir."]
         ];
       } else if (reviewType === "clinic_quality_audit") {
         meta = "La auditoría señala campos que conviene revisar.";
@@ -3663,6 +3721,9 @@
     function relatedReviewSummaryItems(row) {
       var payload = (row && row.payload) || {};
       if (!row) return [];
+      if (isClinicClaimRequestReview(row)) {
+        return ["Verificar identidad", "Decisión de Daniel", "Sin cambios automáticos"];
+      }
       if (row.review_type === "clinic_profile_enrichment") {
         return enrichmentFieldKeys(row).map(proposalLabel);
       }
@@ -3709,10 +3770,11 @@
 
     function reviewWorkgroupRank(row) {
       if (isBlockingClaimReview(row)) return 1;
-      if (row.review_type === "source_change_detected") return 2;
-      if (row.review_type === "clinic_profile_enrichment") return 3;
-      if (row.review_type === "clinic_quality_audit") return 4;
-      if (row.review_type === "candidate_clinic") return 5;
+      if (isClinicClaimRequestReview(row)) return 2;
+      if (row.review_type === "source_change_detected") return 3;
+      if (row.review_type === "clinic_profile_enrichment") return 4;
+      if (row.review_type === "clinic_quality_audit") return 5;
+      if (row.review_type === "candidate_clinic") return 6;
       return 9;
     }
 
@@ -3735,6 +3797,9 @@
       if (rows.some(isBlockingClaimReview)) {
         return "Empieza por el claim bloqueante y deja fuera cualquier dato dudoso antes de guardar.";
       }
+      if (rows.some(isClinicClaimRequestReview)) {
+        return "Empieza por la reclamación: Daniel decide identidad y acceso antes de tocar datos.";
+      }
       if (rows.some(function (item) { return item.review_type === "source_change_detected"; })) {
         return "Empieza por la fuente cambiada y después consolida las mejoras de ficha.";
       }
@@ -3751,12 +3816,13 @@
       });
       var counts = [
         ["Bloqueantes", countWhere(bundle, isBlockingClaimReview)],
+        ["Reclamaciones", countWhere(bundle, isClinicClaimRequestReview)],
         ["Fuentes", countWhere(bundle, function (item) { return item.review_type === "source_change_detected"; })],
         ["Mejoras", countWhere(bundle, function (item) { return item.review_type === "clinic_profile_enrichment"; })],
         ["Auditorías", countWhere(bundle, function (item) { return item.review_type === "clinic_quality_audit" && !isBlockingClaimReview(item); })]
       ].filter(function (item) { return item[1] > 0; });
       var chips = counts.map(function (item) {
-        return '<span class="pill' + (item[0] === "Bloqueantes" ? " warning" : "") + '">' +
+        return '<span class="pill' + (item[0] === "Bloqueantes" || item[0] === "Reclamaciones" ? " warning" : "") + '">' +
           html(item[0] + ": " + item[1]) + '</span>';
       }).join("");
       var duplicateFields = duplicateProposalFieldLabels(bundle);
@@ -6779,15 +6845,23 @@
 
     async function createClinicDraftFromReview() {
       if (!activeReview) return;
-      if ((activeReview.review_type === "clinic_quality_audit" || activeReview.review_type === "clinic_profile_enrichment" || activeReview.review_type === "source_change_detected") && activeReview.clinic_id) {
+      var reviewType = activeReview.review_type;
+      if (reviewType === "clinic_claim_request" && !activeReview.clinic_id) {
+        toast("Reclamación sin ficha enlazada. No crearé un borrador automáticamente.");
+        return;
+      }
+      if ((reviewType === "clinic_quality_audit" || reviewType === "clinic_profile_enrichment" || reviewType === "source_change_detected" || reviewType === "clinic_claim_request") && activeReview.clinic_id) {
         var clinicId = activeReview.clinic_id;
         activeClinicReview = activeReview;
         activeClinicReviewIds = [activeReview.id];
         var payload = activeReview.payload || {};
-        var shouldApplyProposal = activeReview.review_type === "clinic_profile_enrichment";
+        var shouldApplyProposal = reviewType === "clinic_profile_enrichment";
         closeReviewEditor();
         openClinicEditor(clinicId);
         if (shouldApplyProposal) applyClinicProposal(payload);
+        if (reviewType === "clinic_claim_request") {
+          toast("Reclamación abierta. No concede acceso ni cambia datos automáticamente.");
+        }
         return;
       }
 

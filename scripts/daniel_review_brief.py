@@ -30,6 +30,7 @@ from submit_discovery_candidates import get_default_admin_email, load_env_file
 
 TYPE_LABELS = {
     "blocking_claim_review": ("claim bloqueante", "claims bloqueantes"),
+    "clinic_claim_request": ("reclamación de ficha", "reclamaciones de ficha"),
     "candidate_clinic": ("clínica nueva", "clínicas nuevas"),
     "clinic_profile_enrichment": ("mejora de ficha", "mejoras de ficha"),
     "source_change_detected": ("cambio de fuente", "cambios de fuente"),
@@ -149,6 +150,18 @@ def clinic_workgroup_click(digest: dict[str, Any]) -> str:
     return f"Pulsa Filtrar grupo y trabaja {name}: {count} tarjetas juntas."
 
 
+def claim_request_click(digest: dict[str, Any]) -> str:
+    count = review_counts(digest).get("clinic_claim_request", 0)
+    first = first_review(digest, "clinic_claim_request")
+    if not count:
+        return ""
+    return (
+        "Abre Reclamaciones y revisa "
+        f"{review_name(first, 'Reclamaciones')}. "
+        "No confirma identidad, no da acceso y no cambia datos por sí sola."
+    )
+
+
 def google_maps_click(digest: dict[str, Any]) -> str:
     status = digest.get("google_link_reviews") or {}
     count = as_int(status.get("open_count"))
@@ -176,6 +189,7 @@ def next_clicks(digest: dict[str, Any]) -> list[str]:
     if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
         clicks.append(f"No crees trabajos nuevos hasta bajar la bandeja; ahora está {guard}.")
     for candidate in (
+        claim_request_click(digest),
         clinic_workgroup_click(digest),
         specialists_click(digest),
         google_maps_click(digest),
@@ -217,6 +231,12 @@ def first_step(digest: dict[str, Any]) -> list[str]:
         return [
             "Primero revisa claims bloqueantes.",
             review_case_line(first_review(digest, "blocking_claim_review"), "Claims bloqueantes"),
+        ]
+    if counts.get("clinic_claim_request"):
+        return [
+            "Primero revisa reclamaciones de ficha.",
+            review_case_line(first_review(digest, "clinic_claim_request"), "Reclamaciones")
+            + " No confirma identidad, no da acceso y no cambia datos por sí sola.",
         ]
     if counts.get("candidate_clinic"):
         return [
@@ -272,6 +292,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
     if counts:
         for review_type in [
             "blocking_claim_review",
+            "clinic_claim_request",
             "candidate_clinic",
             "source_change_detected",
             "clinic_profile_enrichment",

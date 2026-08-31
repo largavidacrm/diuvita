@@ -39,6 +39,11 @@ de subir la autonomía.
 Si **Tú ahora** dice **No crees trabajos nuevos**, usa primero **Filtrar grupo**,
 **Especialistas** o **Google Maps** para cerrar tarjetas abiertas.
 
+Si **Tu próximo clic** dice **Revisar reclamación**, abre esa tarjeta antes de
+crear nuevas fichas. Una reclamación de ficha no confirma identidad, no concede
+acceso y no cambia datos públicos: solo avisa de que Daniel debe decidir el
+siguiente paso.
+
 El menú lateral abre una zona de trabajo cada vez: **Plan**, **Sistema**,
 **Revisión**, **Clínicas**, **Trabajos** o **Actividad**. Pulsa **Todo** solo si
 quieres volver a la vista larga completa.
@@ -71,6 +76,7 @@ En **Estado del sistema**, mira especialmente:
 - **Sedes sin Maps**: avisa si alguna sede guardada no tiene enlace a ficha de clínica en Google Maps.
 - **Sedes sin valoraciones**: avisa si alguna sede guardada no tiene enlace directo a valoraciones de Google.
 - **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas.
+- **Reclamaciones de ficha**: solicitudes de una clínica para revisar una ficha; siempre requieren decisión humana.
 - **Grupo por clínica**: señala qué clínica conviene revisar en bloque porque concentra varias tarjetas abiertas.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.
 - **Tarjetas duplicadas**: muestra cuántas tarjetas forman parte de esas repeticiones.
@@ -100,6 +106,11 @@ filtro.
 El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
 que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
 auditoría, cambio de fuente y mejoras abiertas a la vez.
+
+El filtro **Reclamaciones** muestra solicitudes de clínicas sobre una ficha.
+Úsalo para revisar quién reclama la ficha y decidir si hace falta pedir prueba,
+conceder acceso o rechazar la solicitud. El sistema no concede acceso ni edita
+la ficha automáticamente.
 
 En los filtros rápidos de **Necesitan revisión**, usa **Especialistas** para ver
 solo tarjetas que traen profesionales publicados o propuestas relacionadas con
@@ -198,9 +209,14 @@ guardarla.
 
 Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
 
-En esas tarjetas verás **Paso recomendado**. No es una decisión automática: te
-orienta sobre si conviene comparar evidencias, buscar una fuente oficial o dejar
-ese dato fuera de publicación.
+Si ves una tarjeta llamada **Reclamación de ficha**, trátala como una solicitud
+de verificación humana. El botón principal abre la ficha para mirar contexto,
+pero no crea borrador, no publica, no cambia datos y no concede acceso por sí
+solo. Daniel decide si se pide prueba, si se acepta o si se cierra.
+
+En las tarjetas de claims bloqueantes verás **Paso recomendado**. No es una
+decisión automática: te orienta sobre si conviene comparar evidencias, buscar
+una fuente oficial o dejar ese dato fuera de publicación.
 
 En **Evidencias propuestas**, cada claim muestra el motivo de la regla, cuándo
 se guardó y un enlace a la fuente cuando existe. Eso te permite ver de dónde

@@ -67,6 +67,17 @@ def main() -> None:
         "candidate and enrichment review context should explain why data is not public yet",
     )
     check(
+        'value="clinic_claim_request"' in index
+        and "function isClinicClaimRequestReview" in index
+        and "Reclamación de ficha" in index
+        and "Revisar reclamación" in index
+        and "No confirma identidad, no da acceso y no cambia datos" in index
+        and "Solicitud de clínica: siempre requiere decisión humana." in index
+        and "Cerrar reclamación" in index
+        and "Reclamación cerrada sin cambios en la ficha." in index,
+        "clinic claim requests should be a human-only review flow",
+    )
+    check(
         'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
         and '["maps_url", "Google Maps", "maps_url"]' in index
         and '["google_reviews_url", "Valoraciones Google", "google_reviews_url"]' in index
@@ -106,6 +117,13 @@ def main() -> None:
         and "telephone: \"clinicPhone\"" in index
         and "tech: true" in index,
         "grouped proposals should normalize aliases, merge technology and warn on weak phones",
+    )
+    check(
+        'reviewType === "clinic_claim_request"' in index
+        and "Reclamación sin ficha enlazada. No crearé un borrador automáticamente." in index
+        and "Reclamación abierta. No concede acceso ni cambia datos automáticamente." in index
+        and 'admin_create_draft_clinic_from_review_v2' in index,
+        "clinic claim requests should open existing clinic context instead of creating a draft",
     )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".review-context" in css, "review context should be styled")
