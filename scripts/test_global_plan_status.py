@@ -173,6 +173,13 @@ def main():
     failed = sample_digest()
     failed["summary"]["jobs"] = {"failed": 1, "dead_letter": 0}
     check(plan_phase(failed) == "estabilización técnica", "failed jobs should change phase")
+    specialist_queue = sample_digest()
+    specialist_queue["summary"]["reviews"] = {"open": 20}
+    specialist_queue["source_coverage"]["clinics_needing_source_work"] = 0
+    check(
+        codex_can_continue_status(specialist_queue) == "mejorar revisión de especialistas propuestos sin publicarlos",
+        "Codex should improve specialist-review tooling before looking for more team pages",
+    )
     print("OK global plan status: roadmap snapshot is readable")
 
 

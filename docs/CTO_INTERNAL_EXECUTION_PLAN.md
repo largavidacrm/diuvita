@@ -501,6 +501,10 @@ Next 10 technical steps:
     `scripts/measure_specialist_coverage.py`: missing-specialist rows now say
     whether to consolidate open review cards, prepare a proposal from internal
     names or first find a public team page.
+95. Refine Codex's global next-work signal for specialists. Done locally in
+    `scripts/global_plan_status.py`: when specialist review cards already exist,
+    the global plan now points Codex toward improving their review/consolidation
+    flow instead of looking for more team pages.
 
 ## Daniel decision checkpoints
 

@@ -128,6 +128,7 @@ def codex_can_continue_status(digest: dict[str, Any]) -> str:
     failed_jobs = as_int(jobs.get("failed")) + as_int(jobs.get("dead_letter"))
     source_coverage = digest.get("source_coverage") or {}
     specialist_coverage = digest.get("specialist_coverage") or {}
+    specialist_reviews = digest.get("specialist_reviews") or {}
     profile_completeness = digest.get("profile_completeness") or {}
 
     if failed_jobs:
@@ -136,6 +137,8 @@ def codex_can_continue_status(digest: dict[str, Any]) -> str:
         return "mejorar panel, extractores y checks sin crear tarjetas nuevas"
     if as_int(source_coverage.get("clinics_needing_source_work")):
         return "mejorar trazabilidad de fuentes y propuestas internas"
+    if as_int(specialist_reviews.get("open_count")):
+        return "mejorar revisión de especialistas propuestos sin publicarlos"
     if as_int(specialist_coverage.get("without_specialists")):
         return "priorizar páginas de equipo para especialistas publicados"
     if as_int(profile_completeness.get("pending_google_maps")):
