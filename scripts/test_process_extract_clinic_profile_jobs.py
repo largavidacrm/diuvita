@@ -53,8 +53,13 @@ def main():
             "clinic_name": "Tiara Health",
             "source_url": "https://www.tiarahealth.com/our-team-of-experts/",
             "requested_fields": ["profesionales", "unidades"],
+            "requested_field_labels": ["Especialistas publicados", "Unidades"],
             "missing_fields": ["Especialistas publicados", "Unidades"],
             "from_review_id": "review-1",
+            "human_supplied_source": True,
+            "source_job_version": "2026-08-31.manual-review-source",
+            "operator_intent": "Daniel indica que esta URL oficial contiene especialistas.",
+            "allowed_output": "review_queue_proposal_only",
         },
     }
     args = Namespace(
@@ -83,6 +88,10 @@ def main():
     })
     check(payload["from_review_id"] == "review-1", "review link should stay in payload")
     check(payload["requested_fields"] == ["profesionales", "unidades"], "payload should keep requested fields")
+    check(payload["requested_field_labels"] == ["Especialistas publicados", "Unidades"], "payload should keep requested labels")
+    check(payload["human_supplied_source"] is True, "payload should mark human-supplied source URLs")
+    check(payload["operator_intent"].startswith("Daniel indica"), "payload should preserve operator intent")
+    check(payload["allowed_output"] == "review_queue_proposal_only", "payload should preserve proposal-only contract")
     check("No edita la ficha ni publica datos" in " ".join(payload["warnings"]), "payload should keep safety warning")
 
     calls = []

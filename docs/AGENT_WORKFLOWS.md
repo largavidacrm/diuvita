@@ -97,12 +97,17 @@ Output goes into `field_claims`, not directly into published clinic data.
 Operator bridge:
 
 - A review card can create a bounded `EXTRACT_CLINIC_PROFILE` job with
-  `source_url`, `clinic_slug`, `from_review_id` and `requested_fields`.
+  `source_url`, `clinic_slug`, `from_review_id`, `requested_fields`,
+  `requested_field_labels`, `human_supplied_source`, `operator_intent` and an
+  `allowed_output` of `review_queue_proposal_only`.
 - `scripts/process_extract_clinic_profile_jobs.py` can process those jobs in
   shadow mode and turn clear findings into a `clinic_profile_enrichment` review
   card.
 - The processor filters proposed fields to the job's `requested_fields`; it does
   not use a useful source as permission to propose unrelated clinic changes.
+- Human-supplied URLs are treated as evidence pointers, not approvals. They can
+  guide the future LLM/worker, but the only allowed output is a new review
+  proposal.
 - Completing the job never edits a clinic profile, never publishes and never
   bypasses Daniel's approve/reject/modify decision.
 

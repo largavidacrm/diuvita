@@ -156,7 +156,14 @@ def build_payload_for_job(job: dict[str, Any], verification: dict[str, Any]) -> 
         "source_urls": source_urls,
         "from_review_id": input_data.get("from_review_id"),
         "requested_fields": fields,
+        "requested_field_labels": [
+            clean_str(item) for item in as_list(input_data.get("requested_field_labels")) if clean_str(item)
+        ],
         "missing_fields": [clean_str(item) for item in as_list(input_data.get("missing_fields")) if clean_str(item)],
+        "human_supplied_source": bool(input_data.get("human_supplied_source")),
+        "source_job_version": clean_str(input_data.get("source_job_version")),
+        "operator_intent": clean_str(input_data.get("operator_intent")),
+        "allowed_output": clean_str(input_data.get("allowed_output") or "review_queue_proposal_only"),
         "warnings": warnings,
     })
     return payload

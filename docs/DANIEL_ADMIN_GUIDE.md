@@ -194,9 +194,10 @@ especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
 revises antes de guardar.
 
 Si una auditoría dice que faltan datos pero la fuente está clara, pulsa
-**Editar ficha** para abrir la ficha en el campo pendiente. Si conoces una URL
-oficial donde el agente debe mirar, pégala en **Fuente para completar esta
-ficha** y pulsa **Crear trabajo con esta fuente**. Eso crea trabajo interno para
+**Revisión manual** para abrir la ficha en el campo pendiente. Si conoces una
+URL oficial donde el agente debe mirar, pégala en **Dile al agente dónde mirar**
+y pulsa **Enviar URL al agente**. Por ejemplo, si faltan especialistas, pega la
+página oficial de equipo o especialistas. Eso crea trabajo interno para
 propuestas revisables, limitado a los campos pendientes de esa tarjeta; no
 guarda ni publica datos.
 

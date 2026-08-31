@@ -493,8 +493,10 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             "status": "operator_supplied_source_required",
             "from_review_id": row.get("id"),
             "requested_fields": [target["key"] for target in packet_manual_targets],
+            "requested_field_labels": [target["label"] for target in packet_manual_targets],
             "source_requirement": "official_clinic_url",
             "write_policy": "creates_review_proposal_only",
+            "allowed_output": "review_queue_proposal_only",
         }
     if not include_values:
         packet["safe_default"] = True

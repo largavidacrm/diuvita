@@ -142,8 +142,20 @@ def main():
         "quality audit packet should describe bounded source-job fields",
     )
     check(
+        quality_packet["source_job_request"]["requested_field_labels"] == [
+            "Especialistas publicados",
+            "Contacto público",
+            "Teléfono principal",
+        ],
+        "quality audit packet should keep human-readable source-job labels",
+    )
+    check(
         quality_packet["source_job_request"]["write_policy"] == "creates_review_proposal_only",
         "source-job bridge should stay review-only",
+    )
+    check(
+        quality_packet["source_job_request"]["allowed_output"] == "review_queue_proposal_only",
+        "source-job bridge should forbid direct profile writes",
     )
 
     claim_packet = decision_packet({

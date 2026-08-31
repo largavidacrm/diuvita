@@ -811,6 +811,12 @@ Next 10 technical steps:
      Daniel's first action now opens the highest-priority actionable review
      card, while clinic groups such as repeated Sensabell work stay visible as
      secondary backlog context and LLM-ready signals.
+155. Make review-supplied source jobs legible for Daniel and LLM-ready. Done
+     locally in `/admin/`: quality-audit cards now say **Dile al agente dónde
+     mirar**, suggest the right kind of official page for the missing field
+     (for example team/specialists pages), and queue source jobs with explicit
+     human-supplied-source metadata, requested field labels and a
+     proposal-only output contract.
 
 ## Daniel decision checkpoints
 

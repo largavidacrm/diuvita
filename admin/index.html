@@ -732,19 +732,19 @@
             <section class="review-source-job-panel hidden" id="reviewSourceJobPanel">
               <div class="review-section-head">
                 <div>
-                  <h3>Fuente para completar esta ficha</h3>
+                  <h3>Dile al agente dónde mirar</h3>
                   <p id="reviewSourceJobMeta">Pega una URL oficial donde esté el dato pendiente.</p>
                 </div>
-                <span class="pill">Next job</span>
+                <span class="pill">Propuesta interna</span>
               </div>
               <div class="review-source-job-form">
                 <div class="field">
-                  <label for="reviewSourceJobUrl">URL útil</label>
+                  <label for="reviewSourceJobUrl">URL oficial</label>
                   <input id="reviewSourceJobUrl" type="url" placeholder="https://">
                 </div>
-                <button class="btn secondary" id="reviewSourceJobBtn" type="button">Crear trabajo con esta fuente</button>
+                <button class="btn secondary" id="reviewSourceJobBtn" type="button">Enviar URL al agente</button>
               </div>
-              <p class="field-note" id="reviewSourceJobHint">El agente creará propuestas revisables; no publica ni guarda datos en la ficha.</p>
+              <p class="field-note" id="reviewSourceJobHint">El agente/LLM creará propuestas revisables; no publica ni guarda datos en la ficha.</p>
             </section>
             <div class="field review-note-field">
               <label for="reviewResolutionNote">Observación breve</label>
@@ -5557,6 +5557,50 @@
       return Boolean(row && row.clinic_id && row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row) && reviewMissingFieldTargets(row).length);
     }
 
+    function reviewSourceJobExampleForTargets(targets) {
+      var keys = (targets || []).map(function (item) { return item.key; });
+      if (keys.indexOf("profesionales") >= 0) {
+        return {
+          source: "una página oficial de equipo o especialistas",
+          placeholder: "https://clinica.es/equipo"
+        };
+      }
+      if (keys.indexOf("unidades") >= 0) {
+        return {
+          source: "una página oficial de unidades, tratamientos o servicios",
+          placeholder: "https://clinica.es/unidades"
+        };
+      }
+      if (keys.indexOf("tech") >= 0) {
+        return {
+          source: "una página oficial de tecnología, equipamiento o instalaciones",
+          placeholder: "https://clinica.es/tecnologia"
+        };
+      }
+      if (keys.indexOf("telefono") >= 0 || keys.indexOf("email") >= 0) {
+        return {
+          source: "una página oficial de contacto",
+          placeholder: "https://clinica.es/contacto"
+        };
+      }
+      if (keys.indexOf("maps_url") >= 0) {
+        return {
+          source: "una página oficial de contacto o ubicación con el perfil real de Google Maps",
+          placeholder: "https://clinica.es/contacto"
+        };
+      }
+      if (keys.indexOf("summary") >= 0 || keys.indexOf("services") >= 0 || keys.indexOf("specialties") >= 0) {
+        return {
+          source: "una página oficial que describa la clínica y sus servicios",
+          placeholder: "https://clinica.es/servicios"
+        };
+      }
+      return {
+        source: "una página oficial de la clínica",
+        placeholder: "https://clinica.es/"
+      };
+    }
+
     function proposedFields(payload) {
       payload = payload || {};
       var fields = payload.proposed_fields || payload.proposed_current_data || payload.fields || {};
@@ -6759,9 +6803,11 @@
         return;
       }
       var targets = reviewMissingFieldTargets(row);
-      el("reviewSourceJobMeta").textContent = "Pega una URL oficial donde mirar: " +
-        targets.map(function (item) { return item.label.toLowerCase(); }).join(", ") + ".";
-      el("reviewSourceJobHint").textContent = "El agente usará esa fuente para crear propuestas revisables; no publica ni guarda datos en la ficha.";
+      var example = reviewSourceJobExampleForTargets(targets);
+      var labels = targets.map(function (item) { return item.label.toLowerCase(); }).join(", ");
+      el("reviewSourceJobMeta").textContent = "Pega " + example.source + " para revisar: " + labels + ".";
+      el("reviewSourceJobUrl").placeholder = example.placeholder;
+      el("reviewSourceJobHint").textContent = "El agente/LLM mirará solo esos campos y dejará otra propuesta revisable. No publica ni guarda datos en la ficha.";
       setInput("reviewSourceJobUrl", "");
       show(panel, true);
     }
@@ -8528,7 +8574,12 @@
           source_urls: [url],
           requested_fields: targets.map(function (item) { return item.key; }),
           missing_fields: targets.map(function (item) { return item.label; }),
+          requested_field_labels: targets.map(function (item) { return item.label; }),
           from_review_id: activeReview.id,
+          human_supplied_source: true,
+          source_job_version: "2026-08-31.manual-review-source",
+          operator_intent: "Daniel indica que esta URL oficial contiene informacion para completar los campos pendientes de esta revision.",
+          allowed_output: "review_queue_proposal_only",
           instruction: "Extrae solo datos claros de esta fuente y crea propuestas revisables. No publiques ni guardes datos en la ficha sin aprobacion humana."
         },
         model_tier: "cheap",

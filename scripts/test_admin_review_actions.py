@@ -75,8 +75,8 @@ def main() -> None:
         "Ficha de la clínica",
         "Datos visibles en la ficha",
         "Contacto interno",
-        "Fuente para completar esta ficha",
-        "Crear trabajo con esta fuente",
+        "Dile al agente dónde mirar",
+        "Enviar URL al agente",
         "Confirmar misma ficha",
         "review-proposal-title",
         "review-proposal-hint",
@@ -227,7 +227,12 @@ def main() -> None:
         and "function createReviewSourceJob" in index
         and '"EXTRACT_CLINIC_PROFILE"' in index
         and "from_review_id" in index
+        and "human_supplied_source" in index
+        and "operator_intent" in index
+        and "allowed_output" in index
+        and "reviewSourceJobExampleForTargets" in index
         and "requested_fields" in index
+        and "requested_field_labels" in index
         and "missing_fields" in index
         and "function reviewClinicProfileFacts" in index
         and "function reviewClinicProfileDataItems" in index
