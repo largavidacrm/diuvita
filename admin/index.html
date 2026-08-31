@@ -7092,6 +7092,10 @@
         var warning = proposalLinkWarning(item);
         if (warning) add(item.label + ": " + warning);
       });
+      var proposalKeys = (proposalItems || []).map(function (item) { return item.key; });
+      if (proposalKeys.indexOf("google_reviews_url") >= 0) {
+        add("Valoraciones Google: confirma primero el perfil real de Google Maps y después que las reseñas pertenecen a esa misma ficha.");
+      }
       (proposalItems || []).forEach(function (item) {
         var phoneWarning = proposalPhoneWarning(item.key, item.value);
         if (phoneWarning) add(phoneWarning);

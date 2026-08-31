@@ -991,6 +991,10 @@ Next 10 technical steps:
      width to the subject, keeps type/priority/date compact, aligns rows
      predictably and adds a local check so dashboard typography and card radii
      stay within the current design scale.
+190. Make Google reviews dependency visible in the review card. Done locally in
+     `/admin/`: if a proposal includes Google review links, the warning block now
+     tells Daniel to confirm the real Google Maps clinic profile first and then
+     confirm the reviews belong to that same profile.
 
 ## Daniel decision checkpoints
 

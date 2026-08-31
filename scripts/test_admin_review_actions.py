@@ -367,6 +367,7 @@ def main() -> None:
     check(
         "Abre el enlace y confirma que es el perfil real de la clínica antes de aprobar." in index
         and "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica." in index
+        and "Valoraciones Google: confirma primero el perfil real de Google Maps" in index
         and "Alguna sede trae Google Maps dudoso" in index,
         "Google Maps proposals should show actionable in-card review hints",
     )

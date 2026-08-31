@@ -178,6 +178,10 @@ Google Maps, pero sigue siendo obligatorio abrirlo y confirmar que corresponde
 a esa clínica. **No guardar tal cual** significa que parece búsqueda, ruta,
 dirección suelta o enlace insuficiente.
 
+Si la propuesta trae **Valoraciones Google**, confirma primero el perfil real
+de Google Maps de la clínica. Después valida que el enlace de reseñas pertenece
+a esa misma ficha, no a otra sede, búsqueda o página genérica.
+
 En las revisiones manuales de calidad, al pulsar **Revisar** se abre primero la
 vista de decisión en columnas: ficha de la clínica a la izquierda y un solo
 campo pendiente a la derecha. Pulsa **Revisión manual** para abrir directamente
