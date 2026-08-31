@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import functools
 import http.server
 import socketserver
@@ -40,6 +41,21 @@ def make_handler(dist: Path = DIST) -> Any:
     return functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(dist))
 
 
+def bind_error_message(host: str, port: int, error: OSError) -> str:
+    url = f"http://{host}:{port}/admin/"
+    if error.errno == errno.EADDRINUSE:
+        return (
+            f"El panel local ya tiene algo usando el puerto {port}. "
+            f"Prueba primero {url}. Si no carga, usa otro puerto, por ejemplo --port {port + 1}."
+        )
+    if error.errno in {errno.EACCES, errno.EPERM}:
+        return (
+            f"No se pudo abrir {url} por permisos locales. "
+            "Codex puede intentarlo de nuevo con permiso local; no afecta a producción."
+        )
+    return f"No se pudo abrir {url}: {error}"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Serve dist/ locally for Vitalarga review.")
     parser.add_argument("--host", default=DEFAULT_HOST)
@@ -55,10 +71,13 @@ def main() -> int:
     dist = dashboard_root()
     ensure_dist_ready(dist)
     handler = make_handler(dist)
-    with ReusableTCPServer((args.host, args.port), handler) as httpd:
-        print(f"Dashboard local: http://{args.host}:{args.port}/admin/")
-        print(f"Sirviendo solo: {dist}")
-        httpd.serve_forever()
+    try:
+        with ReusableTCPServer((args.host, args.port), handler) as httpd:
+            print(f"Dashboard local: http://{args.host}:{args.port}/admin/")
+            print(f"Sirviendo solo: {dist}")
+            httpd.serve_forever()
+    except OSError as error:
+        raise SystemExit(bind_error_message(args.host, args.port, error))
     return 0
 
 
