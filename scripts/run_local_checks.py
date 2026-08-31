@@ -67,6 +67,7 @@ TEST_STEPS = [
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: specialist coverage", "scripts/test_measure_specialist_coverage.py"),
     ("test: specialist reconciliation", "scripts/test_specialist_review_reconciliation.py"),
+    ("test: specialist claim proposal export", "scripts/test_export_specialist_claim_proposals.py"),
     ("test: location coverage", "scripts/test_measure_location_coverage.py"),
     ("test: profile completeness", "scripts/test_measure_profile_completeness.py"),
     ("test: source coverage", "scripts/test_measure_source_coverage.py"),

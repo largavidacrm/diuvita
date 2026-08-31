@@ -690,6 +690,12 @@ Next 10 technical steps:
      now show safe proposed-field labels and counts of sedes, phones and
      specialists per card, while stripping the raw review payload from text and
      JSON output.
+134. Add a private export bridge for specialist evidence. Done locally in
+     `scripts/export_specialist_claim_proposals.py`: internal specialist claims
+     can be turned into a reviewable proposal batch without writing Supabase,
+     editing clinics or publishing names. The normal output shows counts only,
+     JSON/output files are explicit, and repo-local output is blocked by
+     default to avoid committing unpublished proposal payloads.
 
 ## Daniel decision checkpoints
 
