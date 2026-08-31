@@ -242,6 +242,8 @@ def format_report(report: dict[str, Any]) -> str:
         if item.get("error"):
             detail = "error: " + str(item["error"])[:160]
         lines.append(f"- {item.get('name')}: {detail} · {item.get('url')}")
+        if item.get("missing_markers") and not item.get("error"):
+            lines.append("  - Motivo probable: Supabase tiene datos que la web publicada todavía no ha incorporado; falta regenerar la web pública.")
         for missing in item.get("missing_examples") or []:
             lines.append(f"  - {missing.get('field')}: {missing.get('value')}")
     return "\n".join(lines) + "\n"

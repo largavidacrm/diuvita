@@ -80,6 +80,7 @@ def main():
     check("Con desfase: 1" in output, "stale count missing")
     check("Monarka Clinic" in output, "clinic name missing")
     check("campos no aparecen" in output, "missing field summary missing")
+    check("Motivo probable: Supabase tiene datos que la web publicada todavía no ha incorporado" in output, "stale reason should be explained plainly")
     print("OK public-site freshness: stale published pages are detected")
 
 

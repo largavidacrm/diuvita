@@ -465,6 +465,10 @@ Next 10 technical steps:
     when a clinic was edited after the last public-site rebuild, the editor now
     says plainly that the data is saved and the missing public change is a web
     regeneration issue, not a failed save.
+86. Translate public freshness mismatches into a practical reason. Done locally
+    in `scripts/check_public_site_freshness.py`: stale profile reports now say
+    that Supabase has data not yet incorporated by the published site, so the
+    next action is clearer without comparing multiple diagnostics.
 
 ## Daniel decision checkpoints
 
