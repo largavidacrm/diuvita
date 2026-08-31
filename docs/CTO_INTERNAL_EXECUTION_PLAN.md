@@ -453,6 +453,10 @@ Next 10 technical steps:
     `/admin/`: Daniel can filter clinic records by no required blockers,
     missing required fields, visible profiles with pending work, or profiles
     that are still not public.
+83. Add a per-clinic publication readiness diagnostic. Done locally in
+    `scripts/clinic_publication_readiness.py`: CTO runs can ask why a specific
+    clinic cannot be made visible yet and get the missing required fields
+    without editing Supabase or triggering Netlify.
 
 ## Daniel decision checkpoints
 

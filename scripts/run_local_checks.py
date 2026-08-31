@@ -55,6 +55,7 @@ TEST_STEPS = [
     ("test: public legal identity", "scripts/test_public_legal_identity.py"),
     ("test: static data validation", "scripts/test_validate_data.py"),
     ("test: admin digest", "scripts/test_admin_digest.py"),
+    ("test: clinic publication readiness", "scripts/test_clinic_publication_readiness.py"),
     ("test: Daniel review brief", "scripts/test_daniel_review_brief.py"),
     ("test: global plan status", "scripts/test_global_plan_status.py"),
     ("test: blocking claim brief", "scripts/test_blocking_claim_brief.py"),
