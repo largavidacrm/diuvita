@@ -39,6 +39,10 @@ de subir la autonomía.
 Si **Tú ahora** dice **No crees trabajos nuevos**, usa primero **Filtrar grupo**,
 **Especialistas** o **Google Maps** para cerrar tarjetas abiertas.
 
+El menú lateral abre una zona de trabajo cada vez: **Plan**, **Sistema**,
+**Revisión**, **Clínicas**, **Trabajos** o **Actividad**. Pulsa **Todo** solo si
+quieres volver a la vista larga completa.
+
 ## Entender el estado del sistema
 
 En **Estado del sistema**, mira especialmente:

@@ -469,6 +469,10 @@ Next 10 technical steps:
     in `scripts/check_public_site_freshness.py`: stale profile reports now say
     that Supabase has data not yet incorporated by the published site, so the
     next action is clearer without comparing multiple diagnostics.
+87. Make the control sidebar act like a work-mode switch. Done locally in
+    `/admin/`: the side menu now opens one major section at a time, with a
+    `Todo` option for the old long view, so the control center is less
+    overwhelming on desktop and mobile.
 
 ## Daniel decision checkpoints
 

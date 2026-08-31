@@ -52,6 +52,10 @@
       <div class="control-layout">
         <aside class="control-sidebar" aria-label="Menú del centro de control">
           <nav class="control-nav">
+            <button class="control-nav-item" type="button" data-control-jump="allControlSections">
+              <span>Todo</span>
+              <strong>Vista completa</strong>
+            </button>
             <button class="control-nav-item active" type="button" data-control-jump="globalPlanPanel">
               <span>Plan</span>
               <strong id="navPlanMeta">Ahora</strong>
@@ -782,6 +786,16 @@
     var SNAPSHOT_RETENTION_DAYS = 180;
     var SNAPSHOT_KEEP_LATEST = 3;
     var SAFE_WRITE_REVIEW_BACKLOG_LIMIT = 50;
+    var ALL_CONTROL_SECTIONS = "allControlSections";
+    var activeControlSection = "globalPlanPanel";
+    var CONTROL_SECTION_IDS = [
+      "globalPlanPanel",
+      "systemPanel",
+      "reviewWorkArea",
+      "jobsPanel",
+      "eventsPanel",
+      "clinicsPanel"
+    ];
     var PUBLIC_HEALTH_CHECKS = [
       { label: "Inicio", path: "/", markers: ["Vitalarga", "Buscar clínica"] },
       { label: "Ficha", path: "/clinica/the-long-game/", markers: ["profile-jump", "Especialistas publicados por la clínica"] },
@@ -812,10 +826,21 @@
       });
     }
 
+    function setControlSectionVisible(targetId) {
+      var showAll = targetId === ALL_CONTROL_SECTIONS;
+      CONTROL_SECTION_IDS.forEach(function (sectionId) {
+        var section = el(sectionId);
+        if (section) section.classList.toggle("control-section-hidden", !showAll && sectionId !== targetId);
+      });
+    }
+
     function jumpToControlSection(targetId) {
-      var target = el(targetId);
-      if (!target) return;
+      if (!targetId) return;
+      activeControlSection = targetId;
       setControlNavActive(targetId);
+      setControlSectionVisible(targetId);
+      var target = targetId === ALL_CONTROL_SECTIONS ? el("appPanel") : el(targetId);
+      if (!target) return;
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -2167,6 +2192,7 @@
     }
 
     function openGlobalPlanNext() {
+      jumpToControlSection("reviewWorkArea");
       if (globalPlanNextGroupId) {
         reviewClinicGroupFilter = globalPlanNextGroupId;
         setInput("reviewSearch", "");
@@ -5917,6 +5943,7 @@
         return;
       }
       client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey);
+      setControlSectionVisible(activeControlSection);
       Array.prototype.slice.call(document.querySelectorAll("[data-control-jump]")).forEach(function (button) {
         button.addEventListener("click", function () {
           jumpToControlSection(button.getAttribute("data-control-jump"));

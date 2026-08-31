@@ -19,6 +19,7 @@ def main() -> None:
         'class="control-layout"',
         'class="control-sidebar"',
         'class="control-nav"',
+        'data-control-jump="allControlSections"',
         'data-control-jump="globalPlanPanel"',
         'data-control-jump="systemPanel"',
         'data-control-jump="reviewWorkArea"',
@@ -36,10 +37,16 @@ def main() -> None:
         'id="jobsPanel"',
         'id="eventsPanel"',
         "function setControlNavActive",
+        "function setControlSectionVisible",
         "function jumpToControlSection",
         "function updateControlNav",
+        "ALL_CONTROL_SECTIONS",
+        "activeControlSection",
+        "CONTROL_SECTION_IDS",
+        "setControlSectionVisible(activeControlSection)",
         'document.querySelectorAll("[data-control-jump]")',
         'updateControlNav(',
+        'jumpToControlSection("reviewWorkArea")',
     ]:
         check(marker in index, f"missing control sidebar marker: {marker}")
 
@@ -49,6 +56,7 @@ def main() -> None:
         ".control-nav",
         ".control-nav-item",
         ".control-nav-item.active",
+        ".control-section-hidden",
         "grid-template-columns: 190px minmax(0, 1fr)",
         "grid-auto-flow: column",
         "overflow-x: auto",

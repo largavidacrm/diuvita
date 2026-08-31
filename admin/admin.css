@@ -332,6 +332,10 @@ button:disabled {
   min-width: 0;
 }
 
+.control-section-hidden {
+  display: none !important;
+}
+
 .hero-row {
   display: flex;
   align-items: end;
