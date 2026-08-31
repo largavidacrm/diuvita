@@ -696,6 +696,11 @@ Next 10 technical steps:
      editing clinics or publishing names. The normal output shows counts only,
      JSON/output files are explicit, and repo-local output is blocked by
      default to avoid committing unpublished proposal payloads.
+135. Wire private specialist proposal readiness into the CTO cycle. Done
+     locally in `scripts/run_cto_shadow_cycle.py`: optional read-only runs can
+     include `--specialist-claim-proposals`, compact raw proposal JSON out of
+     the cycle output and show Daniel only how many private specialist proposal
+     batches are ready or skipped because cards already exist.
 
 ## Daniel decision checkpoints
 

@@ -24,13 +24,15 @@ for Daniel instead of implementing, softening or silently discarding the change.
     link payloads;
 15. optionally reconcile published/proposed/internal specialists without
     exposing long professional lists in the cycle output;
-16. print the admin digest;
-17. evaluate stored claims against publication rules.
-18. optionally run strict editorial limit checks;
-19. optionally check public production URLs without logging in or writing data.
-20. optionally explain one clinic's public visibility state without publishing
+16. optionally summarize private specialist proposal batches without printing
+    proposed professional names;
+17. print the admin digest;
+18. evaluate stored claims against publication rules.
+19. optionally run strict editorial limit checks;
+20. optionally check public production URLs without logging in or writing data.
+21. optionally explain one clinic's public visibility state without publishing
     or exposing long team/professional payloads.
-21. optionally compare saved public data with deployed clinic pages to detect
+22. optionally compare saved public data with deployed clinic pages to detect
     stale pages.
 
 Default mode is dry-run:
@@ -131,6 +133,17 @@ global plan says the next specialist work is consolidation:
 ```bash
 python3 scripts/run_cto_shadow_cycle.py --specialist-reconciliation --specialist-reconciliation-clinic "Kairos"
 ```
+
+Private specialist proposal export is also optional and read-only. It is useful
+when the reconciliation report finds public specialist names in internal
+evidence but no open review card:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --specialist-claim-proposals --plain-brief
+```
+
+The cycle summary shows only counts. It does not create review cards and does
+not print proposed professional names.
 
 The JSON output also includes a `daniel_brief` block with the simple status,
 next action, review backlog, top missing clinic field, next incomplete profile

@@ -173,6 +173,13 @@ STEP_ITEM_KEYS = {
         "pending_professional_count",
         "next_step",
     ),
+    "export_specialist_claim_proposals": (
+        "slug",
+        "title",
+        "priority",
+        "source_url",
+        "source_urls",
+    ),
 }
 
 
@@ -199,6 +206,7 @@ STEP_LABELS = {
     "clinic_public_visibility_report": "visibilidad publica por clinica",
     "google_link_review_reconciliation": "conciliacion de enlaces Google",
     "specialist_review_reconciliation": "conciliacion de especialistas",
+    "export_specialist_claim_proposals": "propuestas privadas de especialistas",
 }
 
 REVIEW_CARD_CREATING_STEPS = {
@@ -335,6 +343,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in review_cards[:3]
         ]
         compact.pop("review_cards", None)
+    proposals = compact.get("proposals")
+    if isinstance(proposals, list):
+        compact["proposals_count"] = len(proposals)
+        compact["sample_proposals"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in proposals[:3]
+        ]
+        compact.pop("proposals", None)
     checks = compact.get("checks")
     if isinstance(checks, list):
         compact["checks_count"] = len(checks)
@@ -427,6 +443,17 @@ def cycle_next_clicks(digest: dict[str, Any]) -> list[str]:
     return clicks[:4] or ["Abrir el panel y usar Abrir prioridad."]
 
 
+def cycle_profile_queue_signal(digest: dict[str, Any], next_action: str) -> str:
+    if next_action in {"Mejorar fichas existentes", "Completar fichas"}:
+        return next_profile_action(digest)
+    completeness = digest.get("profile_completeness") or {}
+    visible = as_int(completeness.get("visible_clinics"))
+    pending = as_int(completeness.get("with_pending_fields"))
+    if visible and pending:
+        return f"{pending}/{visible} fichas con campos pendientes; se revisan después de la prioridad actual"
+    return "sin ficha pendiente medida"
+
+
 def step_label(name: str) -> str:
     return STEP_LABELS.get(name, name.replace("_", " "))
 
@@ -496,6 +523,22 @@ def specialist_reconciliation_status(step: dict[str, Any] | None) -> str:
     if pending:
         return f"{name}: {pending} pendientes en {cards} tarjetas"
     return f"{name}: sin pendientes detectados"
+
+
+def specialist_claim_proposal_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobadas en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    proposals = as_int(counts.get("proposal_count") or summary.get("proposals_count"))
+    skipped_cards = as_int(counts.get("skipped_with_open_cards"))
+    if proposals:
+        return f"{proposals} propuesta privada lista; {skipped_cards} omitidas porque ya tienen tarjeta"
+    if skipped_cards:
+        return f"sin propuestas nuevas; {skipped_cards} ya tienen tarjeta abierta"
+    return "sin propuestas nuevas"
 
 
 def google_link_reconciliation_status(step: dict[str, Any] | None) -> str:
@@ -606,13 +649,15 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     google_link_reconciliation = google_link_reconciliation_status(google_link_step)
     specialist_step = find_step(steps, "specialist_review_reconciliation")
     specialist_reconciliation = specialist_reconciliation_status(specialist_step)
+    specialist_claim_proposal_step = find_step(steps, "export_specialist_claim_proposals")
+    specialist_claim_proposals = specialist_claim_proposal_status(specialist_claim_proposal_step)
     enrichment_consolidation_step = find_step(steps, "consolidate_profile_enrichment_reviews")
     enrichment_consolidation = enrichment_consolidation_status(enrichment_consolidation_step)
 
     if admin_digest:
         next_action = next_action_label(admin_digest)
         profile_gap = top_pending_profile_field(admin_digest)
-        profile_next = next_profile_action(admin_digest)
+        profile_next = cycle_profile_queue_signal(admin_digest, next_action)
         source_gap = source_coverage_status(admin_digest)
         source_next = next_source_action(admin_digest)
         next_clicks = cycle_next_clicks(admin_digest)
@@ -660,6 +705,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "clinic_visibility": clinic_visibility,
         "google_link_reconciliation": google_link_reconciliation,
         "specialist_reconciliation": specialist_reconciliation,
+        "specialist_claim_proposals": specialist_claim_proposals,
         "enrichment_consolidation": enrichment_consolidation,
         "attention": attention,
     }
@@ -675,7 +721,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         "- Proximos clics: " + " / ".join(str(item) for item in (brief.get("next_clicks") or []) if item),
         f"- Revisiones abiertas: {brief.get('open_reviews')}",
         f"- Campo mas pendiente: {brief.get('profile_gap')}.",
-        f"- Siguiente ficha: {brief.get('profile_next')}.",
+        f"- Fichas pendientes: {brief.get('profile_next')}.",
         f"- Cobertura fuentes: {brief.get('source_gap')}.",
         f"- Siguiente fuente: {brief.get('source_next')}.",
         f"- Publicacion: {brief.get('publication_guard')}",
@@ -686,6 +732,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Consolidacion mejoras: {brief.get('enrichment_consolidation')}.",
         f"- Conciliacion Google: {brief.get('google_link_reconciliation')}.",
         f"- Conciliacion especialistas: {brief.get('specialist_reconciliation')}.",
+        f"- Propuestas especialistas: {brief.get('specialist_claim_proposals')}.",
     ]
     if as_int(brief.get("skipped_steps")):
         lines.append(f"- Pasos omitidos: {brief.get('skipped_steps')}")
@@ -880,6 +927,16 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
         if args.specialist_reconciliation_clinic:
             specialist_reconciliation_args.extend(["--clinic", args.specialist_reconciliation_clinic])
         steps.append(("specialist_review_reconciliation", specialist_reconciliation_args, 45))
+    if args.specialist_claim_proposals or args.specialist_claim_proposals_clinic:
+        specialist_claim_proposal_args = [
+            "export_specialist_claim_proposals.py",
+            "--limit",
+            str(args.specialist_claim_proposal_limit),
+            "--json",
+        ]
+        if args.specialist_claim_proposals_clinic:
+            specialist_claim_proposal_args.extend(["--clinic", args.specialist_claim_proposals_clinic])
+        steps.append(("export_specialist_claim_proposals", specialist_claim_proposal_args, 45))
     steps.extend([
         (
             "admin_digest",
@@ -1010,6 +1067,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--specialist-reconciliation-clinic", default="", help="Clinic name or slug for specialist reconciliation.")
     parser.add_argument("--specialist-reconciliation-limit", type=int, default=5)
+    parser.add_argument(
+        "--specialist-claim-proposals",
+        action="store_true",
+        help="Optionally summarize private proposal batches from internal specialist evidence; read-only.",
+    )
+    parser.add_argument("--specialist-claim-proposals-clinic", default="", help="Clinic name or slug for private specialist proposals.")
+    parser.add_argument("--specialist-claim-proposal-limit", type=int, default=8)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     parser.add_argument(
         "--production-health",
@@ -1074,6 +1138,7 @@ def main() -> int:
         args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
+        args.specialist_claim_proposal_limit,
         args.public_freshness_missing_limit,
         args.clinic_visibility_missing_limit,
         args.max_open_reviews_for_safe_writes,
@@ -1098,6 +1163,7 @@ def main() -> int:
         args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
+        args.specialist_claim_proposal_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:

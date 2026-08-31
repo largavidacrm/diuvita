@@ -14,6 +14,7 @@ from run_cto_shadow_cycle import (
     google_link_reconciliation_status,
     open_review_count_from_digest,
     skipped_step,
+    specialist_claim_proposal_status,
     specialist_reconciliation_status,
     try_parse_json,
 )
@@ -53,6 +54,20 @@ def main():
     })
     check(compact_items["items_count"] == 2, "items count should be kept")
     check("items" not in compact_items, "full item list should be removed")
+    compact_proposals = compact_summary("export_specialist_claim_proposals", {
+        "summary": {"proposal_count": 1, "skipped_with_open_cards": 2},
+        "proposals": [
+            {
+                "slug": "clinic-a",
+                "title": "Ampliar especialistas: Clinic A",
+                "priority": 55,
+                "proposed_fields": {"profesionales": ["Dra. Ana López"]},
+            }
+        ],
+    })
+    check(compact_proposals["proposals_count"] == 1, "proposal count should be kept")
+    check("proposals" not in compact_proposals, "raw proposals should be removed")
+    check("proposed_fields" not in compact_proposals["sample_proposals"][0], "proposed names should be hidden")
     check("snapshot" not in compact_items["sample_items"][0], "large nested snapshot should be omitted")
     compact_seed_sources = compact_summary("seed_visible_clinic_sources", {
         "mode": "apply",
@@ -457,6 +472,27 @@ def main():
         specialist_reconciliation_status(aggregate_specialist_step) == "22 pendientes en 7 tarjetas (4/5 fichas)",
         "specialist reconciliation aggregate status should be readable",
     )
+    claim_proposal_step = {
+        "name": "export_specialist_claim_proposals",
+        "ok": True,
+        "summary": {
+            "summary": {
+                "proposal_count": 1,
+                "skipped_with_open_cards": 5,
+            },
+            "proposals_count": 1,
+        },
+    }
+    check(
+        specialist_claim_proposal_status(claim_proposal_step)
+        == "1 propuesta privada lista; 5 omitidas porque ya tienen tarjeta",
+        "specialist claim proposal status should be readable",
+    )
+    check(
+        specialist_claim_proposal_status({"name": "export_specialist_claim_proposals", "ok": True, "summary": {"summary": {"proposal_count": 0, "skipped_with_open_cards": 5}}})
+        == "sin propuestas nuevas; 5 ya tienen tarjeta abierta",
+        "empty specialist claim proposal status should explain skipped cards",
+    )
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {
@@ -480,7 +516,12 @@ def main():
         },
         "reviews_by_type": [{"review_type": "blocking_claim_review", "open_count": 1}],
         "open_reviews": [{"review_type": "blocking_claim_review", "priority": 95}],
-        "profile_completeness": {"pending_specialists": 17, "pending_contact": 6},
+        "profile_completeness": {
+            "visible_clinics": 19,
+            "with_pending_fields": 19,
+            "pending_specialists": 17,
+            "pending_contact": 6,
+        },
         "profile_next_target": {
             "clinic_name": "Sensabell",
             "pending_count": 4,
@@ -525,7 +566,10 @@ def main():
     check(cycle_brief["status"] == "ok", "clean cycle should be OK")
     check(cycle_brief["next_action"] == "Revisar claim bloqueante", "Daniel brief should keep next action")
     check(cycle_brief["profile_gap"] == "Especialistas · 17 fichas", "Daniel brief should keep top profile gap")
-    check("Sensabell" in cycle_brief["profile_next"], "Daniel brief should keep next profile target")
+    check(
+        cycle_brief["profile_next"] == "19/19 fichas con campos pendientes; se revisan después de la prioridad actual",
+        "Daniel brief should keep secondary profile queue aggregate",
+    )
     check("11/19 fichas con fuente" in cycle_brief["source_gap"], "Daniel brief should keep source coverage")
     check("Kairos Longevity Clinic" in cycle_brief["source_next"], "Daniel brief should keep next source target")
     check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
@@ -537,13 +581,17 @@ def main():
     check("# Vitalarga: resumen CTO automatico" in brief_text, "plain brief title missing")
     check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
     check("Proximos clics: No crear trabajos nuevos" in brief_text, "plain brief next clicks missing")
-    check("Siguiente ficha: Revisar Sensabell" in brief_text, "plain brief next profile missing")
+    check(
+        "Fichas pendientes: 19/19 fichas con campos pendientes; se revisan después de la prioridad actual" in brief_text,
+        "plain brief should keep secondary profile queue aggregate",
+    )
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
     check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
     check("Consolidacion mejoras: no comprobada en este ciclo" in brief_text, "plain brief consolidation line missing")
     check("Conciliacion Google: no comprobada en este ciclo" in brief_text, "plain brief Google reconciliation line missing")
     check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
+    check("Propuestas especialistas: no comprobadas en este ciclo" in brief_text, "plain brief specialist proposal line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",
@@ -597,6 +645,21 @@ def main():
         "Conciliacion especialistas: Kairos Longevity Clinic: 6 pendientes en 2 tarjetas"
         in format_cycle_brief(specialist_cycle_brief),
         "plain brief should show specialist reconciliation result",
+    )
+    specialist_proposal_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [claim_proposal_step],
+    })
+    check(
+        specialist_proposal_cycle_brief["specialist_claim_proposals"]
+        == "1 propuesta privada lista; 5 omitidas porque ya tienen tarjeta",
+        "specialist proposal export should enter cycle brief",
+    )
+    check(
+        "Propuestas especialistas: 1 propuesta privada lista; 5 omitidas porque ya tienen tarjeta"
+        in format_cycle_brief(specialist_proposal_cycle_brief),
+        "plain brief should show specialist proposal export result",
     )
     google_link_cycle_brief = build_cycle_brief({
         "mode": "dry_run",
@@ -673,6 +736,9 @@ def main():
         specialist_reconciliation=False,
         specialist_reconciliation_clinic="",
         specialist_reconciliation_limit=5,
+        specialist_claim_proposals=False,
+        specialist_claim_proposals_clinic="",
+        specialist_claim_proposal_limit=8,
         fetch_timeout=7,
         strict_editorial=False,
         plain_brief=False,
@@ -699,6 +765,7 @@ def main():
     check("clinic_public_visibility_report" not in names, "clinic visibility should be off by default")
     check("google_link_review_reconciliation" not in names, "Google reconciliation should be off by default")
     check("specialist_review_reconciliation" not in names, "specialist reconciliation should be off by default")
+    check("export_specialist_claim_proposals" not in names, "specialist proposal export should be off by default")
     check("consolidate_profile_enrichment_reviews" in names, "duplicate enrichment consolidation step missing")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
@@ -755,6 +822,9 @@ def main():
         specialist_reconciliation=False,
         specialist_reconciliation_clinic="",
         specialist_reconciliation_limit=5,
+        specialist_claim_proposals=False,
+        specialist_claim_proposals_clinic="",
+        specialist_claim_proposal_limit=8,
         fetch_timeout=7,
         strict_editorial=False,
         plain_brief=False,
@@ -821,6 +891,9 @@ def main():
         specialist_reconciliation=True,
         specialist_reconciliation_clinic="Kairos",
         specialist_reconciliation_limit=3,
+        specialist_claim_proposals=True,
+        specialist_claim_proposals_clinic="Benzaquen",
+        specialist_claim_proposal_limit=4,
         fetch_timeout=7,
         strict_editorial=True,
         plain_brief=True,
@@ -840,6 +913,7 @@ def main():
     team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
     google_reconciliation_step = [step for step in optional_steps if step[0] == "google_link_review_reconciliation"][0]
     specialist_reconciliation_step = [step for step in optional_steps if step[0] == "specialist_review_reconciliation"][0]
+    specialist_claim_proposal_step = [step for step in optional_steps if step[0] == "export_specialist_claim_proposals"][0]
     focused_consolidation_step = [step for step in optional_steps if step[0] == "consolidate_profile_enrichment_reviews"][0]
     check("--apply" in seed_apply_step[1], "source seeding should follow safe apply mode")
     check("--apply" in team_source_step[1], "team source discovery should follow safe apply mode")
@@ -858,6 +932,10 @@ def main():
     check("Kairos" in specialist_reconciliation_step[1], "specialist reconciliation clinic should pass through")
     check("3" in specialist_reconciliation_step[1], "specialist reconciliation limit should pass through")
     check(optional_steps.index(specialist_reconciliation_step) < optional_steps.index([step for step in optional_steps if step[0] == "admin_digest"][0]), "specialist reconciliation should run before admin digest")
+    check("--json" in specialist_claim_proposal_step[1], "specialist proposal export should be machine readable")
+    check("Benzaquen" in specialist_claim_proposal_step[1], "specialist proposal clinic should pass through")
+    check("4" in specialist_claim_proposal_step[1], "specialist proposal limit should pass through")
+    check(optional_steps.index(specialist_claim_proposal_step) < optional_steps.index([step for step in optional_steps if step[0] == "admin_digest"][0]), "specialist proposal export should run before admin digest")
     check("Sensabell" in focused_consolidation_step[1], "consolidation clinic should pass through")
     check("4" in focused_consolidation_step[1], "focused consolidation limit should pass through")
     strict_step = [step for step in optional_steps if step[0] == "check_operational_limits_strict"][0]
