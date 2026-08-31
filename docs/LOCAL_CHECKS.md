@@ -17,7 +17,7 @@ The full pass currently covers:
    snapshot-retention status and specialist
    coverage/profile-completeness/public-health/review-backlog status.
 8. Public clinic profile UX, built clinic-page UX and basic site asset checks.
-9. Admin digest, per-clinic publication readiness, Daniel review brief,
+9. Admin digest, publication readiness, Daniel review brief,
    blocking-claim brief, review-backlog brief, review-maturity,
    specialist-coverage, profile-completeness and source-coverage checks.
 10. Enrichment, candidate promotion, source hydration and source monitoring.

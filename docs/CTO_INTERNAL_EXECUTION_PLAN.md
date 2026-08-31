@@ -701,6 +701,11 @@ Next 10 technical steps:
      include `--specialist-claim-proposals`, compact raw proposal JSON out of
      the cycle output and show Daniel only how many private specialist proposal
      batches are ready or skipped because cards already exist.
+136. Let publication readiness run as a global read-only summary. Done locally
+     in `scripts/clinic_publication_readiness.py`: the diagnostic can now run
+     without a clinic query, sort non-archived fichas by required blockers and
+     report measured counts, visible counts, ready fichas, blocking claims and
+     top missing fields before any per-clinic detail.
 
 ## Daniel decision checkpoints
 
