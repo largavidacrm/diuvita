@@ -28,6 +28,7 @@ def main():
     check(any(item["name"] == "admin compact priority filter" for item in local_checks), "admin priority filter marker missing")
     check(any(item["name"] == "admin visual scale tokens" for item in local_checks), "admin visual scale marker missing")
     check(any(item["name"] == "LLM manual review context" for item in local_checks), "LLM manual review marker missing")
+    check(any(item["name"] == "LLM manual source scope" for item in local_checks), "LLM manual source scope marker missing")
     check(any(item["name"] == "built admin manual review context" for item in local_checks), "built admin manual review marker missing")
     check(any(item["name"] == "built admin manual review source handoff" for item in local_checks), "built admin manual source handoff marker missing")
     check(any(item["name"] == "built admin manual review scoped source" for item in local_checks), "built admin manual scoped source marker missing")

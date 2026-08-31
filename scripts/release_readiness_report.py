@@ -34,6 +34,7 @@ SOURCE_MARKERS = [
     ("admin compact priority filter", "admin/index.html", "Prioridad: todas"),
     ("admin visual scale tokens", "admin/admin.css", "--text-ui"),
     ("LLM manual review context", "scripts/review_proposal_decision_packets.py", "manual_review_context"),
+    ("LLM manual source scope", "scripts/review_proposal_decision_packets.py", "primary_target_first"),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
     ("logo download guard", "scripts/fetch_logos.py", "def looks_like_image"),
 ]

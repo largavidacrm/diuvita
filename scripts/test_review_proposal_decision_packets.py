@@ -152,6 +152,19 @@ def main():
         "quality audit packet should keep human-readable source-job labels",
     )
     check(
+        quality_packet["source_job_request"]["primary_requested_fields"] == ["profesionales"],
+        "quality audit packet should identify the primary source-job field",
+    )
+    check(
+        quality_packet["source_job_request"]["primary_requested_field_labels"] == ["Especialistas publicados"],
+        "quality audit packet should identify the primary source-job label",
+    )
+    check(
+        quality_packet["source_job_request"]["ui_route"] == "manual_review_banner_source_handoff"
+        and quality_packet["source_job_request"]["target_scope"] == "primary_target_first",
+        "source-job bridge should match the manual-review banner route",
+    )
+    check(
         quality_packet["source_job_request"]["write_policy"] == "creates_review_proposal_only",
         "source-job bridge should stay review-only",
     )
@@ -172,6 +185,11 @@ def main():
     check(
         manual_context["operator_action"] == "open_admin_target_edit_field_then_save_clinic",
         "manual context should describe the manual operator route",
+    )
+    check(
+        manual_context["source_handoff"]["ui_label"] == "Pasar URL al agente"
+        and manual_context["source_handoff"]["target_scope"] == "primary_target_first",
+        "manual context should expose the scoped source handoff",
     )
     check(
         manual_context["llm_boundary"] == "do_not_invent_values_or_write_field_changes",

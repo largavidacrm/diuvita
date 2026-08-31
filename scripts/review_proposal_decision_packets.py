@@ -339,6 +339,13 @@ def manual_review_context(
         "issues": issues,
         "operator_action": "open_admin_target_edit_field_then_save_clinic",
         "after_save": "resolve_current_review_then_advance_to_next_pending",
+        "source_handoff": {
+            "available": True,
+            "ui_label": "Pasar URL al agente",
+            "source_requirement": "official_clinic_url",
+            "target_scope": "primary_target_first",
+            "allowed_output": "review_queue_proposal_only",
+        },
         "llm_boundary": "do_not_invent_values_or_write_field_changes",
     }
 
@@ -534,7 +541,11 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             "from_review_id": row.get("id"),
             "requested_fields": [target["key"] for target in packet_manual_targets],
             "requested_field_labels": [target["label"] for target in packet_manual_targets],
+            "primary_requested_fields": [packet_manual_targets[0]["key"]],
+            "primary_requested_field_labels": [packet_manual_targets[0]["label"]],
             "source_requirement": "official_clinic_url",
+            "ui_route": "manual_review_banner_source_handoff",
+            "target_scope": "primary_target_first",
             "write_policy": "creates_review_proposal_only",
             "allowed_output": "review_queue_proposal_only",
         }

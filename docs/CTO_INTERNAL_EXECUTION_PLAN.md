@@ -880,6 +880,12 @@ Next 10 technical steps:
      `/admin/`: source URLs submitted from the manual-review banner now target
      the field Daniel is editing first, falling back to the full card only when
      no unique field target is available.
+168. Preserve scoped source handoff in LLM packets. Done locally in
+     `scripts/review_proposal_decision_packets.py` and
+     `scripts/prepare_review_decision_llm_prompt.py`: manual-review packets now
+     describe the **Pasar URL al agente** route, the official-source requirement
+     and the `primary_target_first` scope so future LLM assistance matches the
+     admin workflow.
 
 ## Daniel decision checkpoints
 

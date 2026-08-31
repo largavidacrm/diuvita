@@ -49,6 +49,7 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
         if isinstance(item, dict) and item.get("key")
     ]
     manual_context = packet.get("manual_review_context") if isinstance(packet.get("manual_review_context"), dict) else {}
+    source_job = packet.get("source_job_request") if isinstance(packet.get("source_job_request"), dict) else {}
     return {
         "review_id": packet.get("review_id"),
         "packet_schema_version": packet.get("schema_version") or PACKET_SCHEMA_VERSION,
@@ -64,8 +65,17 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
             "mode": manual_context.get("mode"),
             "operator_action": manual_context.get("operator_action"),
             "after_save": manual_context.get("after_save"),
+            "source_handoff": sanitize_for_prompt(manual_context.get("source_handoff") or {}),
             "llm_boundary": manual_context.get("llm_boundary"),
         } if manual_context else {},
+        "source_job_request": {
+            "status": source_job.get("status"),
+            "source_requirement": source_job.get("source_requirement"),
+            "ui_route": source_job.get("ui_route"),
+            "target_scope": source_job.get("target_scope"),
+            "requested_fields": source_job.get("requested_fields") or [],
+            "primary_requested_fields": source_job.get("primary_requested_fields") or [],
+        } if source_job else {},
         "warning_count": len(packet.get("warnings") or []),
     }
 

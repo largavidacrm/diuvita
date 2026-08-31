@@ -104,6 +104,16 @@ def main():
         "prompt digest should keep the manual operator route",
     )
     check(
+        quality_prompt["packet_digest"]["manual_review_context"]["source_handoff"]["target_scope"]
+        == "primary_target_first",
+        "prompt digest should keep the scoped source handoff",
+    )
+    check(
+        quality_prompt["packet_digest"]["source_job_request"]["ui_route"] == "manual_review_banner_source_handoff"
+        and quality_prompt["packet_digest"]["source_job_request"]["primary_requested_fields"] == ["profesionales"],
+        "prompt digest should keep the primary source-job target",
+    )
+    check(
         quality_prompt["packet_digest"]["manual_review_context"]["llm_boundary"]
         == "do_not_invent_values_or_write_field_changes",
         "prompt digest should keep the no-invention boundary",
