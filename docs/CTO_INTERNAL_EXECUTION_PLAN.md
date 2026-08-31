@@ -955,6 +955,12 @@ Next 10 technical steps:
      groups now include a read-only `review_sequence` that prioritizes conflicts,
      weak phones, Google links and then other fields, so future LLM or operator
      flows can prepare the case without merging multiple admin decisions.
+183. Structure Google Maps review decisions for future assistance. Done locally
+     in `scripts/google_link_review_reconciliation.py`: open Google-link cards
+     now expose `manual_decision_items` with the field, status, safe admin
+     action and `safe_to_auto_publish: false`, preserving the rule that even
+     direct-looking Google Business/Profile links require human confirmation
+     before they enter a clinic ficha.
 
 ## Daniel decision checkpoints
 

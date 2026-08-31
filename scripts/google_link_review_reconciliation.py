@@ -27,6 +27,11 @@ STATUS_LABELS = {
     "empty": "sin enlace",
 }
 
+DECISION_FIELD_LABELS = {
+    "maps_url": "Google Maps",
+    "google_reviews_url": "Valoraciones Google",
+}
+
 
 def compact_lookup_key(value: Any) -> str:
     normalized = unicodedata.normalize("NFKD", str(value or ""))
@@ -109,6 +114,55 @@ def map_status_counts(urls: list[str]) -> dict[str, int]:
     return counts
 
 
+def google_map_decision_item(url: str) -> dict[str, Any]:
+    status = google_maps_review_status(url)
+    direct = is_direct_google_maps_profile_url(url)
+    return {
+        "field": "maps_url",
+        "label": DECISION_FIELD_LABELS["maps_url"],
+        "url": url,
+        "status": status,
+        "status_label": STATUS_LABELS.get(status, status),
+        "direct_profile": direct,
+        "safe_to_auto_publish": False,
+        "manual_decision": "confirm_real_clinic_profile" if direct else "reject_or_replace_with_real_profile",
+        "admin_action": (
+            "abrir enlace y aprobar solo si es la ficha real de la clínica"
+            if direct
+            else "rechazar o modificar con el perfil real de Google Business"
+        ),
+    }
+
+
+def google_review_decision_item(url: str) -> dict[str, Any]:
+    return {
+        "field": "google_reviews_url",
+        "label": DECISION_FIELD_LABELS["google_reviews_url"],
+        "url": url,
+        "status": "review_link",
+        "status_label": "enlace de valoraciones",
+        "direct_profile": False,
+        "safe_to_auto_publish": False,
+        "manual_decision": "confirm_reviews_match_main_profile",
+        "admin_action": "aprobar solo si pertenece a la misma ficha principal de Google Maps",
+    }
+
+
+def manual_decision_items(maps: list[str], reviews: list[str]) -> list[dict[str, Any]]:
+    items = [google_map_decision_item(url) for url in maps]
+    items.extend(google_review_decision_item(url) for url in reviews if valid_http_url(url))
+    return items
+
+
+def decision_field_labels(items: list[dict[str, Any]]) -> list[str]:
+    labels: list[str] = []
+    for item in items:
+        label = str(item.get("label") or "").strip()
+        if label and label not in labels:
+            labels.append(label)
+    return labels
+
+
 def review_link_count(urls: list[str]) -> int:
     return len([url for url in urls if valid_http_url(url)])
 
@@ -142,6 +196,9 @@ def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
         "review_link_count": review_link_count(reviews),
         "source_urls": source_urls(payload),
     }
+    result["manual_decision_items"] = manual_decision_items(maps, reviews)
+    result["manual_decision_count"] = len(result["manual_decision_items"])
+    result["fields_to_review"] = decision_field_labels(result["manual_decision_items"])
     result.pop("payload", None)
     result["next_step"] = google_link_next_step(result)
     return result
@@ -153,6 +210,7 @@ def summarize_cards(cards: list[dict[str, Any]]) -> dict[str, int]:
         "cards_with_direct_maps": sum(1 for card in cards if as_int(card.get("direct_map_count")) > 0),
         "cards_with_unsafe_maps": sum(1 for card in cards if as_int(card.get("unsafe_map_count")) > 0),
         "cards_with_review_links": sum(1 for card in cards if as_int(card.get("review_link_count")) > 0),
+        "manual_decision_items": sum(as_int(card.get("manual_decision_count")) for card in cards),
     }
 
 
@@ -267,6 +325,7 @@ def format_reconciliation(report: dict[str, Any]) -> str:
             f"- Tarjeta: {title}",
             f"- Estado Maps: {first_status_label(row.get('map_status_counts') or {})}",
             f"- Valoraciones Google: {as_int(row.get('review_link_count'))} enlace(s)",
+            f"- Decisiones manuales: {', '.join(row.get('fields_to_review') or ['sin campo directo'])}",
             f"- Siguiente paso: {row.get('next_step')}",
         ])
         maps = row.get("maps_urls") or []
@@ -295,6 +354,7 @@ def format_compact_reconciliation(report: dict[str, Any]) -> str:
         f"- Con perfil directo: {as_int(summary.get('cards_with_direct_maps'))}",
         f"- Con Maps dudoso: {as_int(summary.get('cards_with_unsafe_maps'))}",
         f"- Con valoraciones: {as_int(summary.get('cards_with_review_links'))}",
+        f"- Decisiones manuales: {as_int(summary.get('manual_decision_items'))}",
         "",
         "## Primeras tarjetas",
     ]
@@ -308,6 +368,7 @@ def format_compact_reconciliation(report: dict[str, Any]) -> str:
             f"- {clinic}: {title} · "
             f"{first_status_label(row.get('map_status_counts') or {})}; "
             f"{as_int(row.get('review_link_count'))} valoraciones · "
+            f"campos: {', '.join(row.get('fields_to_review') or ['sin campo directo'])} · "
             f"{row.get('next_step')}"
         )
     lines.append("")

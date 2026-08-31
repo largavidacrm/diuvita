@@ -58,6 +58,12 @@ That reconciliation report is read-only. It separates direct-looking clinic
 profile links from searches, routes or street-address links, and gives Daniel
 the next manual review step.
 
+The JSON report also includes `manual_decision_items`. Each item points to the
+field under review (`maps_url` or `google_reviews_url`), the status of the link,
+the safe admin action and `safe_to_auto_publish: false`. This is intentional:
+a direct-looking Google link can guide the review, but it must still be opened
+and confirmed as the clinic's real Google Business/Profile before saving.
+
 Apply mode creates internal `clinic_profile_enrichment` review cards only:
 
 ```bash
