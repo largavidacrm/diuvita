@@ -629,6 +629,7 @@
     var activeClinic = null;
     var activeReview = null;
     var activeClinicReview = null;
+    var activeClinicReviewIds = [];
     var activeClinicVersions = [];
     var activeClinicVersionRequest = 0;
     var activeClinicLockRequest = 0;
@@ -2867,6 +2868,9 @@
 
     function renderRelatedReviewPlan(row, bundle) {
       var node = el("relatedReviewPlan");
+      var enrichmentRows = (bundle || []).filter(function (item) {
+        return item.review_type === "clinic_profile_enrichment";
+      });
       var counts = [
         ["Bloqueantes", countWhere(bundle, isBlockingClaimReview)],
         ["Fuentes", countWhere(bundle, function (item) { return item.review_type === "source_change_detected"; })],
@@ -2882,9 +2886,12 @@
         chips += '<span class="pill warning">Campos repetidos: ' + html(duplicateFields.slice(0, 3).join(", ")) +
           (duplicateFields.length > 3 ? html(" +" + (duplicateFields.length - 3)) : "") + '</span>';
       }
+      var groupAction = enrichmentRows.length > 1
+        ? '<button class="link-btn" type="button" data-load-related-proposals>Cargar mejoras juntas</button>'
+        : "";
       node.innerHTML = '<div><span>Orden recomendado</span><strong>' +
         html(reviewWorkgroupRecommendation(bundle)) + '</strong></div><div class="related-review-counts">' +
-        chips + '<span class="pill">Actual: ' + html(reviewVisibleLabel(row)) + '</span></div>';
+        chips + '<span class="pill">Actual: ' + html(reviewVisibleLabel(row)) + '</span>' + groupAction + '</div>';
     }
 
     function renderRelatedReviews(row) {
@@ -4446,6 +4453,113 @@
       show(block, true);
     }
 
+    function mergeValueKey(value) {
+      return normalizedFieldValue(value).toLowerCase();
+    }
+
+    function mergeListField(existing, value, isLocation) {
+      var rows = [];
+      var seen = {};
+      function add(item) {
+        if (Array.isArray(item)) {
+          item.forEach(add);
+          return;
+        }
+        if (isLocation) {
+          var location = normalizedLocation(item);
+          var locationKey = location ? locationLine(location).toLowerCase() : "";
+          if (locationKey && !seen[locationKey]) {
+            seen[locationKey] = true;
+            rows.push(location);
+          }
+          return;
+        }
+        linesToArray(item).forEach(function (line) {
+          var key = line.toLowerCase();
+          if (key && !seen[key]) {
+            seen[key] = true;
+            rows.push(line);
+          }
+        });
+      }
+      add(existing);
+      add(value);
+      return rows;
+    }
+
+    function mergeReviewPayloads(rows) {
+      var merged = {
+        proposed_fields: {},
+        source_urls: [],
+        warnings: []
+      };
+      var seenSources = {};
+      var warnedFields = {};
+      var listFields = {
+        services: true,
+        specialties: true,
+        unidades: true,
+        profesionales: true,
+        locations: true
+      };
+      (rows || []).forEach(function (row) {
+        var payload = (row && row.payload) || {};
+        if (!merged.clinic_id && row && row.clinic_id) merged.clinic_id = row.clinic_id;
+        ["clinic_name", "clinic_city", "clinic_country", "website", "source_url"].forEach(function (key) {
+          if (!merged[key] && payload[key]) merged[key] = payload[key];
+        });
+        sourceList(payload).forEach(function (url) {
+          if (!seenSources[url]) {
+            seenSources[url] = true;
+            merged.source_urls.push(url);
+          }
+        });
+        if (Array.isArray(payload.warnings)) {
+          payload.warnings.forEach(function (warning) {
+            var clean = text(warning).trim();
+            if (clean) merged.warnings.push(clean);
+          });
+        }
+        Object.keys(proposedFields(payload)).forEach(function (key) {
+          var value = proposedFields(payload)[key];
+          if (!proposalListValue(value)) return;
+          if (listFields[key]) {
+            merged.proposed_fields[key] = mergeListField(merged.proposed_fields[key] || [], value, key === "locations");
+            return;
+          }
+          if (!hasOwn(merged.proposed_fields, key) || !proposalListValue(merged.proposed_fields[key])) {
+            merged.proposed_fields[key] = value;
+            return;
+          }
+          if (mergeValueKey(merged.proposed_fields[key]) !== mergeValueKey(value) && !warnedFields[key]) {
+            warnedFields[key] = true;
+            merged.warnings.push("Conflicto en " + proposalLabel(key) + ": hay varias propuestas; he cargado la primera.");
+          }
+        });
+      });
+      merged.warnings = mergeListField([], merged.warnings, false);
+      return merged;
+    }
+
+    function loadRelatedEnrichmentProposals() {
+      if (!activeReview || !activeReview.clinic_id) return;
+      var rows = clinicReviewBundle(activeReview).filter(function (row) {
+        return row.clinic_id === activeReview.clinic_id && row.review_type === "clinic_profile_enrichment";
+      });
+      if (rows.length < 2) {
+        toast("No hay varias mejoras abiertas para cargar juntas.");
+        return;
+      }
+      var clinicId = activeReview.clinic_id;
+      activeClinicReview = activeReview;
+      activeClinicReviewIds = rows.map(function (row) { return row.id; }).filter(Boolean);
+      var payload = mergeReviewPayloads(rows);
+      closeReviewEditor();
+      openClinicEditor(clinicId);
+      applyClinicProposal(payload);
+      toast(rows.length + " mejoras cargadas juntas. Revisa y guarda una sola vez.");
+    }
+
     function renderClinics() {
       var clinicsBody = el("clinicsBody");
       var query = trimmed("clinicSearch").toLowerCase();
@@ -4637,6 +4751,7 @@
       activeClinicSourceRequest++;
       activeClinic = null;
       activeClinicReview = null;
+      activeClinicReviewIds = [];
       activeClinicClaimCount = 0;
       activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
@@ -4787,20 +4902,29 @@
       el("clinicSaveBtn").disabled = false;
 
       if (activeClinicReview && activeClinicReview.clinic_id === activeClinic.id) {
-        var defaultNote = activeClinicReview.review_type === "clinic_profile_enrichment"
+        var reviewIdsToResolve = activeClinicReviewIds.length ? activeClinicReviewIds.slice() : [activeClinicReview.id];
+        var defaultNote = reviewIdsToResolve.length > 1
+          ? "Ficha actualizada desde propuestas agrupadas."
+          : activeClinicReview.review_type === "clinic_profile_enrichment"
           ? "Ficha actualizada desde propuesta de ampliación."
           : "Ficha actualizada desde revisión de calidad.";
-        await client.rpc("admin_resolve_review_item", {
-          p_review_id: activeClinicReview.id,
-          p_status: "resolved",
-          p_note: trimmed("clinicNote") || defaultNote
-        });
+        var resolveWarning = false;
+        for (var i = 0; i < reviewIdsToResolve.length; i += 1) {
+          var resolveResult = await client.rpc("admin_resolve_review_item", {
+            p_review_id: reviewIdsToResolve[i],
+            p_status: "resolved",
+            p_note: trimmed("clinicNote") || defaultNote
+          });
+          if (resolveResult.error) resolveWarning = true;
+        }
       }
 
       closeClinicEditor();
       await loadDashboard();
       if (lockWarning) {
         toast("Clínica guardada, pero no se actualizaron los campos protegidos.");
+      } else if (resolveWarning) {
+        toast("Clínica guardada, pero alguna tarjeta no se cerró automáticamente.");
       } else if (selectedStatus === "published" || selectedStatus === "preliminary") {
         toast("Clínica guardada. Publicación iniciada.");
       } else {
@@ -4976,6 +5100,7 @@
       if ((activeReview.review_type === "clinic_quality_audit" || activeReview.review_type === "clinic_profile_enrichment" || activeReview.review_type === "source_change_detected") && activeReview.clinic_id) {
         var clinicId = activeReview.clinic_id;
         activeClinicReview = activeReview;
+        activeClinicReviewIds = [activeReview.id];
         var payload = activeReview.payload || {};
         var shouldApplyProposal = activeReview.review_type === "clinic_profile_enrichment";
         closeReviewEditor();
@@ -5149,6 +5274,10 @@
       el("relatedReviewsList").addEventListener("click", function (event) {
         var button = event.target.closest("[data-related-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-related-review-id"));
+      });
+      el("relatedReviewPlan").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-load-related-proposals]");
+        if (button) loadRelatedEnrichmentProposals();
       });
       el("reviewFilterChips").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group],[data-review-group-clear]");

@@ -372,6 +372,10 @@ Next 10 technical steps:
     `scripts/capture_source_shadow_claims.py`: source excerpts can become
     internal `field_claims` without creating review cards, editing profile data
     or publishing public pages.
+64. Reduce grouped review friction. Done locally in `/admin/`: when one clinic
+    has several open profile-improvement cards, Daniel can load those proposed
+    fields into one editor pass and resolve the grouped cards after one
+    reviewed save.
 
 ## Daniel decision checkpoints
 

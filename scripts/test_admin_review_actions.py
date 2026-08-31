@@ -64,6 +64,20 @@ def main() -> None:
         and '" · sede adicional"' in index,
         "proposed Google Maps links should warn on weak URLs without numbered sede labels",
     )
+    check(
+        'data-load-related-proposals' in index
+        and "Cargar mejoras juntas" in index
+        and "function mergeReviewPayloads(rows)" in index
+        and "function loadRelatedEnrichmentProposals()" in index
+        and "activeClinicReviewIds" in index,
+        "related enrichment reviews should be loadable as one grouped proposal",
+    )
+    check(
+        "Ficha actualizada desde propuestas agrupadas." in index
+        and "alguna tarjeta no se cerró automáticamente" in index
+        and "Conflicto en " in index,
+        "saving grouped proposals should resolve grouped cards and warn on conflicts",
+    )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".compact-list small" in css, "proposed link URLs should remain readable on mobile")
     check(".compact-list em" in css, "proposed link warnings should be styled")
