@@ -116,6 +116,9 @@ Operator bridge:
   metadata (`primary_requested_fields`, `primary_requested_field_labels`,
   `target_scope`, `ui_route`) so the next human or LLM step can see why the URL
   was supplied.
+- Decision packets for those generated cards expose the same provenance as
+  `source_job_context`, redacting full URLs by default and keeping the allowed
+  output as review-proposal-only.
 - Human-supplied URLs are treated as evidence pointers, not approvals. They can
   guide the future LLM/worker, but the only allowed output is a new review
   proposal.
@@ -194,6 +197,9 @@ Required behavior:
 - Future LLM prompts should be generated through
   `scripts/prepare_review_decision_llm_prompt.py` so prompt wording, expected
   JSON schema and validation requirements stay consistent.
+- If a packet contains `source_job_context`, the LLM can use it only to explain
+  provenance and keep attention on the requested field; it is not permission to
+  write source data, publish, or broaden the proposal.
 
 ## APPLY_PUBLICATION_RULES
 

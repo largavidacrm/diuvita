@@ -205,6 +205,12 @@ def field_values(value: Any) -> list[Any]:
     return [value]
 
 
+def clean_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if str(item or "").strip()]
+
+
 def current_field_value(clinic: dict[str, Any], key: str) -> Any:
     data = clinic.get("current_data") if isinstance(clinic.get("current_data"), dict) else {}
     clean = canonical_field(key)
@@ -396,6 +402,37 @@ def evidence_packet(label: str, value: str, include_values: bool) -> dict[str, A
     return packet
 
 
+def source_job_context(payload: dict[str, Any], include_values: bool = False) -> dict[str, Any]:
+    if not (
+        payload.get("human_supplied_source")
+        or payload.get("from_review_id")
+        or payload.get("target_scope")
+        or payload.get("ui_route")
+    ):
+        return {}
+    source_url = str(payload.get("source_url") or "").strip()
+    source_host = urlparse(source_url).netloc if source_url else ""
+    context = {
+        "mode": "operator_supplied_source_review",
+        "from_review_id": payload.get("from_review_id"),
+        "human_supplied_source": bool(payload.get("human_supplied_source")),
+        "requested_fields": clean_list(payload.get("requested_fields")),
+        "requested_field_labels": clean_list(payload.get("requested_field_labels")),
+        "primary_requested_fields": clean_list(payload.get("primary_requested_fields")),
+        "primary_requested_field_labels": clean_list(payload.get("primary_requested_field_labels")),
+        "target_scope": str(payload.get("target_scope") or "").strip(),
+        "ui_route": str(payload.get("ui_route") or "").strip(),
+        "allowed_output": str(payload.get("allowed_output") or "review_queue_proposal_only").strip(),
+        "write_policy": "creates_review_proposal_only",
+        "operator_intent": redacted_text(payload.get("operator_intent"), include_values),
+    }
+    if source_host:
+        context["source_host"] = source_host
+    if include_values and source_url:
+        context["source_url"] = source_url
+    return {key: value for key, value in context.items() if has_visible_value(value)}
+
+
 def phone_warning(key: str, value: Any) -> str:
     if canonical_field(key) not in PHONE_FIELDS:
         return ""
@@ -531,6 +568,9 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             "after_decision": "resolve_current_review_then_advance_to_next_pending",
         },
     }
+    operator_source_context = source_job_context(payload, include_values=include_values)
+    if operator_source_context:
+        packet["source_job_context"] = operator_source_context
     packet_manual_targets = dedupe_targets(all_manual_targets)
     if packet_manual_targets:
         packet["manual_review_targets"] = packet_manual_targets

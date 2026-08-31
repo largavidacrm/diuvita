@@ -916,6 +916,12 @@ Next 10 technical steps:
      compact internal origin line with the requested field and
      `primary_target_first` scope, so Daniel can see why that evidence is being
      considered without opening other queue context.
+175. Expose source-job context in LLM decision packets. Done locally in
+     `scripts/review_proposal_decision_packets.py` and
+     `scripts/prepare_review_decision_llm_prompt.py`: proposals generated from
+     a Daniel-supplied URL now carry safe `source_job_context` metadata, so a
+     future LLM can understand the original field request and source handoff
+     without receiving write permission or broadening the review.
 
 ## Daniel decision checkpoints
 

@@ -22,6 +22,10 @@ El contrato principal es:
   `primary_target_first`: primero se pide al agente el campo principal de esa
   revisión manual; solo se usan los demás campos pendientes como fallback cuando
   no hay un campo único claro.
+- Si esa URL ya generó una propuesta revisable, el paquete de esa propuesta
+  conserva `source_job_context`: origen aportado por Daniel, campo pedido,
+  alcance, ruta del admin y política de salida. Sin `--include-values`, las URLs
+  completas siguen ocultas.
 - La salida por defecto no incluye valores completos, emails, teléfonos crudos
   ni URLs completas de evidencia.
 - El script no resuelve tarjetas, no edita clínicas y no publica páginas.
@@ -62,6 +66,8 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - contexto manual de campo, motivo y siguiente paso cuando exista.
 - fuente oficial a pedir o usar como trabajo interno, respetando siempre el
   alcance `primary_target_first` si está presente.
+- contexto del trabajo de fuente que produjo la propuesta, para saber si nació
+  de una URL aportada por Daniel y qué campo debía resolver primero.
 
 El LLM no debe:
 

@@ -23,6 +23,15 @@ def sample_packet(include_values=False):
         "payload": {
             "source_url": "https://imda.example/contacto",
             "warnings": ["Contrastar https://imda.example/equipo con persona@example.com y +34 600 111 222."],
+            "from_review_id": "quality-previous",
+            "human_supplied_source": True,
+            "requested_fields": ["profesionales", "telefono"],
+            "requested_field_labels": ["Especialistas publicados", "Teléfono principal"],
+            "primary_requested_fields": ["profesionales"],
+            "primary_requested_field_labels": ["Especialistas publicados"],
+            "target_scope": "primary_target_first",
+            "ui_route": "manual_review_banner_source_handoff",
+            "allowed_output": "review_queue_proposal_only",
             "proposed_fields": {
                 "telefono": "916 000 000",
                 "profesionales": ["Dra. Example"],
@@ -73,6 +82,12 @@ def main():
     check(prompt["validation_required"] == "scripts/validate_review_decision_suggestion.py", "validator link missing")
     check(prompt["packet_digest"]["review_id"] == "review-1", "packet digest review id missing")
     check(prompt["packet_digest"]["field_count"] == 2, "packet digest field count missing")
+    source_context = prompt["packet_digest"]["source_job_context"]
+    check(source_context["human_supplied_source"] is True, "prompt digest should keep Daniel-supplied source signal")
+    check(source_context["source_host"] == "imda.example", "prompt digest should keep source host")
+    check(source_context["ui_route"] == "manual_review_banner_source_handoff", "prompt digest should keep source UI route")
+    check(source_context["target_scope"] == "primary_target_first", "prompt digest should keep source scope")
+    check(source_context["primary_requested_fields"] == ["profesionales"], "prompt digest should keep primary requested source fields")
     check(prompt["messages"][0]["role"] == "system", "system message missing")
     check("No publicas" in prompt["messages"][0]["content"], "system safety instruction missing")
     check("Responde solo JSON" in prompt["messages"][0]["content"], "JSON-only instruction missing")

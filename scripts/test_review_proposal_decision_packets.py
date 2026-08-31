@@ -24,6 +24,16 @@ def sample_enrichment_row():
         "payload": {
             "source_url": "https://imda.example/contacto",
             "warnings": ["Contrastar https://imda.example/equipo con persona@example.com y +34 600 111 222."],
+            "from_review_id": "quality-previous",
+            "human_supplied_source": True,
+            "requested_fields": ["profesionales", "telefono"],
+            "requested_field_labels": ["Especialistas publicados", "Teléfono principal"],
+            "primary_requested_fields": ["profesionales"],
+            "primary_requested_field_labels": ["Especialistas publicados"],
+            "target_scope": "primary_target_first",
+            "ui_route": "manual_review_banner_source_handoff",
+            "allowed_output": "review_queue_proposal_only",
+            "operator_intent": "Daniel indica que esta URL oficial contiene especialistas y contacto.",
             "proposed_fields": {
                 "maps_url": "https://www.google.com/maps/search/Unidad+de+Longevidad+IMDA",
                 "telefono": "ABC-123",
@@ -93,6 +103,16 @@ def main():
     check("value" not in safe_packet["current_relevant"][0]["current"], "safe default should omit current values")
     check(safe_packet["evidence"][0]["host"] == "imda.example", "safe evidence should keep host")
     check("value" not in safe_packet["evidence"][0], "safe default should omit evidence URLs")
+    source_context = safe_packet["source_job_context"]
+    check(source_context["mode"] == "operator_supplied_source_review", "source job context mode missing")
+    check(source_context["human_supplied_source"] is True, "source job context should mark Daniel-supplied sources")
+    check(source_context["source_host"] == "imda.example", "source job context should keep source host")
+    check(source_context["requested_fields"] == ["profesionales", "telefono"], "source job context should keep requested fields")
+    check(source_context["primary_requested_fields"] == ["profesionales"], "source job context should keep primary requested fields")
+    check(source_context["target_scope"] == "primary_target_first", "source job context should keep primary target scope")
+    check(source_context["ui_route"] == "manual_review_banner_source_handoff", "source job context should keep UI route")
+    check(source_context["allowed_output"] == "review_queue_proposal_only", "source job context should keep proposal-only output")
+    check("source_url" not in source_context, "safe source job context should omit full source URL")
     check(
         "Google Maps debe ser el perfil real de la clínica" in " ".join(safe_packet["warnings"]),
         "weak Maps warning missing",
@@ -121,6 +141,10 @@ def main():
     check(
         valued_packet["evidence"][0]["value"] == "https://imda.example/contacto",
         "explicit value mode should include evidence URLs",
+    )
+    check(
+        valued_packet["source_job_context"]["source_url"] == "https://imda.example/contacto",
+        "explicit value mode should include source-job URL",
     )
     check(
         "persona@example.com" in " ".join(valued_packet["warnings"]),
