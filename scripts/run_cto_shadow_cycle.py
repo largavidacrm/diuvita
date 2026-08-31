@@ -696,6 +696,8 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
         ]
         if args.public_freshness_slug:
             command += ["--slug", args.public_freshness_slug]
+        if args.public_freshness_clinic:
+            command += ["--clinic", args.public_freshness_clinic]
         steps.append(
             (
                 "check_public_site_freshness",
@@ -749,6 +751,7 @@ def parse_args() -> argparse.Namespace:
         help="Optionally compare Supabase public feed with deployed clinic pages; read-only and network-dependent.",
     )
     parser.add_argument("--public-freshness-slug", default="", help="Limit public freshness to one clinic slug.")
+    parser.add_argument("--public-freshness-clinic", default="", help="Limit public freshness to clinics matching a normal name, city or slug.")
     parser.add_argument("--public-freshness-missing-limit", type=int, default=8)
     parser.add_argument(
         "--strict-editorial",

@@ -74,7 +74,7 @@ The cycle can also include the freshness check when the question is whether
 saved clinic data has reached the deployed static page:
 
 ```bash
-python3 scripts/run_cto_shadow_cycle.py --public-freshness --public-freshness-slug monarka-clinic --plain-brief
+python3 scripts/run_cto_shadow_cycle.py --public-freshness --public-freshness-clinic "Monarka" --plain-brief
 ```
 
 That freshness step is diagnostic only. A stale page should be resolved through

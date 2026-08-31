@@ -485,6 +485,10 @@ Next 10 technical steps:
     `scripts/check_public_site_freshness.py`: CTO checks can use
     `--clinic "Monarka"` or `--clinic "Rose Bar"` instead of requiring Daniel
     or the operator to know the exact slug.
+91. Pass normal clinic names through the CTO cycle freshness check. Done locally
+    in `scripts/run_cto_shadow_cycle.py`: unattended diagnostics can now use
+    `--public-freshness-clinic "Monarka"` while the exact slug option remains
+    available for automation.
 
 ## Daniel decision checkpoints
 

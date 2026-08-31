@@ -401,6 +401,7 @@ def main():
         production_timeout=7,
         public_freshness=False,
         public_freshness_slug="",
+        public_freshness_clinic="",
         public_freshness_missing_limit=8,
     ))
     names = [step[0] for step in steps]
@@ -467,6 +468,7 @@ def main():
         production_timeout=7,
         public_freshness=False,
         public_freshness_slug="",
+        public_freshness_clinic="",
         public_freshness_missing_limit=8,
     ))
     google_step = [step for step in google_steps if step[0] == "discover_clinic_google_links"][0]
@@ -516,6 +518,7 @@ def main():
         production_timeout=7,
         public_freshness=True,
         public_freshness_slug="monarka-clinic",
+        public_freshness_clinic="Monarka",
         public_freshness_missing_limit=5,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
@@ -541,6 +544,7 @@ def main():
     check(optional_steps.index(health_step) < optional_steps.index(freshness_step), "public freshness should run after production health")
     check("--json" in freshness_step[1], "public freshness should be machine readable")
     check("monarka-clinic" in freshness_step[1], "public freshness clinic slug should pass through")
+    check("Monarka" in freshness_step[1], "public freshness clinic name should pass through")
     check("5" in freshness_step[1], "public freshness missing limit should pass through")
     print("OK cycle: CTO shadow orchestration")
 
