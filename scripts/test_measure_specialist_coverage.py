@@ -3,6 +3,7 @@
 
 from measure_specialist_coverage import (
     clean_specialist_example,
+    covered_specialist_next_step_for_row,
     format_clinic_line,
     format_coverage,
     next_specialist_action,
@@ -56,9 +57,9 @@ def main():
                 "city": "Barcelona",
                 "status": "preliminary",
                 "specialist_entries": 5,
-                "specialist_claims": 0,
-                "specialist_examples": [],
-                "open_review_count": 0,
+                "specialist_claims": 7,
+                "specialist_examples": ["Dra. Alba Cuatro", "Dr. Bruno Cinco"],
+                "open_review_count": 2,
             }
         ],
     }
@@ -77,6 +78,11 @@ def main():
     check(
         specialist_next_step_for_row(report["missing_specialists"][1]) == "revisar las tarjetas abiertas y consolidar una sola ficha",
         "rows with reviews and claims should route to consolidation",
+    )
+    check(
+        covered_specialist_next_step_for_row(report["covered_specialists"][0])
+        == "comparar especialistas publicados con nombres detectados y consolidar una sola ficha",
+        "partially covered specialist rows should route to consolidation",
     )
     check("Siguiente acción: Revisar Clinic C: ya tiene 3 revisiones abiertas." in output, "next specialist action line missing")
     check("Writes data: no" in output, "read-only signal missing")
@@ -98,6 +104,8 @@ def main():
     check("Clinic A · Madrid · publicada · 2 nombres detectados · ej.: Dra. Maria Uno, Dr. Luis Dos · 1 revisión abierta · siguiente: revisar las tarjetas abiertas y consolidar una sola ficha" in output, "missing clinic line missing")
     check(output.index("Clinic C") < output.index("Clinic A"), "higher-review missing clinic should be listed first")
     check("Clinic B · Barcelona · preliminar · 5 especialistas" in output, "covered clinic line missing")
+    check("7 nombres detectados" in output, "covered clinic should show extra detected names")
+    check("siguiente: comparar especialistas publicados con nombres detectados" in output, "covered clinic next step missing")
     print("OK specialist coverage: report is read-only")
 
 

@@ -529,6 +529,10 @@ Next 10 technical steps:
      rejection reason when a Maps candidate is found but not safe enough to
      propose, for example because it looks like a street address, a short link
      without clinic context or competing ambiguous candidates.
+101. Show next steps for partially covered specialist profiles. Done locally in
+     `scripts/measure_specialist_coverage.py`: clinics like Arvila that already
+     have some specialists published but more names detected now show the
+     consolidation step instead of looking finished.
 
 ## Daniel decision checkpoints
 

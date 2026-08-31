@@ -273,6 +273,21 @@ def specialist_next_step_for_row(row: dict[str, Any]) -> str:
     return "buscar primero una página pública de equipo"
 
 
+def covered_specialist_next_step_for_row(row: dict[str, Any]) -> str:
+    entries = as_int(row.get("specialist_entries"))
+    claims = as_int(row.get("specialist_claims"))
+    reviews = as_int(row.get("open_review_count"))
+    if reviews and claims > entries:
+        return "comparar especialistas publicados con nombres detectados y consolidar una sola ficha"
+    if reviews:
+        return "revisar tarjetas abiertas antes de tocar la ficha publicada"
+    if claims > entries:
+        return "preparar propuesta revisable solo con nombres públicos todavía no publicados"
+    if claims:
+        return "comprobar si los nombres internos ya están representados en la ficha"
+    return ""
+
+
 def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> str:
     name = row.get("clinic_name") or row.get("slug") or "sin nombre"
     city = row.get("city") or "sin ciudad"
@@ -294,6 +309,10 @@ def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> st
         parts.append(f"{reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}")
     if not include_entries:
         parts.append("siguiente: " + specialist_next_step_for_row(row))
+    else:
+        next_step = covered_specialist_next_step_for_row(row)
+        if next_step:
+            parts.append("siguiente: " + next_step)
     return "- " + " · ".join(parts)
 
 
