@@ -558,7 +558,7 @@
           </dl>
           <section class="review-flow hidden" id="reviewFlowPanel">
             <div>
-              <h3>Camino de publicación</h3>
+              <h3>Camino de revisión</h3>
               <p id="reviewFlowMeta">La candidata no se publica directamente.</p>
             </div>
             <div class="review-flow-steps" id="reviewFlowSteps"></div>
@@ -591,6 +591,7 @@
           <p class="review-action-note" id="reviewActionNote">La publicación final se decide después, en Validación final.</p>
           <div class="form-actions">
             <button class="btn" id="reviewCreateDraftBtn" type="button">Crear borrador y validar</button>
+            <button class="btn secondary hidden" id="reviewNeedsInfoBtn" type="button">Pedir más información</button>
             <button class="btn danger" id="reviewDismissBtn" type="button">Descartar</button>
             <button class="btn secondary" id="reviewCloseBtn" type="button">Cerrar</button>
           </div>
@@ -843,6 +844,7 @@
     var REVIEW_TYPE_FILTERS = [
       ["", "Todas"],
       ["candidate_clinic", "Clínicas nuevas"],
+      ["clinic_claim_request", "Reclamaciones"],
       ["clinic_profile_enrichment", "Mejoras"],
       ["blocking_claim_review", "Claims bloqueantes"],
       ["clinic_quality_audit", "Auditorías"],
@@ -2116,6 +2118,7 @@
     function reviewTypeLabel(type) {
       var labels = {
         candidate_clinic: "Clínica nueva",
+        clinic_claim_request: "Reclamación de ficha",
         clinic_quality_audit: "Auditoría de calidad",
         clinic_profile_enrichment: "Mejora de ficha",
         source_change_detected: "Cambio de fuente"
@@ -2126,6 +2129,15 @@
     function isBlockingClaimReview(row) {
       var payload = (row && row.payload) || {};
       return row && row.review_type === "clinic_quality_audit" && payload.quality_context === "blocking_claims";
+    }
+
+    function isClinicClaimReview(row) {
+      return row && row.review_type === "clinic_claim_request";
+    }
+
+    function isPortalChangeReview(row) {
+      var payload = (row && row.payload) || {};
+      return row && row.review_type === "clinic_profile_enrichment" && Boolean(payload.portal_change_request_id);
     }
 
     function reviewVisibleLabel(row) {
@@ -2147,6 +2159,7 @@
       rows = Array.isArray(rows) ? rows : [];
       if (Number(failedJobs || 0)) return "Revisar fallos";
       if (rows.some(isBlockingClaimReview)) return "Revisar claim bloqueante";
+      if (rows.some(isClinicClaimReview)) return "Validar accesos de clínicas";
       if (rows.some(function (row) { return row.review_type === "candidate_clinic" && Number(row.priority || 0) >= 90; })) {
         return "Validar candidatas";
       }
@@ -2919,6 +2932,9 @@
       var extra = isDuplicateEnrichmentReview(row)
         ? ' <span class="pill warning">Varias propuestas</span>'
         : "";
+      if (isPortalChangeReview(row)) {
+        extra += ' <span class="pill">Portal clínica</span>';
+      }
       return html(reviewVisibleLabel(row)) + extra + reviewProfessionalsBadge(row);
     }
 
@@ -2951,6 +2967,7 @@
     function reviewSummary(rows) {
       var parts = [
         ["Clínica nueva", countWhere(rows, function (row) { return row.review_type === "candidate_clinic"; })],
+        ["Reclamación de ficha", countWhere(rows, isClinicClaimReview)],
         ["Mejora de ficha", countWhere(rows, function (row) { return row.review_type === "clinic_profile_enrichment"; })],
         ["Claim bloqueante", countWhere(rows, isBlockingClaimReview)],
         ["Auditoría de calidad", countWhere(rows, function (row) { return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row); })],
@@ -3089,6 +3106,7 @@
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
       var evidence = summary.evidence || {};
+      var portal = summary.portal || {};
       var automation = summary.automation || {};
       var failedJobs = Number(jobs.failed || 0) + Number(jobs.dead_letter || 0);
       var runningJobs = Number(jobs.running || 0);
@@ -3193,6 +3211,8 @@
         systemItem("Fichas sin fuente", sourceCoverageGapLabel, sourceCoverageStatus.withoutSources ? "warning-text" : ""),
         systemItem("Siguiente fuente", sourceCoverageNextLabel, sourceCoverageStatus.nextTarget ? "warning-text" : ""),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
+        systemItem("Portal clínicas", (portal.claim_requests_pending || 0) + " accesos · " + (portal.change_requests_pending || 0) + " cambios", Number((portal.claim_requests_pending || 0) + (portal.change_requests_pending || 0)) ? "warning-text" : ""),
+        systemItem("Datos confirmados", portal.identity_confirmed || 0),
         systemItem("Freno bandeja", backlogGuard.label, backlogGuard.tone),
         systemItem("Grupo por clínica", clinicWorkgroupLabel(clinicWorkgroup), clinicWorkgroup ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
@@ -3253,6 +3273,10 @@
         payload.clinic_city,
         payload.clinic_country,
         payload.source_url,
+        payload.requester_email,
+        payload.requester_name,
+        payload.requester_role,
+        payload.message,
         candidate.name,
         candidate.clinic_name,
         candidate.city,
@@ -3368,6 +3392,7 @@
 
     function dismissButtonLabel(reviewType) {
       if (reviewType === "candidate_clinic") return "Descartar candidata";
+      if (reviewType === "clinic_claim_request") return "Rechazar acceso";
       if (reviewType === "source_change_detected") return "Marcar revisado";
       if (reviewType === "clinic_quality_audit") return "Cerrar auditoría";
       return "Descartar propuesta";
@@ -3376,6 +3401,7 @@
     function defaultDismissNote(reviewType) {
       var notes = {
         candidate_clinic: "Candidata descartada tras revisión manual.",
+        clinic_claim_request: "Solicitud de acceso rechazada tras revisión manual.",
         clinic_profile_enrichment: "Propuesta descartada tras revisión manual.",
         clinic_quality_audit: "Auditoría cerrada sin cambios en la ficha.",
         source_change_detected: "Cambio de fuente revisado; no requiere edición."
@@ -3385,6 +3411,7 @@
 
     function primaryReviewButtonLabel(reviewType, blocksDraft) {
       if (reviewType === "candidate_clinic") return blocksDraft ? "Duplicado probable" : "Crear borrador y validar";
+      if (reviewType === "clinic_claim_request") return "Aprobar acceso";
       if (reviewType === "source_change_detected") return "Revisar ficha";
       return "Editar clínica";
     }
@@ -3396,6 +3423,9 @@
       }
       if (reviewType === "source_change_detected") {
         return "Abrirá el editor de la clínica. La web solo cambia si guardas como preliminar o publicada.";
+      }
+      if (reviewType === "clinic_claim_request") {
+        return "Aprobar crea acceso privado para la clínica y marca la ficha como datos confirmados por el centro. No cambia el contenido de la ficha.";
       }
       if (reviewType === "clinic_quality_audit" || reviewType === "clinic_profile_enrichment") {
         return "Abrirá el editor de la clínica. Revisa la propuesta y decide el estado en Validación final.";
@@ -3483,6 +3513,13 @@
           ["2", "Revisar cambios", "Comprueba datos y fuentes."],
           ["3", "Guardar", "Decide el estado final."]
         ];
+      } else if (reviewType === "clinic_claim_request") {
+        meta = "El acceso solo se concede después de revisión manual.";
+        steps = [
+          ["1", "Comprobar identidad", "Revisa email, cargo y mensaje."],
+          ["2", "Decidir acceso", "Aprueba, pide más información o rechaza."],
+          ["3", "Portal privado", "La clínica podrá proponer cambios, no publicarlos."]
+        ];
       } else if (reviewType === "source_change_detected") {
         meta = "La fuente cambió; primero se revisa la ficha.";
         steps = [
@@ -3548,6 +3585,16 @@
 
     function renderReviewGuidance(row, payload) {
       var panel = el("reviewGuidancePanel");
+      if (isClinicClaimReview(row)) {
+        el("reviewGuidanceText").textContent = "Comprueba que el email y el cargo encajan con la clínica antes de aprobar acceso. Si dudas, pide más información.";
+        show(panel, true);
+        return;
+      }
+      if (isPortalChangeReview(row)) {
+        el("reviewGuidanceText").textContent = "Carga la propuesta en el editor, revisa fuentes públicas y evita publicar textos promocionales o datos no verificables.";
+        show(panel, true);
+        return;
+      }
       if (!isBlockingClaimReview(row)) {
         show(panel, false);
         return;
@@ -3645,10 +3692,11 @@
 
     function reviewWorkgroupRank(row) {
       if (isBlockingClaimReview(row)) return 1;
-      if (row.review_type === "source_change_detected") return 2;
-      if (row.review_type === "clinic_profile_enrichment") return 3;
-      if (row.review_type === "clinic_quality_audit") return 4;
-      if (row.review_type === "candidate_clinic") return 5;
+      if (isClinicClaimReview(row)) return 2;
+      if (row.review_type === "source_change_detected") return 3;
+      if (row.review_type === "clinic_profile_enrichment") return 4;
+      if (row.review_type === "clinic_quality_audit") return 5;
+      if (row.review_type === "candidate_clinic") return 6;
       return 9;
     }
 
@@ -4932,7 +4980,12 @@
         public_site_rebuild_skipped: "Publicación agrupada",
         clinic_field_locks_updated: "Campos protegidos",
         source_change_detected: "Cambio de fuente detectado",
-        clinic_version_restored: "Versión restaurada"
+        clinic_version_restored: "Versión restaurada",
+        clinic_portal_claim_submitted: "Solicitud de clínica recibida",
+        clinic_claim_request_resolved: "Solicitud de acceso resuelta",
+        clinic_identity_confirmed: "Datos confirmados por el centro",
+        clinic_portal_change_submitted: "Cambio propuesto por clínica",
+        clinic_portal_change_resolved: "Cambio de clínica resuelto"
       };
       return labels[name] || name || "Movimiento";
     }
@@ -4970,6 +5023,21 @@
       }
       if (row.event_name === "clinic_version_restored") {
         return "Restaurada v" + (payload.restored_version_number || "?");
+      }
+      if (row.event_name === "clinic_portal_claim_submitted") {
+        return payload.request_kind === "recommend_clinic" ? "Recomendación enviada al panel" : "Reclamación enviada al panel";
+      }
+      if (row.event_name === "clinic_claim_request_resolved") {
+        return "Resultado: " + (payload.status || "resuelto");
+      }
+      if (row.event_name === "clinic_identity_confirmed") {
+        return payload.label || "Ficha marcada como confirmada por el centro";
+      }
+      if (row.event_name === "clinic_portal_change_submitted") {
+        return "Propuesta enviada por clínica";
+      }
+      if (row.event_name === "clinic_portal_change_resolved") {
+        return "Resultado: " + (payload.status || "resuelto");
       }
       if (row.event_name === "agent_job_failed") {
         return payload.error || "Revisar trabajo fallido";
@@ -5107,7 +5175,34 @@
           if (text(warning).trim()) items.push("Revisar: " + text(warning).trim());
         });
       }
+      if (Array.isArray(payload.risk_flags)) {
+        payload.risk_flags.forEach(function (flag) {
+          var label = flag && (flag.label || flag.code);
+          if (text(label).trim()) items.push("Alerta portal: " + text(label).trim());
+        });
+      }
       return items;
+    }
+
+    function portalRiskItems(payload) {
+      var flags = payload && Array.isArray(payload.risk_flags) ? payload.risk_flags : [];
+      if (!flags.length) return ["Sin alertas automáticas del portal."];
+      return flags.map(function (flag) {
+        if (!flag || typeof flag !== "object") return text(flag);
+        return text(flag.label || flag.code || "Alerta").trim();
+      }).filter(Boolean);
+    }
+
+    function clinicClaimReviewItems(payload) {
+      payload = payload || {};
+      return [
+        "Solicitante: " + text(payload.requester_name || "—"),
+        "Email: " + text(payload.requester_email || "—"),
+        "Cargo: " + text(payload.requester_role || "—"),
+        "Mensaje: " + text(payload.message || "—")
+      ].concat(portalRiskItems(payload).map(function (item) {
+        return "Alerta: " + item;
+      }));
     }
 
     function proposalProfessionals(payload) {
@@ -6314,20 +6409,23 @@
       var isQualityAudit = activeReview.review_type === "clinic_quality_audit";
       var isEnrichment = activeReview.review_type === "clinic_profile_enrichment";
       var isSourceChange = activeReview.review_type === "source_change_detected";
+      var isClaim = isClinicClaimReview(activeReview);
+      var isPortalChange = isPortalChangeReview(activeReview);
       var website = candidate.website || candidate.web;
       var source = candidate.source_url || payload.candidate_source_url || website;
       var confidence = candidate.discovery_confidence || candidate.confidence;
       var duplicateProbability = Number(payload.duplicate_probability || 0);
       var blocksDraft = duplicateProbability >= 0.9;
+      var existingClinicReview = isQualityAudit || isEnrichment || isSourceChange || isClaim;
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
       el("reviewEditorMeta").textContent = reviewVisibleLabel(activeReview) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
-      setText("reviewCandidateName", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_name : candidate.name || candidate.clinic_name);
-      setText("reviewCandidateCity", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_city : candidate.city);
-      setText("reviewCandidateCountry", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
+      setText("reviewCandidateName", existingClinicReview ? payload.clinic_name : candidate.name || candidate.clinic_name);
+      setText("reviewCandidateCity", existingClinicReview ? payload.clinic_city : candidate.city);
+      setText("reviewCandidateCountry", existingClinicReview ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
       setText("reviewCandidateConfidence", confidence == null ? "" : pct(confidence));
-      setLink("reviewCandidateWebsite", (isQualityAudit || isEnrichment || isSourceChange) ? payload.website || payload.source_url : website);
-      if (isEnrichment) {
+      setLink("reviewCandidateWebsite", existingClinicReview ? payload.website || payload.source_url : website);
+      if (isEnrichment || isClaim) {
         setLinks("reviewCandidateSource", sourceList(payload));
       } else if (isSourceChange) {
         setLinks("reviewCandidateSource", [payload.source_url].filter(Boolean));
@@ -6336,21 +6434,22 @@
       }
       setProposedLinks(payload);
       setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
-      setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : isSourceChange ? [
+      setInlineList("reviewCandidateServices", isClaim ? clinicClaimReviewItems(payload) : isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : isSourceChange ? [
         "Hash anterior: " + text(payload.previous_hash || "").slice(0, 12),
         "Hash actual: " + text(payload.current_hash || "").slice(0, 12),
         "Fuente revisada: " + date(payload.retrieved_at)
       ].concat(materialChangeItems(payload)) : candidateList(candidate, "services"));
-      setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
+      setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange || isClaim) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
       renderReviewContext(activeReview, payload, blocksDraft);
       renderReviewGuidance(activeReview, payload);
       renderReviewRules(payload);
       renderReviewFlow(activeReview.review_type, blocksDraft);
       renderRelatedReviews(activeReview);
-      el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;
+      el("reviewCreateDraftBtn").disabled = !(isQualityAudit || isEnrichment || isSourceChange || isClaim || (activeReview.review_type === "candidate_clinic" && !blocksDraft));
       el("reviewCreateDraftBtn").textContent = primaryReviewButtonLabel(activeReview.review_type, blocksDraft);
       el("reviewActionNote").textContent = reviewActionNote(activeReview.review_type, blocksDraft);
       el("reviewDismissBtn").textContent = dismissButtonLabel(activeReview.review_type);
+      show(el("reviewNeedsInfoBtn"), isClaim || isPortalChange);
       setInput("reviewResolutionNote", "");
       show(el("reviewEditor"), true);
       el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -6362,6 +6461,7 @@
       el("relatedReviewsList").innerHTML = "";
       show(el("reviewProposedLinksBlock"), false);
       el("reviewCandidateProposedLinks").textContent = "—";
+      show(el("reviewNeedsInfoBtn"), false);
       show(el("reviewEditor"), false);
     }
 
@@ -6467,7 +6567,17 @@
           ? "Ficha actualizada desde propuesta de ampliación."
           : "Ficha actualizada desde revisión de calidad.";
         var resolveWarning = false;
+        var portalChangeId = activeClinicReview.payload && activeClinicReview.payload.portal_change_request_id;
+        if (portalChangeId) {
+          var portalResolveResult = await client.rpc("admin_resolve_clinic_profile_change_request", {
+            p_change_request_id: portalChangeId,
+            p_status: "approved",
+            p_note: trimmed("clinicNote") || "Cambios de clínica aplicados tras revisión manual."
+          });
+          if (portalResolveResult.error) resolveWarning = true;
+        }
         for (var i = 0; i < reviewIdsToResolve.length; i += 1) {
+          if (portalChangeId && reviewIdsToResolve[i] === activeClinicReview.id) continue;
           var resolveResult = await client.rpc("admin_resolve_review_item", {
             p_review_id: reviewIdsToResolve[i],
             p_status: "resolved",
@@ -6664,8 +6774,97 @@
       await loadDashboard();
     }
 
+    function portalClaimRequestId(row) {
+      return row && row.payload ? row.payload.portal_claim_request_id : "";
+    }
+
+    function portalChangeRequestId(row) {
+      return row && row.payload ? row.payload.portal_change_request_id : "";
+    }
+
+    function setReviewActionBusy(busy) {
+      el("reviewCreateDraftBtn").disabled = busy;
+      el("reviewDismissBtn").disabled = busy;
+      el("reviewNeedsInfoBtn").disabled = busy;
+    }
+
+    async function resolveClinicClaimRequest(status) {
+      if (!activeReview) return;
+      var claimRequestId = portalClaimRequestId(activeReview);
+      var payload = activeReview.payload || {};
+      var isRecommendation = payload.request_kind === "recommend_clinic";
+      if (!claimRequestId) {
+        toast("La solicitud de acceso no tiene identificador interno.");
+        return;
+      }
+      var note = trimmed("reviewResolutionNote") || (
+        status === "approved"
+          ? (isRecommendation ? "Recomendación convertida en borrador interno tras revisión manual." : "Acceso aprobado tras revisión manual.")
+          : status === "needs_more_info"
+            ? (isRecommendation ? "Se necesita más información antes de valorar la recomendación." : "Se necesita más información antes de aprobar acceso.")
+            : (isRecommendation ? "Recomendación rechazada tras revisión manual." : defaultDismissNote("clinic_claim_request"))
+      );
+      setReviewActionBusy(true);
+      var result = await client.rpc("admin_resolve_clinic_claim_request", {
+        p_claim_request_id: claimRequestId,
+        p_status: status,
+        p_note: note
+      });
+      setReviewActionBusy(false);
+      if (result.error) {
+        toast("No se pudo actualizar la solicitud de acceso.");
+        return;
+      }
+      closeReviewEditor();
+      await loadDashboard();
+      toast(status === "approved" ? (isRecommendation ? "Recomendación aprobada como borrador interno." : "Acceso aprobado. La ficha queda marcada como datos confirmados por el centro.") : status === "needs_more_info" ? "Solicitud marcada como pendiente de más información." : (isRecommendation ? "Recomendación rechazada." : "Solicitud de acceso rechazada."));
+    }
+
+    async function resolvePortalChangeRequest(status) {
+      if (!activeReview) return;
+      var changeRequestId = portalChangeRequestId(activeReview);
+      if (!changeRequestId) {
+        toast("La solicitud de cambios no tiene identificador interno.");
+        return;
+      }
+      var note = trimmed("reviewResolutionNote") || (
+        status === "needs_more_info"
+          ? "Se necesita más información antes de aplicar cambios."
+          : "Propuesta de cambios rechazada tras revisión manual."
+      );
+      setReviewActionBusy(true);
+      var result = await client.rpc("admin_resolve_clinic_profile_change_request", {
+        p_change_request_id: changeRequestId,
+        p_status: status,
+        p_note: note
+      });
+      setReviewActionBusy(false);
+      if (result.error) {
+        toast("No se pudo actualizar la solicitud de cambios.");
+        return;
+      }
+      closeReviewEditor();
+      await loadDashboard();
+      toast(status === "needs_more_info" ? "Solicitud marcada como pendiente de más información." : "Solicitud de cambios rechazada.");
+    }
+
+    async function requestMoreInfoReview() {
+      if (!activeReview) return;
+      if (isClinicClaimReview(activeReview)) {
+        await resolveClinicClaimRequest("needs_more_info");
+        return;
+      }
+      if (isPortalChangeReview(activeReview)) {
+        await resolvePortalChangeRequest("needs_more_info");
+      }
+    }
+
     async function createClinicDraftFromReview() {
       if (!activeReview) return;
+      if (isClinicClaimReview(activeReview)) {
+        await resolveClinicClaimRequest("approved");
+        return;
+      }
       if ((activeReview.review_type === "clinic_quality_audit" || activeReview.review_type === "clinic_profile_enrichment" || activeReview.review_type === "source_change_detected") && activeReview.clinic_id) {
         var clinicId = activeReview.clinic_id;
         activeClinicReview = activeReview;
@@ -6678,18 +6877,25 @@
         return;
       }
 
-      el("reviewCreateDraftBtn").disabled = true;
-      el("reviewDismissBtn").disabled = true;
+      setReviewActionBusy(true);
+      var portalRecommendationId = activeReview.review_type === "candidate_clinic" ? portalClaimRequestId(activeReview) : "";
       var result = await client.rpc("admin_create_draft_clinic_from_review_v2", {
         p_review_id: activeReview.id,
         p_note: trimmed("reviewResolutionNote") || null
       });
-      el("reviewCreateDraftBtn").disabled = false;
-      el("reviewDismissBtn").disabled = false;
+      setReviewActionBusy(false);
 
       if (result.error) {
         toast("No se pudo crear el borrador. Puede que ya exista.");
         return;
+      }
+
+      if (portalRecommendationId) {
+        await client.rpc("admin_resolve_clinic_claim_request", {
+          p_claim_request_id: portalRecommendationId,
+          p_status: "approved",
+          p_note: trimmed("reviewResolutionNote") || "Recomendación convertida en borrador interno tras revisión manual."
+        });
       }
 
       closeReviewEditor();
@@ -6703,16 +6909,26 @@
     async function dismissReview() {
       if (!activeReview) return;
       var reviewType = activeReview.review_type;
+      if (isClinicClaimReview(activeReview)) {
+        await resolveClinicClaimRequest("rejected");
+        return;
+      }
+      if (reviewType === "candidate_clinic" && portalClaimRequestId(activeReview)) {
+        await resolveClinicClaimRequest("rejected");
+        return;
+      }
+      if (isPortalChangeReview(activeReview)) {
+        await resolvePortalChangeRequest("rejected");
+        return;
+      }
       var note = trimmed("reviewResolutionNote") || defaultDismissNote(reviewType);
-      el("reviewCreateDraftBtn").disabled = true;
-      el("reviewDismissBtn").disabled = true;
+      setReviewActionBusy(true);
       var result = await client.rpc("admin_resolve_review_item", {
         p_review_id: activeReview.id,
         p_status: "dismissed",
         p_note: note
       });
-      el("reviewCreateDraftBtn").disabled = false;
-      el("reviewDismissBtn").disabled = false;
+      setReviewActionBusy(false);
 
       if (result.error) {
         toast("No se pudo descartar la propuesta.");
@@ -6914,6 +7130,7 @@
       el("reviewCloseBtn").addEventListener("click", closeReviewEditor);
       el("reviewCloseTop").addEventListener("click", closeReviewEditor);
       el("reviewCreateDraftBtn").addEventListener("click", createClinicDraftFromReview);
+      el("reviewNeedsInfoBtn").addEventListener("click", requestMoreInfoReview);
       el("reviewDismissBtn").addEventListener("click", dismissReview);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);

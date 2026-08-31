@@ -15,10 +15,12 @@ from admin_digest import (
     load_digest,
     next_action_label,
     next_profile_action,
+    next_portal_action,
     next_source_action,
     next_specialist_action,
     parse_timestamp,
     publication_control_status,
+    portal_status,
     review_backlog_guard_status,
     source_coverage_status,
     specialist_review_status,
@@ -31,7 +33,10 @@ from submit_discovery_candidates import get_default_admin_email, load_env_file
 TYPE_LABELS = {
     "blocking_claim_review": ("claim bloqueante", "claims bloqueantes"),
     "candidate_clinic": ("clínica nueva", "clínicas nuevas"),
+    "clinic_claim_request": ("solicitud de acceso", "solicitudes de acceso"),
     "clinic_profile_enrichment": ("mejora de ficha", "mejoras de ficha"),
+    "portal_profile_change": ("cambio pedido por clínica", "cambios pedidos por clínicas"),
+    "portal_recommended_clinic": ("clínica sugerida por usuario", "clínicas sugeridas por usuarios"),
     "source_change_detected": ("cambio de fuente", "cambios de fuente"),
     "clinic_quality_audit": ("auditoría de calidad", "auditorías de calidad"),
 }
@@ -208,6 +213,11 @@ def first_step(digest: dict[str, Any]) -> list[str]:
             "Primero revisa fallos técnicos.",
             "Hay trabajos fallidos; conviene corregirlos antes de aceptar nuevas fichas.",
         ]
+    if counts.get("clinic_claim_request"):
+        return [
+            "Primero revisa solicitudes de acceso del portal.",
+            f"Caso visible: {review_name(first_review(digest, 'clinic_claim_request'), 'Reclamaciones')}.",
+        ]
     if (guard.startswith("cerca del freno") or guard.startswith("freno activo")) and group != "sin grupo por clínica medido":
         return [
             "Primero baja un grupo repetido.",
@@ -217,6 +227,16 @@ def first_step(digest: dict[str, Any]) -> list[str]:
         return [
             "Primero revisa claims bloqueantes.",
             review_case_line(first_review(digest, "blocking_claim_review"), "Claims bloqueantes"),
+        ]
+    if counts.get("portal_profile_change"):
+        return [
+            "Primero revisa cambios pedidos por clínicas.",
+            f"Caso visible: {review_name(first_review(digest, 'portal_profile_change'), 'Mejoras de ficha')}.",
+        ]
+    if counts.get("portal_recommended_clinic"):
+        return [
+            "Primero valora clínicas sugeridas por usuarios.",
+            f"Caso visible: {review_name(first_review(digest, 'portal_recommended_clinic'), 'Clínicas nuevas')}.",
         ]
     if counts.get("candidate_clinic"):
         return [
@@ -271,7 +291,10 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
 
     if counts:
         for review_type in [
+            "clinic_claim_request",
             "blocking_claim_review",
+            "portal_profile_change",
+            "portal_recommended_clinic",
             "candidate_clinic",
             "source_change_detected",
             "clinic_profile_enrichment",
@@ -293,6 +316,10 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Publicación web: {publication_control_status(digest)}.",
         f"- Madurez de auto-publicación: {maturity_status(digest)}.",
         "- Crear borrador no publica. Publicar se decide después en el editor, en Validación final.",
+        "",
+        "## Portal clínicas",
+        f"- Estado: {portal_status(digest)}.",
+        f"- Siguiente portal: {next_portal_action(digest)}.",
         "",
         "## Señales técnicas",
         f"- Clínicas visibles: {as_int(clinics.get('published'))} publicadas y {as_int(clinics.get('preliminary'))} preliminares.",

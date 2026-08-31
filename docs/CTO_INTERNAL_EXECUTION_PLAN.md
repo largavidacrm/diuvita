@@ -108,6 +108,12 @@ Already built:
 - Duplicated review pressure has a read-only brief with concrete clinics to start from, and the safe CTO cycle includes that measurement.
 - Blocking-claim briefs now show a plain recommended next step per affected clinic without resolving the claim.
 - Global plan status can be generated as a read-only executive snapshot from real Supabase state.
+- Clinic claim portal is built locally in an isolated branch: public intake,
+  private clinic workspace, manual admin approval and profile-change proposals.
+  The portal signal now appears in the admin digest, Daniel brief and global
+  plan status. A read-only activation checklist distinguishes code readiness
+  from Daniel/Supabase/production decisions. It is not active in production
+  until Daniel reviews legal/privacy text and the Supabase migration is applied.
 
 Not yet mature:
 
@@ -123,6 +129,9 @@ Not yet mature:
   should be used in small batches before source-shadow extraction.
 - Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
 - Daily/weekly digest and notification cadence.
+- Clinic portal production activation, including legal/privacy review, Supabase
+  Auth email settings, a controlled real-flow test and the future decision on
+  document uploads.
 - Rollback controls in the admin UI need operational usage, but the restore path and preview now exist.
 - Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.
 
@@ -632,6 +641,14 @@ Next 10 technical steps:
      card lacks its own source URL, the read-only report now also shows source
      URLs linked to internal specialist claims, making cases like Neolife
      reviewable without publishing names automatically.
+124. Build a manual clinic portal for recommendations, profile claims and
+     clinic-originated change requests. Done locally in an isolated branch with
+     no automatic publication, no document upload and no outbound emails. Portal
+     requests are also visible in the digest, Daniel brief and global plan status.
+125. Add a read-only clinic portal activation checklist. Done locally in
+    `scripts/check_clinic_portal_activation.py`; it reports technical readiness
+    separately from legal/privacy review, Supabase migration, Auth settings,
+    controlled testing and Daniel's production approval.
 
 ## Daniel decision checkpoints
 

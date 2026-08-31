@@ -160,6 +160,7 @@ def main():
     check("Sedes y ubicaciones: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Ciclo autónomo: activo en sombra; señal automática base" in output, "shadow cycle line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
+    check("Portal clínicas: sin solicitudes pendientes" in output, "portal status line missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Señal automática base: Revisar claim bloqueante" in output, "base review signal missing")
     check("Google Maps propuestos: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps proposed line missing")
@@ -180,6 +181,29 @@ def main():
         codex_can_continue_status(specialist_queue) == "mejorar revisión de especialistas propuestos sin publicarlos",
         "Codex should improve specialist-review tooling before looking for more team pages",
     )
+
+    portal_digest = sample_digest()
+    portal_digest["summary"]["portal"] = {
+        "claim_requests_pending": 1,
+        "change_requests_pending": 1,
+        "active_memberships": 3,
+        "identity_confirmed": 2,
+    }
+    portal_digest["portal_reviews"] = {
+        "claim_access_open": 1,
+        "recommended_clinic_open": 0,
+        "profile_change_open": 1,
+        "open_total": 2,
+    }
+    portal_digest["reviews_by_type"] = [
+        {"review_type": "clinic_claim_request", "open_count": 1},
+        {"review_type": "portal_profile_change", "open_count": 1},
+    ]
+    portal_output = format_global_plan_status(portal_digest, "codex/clinic-portal · abc123")
+    check(plan_phase(portal_digest) == "portal de clínicas y validación manual", "portal should change active phase")
+    check("Portal clínicas: 2 pendientes: 1 acceso, 1 cambio" in portal_output, "portal pending status missing")
+    check("Siguiente portal: Revisar 1 solicitud de acceso" in portal_output, "next portal work missing")
+    check("Señal automática base: Revisar accesos del portal" in portal_output, "portal priority missing")
     print("OK global plan status: roadmap snapshot is readable")
 
 

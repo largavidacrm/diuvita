@@ -200,6 +200,8 @@ def main():
     check("Modo sombra: activo" in output, "shadow mode state missing")
     check("Publicación web: con cambios pendientes de verse online" in output, "publication control state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
+    check("Portal clínicas" in output, "portal section missing")
+    check("Siguiente portal: sin solicitudes pendientes" in output, "empty portal action missing")
     check("Completitud de fichas: 0/19 fichas sin campos pendientes medidos; 19 con pendientes" in output, "profile completeness missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending profile field missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps review target missing")
@@ -272,6 +274,47 @@ def main():
         == "Caso visible: Regenera Clinic Medicina de la Longevidad. Trae 11 especialistas recogidos.",
         "candidate reviews should show collected professionals",
     )
+
+    portal_digest = sample_digest()
+    portal_digest["summary"]["portal"] = {
+        "claim_requests_pending": 1,
+        "change_requests_pending": 1,
+        "active_memberships": 2,
+        "identity_confirmed": 1,
+    }
+    portal_digest["portal_reviews"] = {
+        "claim_access_open": 1,
+        "recommended_clinic_open": 0,
+        "profile_change_open": 1,
+        "open_total": 2,
+    }
+    portal_digest["reviews_by_type"] = [
+        {"review_type": "clinic_claim_request", "open_count": 1},
+        {"review_type": "portal_profile_change", "open_count": 1},
+        {"review_type": "blocking_claim_review", "open_count": 1},
+    ]
+    portal_digest["open_reviews"] = [
+        {
+            "review_type": "clinic_claim_request",
+            "priority": 94,
+            "clinic_name": "Monarka Clinic",
+            "title": "Solicitud de acceso: Monarka Clinic",
+        }
+    ]
+    portal_digest["review_examples_by_type"] = portal_digest["open_reviews"]
+    portal_output = format_brief(portal_digest)
+    check(
+        first_step(portal_digest)[0] == "Primero revisa solicitudes de acceso del portal.",
+        "portal access should be first when pending",
+    )
+    check("Caso visible: Solicitud de acceso: Monarka Clinic." in portal_output, "portal visible case missing")
+    check("1 solicitud de acceso pendiente" in portal_output, "portal access count missing")
+    check("1 cambio pedido por clínica pendiente" in portal_output, "portal change count missing")
+    check(
+        "Estado: 2 pendientes: 1 acceso, 1 cambio; 1 ficha con datos confirmados por el centro" in portal_output,
+        "portal status summary missing",
+    )
+    check("Siguiente portal: Revisar 1 solicitud de acceso" in portal_output, "portal next action missing")
     print("OK Daniel brief: review guidance is readable")
 
 
