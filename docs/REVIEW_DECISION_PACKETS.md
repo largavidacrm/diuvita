@@ -1,0 +1,71 @@
+# Paquetes de decisión de propuestas
+
+`scripts/review_proposal_decision_packets.py` prepara propuestas abiertas de
+`review_queue` como unidades pequeñas para revisión humana o asistencia futura
+con LLM.
+
+El contrato principal es:
+
+- Un paquete representa una tarjeta abierta y una sola decisión.
+- Las acciones posibles son siempre `approve`, `reject` o `modify`.
+- `modify` solo puede tocar los campos listados en `editable_fields`.
+- La salida por defecto no incluye valores completos, emails, teléfonos crudos
+  ni URLs completas de evidencia.
+- El script no resuelve tarjetas, no edita clínicas y no publica páginas.
+
+## Uso seguro
+
+Para ver paquetes sin valores completos:
+
+```bash
+python3 scripts/review_proposal_decision_packets.py --limit 10
+```
+
+Para centrarlo en una clínica o fragmento de título:
+
+```bash
+python3 scripts/review_proposal_decision_packets.py --clinic IMDA --limit 5
+```
+
+Para preparar una decisión local con valores completos:
+
+```bash
+python3 scripts/review_proposal_decision_packets.py --review-id REVIEW_ID --include-values
+```
+
+`--include-values` es solo para preparación local deliberada. No debe usarse en
+resúmenes largos, logs compartidos, prompts externos o documentación.
+
+## Uso con LLM
+
+Un LLM puede recibir un paquete y devolver una ayuda breve:
+
+- decisión sugerida;
+- motivo;
+- advertencias que Daniel debe mirar;
+- propuesta corregida si la acción sugerida es `modify`.
+
+El LLM no debe:
+
+- inventar campos fuera de `editable_fields`;
+- convertir una advertencia en aprobación automática;
+- resolver la tarjeta;
+- ejecutar escrituras en Supabase;
+- cambiar publicación, estado público o datos sensibles;
+- sustituir la revisión humana de Daniel.
+
+Si el paquete incluye Google Maps, especialistas, precios, colegiación visible o
+una reclamación de ficha, el resultado debe seguir marcado como revisión humana
+obligatoria.
+
+## Relación con el panel
+
+El panel `/admin/` mantiene la experiencia humana simple:
+
+```text
+abrir propuesta -> revisar ese cambio -> aprobar / rechazar / modificar -> siguiente
+```
+
+Los paquetes de decisión son la forma técnica de conservar esa misma estructura
+para futuras automatizaciones sin volver a agrupar varias decisiones en una
+misma ficha.

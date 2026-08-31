@@ -134,6 +134,8 @@ Medical claims, physician credentials and prices need stronger verification than
 Purpose: turn one open `review_queue` card into the exact information needed
 for a human decision or future LLM-assisted preparation.
 
+Detailed contract: `docs/REVIEW_DECISION_PACKETS.md`.
+
 Required behavior:
 
 - One packet represents one review card and one decision.
