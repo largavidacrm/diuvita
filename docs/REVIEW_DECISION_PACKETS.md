@@ -73,6 +73,7 @@ sugerencia:
 - corresponde a la misma tarjeta;
 - no trae escrituras, publicación, Supabase, Netlify ni SQL;
 - no modifica campos fuera de `editable_fields`;
+- rechaza modificaciones con Google Maps débil o teléfono dudoso;
 - mantiene la decisión final como revisión humana.
 
 Por defecto también oculta valores crudos de la sugerencia. Para depuración

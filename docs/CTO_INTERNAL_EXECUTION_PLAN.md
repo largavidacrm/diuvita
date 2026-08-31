@@ -760,8 +760,8 @@ Next 10 technical steps:
      `scripts/validate_review_decision_suggestion.py`: advisory LLM output can
      be validated against a one-card decision packet before being shown or used,
      blocking publication/control keys, mismatched review ids and field changes
-     outside `editable_fields`. The guard has no Supabase access and writes no
-     data.
+     outside `editable_fields`, plus weak Google Maps and doubtful phone
+     modifications. The guard has no Supabase access and writes no data.
 
 ## Daniel decision checkpoints
 
