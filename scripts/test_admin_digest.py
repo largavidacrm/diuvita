@@ -12,6 +12,7 @@ from admin_digest import (
     next_profile_action,
     next_source_action,
     next_specialist_action,
+    publication_control_status,
     review_backlog_guard_status,
     source_coverage_status,
     specialist_review_status,
@@ -47,6 +48,8 @@ def main():
             "rebuild_hook_configured": True,
             "rebuild_batch_minutes": 30,
             "last_public_site_rebuild_requested_at": "2026-08-30T10:35:11+00:00",
+            "last_public_site_change_at": "2026-08-30T10:35:11+00:00",
+            "pending_public_site_rebuild": False,
         },
         "reviews_by_type": [
             {
@@ -317,6 +320,7 @@ def main():
     check("Sedes: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Publicacion web: agrupada cada 30 min" in output, "publication batching missing")
+    check("Ultimo cambio guardado: 2026-08-30 10:35" in output, "last public change missing")
     check("Ultima peticion Netlify: 2026-08-30 10:35" in output, "last rebuild request missing")
     check("Bajo riesgo: no lista" in output, "maturity signal missing")
     check("muestra humana insuficiente: 13/200 candidatas" in output, "maturity blocker missing")
@@ -328,6 +332,17 @@ def main():
     check("review_examples_by_type" not in output, "raw example key should not appear in formatted digest")
     check("Coste registrado 24h: 1.25" in output, "cost formatting missing")
     check("Siguiente accion: Revisar claim bloqueante" in output, "next action missing")
+
+    pending_digest = dict(digest)
+    pending_digest["publication_control"] = dict(digest["publication_control"])
+    pending_digest["publication_control"]["last_public_site_change_at"] = "2026-08-30T11:05:00+00:00"
+    pending_digest["publication_control"]["pending_public_site_rebuild"] = True
+    pending_output = format_digest(pending_digest)
+    check(
+        publication_control_status(pending_digest) == "con cambios pendientes de verse online",
+        "pending publication status should be explicit",
+    )
+    check("Publicacion web: con cambios pendientes de verse online" in pending_output, "pending publication line missing")
     check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")

@@ -136,6 +136,14 @@
           <h2>Estado del sistema</h2>
           <span class="pill" id="systemHealthPill">Cargando</span>
         </div>
+        <div class="publication-banner hidden" id="publicationBanner">
+          <div>
+            <span>Web pública</span>
+            <strong id="publicationBannerTitle">Comprobando publicación.</strong>
+            <p id="publicationBannerDetail">Leyendo si hay cambios guardados pendientes de verse online.</p>
+          </div>
+          <button class="btn secondary hidden" id="requestPublicRebuildBtn" type="button">Actualizar web ahora</button>
+        </div>
         <div class="system-grid" id="systemStatusList">
           <p class="empty">Cargando estado operativo.</p>
         </div>
@@ -1125,6 +1133,9 @@
         rebuildHookConfigured: false,
         rebuildBatchMinutes: null,
         lastPublicSiteRebuildRequestedAt: null,
+        lastPublicSiteChangeAt: null,
+        pendingPublicSiteRebuild: false,
+        canRequestPublicSiteRebuildNow: false,
         unavailable: false
       };
     }
@@ -1672,13 +1683,25 @@
       control.rebuildHookConfigured = Boolean(data.rebuild_hook_configured);
       control.rebuildBatchMinutes = data.rebuild_batch_minutes == null ? null : Number(data.rebuild_batch_minutes);
       control.lastPublicSiteRebuildRequestedAt = data.last_public_site_rebuild_requested_at || null;
+      control.lastPublicSiteChangeAt = data.last_public_site_change_at || null;
+      control.pendingPublicSiteRebuild = Boolean(data.pending_public_site_rebuild);
+      control.canRequestPublicSiteRebuildNow = Boolean(data.can_request_public_site_rebuild_now);
       return control;
+    }
+
+    function publicationHasPendingChanges(control) {
+      control = control || emptyPublicationControl();
+      if (control.pendingPublicSiteRebuild) return true;
+      var lastChange = parseDateValue(control.lastPublicSiteChangeAt);
+      var lastRebuild = parseDateValue(control.lastPublicSiteRebuildRequestedAt);
+      return Boolean(lastChange && (!lastRebuild || lastChange > lastRebuild));
     }
 
     function publicationControlLabel(control) {
       control = control || emptyPublicationControl();
       if (control.unavailable) return "No disponible";
       if (!control.rebuildHookConfigured) return "Hook no configurado";
+      if (publicationHasPendingChanges(control)) return "Cambios pendientes";
       if (Number(control.rebuildBatchMinutes || 0) > 1) return "Agrupada · " + control.rebuildBatchMinutes + " min";
       return "Directa";
     }
@@ -1688,7 +1711,42 @@
       if (control.unavailable) return "No se pudo leer Supabase.";
       if (!control.rebuildHookConfigured) return "No se pedirá rebuild automático.";
       var last = control.lastPublicSiteRebuildRequestedAt ? date(control.lastPublicSiteRebuildRequestedAt) : "sin petición todavía";
+      if (publicationHasPendingChanges(control)) {
+        var change = control.lastPublicSiteChangeAt ? date(control.lastPublicSiteChangeAt) : "cambio reciente";
+        return "Último cambio: " + change + " · última web: " + last;
+      }
       return "Última petición: " + last;
+    }
+
+    function renderPublicationBanner(control) {
+      control = control || emptyPublicationControl();
+      var banner = el("publicationBanner");
+      var button = el("requestPublicRebuildBtn");
+      banner.className = "publication-banner";
+      show(button, false);
+      if (control.unavailable) {
+        show(banner, true);
+        banner.classList.add("is-pending");
+        el("publicationBannerTitle").textContent = "No puedo comprobar si la web está al día.";
+        el("publicationBannerDetail").textContent = "El panel no pudo leer el estado de publicación en Supabase.";
+        return;
+      }
+      if (!control.rebuildHookConfigured) {
+        show(banner, true);
+        banner.classList.add("is-pending");
+        el("publicationBannerTitle").textContent = "La actualización automática de la web no está configurada.";
+        el("publicationBannerDetail").textContent = "Las fichas se guardan, pero la web pública no se reconstruirá hasta configurar el hook.";
+        return;
+      }
+      if (!publicationHasPendingChanges(control)) {
+        show(banner, false);
+        return;
+      }
+      show(banner, true);
+      banner.classList.add("is-pending");
+      el("publicationBannerTitle").textContent = "Hay cambios guardados que todavía no se ven online.";
+      el("publicationBannerDetail").textContent = publicationControlDetail(control);
+      show(button, control.canRequestPublicSiteRebuildNow);
     }
 
     function pill(status) {
@@ -2587,6 +2645,7 @@
         : publicSite.ok + "/" + publicSite.checks + " comprobaciones";
       var publication = publicationControl || emptyPublicationControl();
       var nextReview = firstActionReview(openReviews, failedJobs);
+      renderPublicationBanner(publication);
 
       el("systemHealthPill").className = "pill" + healthTone;
       el("systemHealthPill").textContent = healthLabel;
@@ -2625,7 +2684,7 @@
         systemItem("Primer atasco", duplicateTargetLabel, backlogQuality.firstDuplicateTarget ? "warning-text" : ""),
         systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Checks web", publicSiteDetail, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
-        systemItem("Publicación agrupada", publicationControlLabel(publication), publication.unavailable || !publication.rebuildHookConfigured ? "warning-text" : ""),
+        systemItem("Publicación agrupada", publicationControlLabel(publication), publication.unavailable || !publication.rebuildHookConfigured || publicationHasPendingChanges(publication) ? "warning-text" : ""),
         systemItem("Último rebuild", publicationControlDetail(publication)),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
         systemItem("Fallos", failedJobs, failedJobs ? "danger-text" : ""),
@@ -5586,6 +5645,36 @@
       show(el("loginPanel"), true);
     }
 
+    function setPublicRebuildLoading(loading) {
+      var button = el("requestPublicRebuildBtn");
+      button.disabled = loading;
+      button.textContent = loading ? "Actualizando web..." : "Actualizar web ahora";
+      button.setAttribute("aria-busy", loading ? "true" : "false");
+    }
+
+    async function requestPublicSiteRebuildNow() {
+      var shouldContinue = window.confirm(
+        "Esto pide una actualización de la web pública en Netlify.\n\n" +
+        "Úsalo cuando hayas terminado un lote de cambios y quieras que se vean online.\n\n" +
+        "¿Actualizar web ahora?"
+      );
+      if (!shouldContinue) return;
+
+      setPublicRebuildLoading(true);
+      var result = await client.rpc("admin_request_public_site_rebuild_now", {
+        p_note: "Solicitud manual desde el panel admin"
+      });
+      if (result.error) {
+        console.error(result.error);
+        setPublicRebuildLoading(false);
+        toast("No se pudo pedir la actualización web. Puede faltar activar la migración.");
+        return;
+      }
+      toast("Actualización web solicitada. Netlify puede tardar unos minutos.");
+      setPublicRebuildLoading(false);
+      await loadDashboard();
+    }
+
     async function init() {
       if (!config.supabaseUrl || !config.supabasePublishableKey || !window.supabase) {
         show(el("configPanel"), true);
@@ -5713,6 +5802,7 @@
       el("openGoogleLinksBtn").addEventListener("click", openGoogleLinksTarget);
       el("openSpecialistTargetBtn").addEventListener("click", openSpecialistTarget);
       el("globalPlanOpenNextBtn").addEventListener("click", openGlobalPlanNext);
+      el("requestPublicRebuildBtn").addEventListener("click", requestPublicSiteRebuildNow);
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));

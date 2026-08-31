@@ -673,6 +673,51 @@ button:disabled {
   justify-self: start;
 }
 
+.publication-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(236, 243, 238, 0.46);
+}
+
+.publication-banner.is-pending {
+  background: rgba(179, 112, 24, 0.1);
+}
+
+.publication-banner div {
+  min-width: 0;
+}
+
+.publication-banner span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.publication-banner strong {
+  display: block;
+  margin-top: 0.12rem;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.publication-banner p {
+  margin: 0.18rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.publication-banner .btn {
+  flex: 0 0 auto;
+}
+
 .system-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1813,6 +1858,15 @@ td small {
     width: 100%;
     max-width: none;
     text-align: left;
+  }
+
+  .publication-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .publication-banner .btn {
+    width: 100%;
   }
 
   .filter-chip-row {

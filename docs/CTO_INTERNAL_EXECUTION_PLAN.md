@@ -416,6 +416,11 @@ Next 10 technical steps:
     admin now has persistent navigation for Plan, Sistema, Revisión, Clínicas,
     Trabajos and Actividad, with compact status counters and a mobile
     horizontal layout.
+75. Make pending public rebuilds explicit. Done locally in `/admin/` and
+    `supabase/migrations/0023_public_site_rebuild_pending_control.sql`: the
+    system now tracks the last saved public change separately from the last
+    Netlify rebuild request, shows when saved edits are not online yet, and
+    gives Daniel a single "Actualizar web ahora" action for batched publishing.
 
 ## Daniel decision checkpoints
 

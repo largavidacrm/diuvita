@@ -1122,6 +1122,8 @@ def publication_control_status(digest: dict[str, Any]) -> str:
     control = digest.get("publication_control") or {}
     if not control.get("rebuild_hook_configured"):
         return "no configurada"
+    if control.get("pending_public_site_rebuild"):
+        return "con cambios pendientes de verse online"
     minutes = as_int(control.get("rebuild_batch_minutes"))
     if minutes > 1:
         return f"agrupada cada {minutes} min"
@@ -1431,6 +1433,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Auto-publicacion", "activada" if auto_publish else "desactivada"))
     output.append(line("Modo sombra", "activo" if automation.get("shadow_mode_active") else "inactivo"))
     output.append(line("Publicacion web", publication_control_status(digest)))
+    last_change = parse_timestamp((digest.get("publication_control") or {}).get("last_public_site_change_at"))
+    if last_change != "-":
+        output.append(line("Ultimo cambio guardado", last_change))
     last_rebuild = parse_timestamp((digest.get("publication_control") or {}).get("last_public_site_rebuild_requested_at"))
     if last_rebuild != "-":
         output.append(line("Ultima peticion Netlify", last_rebuild))
