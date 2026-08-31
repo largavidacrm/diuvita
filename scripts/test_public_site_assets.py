@@ -12,6 +12,17 @@ def check(condition: bool, message: str) -> None:
         raise SystemExit(f"FAIL: {message}")
 
 
+def looks_like_real_logo(path: Path) -> bool:
+    head = path.read_bytes()[:512].lstrip().lower()
+    if not head:
+        return False
+    if head.startswith((b"<!doctype", b"<html")) or b"<meta http-equiv" in head[:300]:
+        return False
+    if path.suffix.lower() == ".svg" and b"<svg" not in head:
+        return False
+    return True
+
+
 def main() -> None:
     source = (ROOT / "build.py").read_text(encoding="utf-8")
     fetch_logos = (ROOT / "scripts" / "fetch_logos.py").read_text(encoding="utf-8")
@@ -45,7 +56,13 @@ def main() -> None:
         "Tiara logo status should explain the invalid download",
     )
 
-    print("OK public site assets: favicon generated")
+    for logo_dir in [ROOT / "assets" / "logos" / "orig", ROOT / "assets" / "logos" / "thumb"]:
+        for path in sorted(logo_dir.iterdir()):
+            if path.name == "status.json" or path.name.startswith("."):
+                continue
+            check(looks_like_real_logo(path), f"invalid logo asset: {path.relative_to(ROOT)}")
+
+    print("OK public site assets: favicon and logo assets guarded")
 
 
 if __name__ == "__main__":
