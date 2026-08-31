@@ -334,7 +334,7 @@ def main() -> None:
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".review-decision" in css, "single decision container should be styled")
     check(".review-table" in css, "review queue table should have compact dedicated styling")
-    check(".work-grid.review-work-list-only" in css, "review list should use full width when no proposal is open")
+    check(".review-work-list-only" not in css and "review-work-list-only" not in index, "review queue should keep the two-column work area")
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")

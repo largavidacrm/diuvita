@@ -7956,7 +7956,6 @@
       var specialistReview = firstSpecialistTargetReview(reviewCache);
       var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
       var actionLead = reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget);
-      el("reviewWorkArea").classList.toggle("review-work-list-only", !activeReview);
       renderReviewFilterChips();
       renderReviewCasePanel();
       show(el("reviewActionStrip"), false);

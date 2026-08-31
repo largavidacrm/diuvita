@@ -58,6 +58,7 @@ def main():
     check(retry_report["attempts"] == 2, "retry attempts should be counted")
     check(len(calls) == 2, "health check should stop retrying after success")
     admin_check = [item for item in CHECKS if item["name"] == "admin_shell"][0]
+    admin_css_check = [item for item in CHECKS if item["name"] == "admin_css"][0]
     home_check = [item for item in CHECKS if item["name"] == "home"][0]
     profile_check = [item for item in CHECKS if item["name"] == "public_profile_ux"][0]
     check("card-signals" in home_check["markers"], "home deployment should include card signal marker")
@@ -91,6 +92,11 @@ def main():
     check("sidebarToggleBtn" in admin_check["markers"], "admin deployment should include collapsible sidebar marker")
     check("reviewSourceJobPanel" in admin_check["markers"], "admin deployment should include review source handoff marker")
     check("clinicInternalContactName" in admin_check["markers"], "admin deployment should include private clinic contact marker")
+    check("firstReviewMissingFieldTargetId" in admin_check["markers"], "admin deployment should include manual review field-focus marker")
+    check("Prioridad: todas" in admin_check["markers"], "admin deployment should include compact priority filter marker")
+    check("--text-ui" in admin_css_check["markers"], "admin css deployment should include UI text scale token")
+    check("--text-body" in admin_css_check["markers"], "admin css deployment should include body text scale token")
+    check("--text-stat" in admin_css_check["markers"], "admin css deployment should include metric text scale token")
     check("finishReviewDecision" in admin_check["markers"], "admin deployment should include sequential review marker")
     check("Campo más pendiente" in admin_check["markers"], "admin deployment should include top pending field marker")
     check("Siguiente ficha" in admin_check["markers"], "admin deployment should include next profile marker")

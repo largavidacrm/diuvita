@@ -51,6 +51,8 @@ CHECKS = [
             "sidebarToggleBtn",
             "reviewSourceJobPanel",
             "clinicInternalContactName",
+            "firstReviewMissingFieldTargetId",
+            "Prioridad: todas",
             "finishReviewDecision",
             "Siguiente especialistas",
             "Duplicados mejoras",
@@ -67,6 +69,11 @@ CHECKS = [
             "Sin claims bloqueantes pendientes",
             "restoreChangeText",
         ],
+    },
+    {
+        "name": "admin_css",
+        "path": "/admin/admin.css",
+        "markers": ["--text-ui", "--text-body", "--text-stat"],
     },
     {
         "name": "public_profile_ux",

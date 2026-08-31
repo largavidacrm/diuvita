@@ -824,18 +824,6 @@ body.sidebar-collapsed .control-sidebar {
   align-items: start;
 }
 
-.work-grid.review-work-list-only {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.review-work-list-only .review-list-panel {
-  grid-column: 1 / -1;
-}
-
-.review-work-list-only .review-selection-panel {
-  display: none;
-}
-
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);

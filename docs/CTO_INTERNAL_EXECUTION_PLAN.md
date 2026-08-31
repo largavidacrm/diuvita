@@ -862,12 +862,15 @@ Next 10 technical steps:
      quality-review cards with a known missing field now open the clinic editor
      directly at that field, keep the manual-review banner visible, and leave
      source-change/proposal cards on the single-decision approve/reject/modify
-     path. The review queue also uses a full-width compact table when no
-     proposal is open so dates, priorities and actions fit more consistently.
+     path.
 164. Normalize dashboard visual scale. Done locally in `/admin/`: shared
      typography tokens now control labels, controls, panel copy, card titles and
      metric numbers across the control center, the page title is less oversized,
      and the review priority filter uses a shorter label to avoid clipped text.
+165. Keep review columns stable. Done locally in `/admin/`: the review queue no
+     longer expands into a one-column, full-width mode when no proposal is
+     selected, so Daniel always sees the pending list as part of the review
+     workspace instead of feeling the ficha columns disappeared.
 
 ## Daniel decision checkpoints
 

@@ -27,7 +27,10 @@ SOURCE_MARKERS = [
     ("admin review source handoff", "admin/index.html", 'id="reviewSourceJobPanel"'),
     ("admin internal clinic contact", "admin/index.html", 'id="clinicInternalContactName"'),
     ("admin manual review context", "admin/index.html", 'id="clinicManualReviewContext"'),
+    ("admin manual review field focus", "admin/index.html", "openClinicEditorForReview(activeReview, firstReviewMissingFieldTargetId(activeReview));"),
     ("admin manual review wording", "admin/index.html", "Revisión manual de fichas"),
+    ("admin compact priority filter", "admin/index.html", "Prioridad: todas"),
+    ("admin visual scale tokens", "admin/admin.css", "--text-ui"),
     ("LLM manual review context", "scripts/review_proposal_decision_packets.py", "manual_review_context"),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
     ("logo download guard", "scripts/fetch_logos.py", "def looks_like_image"),
@@ -37,6 +40,9 @@ DIST_MARKERS = [
     ("built admin clinic-centered review", "dist/admin/index.html", "reviewClinicPanel"),
     ("built admin decision actions", "dist/admin/index.html", "reviewApproveBtn"),
     ("built admin manual review context", "dist/admin/index.html", "clinicManualReviewContext"),
+    ("built admin manual review field focus", "dist/admin/index.html", "openClinicEditorForReview(activeReview, firstReviewMissingFieldTargetId(activeReview));"),
+    ("built admin compact priority filter", "dist/admin/index.html", "Prioridad: todas"),
+    ("built admin visual scale tokens", "dist/admin/admin.css", "--text-ui"),
     ("built Tiara profile remains", "dist/clinica/tiara-health/index.html", "Tiara Health"),
 ]
 
