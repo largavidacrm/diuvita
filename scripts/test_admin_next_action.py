@@ -40,6 +40,8 @@ def main() -> None:
         "function globalPlanBottleneckText",
         "function globalPlanNextDetailText",
         "function globalPlanCodexWorkDetail",
+        "Consolidar especialistas ya propuestos en tarjetas abiertas, sin publicarlos automáticamente.",
+        "Convertir nombres internos de especialistas en propuestas revisables.",
         "function globalPlanNowDetail",
         "function globalPlanBlockerLabel",
         "function globalPlanBlockerDetail",

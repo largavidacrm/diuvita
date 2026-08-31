@@ -548,6 +548,10 @@ Next 10 technical steps:
      published specialists, specialists proposed in open cards, internal
      detected names, duplicates already represented and the next manual review
      step without editing Supabase.
+105. Align the admin global plan with specialist review reality. Done locally in
+     `/admin/`: when specialist cards already exist, Codex work is described as
+     consolidating proposals rather than finding more team pages, keeping the
+     center of control closer to Daniel's real next action.
 
 ## Daniel decision checkpoints
 

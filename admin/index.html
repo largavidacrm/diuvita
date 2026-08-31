@@ -2108,6 +2108,8 @@
       if (Number(failedJobs || 0)) return "Resolver fallos técnicos y volver a medir antes de tocar fichas.";
       if (Number(openCount || 0) >= 45) return "Seguir mejorando el panel, extractores y checks sin crear más tarjetas.";
       if (sources && sources.needingSourceWork) return "Completar trazabilidad de fuentes y preparar mejores propuestas internas.";
+      if (specialists && specialists.withOpenSpecialistReviews) return "Consolidar especialistas ya propuestos en tarjetas abiertas, sin publicarlos automáticamente.";
+      if (specialists && specialists.withSpecialistClaims) return "Convertir nombres internos de especialistas en propuestas revisables.";
       if (specialists && specialists.withoutSpecialists) return "Priorizar páginas de equipo para capturar especialistas publicados.";
       if (completeness && completeness.incompleteProfiles) return "Completar huecos de fichas visibles sin publicar automáticamente.";
       return "Preparar el siguiente bloque técnico sin activar auto-publicación.";
