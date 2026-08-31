@@ -38,6 +38,7 @@ TEST_STEPS = [
     ("test: admin review filters", "scripts/test_admin_review_filters.py"),
     ("test: admin review case panel", "scripts/test_admin_review_case_panel.py"),
     ("test: admin review actions", "scripts/test_admin_review_actions.py"),
+    ("test: admin visual consistency", "scripts/test_admin_visual_consistency.py"),
     ("test: admin control sidebar", "scripts/test_admin_control_sidebar.py"),
     ("test: admin publication flow", "scripts/test_admin_publication_flow.py"),
     ("test: admin publication readiness status", "scripts/test_admin_publication_readiness_status.py"),

@@ -1273,17 +1273,17 @@ table {
 
 .review-table th:nth-child(1),
 .review-table td:nth-child(1) {
-  width: 34%;
+  width: 40%;
 }
 
 .review-table th:nth-child(2),
 .review-table td:nth-child(2) {
-  width: 24%;
+  width: 20%;
 }
 
 .review-table th:nth-child(3),
 .review-table td:nth-child(3) {
-  width: 18%;
+  width: 16%;
 }
 
 .review-table th:nth-child(4),
@@ -1307,10 +1307,10 @@ td {
 
 .review-table th,
 .review-table td {
-  padding: 0.54rem 0.66rem;
+  padding: 0.48rem 0.62rem;
   font-size: var(--text-ui);
   line-height: 1.25;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 th {

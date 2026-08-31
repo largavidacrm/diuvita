@@ -986,6 +986,11 @@ Next 10 technical steps:
      carry `manual_decision_sequence`, reviewing the clinic Google Maps profile
      before Google reviews while keeping every item `safe_to_auto_publish:
      false`.
+189. Guard dashboard visual consistency. Done locally in `/admin/` and
+     `scripts/test_admin_visual_consistency.py`: the review table now gives more
+     width to the subject, keeps type/priority/date compact, aligns rows
+     predictably and adds a local check so dashboard typography and card radii
+     stay within the current design scale.
 
 ## Daniel decision checkpoints
 

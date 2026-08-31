@@ -250,6 +250,10 @@ filtros y una columna lateral de selección. Al pulsar **Revisar**, la bandeja s
 oculta y se abre la ficha de la clínica en el centro, con la decisión concreta
 de esa propuesta a la derecha.
 
+La tabla de revisión está pensada para escanear, no para leer fichas completas:
+los títulos largos se recortan visualmente, las columnas mantienen anchuras
+estables y el botón **Revisar** abre el detalle completo de una sola propuesta.
+
 ## Revisar mejoras de una ficha existente
 
 Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que ya existe.
