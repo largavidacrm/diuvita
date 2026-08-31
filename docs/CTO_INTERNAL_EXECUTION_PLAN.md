@@ -641,6 +641,12 @@ Next 10 technical steps:
      numbers can map to principal/fixed/mobile review fields, and checked common
      team paths such as `/equipo/` are prioritized when they provide cleaner
      public professional proposals.
+125. Add read-only consolidation for duplicate enrichment cards. Done locally in
+     `scripts/consolidate_profile_enrichment_reviews.py` and the CTO cycle:
+     duplicate `clinic_profile_enrichment` cards for the same clinic can now be
+     merged into one proposed field set, with source counts, already-present
+     fields and scalar conflicts shown before Daniel uses "Cargar mejoras
+     juntas". It does not resolve cards, edit clinics or publish anything.
 
 ## Daniel decision checkpoints
 

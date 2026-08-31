@@ -9,6 +9,7 @@ from run_cto_shadow_cycle import (
     clinic_visibility_status,
     compact_summary,
     cycle_next_clicks,
+    enrichment_consolidation_status,
     format_cycle_brief,
     google_link_reconciliation_status,
     open_review_count_from_digest,
@@ -233,6 +234,87 @@ def main():
     check("clinic_workgroups" not in compact_backlog, "full clinic workgroup list should be removed")
     check("blocking_claim_reviews" in compact_backlog["sample_clinic_workgroups"][0], "clinic workgroup counts should be kept")
     check("clinic_id" not in compact_backlog["sample_clinic_workgroups"][0], "large clinic ids should be omitted")
+    compact_consolidation = compact_summary("consolidate_profile_enrichment_reviews", {
+        "summary": {
+            "groups": 1,
+            "cards": 3,
+            "fields_to_review": 5,
+            "conflicts": 1,
+        },
+        "groups": [
+            {
+                "clinic_name": "Sensabell",
+                "clinic_slug": "sensabell",
+                "city": "Valencia",
+                "clinic_status": "published",
+                "card_count": 3,
+                "source_count": 2,
+                "merged_field_count": 6,
+                "merged_field_counts": {"profesionales": 4},
+                "already_present_count": 1,
+                "conflict_count": 1,
+                "conflict_fields": ["telefono"],
+                "weak_phone_count": 1,
+                "weak_phone_fields": ["phone_fixed"],
+                "merged_fields": {"profesionales": ["Dra. Example"]},
+                "source_urls": ["https://sensabell.example/equipo/"],
+                "next_step": "resolver conflictos antes de cargar mejoras juntas",
+            }
+        ],
+    })
+    check(compact_consolidation["groups_count"] == 1, "consolidation group count should be kept")
+    check("groups" not in compact_consolidation, "full consolidation groups should be removed")
+    check("merged_fields" not in compact_consolidation["sample_groups"][0], "merged field payload should stay out of cycle output")
+    check("source_urls" not in compact_consolidation["sample_groups"][0], "consolidation source URLs should stay out of cycle output")
+    check("conflict_count" in compact_consolidation["sample_groups"][0], "consolidation conflict count should be kept")
+    check("weak_phone_count" in compact_consolidation["sample_groups"][0], "consolidation weak phone count should be kept")
+    consolidation_step = {
+        "name": "consolidate_profile_enrichment_reviews",
+        "ok": True,
+        "summary": compact_consolidation,
+    }
+    check(
+        enrichment_consolidation_status(consolidation_step)
+        == "1 conflictos en 1 grupos; revisar antes de fusionar",
+        "consolidation status should flag conflicts",
+    )
+    clean_consolidation_step = {
+        "name": "consolidate_profile_enrichment_reviews",
+        "ok": True,
+        "summary": {
+            "summary": {
+                "groups": 2,
+                "cards": 5,
+                "fields_to_review": 9,
+                "conflicts": 0,
+            },
+            "groups_count": 2,
+        },
+    }
+    check(
+        enrichment_consolidation_status(clean_consolidation_step)
+        == "9 campos listos para revisar en 2 grupos (5 tarjetas)",
+        "clean consolidation status should show actionable fields",
+    )
+    weak_phone_consolidation_step = {
+        "name": "consolidate_profile_enrichment_reviews",
+        "ok": True,
+        "summary": {
+            "summary": {
+                "groups": 2,
+                "cards": 5,
+                "fields_to_review": 9,
+                "conflicts": 0,
+                "weak_phone_fields": 1,
+            },
+            "groups_count": 2,
+        },
+    }
+    check(
+        enrichment_consolidation_status(weak_phone_consolidation_step)
+        == "1 telefonos dudosos en 2 grupos; revisar antes de fusionar",
+        "weak phone consolidation status should be visible",
+    )
     compact_digest = compact_summary("admin_digest", {
         "admin_email": "admin@example.test",
         "summary": {"reviews": {"open": 2}},
@@ -459,6 +541,7 @@ def main():
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
     check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
+    check("Consolidacion mejoras: no comprobada en este ciclo" in brief_text, "plain brief consolidation line missing")
     check("Conciliacion Google: no comprobada en este ciclo" in brief_text, "plain brief Google reconciliation line missing")
     check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
@@ -535,6 +618,27 @@ def main():
         in format_cycle_brief(google_link_cycle_brief),
         "plain brief should show Google reconciliation result",
     )
+    consolidation_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {
+                "name": "consolidate_profile_enrichment_reviews",
+                "ok": True,
+                "summary": clean_consolidation_step["summary"],
+            },
+        ],
+    })
+    check(
+        consolidation_cycle_brief["enrichment_consolidation"]
+        == "9 campos listos para revisar en 2 grupos (5 tarjetas)",
+        "consolidation should enter cycle brief",
+    )
+    check(
+        "Consolidacion mejoras: 9 campos listos para revisar en 2 grupos (5 tarjetas)"
+        in format_cycle_brief(consolidation_cycle_brief),
+        "plain brief should show consolidation result",
+    )
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -561,6 +665,8 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        enrichment_consolidation_limit=6,
+        enrichment_consolidation_clinic="",
         google_link_reconciliation=False,
         google_link_reconciliation_clinic="",
         google_link_reconciliation_limit=8,
@@ -593,6 +699,7 @@ def main():
     check("clinic_public_visibility_report" not in names, "clinic visibility should be off by default")
     check("google_link_review_reconciliation" not in names, "Google reconciliation should be off by default")
     check("specialist_review_reconciliation" not in names, "specialist reconciliation should be off by default")
+    check("consolidate_profile_enrichment_reviews" in names, "duplicate enrichment consolidation step missing")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
@@ -640,6 +747,8 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        enrichment_consolidation_limit=6,
+        enrichment_consolidation_clinic="",
         google_link_reconciliation=False,
         google_link_reconciliation_clinic="",
         google_link_reconciliation_limit=8,
@@ -668,7 +777,12 @@ def main():
     backlog_step = [step for step in steps if step[0] == "review_backlog_brief"][0]
     check("--json" in backlog_step[1], "review backlog brief should be machine readable")
     check("4" in backlog_step[1], "review backlog brief limit should pass through")
+    consolidation_step_def = [step for step in steps if step[0] == "consolidate_profile_enrichment_reviews"][0]
+    check("--json" in consolidation_step_def[1], "consolidation should be machine readable")
+    check("6" in consolidation_step_def[1], "consolidation limit should pass through")
+    check(steps.index(backlog_step) < steps.index(consolidation_step_def), "consolidation should follow backlog brief")
     digest_step = [step for step in steps if step[0] == "admin_digest"][0]
+    check(steps.index(consolidation_step_def) < steps.index(digest_step), "consolidation should run before admin digest")
     check("--json" in digest_step[1], "admin digest should be machine readable")
     claim_step = [step for step in steps if step[0] == "evaluate_claim_rules"][0]
     check("--json" in claim_step[1], "claim rule evaluation should be machine readable")
@@ -699,6 +813,8 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        enrichment_consolidation_limit=4,
+        enrichment_consolidation_clinic="Sensabell",
         google_link_reconciliation=True,
         google_link_reconciliation_clinic="Arvila",
         google_link_reconciliation_limit=4,
@@ -724,6 +840,7 @@ def main():
     team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
     google_reconciliation_step = [step for step in optional_steps if step[0] == "google_link_review_reconciliation"][0]
     specialist_reconciliation_step = [step for step in optional_steps if step[0] == "specialist_review_reconciliation"][0]
+    focused_consolidation_step = [step for step in optional_steps if step[0] == "consolidate_profile_enrichment_reviews"][0]
     check("--apply" in seed_apply_step[1], "source seeding should follow safe apply mode")
     check("--apply" in team_source_step[1], "team source discovery should follow safe apply mode")
     check("--clinic-slug" in team_source_step[1] and "arvila-magna" in team_source_step[1], "team source clinic slug should pass through")
@@ -741,6 +858,8 @@ def main():
     check("Kairos" in specialist_reconciliation_step[1], "specialist reconciliation clinic should pass through")
     check("3" in specialist_reconciliation_step[1], "specialist reconciliation limit should pass through")
     check(optional_steps.index(specialist_reconciliation_step) < optional_steps.index([step for step in optional_steps if step[0] == "admin_digest"][0]), "specialist reconciliation should run before admin digest")
+    check("Sensabell" in focused_consolidation_step[1], "consolidation clinic should pass through")
+    check("4" in focused_consolidation_step[1], "focused consolidation limit should pass through")
     strict_step = [step for step in optional_steps if step[0] == "check_operational_limits_strict"][0]
     check("--strict-editorial" in strict_step[1], "strict editorial flag should pass through")
     health_step = [step for step in optional_steps if step[0] == "check_production_health"][0]

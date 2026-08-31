@@ -587,26 +587,37 @@ def clean_phone(raw: str) -> str:
     return normalize_space(raw).strip(".,;:")
 
 
+def plausible_spanish_phone(value: str) -> bool:
+    digits = spanish_phone_digits(value)
+    return len(digits) == 9 and digits[0] in {"6", "7", "8", "9"}
+
+
 def split_phone_candidate(raw: str) -> list[str]:
     clean = clean_phone(raw)
     digits = re.sub(r"\D", "", clean)
     if not digits:
         return []
     if clean.startswith("+") and len(digits) <= 15:
-        return [clean]
+        return [clean] if plausible_spanish_phone(clean) else []
     if clean.startswith("+34") and len(digits) > 11 and (len(digits) - 2) % 9 == 0:
         phones = ["+" + digits[:11]]
         phones.extend(digits[index : index + 9] for index in range(11, len(digits), 9))
-        return phones
-    if len(digits) <= 15:
-        return [clean]
+        return [phone for phone in phones if plausible_spanish_phone(phone)]
+    if len(digits) in {9, 11, 13}:
+        return [clean] if plausible_spanish_phone(clean) else []
     if len(digits) % 9 == 0:
-        return [digits[index : index + 9] for index in range(0, len(digits), 9)]
-    return [clean]
+        return [
+            phone
+            for phone in (digits[index : index + 9] for index in range(0, len(digits), 9))
+            if plausible_spanish_phone(phone)
+        ]
+    return []
 
 
 def spanish_phone_digits(value: str) -> str:
     digits = re.sub(r"\D", "", value or "")
+    if digits.startswith("0034") and len(digits) == 13:
+        return digits[4:]
     if digits.startswith("34") and len(digits) == 11:
         return digits[2:]
     return digits

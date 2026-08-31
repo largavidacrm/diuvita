@@ -247,6 +247,12 @@ Cuando abras una tarjeta y existan otras revisiones abiertas para la misma
 clínica, verás **Otras revisiones de esta clínica**. Úsalo para revisar esas
 tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
 
+El sistema también puede generar un informe interno de consolidación para esas
+mejoras duplicadas. Ese informe no cambia nada: solo dice qué campos se pueden
+unir, qué fuentes hay detrás y si hay conflictos como dos teléfonos principales
+distintos. Si no hay conflictos, lo normal es abrir el caso y usar **Cargar
+mejoras juntas**.
+
 ## Editar una clínica
 
 1. Baja al bloque **Clínicas**.

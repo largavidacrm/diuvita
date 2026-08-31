@@ -120,6 +120,22 @@ STEP_ITEM_KEYS = {
         "max_priority",
         "oldest_created_at",
     ),
+    "consolidate_profile_enrichment_reviews": (
+        "clinic_name",
+        "clinic_slug",
+        "city",
+        "clinic_status",
+        "card_count",
+        "source_count",
+        "merged_field_count",
+        "merged_field_counts",
+        "already_present_count",
+        "conflict_count",
+        "conflict_fields",
+        "weak_phone_count",
+        "weak_phone_fields",
+        "next_step",
+    ),
     "admin_digest": ("title", "review_type", "priority", "clinic_name", "clinic_slug", "professionals_count"),
     "submit_source_shadow_reviews": (
         "clinic_slug",
@@ -174,6 +190,7 @@ STEP_LABELS = {
     "measure_source_coverage": "cobertura de fuentes",
     "measure_profile_completeness": "completitud de fichas",
     "review_backlog_brief": "atascos de bandeja",
+    "consolidate_profile_enrichment_reviews": "consolidacion de mejoras duplicadas",
     "admin_digest": "resumen interno",
     "evaluate_claim_rules": "reglas de publicacion",
     "check_operational_limits_strict": "limites operativos",
@@ -280,6 +297,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in clinic_workgroups[:3]
         ]
         compact.pop("clinic_workgroups", None)
+    groups = compact.get("groups")
+    if isinstance(groups, list):
+        compact["groups_count"] = len(groups)
+        compact["sample_groups"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in groups[:3]
+        ]
+        compact.pop("groups", None)
     open_reviews = compact.get("open_reviews")
     if isinstance(open_reviews, list):
         compact["open_reviews_count"] = len(open_reviews)
@@ -493,6 +518,27 @@ def google_link_reconciliation_status(step: dict[str, Any] | None) -> str:
     return f"{cards} tarjetas sin perfil Maps directo"
 
 
+def enrichment_consolidation_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    groups = as_int(counts.get("groups") or summary.get("groups_count"))
+    if not groups:
+        return "sin mejoras duplicadas"
+    cards = as_int(counts.get("cards"))
+    conflicts = as_int(counts.get("conflicts"))
+    weak_phones = as_int(counts.get("weak_phone_fields"))
+    fields = as_int(counts.get("fields_to_review"))
+    if conflicts:
+        return f"{conflicts} conflictos en {groups} grupos; revisar antes de fusionar"
+    if weak_phones:
+        return f"{weak_phones} telefonos dudosos en {groups} grupos; revisar antes de fusionar"
+    return f"{fields} campos listos para revisar en {groups} grupos ({cards} tarjetas)"
+
+
 def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     steps = [step for step in output.get("steps") or [] if isinstance(step, dict)]
     failed_step = first_failed_step(steps)
@@ -560,6 +606,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     google_link_reconciliation = google_link_reconciliation_status(google_link_step)
     specialist_step = find_step(steps, "specialist_review_reconciliation")
     specialist_reconciliation = specialist_reconciliation_status(specialist_step)
+    enrichment_consolidation_step = find_step(steps, "consolidate_profile_enrichment_reviews")
+    enrichment_consolidation = enrichment_consolidation_status(enrichment_consolidation_step)
 
     if admin_digest:
         next_action = next_action_label(admin_digest)
@@ -612,6 +660,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "clinic_visibility": clinic_visibility,
         "google_link_reconciliation": google_link_reconciliation,
         "specialist_reconciliation": specialist_reconciliation,
+        "enrichment_consolidation": enrichment_consolidation,
         "attention": attention,
     }
 
@@ -634,6 +683,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Web publica: {brief.get('production_health')}.",
         f"- Frescura web: {brief.get('public_freshness')}.",
         f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
+        f"- Consolidacion mejoras: {brief.get('enrichment_consolidation')}.",
         f"- Conciliacion Google: {brief.get('google_link_reconciliation')}.",
         f"- Conciliacion especialistas: {brief.get('specialist_reconciliation')}.",
     ]
@@ -794,6 +844,21 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ["review_backlog_brief.py", "--limit", str(args.backlog_brief_limit), "--json"],
             45,
         ),
+        (
+            "consolidate_profile_enrichment_reviews",
+            [
+                "consolidate_profile_enrichment_reviews.py",
+                "--limit",
+                str(args.enrichment_consolidation_limit),
+                "--json",
+                *(
+                    ["--clinic", args.enrichment_consolidation_clinic]
+                    if args.enrichment_consolidation_clinic
+                    else []
+                ),
+            ],
+            45,
+        ),
     ])
     if args.google_link_reconciliation or args.google_link_reconciliation_clinic:
         google_link_reconciliation_args = [
@@ -929,6 +994,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-coverage-limit", type=int, default=12)
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
     parser.add_argument("--backlog-brief-limit", type=int, default=8)
+    parser.add_argument("--enrichment-consolidation-limit", type=int, default=8)
+    parser.add_argument("--enrichment-consolidation-clinic", default="", help="Clinic name or slug for duplicate enrichment consolidation.")
     parser.add_argument(
         "--google-link-reconciliation",
         action="store_true",
@@ -1004,6 +1071,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
         args.public_freshness_missing_limit,
@@ -1027,6 +1095,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
     ) < 1:

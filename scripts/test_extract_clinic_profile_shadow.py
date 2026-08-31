@@ -58,6 +58,10 @@ def main():
         extract_contacts("Contacto +34965130120 965210687")["phones"] == ["+34965130120", "965210687"],
         "adjacent +34 and Spanish phone numbers should be split",
     )
+    check(
+        extract_contacts("Medicina General COMB 08-29679-5")["phones"] == [],
+        "professional registry numbers should not be extracted as phones",
+    )
     check(len(profile["locations"]) == 2, "two locations should be extracted")
     check(profile["locations"][0]["city"] == "Madrid", "Madrid location city missing")
     check(profile["locations"][1]["city"] == "Barcelona", "Barcelona location city missing")
