@@ -19,20 +19,22 @@ for Daniel instead of implementing, softening or silently discarding the change.
 10. measure source snapshot retention without deleting evidence;
 11. measure visible source coverage without writing evidence;
 12. measure visible-profile completeness without editing clinics;
-13. measure review-inbox bottlenecks without resolving cards;
-14. optionally reconcile Google Maps/review-link cards without printing long
+13. optionally summarize publication blockers across clinics without editing
+    or publishing records;
+14. measure review-inbox bottlenecks without resolving cards;
+15. optionally reconcile Google Maps/review-link cards without printing long
     link payloads;
-15. optionally reconcile published/proposed/internal specialists without
+16. optionally reconcile published/proposed/internal specialists without
     exposing long professional lists in the cycle output;
-16. optionally summarize private specialist proposal batches without printing
+17. optionally summarize private specialist proposal batches without printing
     proposed professional names;
-17. print the admin digest;
-18. evaluate stored claims against publication rules.
-19. optionally run strict editorial limit checks;
-20. optionally check public production URLs without logging in or writing data.
-21. optionally explain one clinic's public visibility state without publishing
+18. print the admin digest;
+19. evaluate stored claims against publication rules.
+20. optionally run strict editorial limit checks;
+21. optionally check public production URLs without logging in or writing data.
+22. optionally explain one clinic's public visibility state without publishing
     or exposing long team/professional payloads.
-22. optionally compare saved public data with deployed clinic pages to detect
+23. optionally compare saved public data with deployed clinic pages to detect
     stale pages.
 
 Default mode is dry-run:
@@ -120,6 +122,20 @@ Review-backlog measurement is read-only and helps identify duplicate
 profile-enrichment pressure before adding more cards.
 Source-coverage measurement is read-only and highlights visible clinics whose
 source trail is weak before expanding automation.
+Publication-readiness measurement is optional and read-only. It is useful when
+Daniel or Codex needs a global view of which fichas are most blocked before
+manual publication review:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --publication-readiness --plain-brief
+```
+
+To focus one clinic:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --publication-readiness-clinic "Monarka" --plain-brief
+```
+
 Google-link reconciliation is optional and read-only. It is useful when the next
 manual bottleneck is validating direct clinic Google Business/Profile links:
 

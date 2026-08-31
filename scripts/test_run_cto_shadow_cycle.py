@@ -13,6 +13,7 @@ from run_cto_shadow_cycle import (
     format_cycle_brief,
     google_link_reconciliation_status,
     open_review_count_from_digest,
+    publication_readiness_status,
     skipped_step,
     specialist_claim_proposal_status,
     specialist_reconciliation_status,
@@ -68,6 +69,28 @@ def main():
     check(compact_proposals["proposals_count"] == 1, "proposal count should be kept")
     check("proposals" not in compact_proposals, "raw proposals should be removed")
     check("proposed_fields" not in compact_proposals["sample_proposals"][0], "proposed names should be hidden")
+    compact_publication = compact_summary("clinic_publication_readiness", {
+        "summary": {
+            "clinics_measured": 24,
+            "ready_clinics": 3,
+            "clinics_with_missing_fields": 21,
+            "clinics_with_blocking_reviews": 1,
+            "top_missing_fields": [{"field": "Google Maps de clinica", "count": 20}],
+        },
+        "matches": [
+            {
+                "slug": "clinic-a",
+                "clinic_name": "Clinic A",
+                "city": "Madrid",
+                "status": "draft",
+                "open_reviews": 2,
+                "has_summary": False,
+            }
+        ],
+    })
+    check(compact_publication["matches_count"] == 1, "publication matches count should be kept")
+    check("matches" not in compact_publication, "raw publication matches should be removed")
+    check("has_summary" not in compact_publication["sample_matches"][0], "publication internals should be hidden")
     check("snapshot" not in compact_items["sample_items"][0], "large nested snapshot should be omitted")
     compact_seed_sources = compact_summary("seed_visible_clinic_sources", {
         "mode": "apply",
@@ -427,6 +450,12 @@ def main():
     check("missing_examples" not in compact_visibility["freshness"]["sample_checks"][0], "visibility freshness examples should be omitted")
     visibility_step = {"name": "clinic_public_visibility_report", "ok": True, "summary": compact_visibility}
     check(clinic_visibility_status(visibility_step) == "1 ficha con desfase", "visibility step status should show stale public page")
+    publication_step = {"name": "clinic_publication_readiness", "ok": True, "summary": compact_publication}
+    check(
+        publication_readiness_status(publication_step)
+        == "3/24 sin faltantes; 21 con faltantes; principal: Google Maps de clinica (20); 1 con claims bloqueantes",
+        "publication readiness status should summarize blockers",
+    )
     compact_specialists = compact_summary("specialist_review_reconciliation", {
         "query": "Kairos",
         "clinics": [
@@ -587,6 +616,7 @@ def main():
     )
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
+    check("Preparacion publicacion: no comprobada en este ciclo" in brief_text, "plain brief publication readiness line missing")
     check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
     check("Consolidacion mejoras: no comprobada en este ciclo" in brief_text, "plain brief consolidation line missing")
     check("Conciliacion Google: no comprobada en este ciclo" in brief_text, "plain brief Google reconciliation line missing")
@@ -630,6 +660,23 @@ def main():
     })
     check(visibility_cycle_brief["clinic_visibility"] == "1 ficha con desfase", "clinic visibility should enter cycle brief")
     check("Visibilidad clinica: 1 ficha con desfase" in format_cycle_brief(visibility_cycle_brief), "plain brief should show clinic visibility result")
+    publication_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {"name": "clinic_publication_readiness", "ok": True, "summary": compact_publication},
+        ],
+    })
+    check(
+        publication_cycle_brief["publication_readiness"]
+        == "3/24 sin faltantes; 21 con faltantes; principal: Google Maps de clinica (20); 1 con claims bloqueantes",
+        "publication readiness should enter cycle brief",
+    )
+    check(
+        "Preparacion publicacion: 3/24 sin faltantes; 21 con faltantes; principal: Google Maps de clinica (20); 1 con claims bloqueantes"
+        in format_cycle_brief(publication_cycle_brief),
+        "plain brief should show publication readiness result",
+    )
     specialist_cycle_brief = build_cycle_brief({
         "mode": "dry_run",
         "ok": True,
@@ -727,6 +774,9 @@ def main():
         snapshot_retention_limit=7,
         source_coverage_limit=10,
         profile_completeness_limit=11,
+        publication_readiness=False,
+        publication_readiness_clinic="",
+        publication_readiness_limit=8,
         backlog_brief_limit=4,
         enrichment_consolidation_limit=6,
         enrichment_consolidation_clinic="",
@@ -763,6 +813,7 @@ def main():
     check("check_production_health" not in names, "production health should be off by default")
     check("check_public_site_freshness" not in names, "public freshness should be off by default")
     check("clinic_public_visibility_report" not in names, "clinic visibility should be off by default")
+    check("clinic_publication_readiness" not in names, "publication readiness should be off by default")
     check("google_link_review_reconciliation" not in names, "Google reconciliation should be off by default")
     check("specialist_review_reconciliation" not in names, "specialist reconciliation should be off by default")
     check("export_specialist_claim_proposals" not in names, "specialist proposal export should be off by default")
@@ -813,6 +864,9 @@ def main():
         snapshot_retention_limit=7,
         source_coverage_limit=10,
         profile_completeness_limit=11,
+        publication_readiness=False,
+        publication_readiness_clinic="",
+        publication_readiness_limit=8,
         backlog_brief_limit=4,
         enrichment_consolidation_limit=6,
         enrichment_consolidation_clinic="",
@@ -882,6 +936,9 @@ def main():
         snapshot_retention_limit=7,
         source_coverage_limit=10,
         profile_completeness_limit=11,
+        publication_readiness=True,
+        publication_readiness_clinic="Monarka",
+        publication_readiness_limit=5,
         backlog_brief_limit=4,
         enrichment_consolidation_limit=4,
         enrichment_consolidation_clinic="Sensabell",
@@ -952,11 +1009,16 @@ def main():
     check("Monarka" in freshness_step[1], "public freshness clinic name should pass through")
     check("5" in freshness_step[1], "public freshness missing limit should pass through")
     visibility_step = [step for step in optional_steps if step[0] == "clinic_public_visibility_report"][0]
+    publication_readiness_step = [step for step in optional_steps if step[0] == "clinic_publication_readiness"][0]
     check(optional_steps.index(health_step) < optional_steps.index(visibility_step), "clinic visibility should run after production health")
     check(optional_steps.index(visibility_step) < optional_steps.index(freshness_step), "clinic visibility should run before public freshness can stop the cycle")
     check("--json" in visibility_step[1], "clinic visibility should be machine readable")
     check("Monarka" in visibility_step[1], "clinic visibility should reuse the normal clinic name")
     check("30" in visibility_step[1], "clinic visibility missing limit should pass through")
+    check("--json" in publication_readiness_step[1], "publication readiness should be machine readable")
+    check("Monarka" in publication_readiness_step[1], "publication readiness clinic should pass through")
+    check("5" in publication_readiness_step[1], "publication readiness limit should pass through")
+    check(optional_steps.index(publication_readiness_step) < optional_steps.index([step for step in optional_steps if step[0] == "review_backlog_brief"][0]), "publication readiness should run before backlog brief")
     print("OK cycle: CTO shadow orchestration")
 
 

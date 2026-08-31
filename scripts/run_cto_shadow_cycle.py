@@ -106,6 +106,14 @@ STEP_ITEM_KEYS = {
         "pending_fields",
         "open_quality_reviews",
     ),
+    "clinic_publication_readiness": (
+        "slug",
+        "clinic_name",
+        "city",
+        "status",
+        "open_reviews",
+        "open_blocking_reviews",
+    ),
     "review_backlog_brief": (
         "clinic_name",
         "clinic_slug",
@@ -196,6 +204,7 @@ STEP_LABELS = {
     "measure_source_snapshot_retention": "retencion de evidencias",
     "measure_source_coverage": "cobertura de fuentes",
     "measure_profile_completeness": "completitud de fichas",
+    "clinic_publication_readiness": "preparacion para publicacion",
     "review_backlog_brief": "atascos de bandeja",
     "consolidate_profile_enrichment_reviews": "consolidacion de mejoras duplicadas",
     "admin_digest": "resumen interno",
@@ -343,6 +352,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in review_cards[:3]
         ]
         compact.pop("review_cards", None)
+    matches = compact.get("matches")
+    if isinstance(matches, list):
+        compact["matches_count"] = len(matches)
+        compact["sample_matches"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in matches[:3]
+        ]
+        compact.pop("matches", None)
     proposals = compact.get("proposals")
     if isinstance(proposals, list):
         compact["proposals_count"] = len(proposals)
@@ -500,6 +517,30 @@ def clinic_visibility_status(step: dict[str, Any] | None) -> str:
     return "medida"
 
 
+def publication_readiness_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    measured = as_int(counts.get("clinics_measured") or summary.get("matches_count"))
+    if not measured:
+        return "sin fichas medidas"
+    ready = as_int(counts.get("ready_clinics"))
+    missing = as_int(counts.get("clinics_with_missing_fields"))
+    blocking = as_int(counts.get("clinics_with_blocking_reviews"))
+    top_missing = counts.get("top_missing_fields") if isinstance(counts.get("top_missing_fields"), list) else []
+    top = top_missing[0] if top_missing and isinstance(top_missing[0], dict) else {}
+    field = str(top.get("field") or "").strip()
+    count = as_int(top.get("count"))
+    detail = f"; principal: {field} ({count})" if field and count else ""
+    blocking_detail = f"; {blocking} con claims bloqueantes" if blocking else ""
+    if missing:
+        return f"{ready}/{measured} sin faltantes; {missing} con faltantes{detail}{blocking_detail}"
+    return f"{ready}/{measured} sin faltantes obligatorios{blocking_detail}"
+
+
 def specialist_reconciliation_status(step: dict[str, Any] | None) -> str:
     if not step:
         return "no comprobada en este ciclo"
@@ -643,6 +684,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     else:
         stale_count = as_int(freshness_summary.get("stale_count"))
         public_freshness = f"{stale_count} con desfase" if stale_count else "revisar"
+    publication_readiness_step = find_step(steps, "clinic_publication_readiness")
+    publication_readiness = publication_readiness_status(publication_readiness_step)
     visibility_step = find_step(steps, "clinic_public_visibility_report")
     clinic_visibility = clinic_visibility_status(visibility_step)
     google_link_step = find_step(steps, "google_link_review_reconciliation")
@@ -702,6 +745,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "shadow_mode": "activo" if shadow_mode else "inactivo",
         "production_health": production_health,
         "public_freshness": public_freshness,
+        "publication_readiness": publication_readiness,
         "clinic_visibility": clinic_visibility,
         "google_link_reconciliation": google_link_reconciliation,
         "specialist_reconciliation": specialist_reconciliation,
@@ -728,6 +772,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Modo sombra: {brief.get('shadow_mode')}.",
         f"- Web publica: {brief.get('production_health')}.",
         f"- Frescura web: {brief.get('public_freshness')}.",
+        f"- Preparacion publicacion: {brief.get('publication_readiness')}.",
         f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
         f"- Consolidacion mejoras: {brief.get('enrichment_consolidation')}.",
         f"- Conciliacion Google: {brief.get('google_link_reconciliation')}.",
@@ -885,6 +930,27 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             "measure_profile_completeness",
             ["measure_profile_completeness.py", "--limit", str(args.profile_completeness_limit), "--json"],
             45,
+        ),
+        *(
+            [
+                (
+                    "clinic_publication_readiness",
+                    [
+                        "clinic_publication_readiness.py",
+                        "--limit",
+                        str(args.publication_readiness_limit),
+                        "--json",
+                        *(
+                            ["--clinic", args.publication_readiness_clinic]
+                            if args.publication_readiness_clinic
+                            else []
+                        ),
+                    ],
+                    45,
+                )
+            ]
+            if args.publication_readiness or args.publication_readiness_clinic
+            else []
         ),
         (
             "review_backlog_brief",
@@ -1050,6 +1116,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--snapshot-retention-limit", type=int, default=8)
     parser.add_argument("--source-coverage-limit", type=int, default=12)
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
+    parser.add_argument(
+        "--publication-readiness",
+        action="store_true",
+        help="Optionally summarize publication blockers across clinics; read-only.",
+    )
+    parser.add_argument("--publication-readiness-clinic", default="", help="Clinic name or slug for publication-readiness diagnostics.")
+    parser.add_argument("--publication-readiness-limit", type=int, default=8)
     parser.add_argument("--backlog-brief-limit", type=int, default=8)
     parser.add_argument("--enrichment-consolidation-limit", type=int, default=8)
     parser.add_argument("--enrichment-consolidation-clinic", default="", help="Clinic name or slug for duplicate enrichment consolidation.")
@@ -1135,6 +1208,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.publication_readiness_limit,
         args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
@@ -1160,6 +1234,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.publication_readiness_limit,
         args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,

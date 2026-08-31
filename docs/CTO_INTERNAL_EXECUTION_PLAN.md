@@ -706,6 +706,11 @@ Next 10 technical steps:
      without a clinic query, sort non-archived fichas by required blockers and
      report measured counts, visible counts, ready fichas, blocking claims and
      top missing fields before any per-clinic detail.
+137. Add publication-readiness visibility to CTO cycle runs. Done locally in
+     `scripts/run_cto_shadow_cycle.py`: optional `--publication-readiness` and
+     `--publication-readiness-clinic` runs now add compact readiness status to
+     the Daniel brief without editing clinics, publishing pages or dumping full
+     match rows.
 
 ## Daniel decision checkpoints
 
