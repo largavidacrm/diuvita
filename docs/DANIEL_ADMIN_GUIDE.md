@@ -91,6 +91,12 @@ En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta d
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
 clínica.
 
+El bloque **Caso recomendado** resume la clínica que conviene trabajar como un
+caso completo. Muestra cuántas tarjetas tiene abiertas, el orden sugerido y el
+botón **Trabajar caso**. Cuando ya estás dentro de ese grupo, el botón cambia a
+**Abrir primera tarjeta** y aparece **Ver toda la bandeja** para salir del
+filtro.
+
 El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
 que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
 auditoría, cambio de fuente y mejoras abiertas a la vez.
@@ -100,6 +106,11 @@ solo tarjetas que traen profesionales publicados o propuestas relacionadas con
 equipo médico. Es la forma más rápida de completar ese apartado sin revisar toda
 la bandeja. Al activar ese filtro, arriba salen primero las tarjetas con más
 especialistas propuestos.
+
+En la tabla de revisiones, las tarjetas con especialistas muestran una línea
+explicando que esos nombres son **propuestas internas**. No aparecen en la web
+hasta que abras la tarjeta, revises la fuente pública, cargues la propuesta en
+el editor y guardes la ficha.
 
 El filtro rápido **Google Maps** muestra las tarjetas que traen un enlace directo
 propuesto a Google Maps o a valoraciones de Google. Ábrelo, comprueba que el
@@ -217,7 +228,8 @@ tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
 1. Baja al bloque **Clínicas**.
 2. Busca la clínica por nombre o ciudad.
 3. Usa el filtro de preparación si quieres ver solo fichas sin faltantes,
-   fichas con faltantes, visibles con pendientes o no visibles.
+   fichas con faltantes, visibles con pendientes, pendientes de web pública o
+   no visibles.
 4. Mira la columna **Falta para publicar**: el primer campo en negrita es lo
    primero que conviene completar.
 5. Pulsa **Editar**.
@@ -253,6 +265,10 @@ fuente pública revisable. No son rankings ni recomendaciones.
 
 Si la clínica está como **Publicada** o **Preliminar**, el cambio se manda a la web automáticamente. Puede tardar unos minutos.
 Si está como **Borrador**, **Revisión**, **Descubierta**, **Extraída**, **Verificada** o **Archivada**, se guarda dentro del panel pero no aparece como ficha pública.
+
+Si una ficha aparece como **Pendiente de web**, no es que se haya perdido el
+cambio: está guardado en el admin y falta que la web pública se actualice en el
+lote correspondiente.
 
 En **Historial de cambios**, cada versión antigua indica qué campos cambiarían si la restauras. Restaurar pide confirmación, sobrescribe la ficha actual y queda registrado como una nueva versión.
 

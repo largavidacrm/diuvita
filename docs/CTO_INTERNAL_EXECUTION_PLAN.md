@@ -609,6 +609,10 @@ Next 10 technical steps:
      `scripts/review_backlog_brief.py`: the read-only backlog brief now accepts
      `--clinic` and, when focused, shows the concrete cards in that clinic case
      so Daniel can work Sensabell-style groups together.
+119. Update Daniel's admin guide for the new review workflow. Done locally in
+     `docs/DANIEL_ADMIN_GUIDE.md`: the guide now explains the case-recommended
+     review panel, proposal-only specialist rows, the "Pendientes de web
+     pública" clinic filter and the meaning of "Pendiente de web".
 
 ## Daniel decision checkpoints
 
