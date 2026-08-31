@@ -439,6 +439,11 @@ Next 10 technical steps:
     candidate that is not yet public or to an existing clinic profile proposal,
     including why proposed specialists do not appear online until Daniel saves
     the ficha.
+80. Clean specialist coverage examples. Done locally in
+    `scripts/measure_specialist_coverage.py`: internal reports now suppress
+    specialty/menu fragments and label weak signals as not having a clear
+    professional name, so Daniel is not shown specialties as if they were
+    people.
 
 ## Daniel decision checkpoints
 

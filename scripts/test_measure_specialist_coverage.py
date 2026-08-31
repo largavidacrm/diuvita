@@ -2,6 +2,8 @@
 """Checks for the read-only specialist coverage report."""
 
 from measure_specialist_coverage import (
+    clean_specialist_example,
+    format_clinic_line,
     format_coverage,
     next_specialist_action,
     pct,
@@ -73,6 +75,20 @@ def main():
     check(next_specialist_action(report) == "Revisar Clinic C: ya tiene 3 revisiones abiertas.", "next specialist action missing")
     check("Siguiente acción: Revisar Clinic C: ya tiene 3 revisiones abiertas." in output, "next specialist action line missing")
     check("Writes data: no" in output, "read-only signal missing")
+    check(clean_specialist_example("Dr. Ibanez Sesion") == "", "session/navigation fragments should not become specialists")
+    check(clean_specialist_example("Dr. Joan Josep Fuertes Medicina") == "Dr. Joan Josep Fuertes", "medical role should be trimmed after full name")
+    check(clean_specialist_example("Alergología Anestesiología") == "", "specialty lists should not become specialist examples")
+    check(clean_specialist_example("Neurocirugía Neurología Obstetricia Oftalmología") == "", "long specialty menus should be ignored")
+    check(clean_specialist_example("Dra. Anna Paola Medicina Estética") == "Dra. Anna Paola", "role words should stop after the person name")
+    noisy_line = format_clinic_line({
+        "clinic_name": "Olympia",
+        "city": "Madrid",
+        "status": "preliminary",
+        "specialist_claims": 2,
+        "specialist_examples": ["Alergología Anestesiología", "Neurocirugía Neurología Obstetricia Oftalmología"],
+        "open_review_count": 1,
+    })
+    check("2 señales internas sin nombre claro" in noisy_line, "noisy specialist signals should be labeled clearly")
     check(specialist_examples(report["missing_specialists"][0]) == ["Dra. Maria Uno", "Dr. Luis Dos"], "specialist examples missing")
     check("Clinic A · Madrid · publicada · 2 nombres detectados · ej.: Dra. Maria Uno, Dr. Luis Dos · 1 revisión abierta" in output, "missing clinic line missing")
     check(output.index("Clinic C") < output.index("Clinic A"), "higher-review missing clinic should be listed first")

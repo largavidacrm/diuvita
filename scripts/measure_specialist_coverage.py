@@ -58,6 +58,39 @@ EXAMPLE_STOP_WORDS = {
     "valencia",
     "zaragoza",
 }
+SPECIALTY_ONLY_WORDS = {
+    "alergologia",
+    "alergología",
+    "anestesiologia",
+    "anestesiología",
+    "cardiologia",
+    "cardiología",
+    "cirugia",
+    "cirugía",
+    "dermatologia",
+    "dermatología",
+    "endocrinologia",
+    "endocrinología",
+    "fisioterapia",
+    "ginecologia",
+    "ginecología",
+    "medicina",
+    "neurocirugia",
+    "neurocirugía",
+    "neurologia",
+    "neurología",
+    "nutricion",
+    "nutrición",
+    "obstetricia",
+    "oftalmologia",
+    "oftalmología",
+    "oncologia",
+    "oncología",
+    "optica",
+    "óptica",
+    "traumatologia",
+    "traumatología",
+}
 
 
 def load_coverage(limit: int, local_env: dict[str, str]) -> dict[str, Any]:
@@ -204,6 +237,8 @@ def clean_specialist_example(value: Any) -> str:
     name_words = [word for word in clean.split() if fold(word.strip(".")) not in {"dr", "dra", "doctor", "doctora", "lic"}]
     if len(name_words) < 2:
         return ""
+    if all(fold(word.strip(".,;:()[]")) in SPECIALTY_ONLY_WORDS for word in name_words):
+        return ""
     if any(fold(word.strip(".,;:()[]")) in {"sesion", "cita", "contacto"} for word in name_words):
         return ""
     return clean
@@ -237,10 +272,12 @@ def format_clinic_line(row: dict[str, Any], include_entries: bool = False) -> st
         entries = as_int(row.get("specialist_entries"))
         parts.append(f"{entries} {plural(entries, 'especialista', 'especialistas')}")
     if claims:
-        parts.append(f"{claims} {plural(claims, 'nombre detectado', 'nombres detectados')}")
         examples = specialist_examples(row)
         if examples:
+            parts.append(f"{claims} {plural(claims, 'nombre detectado', 'nombres detectados')}")
             parts.append("ej.: " + ", ".join(examples))
+        else:
+            parts.append(f"{claims} {plural(claims, 'señal interna sin nombre claro', 'señales internas sin nombre claro')}")
     if reviews:
         parts.append(f"{reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}")
     return "- " + " · ".join(parts)
