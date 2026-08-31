@@ -768,6 +768,17 @@ Next 10 technical steps:
      JSON schema and validator reference. The default prompt strips raw values
      even if the packet input contains them; full values require an explicit
      local flag and still produce no writes.
+148. Make open reviews clinic-centered. Done locally in `/admin/`: after Daniel
+     opens a review, the middle column switches from the queue to the selected
+     clinic ficha, while the right column stays focused on the single proposed
+     change, evidence, warnings and Approve/Reject/Modify actions. The
+     underlying one-card decision packet structure remains intact for future
+     LLM-assisted preparation.
+149. Ignore invalid downloaded logo assets. Done locally in `build.py` and
+     `scripts/fetch_logos.py`: logo files that are actually HTML or challenge
+     pages are no longer treated as valid images. Tiara Health remains in the
+     guide, but its blocked logo download is marked invalid until a real
+     official logo asset is available.
 
 ## Daniel decision checkpoints
 

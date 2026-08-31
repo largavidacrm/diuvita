@@ -81,6 +81,7 @@ def main():
     check("openSourceTargetBtn" in admin_check["markers"], "admin deployment should include next source button marker")
     check("reviewDecisionSummary" in admin_check["markers"], "admin deployment should include review decision summary marker")
     check("reviewCurrentRelevantPanel" in admin_check["markers"], "admin deployment should include current relevant data marker")
+    check("reviewClinicPanel" in admin_check["markers"], "admin deployment should include review clinic ficha marker")
     check("reviewProposalFocus" in admin_check["markers"], "admin deployment should include focused proposal marker")
     check("reviewEvidencePanel" in admin_check["markers"], "admin deployment should include evidence marker")
     check("reviewWarningPanel" in admin_check["markers"], "admin deployment should include warning marker")

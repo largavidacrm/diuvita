@@ -41,6 +41,7 @@ CHECKS = [
             "Publicación agrupada",
             "reviewDecisionSummary",
             "reviewCurrentRelevantPanel",
+            "reviewClinicPanel",
             "reviewProposalFocus",
             "reviewEvidencePanel",
             "reviewWarningPanel",

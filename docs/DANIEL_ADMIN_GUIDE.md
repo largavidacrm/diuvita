@@ -213,12 +213,14 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 
 1. Entra en **Necesitan revisión**.
 2. Abre una tarjeta de tipo `clinic_profile_enrichment`.
-3. Verás solo la clínica afectada, el tipo de propuesta, los datos actuales
-   relevantes, el cambio propuesto, las fuentes y los avisos imprescindibles.
-4. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
-5. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
+3. La columna central cambia de bandeja a **Ficha de la clínica** para que veas
+   el contexto de esa clínica sin seguir mirando la cola.
+4. La columna derecha muestra solo esa propuesta concreta: qué cambio se valora,
+   fuente o evidencia, avisos imprescindibles y la observación breve.
+5. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
+6. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
    confirma con **Guardar modificación**.
-6. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
+7. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
    pendiente. Si no queda ninguna, vuelve a la lista.
 
 La aprobación aplica la propuesta mediante el flujo existente, pero no cambia la
@@ -246,8 +248,9 @@ Puedes usar el filtro **Especialistas** para ver solo tarjetas que mencionan
 especialistas publicados o profesionales detectados.
 
 Al abrir una tarjeta, no verás caminos de publicación, otras revisiones,
-resúmenes de cola ni acciones para crear trabajo. La ficha abierta representa
-una propuesta y una decisión.
+resúmenes de cola ni acciones para crear trabajo. Verás la ficha de la clínica
+en el centro y la decisión de esa propuesta a la derecha. La ficha abierta
+representa una propuesta y una decisión.
 
 ## Editar sedes de una clínica
 

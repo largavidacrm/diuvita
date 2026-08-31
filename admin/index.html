@@ -541,7 +541,7 @@
       </section>
 
       <section class="work-grid" id="reviewWorkArea">
-        <section class="panel review-panel">
+        <section class="panel review-panel" id="reviewListPanel">
           <div class="panel-head review-panel-head">
             <div class="review-title-block">
               <h2>Necesitan revisión</h2>
@@ -617,6 +617,31 @@
           </div>
         </section>
 
+        <section class="panel review-clinic-panel hidden" id="reviewClinicPanel">
+          <div class="panel-head">
+            <div>
+              <h2>Ficha de la clínica</h2>
+              <span class="muted" id="reviewClinicProfileMeta">Abre una propuesta para ver su ficha.</span>
+            </div>
+            <button class="link-btn" id="reviewBackToListBtn" type="button">Volver a lista</button>
+          </div>
+          <div class="panel-body review-clinic-profile">
+            <section class="review-clinic-identity">
+              <span class="pill" id="reviewClinicProfileStatus">Pendiente</span>
+              <h3 id="reviewClinicProfileName">Sin propuesta seleccionada</h3>
+              <p id="reviewClinicProfileSummary">La ficha aparecerá aquí al abrir una revisión.</p>
+            </section>
+            <div class="review-clinic-facts" id="reviewClinicProfileFacts"></div>
+            <section class="review-clinic-data-panel">
+              <div class="review-section-head">
+                <h3>Datos visibles en la ficha</h3>
+                <span class="pill" id="reviewClinicProfileDataCount">0 datos</span>
+              </div>
+              <div class="review-clinic-data" id="reviewClinicProfileData"></div>
+            </section>
+          </div>
+        </section>
+
         <section class="panel review-selection-panel" id="reviewSelectionPanel">
           <div class="panel-head">
             <h2>Revisión seleccionada</h2>
@@ -634,7 +659,7 @@
             </div>
           </div>
           <div class="review-decision">
-            <section class="review-decision-summary" id="reviewDecisionSummary">
+            <section class="review-decision-summary hidden" id="reviewDecisionSummary">
               <div>
                 <span>Clínica afectada</span>
                 <strong id="reviewAffectedClinic">—</strong>
@@ -646,7 +671,7 @@
                 <small id="reviewProposalDate">—</small>
               </div>
             </section>
-            <section class="review-current-relevant" id="reviewCurrentRelevantPanel">
+            <section class="review-current-relevant hidden" id="reviewCurrentRelevantPanel">
               <div class="review-section-head">
                 <h3>Datos actuales relevantes</h3>
                 <span class="pill" id="reviewCurrentRelevantCount">0 campos</span>
@@ -6024,6 +6049,131 @@
         : '<p class="empty">No hay datos actuales relevantes para esta propuesta.</p>';
     }
 
+    function reviewClinicProfileCandidateValue(row, key) {
+      var payload = (row && row.payload) || {};
+      var candidate = candidateFromReview(row);
+      var lookup = {
+        display_name: candidate.name || candidate.clinic_name || payload.clinic_name || (row && row.title),
+        website: candidate.website || candidate.web || payload.website,
+        country: candidate.country || payload.clinic_country || (payload.job_input || {}).country,
+        city: candidate.city || payload.clinic_city || payload.city,
+        region: candidate.region || payload.region,
+        address: candidate.address || payload.address,
+        summary: candidate.summary || payload.summary,
+        services: candidate.services || payload.services,
+        specialties: candidate.specialties || payload.specialties,
+        unidades: candidate.unidades || payload.unidades,
+        profesionales: candidate.profesionales || candidate.professionals || payload.profesionales || payload.professionals,
+        tech: candidate.tech || payload.tech,
+        email: candidate.email || payload.email,
+        telefono: candidate.telefono || candidate.phone || candidate.telephone || payload.telefono || payload.phone || payload.telephone,
+        phone_fixed: candidate.phone_fixed || payload.phone_fixed,
+        phone_mobile: candidate.phone_mobile || payload.phone_mobile,
+        phone_whatsapp: candidate.phone_whatsapp || payload.phone_whatsapp,
+        instagram: candidate.instagram || payload.instagram,
+        care_mode: candidate.care_mode || payload.care_mode,
+        locations: candidate.locations || payload.locations
+      };
+      if (key === "locations" && !lookup.locations && (lookup.address || lookup.city)) {
+        return [{ name: "Sede principal", city: lookup.city, address: lookup.address }];
+      }
+      return lookup[key];
+    }
+
+    function reviewClinicProfileValue(row, key) {
+      var clinic = reviewClinicForRow(row);
+      if (clinic) return currentClinicField(clinic, key);
+      return reviewClinicProfileCandidateValue(row, key);
+    }
+
+    function reviewProfileHasValue(key, value) {
+      if (key === "locations") return normalizedLocations(value).length > 0;
+      if (Array.isArray(value)) return value.some(function (item) { return text(item).trim(); });
+      if (value && typeof value === "object") return Boolean(locationLine(value) || compactText(JSON.stringify(value), 20));
+      return Boolean(text(value).trim());
+    }
+
+    function reviewClinicProfileContact(row) {
+      var values = [];
+      [
+        ["Teléfono", "telefono"],
+        ["Fijo", "phone_fixed"],
+        ["Móvil", "phone_mobile"],
+        ["WhatsApp", "phone_whatsapp"],
+        ["Email", "email"],
+        ["Instagram", "instagram"]
+      ].forEach(function (item) {
+        var value = reviewClinicProfileValue(row, item[1]);
+        if (reviewProfileHasValue(item[1], value)) values.push(item[0] + ": " + proposalListValue(value));
+      });
+      return values;
+    }
+
+    function reviewClinicProfileFacts(row) {
+      var identity = reviewCandidateIdentity(row);
+      var facts = [
+        { label: "Estado interno", key: "status", value: reviewClinicForRow(row) ? reviewClinicProfileValue(row, "status") : identity.status },
+        { label: "Ubicación", key: "city", value: identity.place },
+        { label: "Web", key: "website", value: reviewClinicProfileValue(row, "website") },
+        { label: "Modalidad", key: "care_mode", value: reviewClinicProfileValue(row, "care_mode") },
+        { label: "Contacto", key: "telefono", value: reviewClinicProfileContact(row) }
+      ];
+      return facts.filter(function (item) {
+        return reviewProfileHasValue(item.key, item.value);
+      });
+    }
+
+    function reviewClinicProfileDataItems(row) {
+      var rows = [
+        { label: "Sedes", key: "locations", value: reviewClinicProfileValue(row, "locations") },
+        { label: "Servicios", key: "services", value: reviewClinicProfileValue(row, "services") },
+        { label: "Especialidades", key: "specialties", value: reviewClinicProfileValue(row, "specialties") },
+        { label: "Unidades", key: "unidades", value: reviewClinicProfileValue(row, "unidades") },
+        { label: "Especialistas", key: "profesionales", value: reviewClinicProfileValue(row, "profesionales") },
+        { label: "Tecnología", key: "tech", value: reviewClinicProfileValue(row, "tech") }
+      ];
+      return rows.filter(function (item) {
+        return reviewProfileHasValue(item.key, item.value);
+      });
+    }
+
+    function reviewClinicProfileItemHtml(className, item) {
+      return '<article class="' + className + '"><span>' + html(item.label) + '</span><div>' +
+        snapshotValueHtml(item.key, item.value) + '</div></article>';
+    }
+
+    function renderReviewClinicPanel(row) {
+      if (!row) {
+        el("reviewClinicProfileMeta").textContent = "Abre una propuesta para ver su ficha.";
+        el("reviewClinicProfileStatus").textContent = "Pendiente";
+        el("reviewClinicProfileName").textContent = "Sin propuesta seleccionada";
+        el("reviewClinicProfileSummary").textContent = "La ficha aparecerá aquí al abrir una revisión.";
+        el("reviewClinicProfileFacts").innerHTML = "";
+        el("reviewClinicProfileDataCount").textContent = "0 datos";
+        el("reviewClinicProfileData").innerHTML = '<p class="empty">Sin ficha seleccionada.</p>';
+        return;
+      }
+      var identity = reviewCandidateIdentity(row);
+      var summary = reviewClinicProfileValue(row, "summary");
+      var facts = reviewClinicProfileFacts(row);
+      var dataItems = reviewClinicProfileDataItems(row);
+      el("reviewClinicProfileMeta").textContent = reviewVisibleLabel(row) + " · " + date(row.created_at);
+      el("reviewClinicProfileStatus").textContent = identity.status;
+      el("reviewClinicProfileName").textContent = identity.name;
+      el("reviewClinicProfileSummary").textContent = text(summary).trim() || (
+        reviewClinicForRow(row)
+          ? "Ficha sin resumen guardado todavía."
+          : "Ficha provisional: si se aprueba, se crea como borrador interno para revisión final."
+      );
+      el("reviewClinicProfileFacts").innerHTML = facts.length
+        ? facts.map(function (item) { return reviewClinicProfileItemHtml("review-clinic-fact", item); }).join("")
+        : '<p class="empty">Sin datos básicos guardados.</p>';
+      el("reviewClinicProfileDataCount").textContent = dataItems.length + (dataItems.length === 1 ? " dato" : " datos");
+      el("reviewClinicProfileData").innerHTML = dataItems.length
+        ? dataItems.map(function (item) { return reviewClinicProfileItemHtml("review-clinic-field", item); }).join("")
+        : '<p class="empty">No hay más datos visibles en esta ficha.</p>';
+    }
+
     function proposalFieldOrder() {
       return [
         "display_name",
@@ -6293,6 +6443,7 @@
       if (!row) {
         renderReviewProposalFocus(null);
         renderReviewCurrentRelevant(null, []);
+        renderReviewClinicPanel(null);
         renderReviewEvidence(null);
         renderReviewWarnings(null, []);
         setReviewModifyMode(false);
@@ -6301,6 +6452,7 @@
       var proposalItems = reviewProposalFocusItems(row);
       renderReviewDecisionSummary(row);
       renderReviewCurrentRelevant(row, proposalItems);
+      renderReviewClinicPanel(row);
       renderReviewProposalFocus(row);
       renderReviewEvidence(row);
       renderReviewWarnings(row, proposalItems);
@@ -7461,16 +7613,20 @@
       setControlNavActive("reviewWorkArea");
       setControlSectionVisible("reviewWorkArea");
       show(el("jobCreatePanel"), false);
+      show(el("reviewListPanel"), false);
+      show(el("reviewClinicPanel"), true);
       show(el("reviewSelectionPanel"), false);
       show(el("reviewEditor"), true);
       renderReviews();
-      el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
+      el("reviewClinicPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function closeReviewEditor() {
       activeReview = null;
       renderReviewValidationView(null);
       show(el("reviewEditor"), false);
+      show(el("reviewClinicPanel"), false);
+      show(el("reviewListPanel"), true);
       show(el("reviewSelectionPanel"), true);
       show(el("jobCreatePanel"), true);
       renderReviews();
@@ -8045,6 +8201,7 @@
       el("reviewApproveBtn").addEventListener("click", function () { approveReview(false); });
       el("reviewRejectBtn").addEventListener("click", rejectReview);
       el("reviewModifyBtn").addEventListener("click", modifyReview);
+      el("reviewBackToListBtn").addEventListener("click", closeReviewEditor);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);
       el("clinicPublishFilter").addEventListener("change", renderClinics);

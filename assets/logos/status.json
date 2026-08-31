@@ -52,10 +52,8 @@
     "bytes": 139985
   },
   "tiara-health": {
-    "ok": true,
-    "orig": "tiara-health.svg",
-    "thumb": "tiara-health.svg",
-    "bytes": 225
+    "ok": false,
+    "error": "descarga no válida: no parece un logo"
   },
   "arvila-magna": {
     "ok": true,

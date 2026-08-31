@@ -19,8 +19,18 @@ def main() -> None:
         'id="reviewSearch"',
         'id="reviewTypeFilter"',
         'id="reviewPriorityFilter"',
+        'id="reviewListPanel"',
         'id="reviewsBody"',
         'data-review-id',
+        'id="reviewClinicPanel"',
+        'id="reviewClinicProfileMeta"',
+        'id="reviewClinicProfileStatus"',
+        'id="reviewClinicProfileName"',
+        'id="reviewClinicProfileSummary"',
+        'id="reviewClinicProfileFacts"',
+        'id="reviewClinicProfileDataCount"',
+        'id="reviewClinicProfileData"',
+        'id="reviewBackToListBtn"',
         'id="reviewSelectionPanel"',
         'id="reviewDecisionSummary"',
         'id="reviewAffectedClinic"',
@@ -51,6 +61,8 @@ def main() -> None:
         ">Rechazar</button>",
         ">Modificar</button>",
         'activeReviewModifyMode ? "Guardar modificación" : "Modificar"',
+        "Ficha de la clínica",
+        "Datos visibles en la ficha",
         "Clínica afectada",
         "Tipo de propuesta",
         "Datos actuales relevantes",
@@ -178,6 +190,10 @@ def main() -> None:
         and "function rejectReview" in index
         and "function modifyReview" in index
         and "function finishReviewDecision" in index
+        and "function renderReviewClinicPanel" in index
+        and "function reviewClinicProfileFacts" in index
+        and "function reviewClinicProfileDataItems" in index
+        and "function reviewClinicProfileValue" in index
         and 'await finishReviewDecision(modified ? "Modificación guardada." : "Propuesta aprobada.", currentId)' in index
         and 'await finishReviewDecision("Propuesta rechazada.", currentId)' in index
         and "openReviewEditor(nextReview.id)" in index
@@ -189,11 +205,31 @@ def main() -> None:
     )
     check(
         'show(el("jobCreatePanel"), false)' in index
+        and 'show(el("reviewListPanel"), false)' in index
+        and 'show(el("reviewClinicPanel"), true)' in index
         and 'show(el("reviewSelectionPanel"), false)' in index
         and 'show(el("reviewEditor"), true)' in index
         and 'show(el("reviewActionStrip"), false)' in index
         and 'show(el("reviewCasePanel"), false)' in index,
-        "opening a review should hide non-decision panels",
+        "opening a review should hide the queue and show the clinic ficha beside the decision",
+    )
+    check(
+        'show(el("reviewClinicPanel"), false)' in index
+        and 'show(el("reviewListPanel"), true)' in index
+        and 'el("reviewBackToListBtn").addEventListener("click", closeReviewEditor)' in index,
+        "closing a review should restore the queue view",
+    )
+    check(
+        'class="review-decision-summary hidden"' in index
+        and 'class="review-current-relevant hidden"' in index,
+        "current clinic context should move out of the visible decision column",
+    )
+    check(
+        index.index('id="reviewListPanel"')
+        < index.index('id="reviewClinicPanel"')
+        < index.index('id="reviewSelectionPanel"')
+        < index.index('id="reviewEditor"'),
+        "review work area should switch from queue to clinic ficha before the decision panel",
     )
     check(
         'reviewType === "clinic_claim_request"' in index
@@ -205,6 +241,8 @@ def main() -> None:
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".review-decision" in css, "single decision container should be styled")
     check(".review-decision-summary" in css, "review decision summary should be styled")
+    check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
+    check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")
     check(".review-modify-panel" in css and ".review-decision-actions" in css, "modify and action panels should be styled")

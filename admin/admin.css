@@ -1333,6 +1333,95 @@ td small {
   line-height: 1.45;
 }
 
+.review-clinic-panel {
+  min-width: 0;
+}
+
+.review-clinic-profile {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.review-clinic-identity {
+  display: grid;
+  gap: 0.36rem;
+  padding: 0.92rem;
+  border: 1px solid rgba(14, 79, 74, 0.2);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.review-clinic-identity .pill {
+  justify-self: start;
+}
+
+.review-clinic-identity h3 {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1.34rem;
+  line-height: 1.12;
+}
+
+.review-clinic-identity p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.38;
+}
+
+.review-clinic-facts,
+.review-clinic-data {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.review-clinic-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.review-clinic-data-panel {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(247, 244, 238, 0.72);
+}
+
+.review-clinic-fact,
+.review-clinic-field {
+  min-width: 0;
+  padding: 0.72rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.review-clinic-fact span,
+.review-clinic-field span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.review-clinic-fact div,
+.review-clinic-field div {
+  margin-top: 0.22rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.review-clinic-fact a,
+.review-clinic-field a {
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
 .review-editor-panel {
   position: sticky;
   top: 5rem;
@@ -2508,6 +2597,7 @@ td small {
   .detail-grid,
   .diff-cols,
   .review-proposal-item,
+  .review-clinic-facts,
   .review-snapshot-section dl,
   .review-decision-summary,
   .review-decision-actions,

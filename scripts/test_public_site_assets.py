@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Checks that the public site shell has its own basic browser assets."""
+import json
 from pathlib import Path
 
 
@@ -13,13 +14,36 @@ def check(condition: bool, message: str) -> None:
 
 def main() -> None:
     source = (ROOT / "build.py").read_text(encoding="utf-8")
+    fetch_logos = (ROOT / "scripts" / "fetch_logos.py").read_text(encoding="utf-8")
+    logo_status = json.loads((ROOT / "assets" / "logos" / "status.json").read_text(encoding="utf-8"))
 
     for marker in [
         'href="/favicon.svg"',
         "FAVICON_SVG",
         'open(os.path.join(DIST, "favicon.svg")',
+        "def _looks_like_logo_asset",
+        "b\"<html\"",
+        "_looks_like_logo_asset(os.path.join(dirpath, fn))",
     ]:
         check(marker in source, f"missing public asset marker: {marker}")
+
+    for marker in [
+        "def looks_like_image",
+        '"text/html" in lower_ctype',
+        'status[slug] = {"ok": False, "error": "descarga no válida: no parece un logo"}',
+    ]:
+        check(marker in fetch_logos, f"missing logo fetch guard marker: {marker}")
+
+    check(
+        not (ROOT / "assets" / "logos" / "thumb" / "tiara-health.svg").exists()
+        and not (ROOT / "assets" / "logos" / "orig" / "tiara-health.svg").exists(),
+        "Tiara's blocked HTML challenge should not remain as a logo asset",
+    )
+    check(
+        logo_status.get("tiara-health", {}).get("ok") is False
+        and "no parece un logo" in logo_status.get("tiara-health", {}).get("error", ""),
+        "Tiara logo status should explain the invalid download",
+    )
 
     print("OK public site assets: favicon generated")
 

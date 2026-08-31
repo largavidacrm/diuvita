@@ -22,6 +22,17 @@ def ext_for(url, ctype):
     if "jpeg" in ctype or "jpg" in ctype: return ".jpg"
     return ".png"
 
+def looks_like_image(data, ext, ctype):
+    head = data[:512].lstrip().lower()
+    lower_ctype = (ctype or "").lower()
+    if not data or "text/html" in lower_ctype:
+        return False
+    if head.startswith((b"<!doctype", b"<html")) or b"<meta http-equiv" in head[:300]:
+        return False
+    if ext == ".svg" and b"<svg" not in head:
+        return False
+    return True
+
 for slug, info in logos.items():
     if not info.get("aprobado"):
         status[slug] = {"ok": False, "skipped": "no aprobado"}
@@ -40,6 +51,9 @@ for slug, info in logos.items():
         status[slug] = {"ok": False, "error": str(e)[:120]}
         continue
     ext = ext_for(url, ctype)
+    if not looks_like_image(data, ext, ctype):
+        status[slug] = {"ok": False, "error": "descarga no válida: no parece un logo"}
+        continue
     with open(os.path.join(ORIG, slug + ext), "wb") as f:
         f.write(data)
     if ext == ".svg":

@@ -581,11 +581,25 @@ LOGOS_FILE = os.path.join(ROOT, "data", "logos.json")
 ORIG_DIR = os.path.join(ROOT, "assets", "logos", "orig")
 THUMB_DIR = os.path.join(ROOT, "assets", "logos", "thumb")
 
+def _looks_like_logo_asset(path):
+    try:
+        with open(path, "rb") as f:
+            head = f.read(512).lstrip().lower()
+    except OSError:
+        return False
+    if not head:
+        return False
+    if head.startswith((b"<!doctype", b"<html")) or b"<meta http-equiv" in head[:300]:
+        return False
+    if os.path.splitext(path)[1].lower() == ".svg" and b"<svg" not in head:
+        return False
+    return True
+
 def _find(dirpath, slug):
     if not os.path.isdir(dirpath):
         return None
     for fn in os.listdir(dirpath):
-        if os.path.splitext(fn)[0] == slug:
+        if os.path.splitext(fn)[0] == slug and _looks_like_logo_asset(os.path.join(dirpath, fn)):
             return fn
     return None
 
