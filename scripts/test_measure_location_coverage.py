@@ -2,7 +2,11 @@
 """Checks for the read-only location coverage report."""
 
 from measure_location_coverage import (
+    first_location_claim,
+    first_location_proposal,
     format_location_coverage,
+    format_location_claim_row,
+    format_location_proposal_row,
     format_location_row,
     location_name,
     next_location_action,
@@ -30,6 +34,10 @@ def main():
             "locations_missing_google_maps_profile": 2,
             "locations_with_google_reviews": 0,
             "locations_missing_google_reviews": 3,
+            "clinics_with_location_proposals": 1,
+            "proposed_location_rows": 2,
+            "clinics_with_location_claims": 1,
+            "internal_location_rows": 2,
         },
         "next_location_target": {
             "slug": "clinic-a",
@@ -66,6 +74,26 @@ def main():
                 "pending_count": 1,
             },
         ],
+        "pending_location_proposals": [
+            {
+                "slug": "clinic-c",
+                "clinic_name": "Clinic C",
+                "clinic_city": "Barcelona",
+                "status": "published",
+                "open_review_count": 2,
+                "proposed_location_count": 2,
+            }
+        ],
+        "pending_location_claims": [
+            {
+                "slug": "clinic-d",
+                "clinic_name": "Clinic D",
+                "clinic_city": "Valencia",
+                "status": "published",
+                "claim_count": 1,
+                "location_claim_count": 2,
+            }
+        ],
     }
     output = format_location_coverage(report)
 
@@ -83,9 +111,33 @@ def main():
     check("Sedes medidas: 3" in output, "location count missing")
     check("Sedes con Google Maps de clínica: 1/3 (33%)" in output, "Maps coverage missing")
     check("Sedes con valoraciones Google: 0/3 (0%)" in output, "reviews coverage missing")
+    check("Clínicas con sedes propuestas en bandeja: 1" in output, "location proposal clinic count missing")
+    check("Sedes propuestas en bandeja: 2" in output, "location proposal count missing")
+    check("Clínicas con sedes detectadas internas: 1" in output, "location claim clinic count missing")
+    check("Sedes detectadas internas: 2" in output, "location claim count missing")
     check("Writes data: no" in output, "read-only signal missing")
     check("Siguiente acción" in output, "next action section missing")
     check("Clinic A · Madrid · publicada · Sede adicional · 2 sedes" in output, "pending location row missing")
+    check("Sedes propuestas en bandeja" in output, "location proposals section missing")
+    check("Clinic C · Barcelona · publicada · 2 sedes detectadas · 2 revisiones abiertas" in output, "location proposal row missing")
+    check("Sedes detectadas internas" in output, "internal location claims section missing")
+    check("Clinic D · Valencia · publicada · 2 sedes detectadas internas · 1 evidencia" in output, "internal location claim row missing")
+    check(first_location_proposal(report)["clinic_name"] == "Clinic C", "first location proposal missing")
+    check(first_location_claim(report)["clinic_name"] == "Clinic D", "first location claim missing")
+    check(format_location_proposal_row(report["pending_location_proposals"][0]).startswith("- Clinic C"), "proposal formatter missing")
+    check(format_location_claim_row(report["pending_location_claims"][0]).startswith("- Clinic D"), "claim formatter missing")
+    single_claim_row = dict(report["pending_location_claims"][0], location_claim_count=1)
+    check("1 sede detectada interna" in format_location_claim_row(single_claim_row), "singular internal location claim label missing")
+    no_explicit_report = dict(report, next_location_target={}, pending_locations=[])
+    check(
+        next_location_action(no_explicit_report) == "Revisar sedes propuestas de Clinic C: 2 sedes detectadas en bandeja",
+        "next action should fall back to proposed locations",
+    )
+    claims_only_report = dict(no_explicit_report, pending_location_proposals=[])
+    check(
+        next_location_action(claims_only_report) == "Preparar revisión de sedes para Clinic D: 2 sedes detectadas internas",
+        "next action should fall back to internal location claims",
+    )
     check("Sede 1" not in output and "Sede 2" not in output, "location output should avoid numbered labels")
     check("no ordena clínicas por calidad" in output, "no-ranking note missing")
     check(format_location_row(report["pending_locations"][0]).startswith("- Clinic A"), "row formatter missing")

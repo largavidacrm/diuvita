@@ -9,7 +9,9 @@ It measures:
 - clinics with more than one location;
 - location rows with an address;
 - location rows with a direct-looking Google Maps clinic profile link;
-- location rows with a Google reviews link.
+- location rows with a Google reviews link;
+- open review cards that already propose explicit locations;
+- internal location evidence that has not yet become a review card.
 
 It does not publish clinics, edit clinic data, resolve review cards or rank
 clinics by quality. The output is an internal operational checklist only.
@@ -35,3 +37,7 @@ The Google Maps check follows the project rule: count and publish only a
 direct-looking clinic profile link. Generic searches, directions links and
 street-address-only place URLs stay pending for manual review and are not shown
 as public Google Maps buttons.
+
+When the review inbox is near the safe-write limit, internal location evidence
+should remain measured only. Convert it into review cards after Daniel has
+reduced the open review backlog.

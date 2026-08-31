@@ -403,6 +403,11 @@ Next 10 technical steps:
 71. Make the global-plan next step more scannable. Done locally in `/admin/`:
     grouped review work now appears as a short route such as filter group, open
     one improvement, load grouped improvements, review and save.
+72. Distinguish stored, proposed and internally detected locations. Done locally
+    in `scripts/measure_location_coverage.py`: the read-only location report now
+    shows explicit saved sedes, review-card proposals and internal location
+    evidence separately, so the next safe action is clearer while the inbox is
+    near full.
 
 ## Daniel decision checkpoints
 

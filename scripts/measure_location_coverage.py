@@ -30,10 +30,62 @@ with visible_clinics as (
     c.city as clinic_city,
     c.status,
     c.current_data
-  from public.clinics c
-  where c.status in ('published', 'preliminary')
-),
-location_rows as (
+	  from public.clinics c
+	  where c.status in ('published', 'preliminary')
+	),
+	location_review_proposals as (
+	  select
+	    c.id,
+	    c.slug,
+	    c.clinic_name,
+	    c.clinic_city,
+	    c.status,
+	    count(*) as open_review_count,
+	    coalesce(sum(jsonb_array_length(proposed.locations)), 0) as proposed_location_count
+	  from visible_clinics c
+	  join public.review_queue rq on rq.clinic_id = c.id
+	  cross join lateral (
+	    select case
+	      when jsonb_typeof(coalesce(
+	        rq.payload #> '{{proposed_fields,locations}}',
+	        rq.payload #> '{{proposed_current_data,locations}}',
+	        rq.payload #> '{{fields,locations}}'
+	      )) = 'array'
+	        then coalesce(
+	          rq.payload #> '{{proposed_fields,locations}}',
+	          rq.payload #> '{{proposed_current_data,locations}}',
+	          rq.payload #> '{{fields,locations}}'
+	        )
+	      else '[]'::jsonb
+	    end as locations
+	  ) proposed
+	  where rq.status = 'open'
+	    and rq.review_type = 'clinic_profile_enrichment'
+	    and jsonb_array_length(proposed.locations) > 0
+	  group by c.id, c.slug, c.clinic_name, c.clinic_city, c.status
+	),
+	location_claims as (
+	  select
+	    c.id,
+	    c.slug,
+	    c.clinic_name,
+	    c.clinic_city,
+	    c.status,
+	    count(*) as claim_count,
+	    coalesce(sum(
+	      case
+	        when jsonb_typeof(fc.value) = 'array' then jsonb_array_length(fc.value)
+	        when fc.value is not null then 1
+	        else 0
+	      end
+	    ), 0) as location_claim_count
+	  from visible_clinics c
+	  join public.field_claims fc on fc.clinic_id = c.id
+	    where fc.field_path = 'location.locations'
+	    and fc.verification_status not in ('rejected', 'stale')
+	  group by c.id, c.slug, c.clinic_name, c.clinic_city, c.status
+	),
+	location_rows as (
   select
     c.id,
     c.slug,
@@ -83,21 +135,25 @@ location_checks as (
     ], null) as pending_fields
   from location_rows lr
 ),
-summary as (
-  select jsonb_build_object(
-    'visible_clinics', (select count(*) from visible_clinics),
-    'clinics_with_locations', count(distinct id),
-    'multi_location_clinics', count(distinct id) filter (where clinic_location_count > 1),
-    'total_locations', count(*),
-    'locations_with_address', count(*) filter (where has_address),
-    'locations_missing_address', count(*) filter (where not has_address),
-    'locations_with_google_maps_profile', count(*) filter (where has_google_maps_profile),
-    'locations_missing_google_maps_profile', count(*) filter (where not has_google_maps_profile),
-    'locations_with_google_reviews', count(*) filter (where has_google_reviews),
-    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews)
-  ) as data
-  from location_checks
-),
+	summary as (
+	  select jsonb_build_object(
+	    'visible_clinics', (select count(*) from visible_clinics),
+	    'clinics_with_locations', count(distinct id),
+	    'multi_location_clinics', count(distinct id) filter (where clinic_location_count > 1),
+	    'total_locations', count(*),
+	    'locations_with_address', count(*) filter (where has_address),
+	    'locations_missing_address', count(*) filter (where not has_address),
+	    'locations_with_google_maps_profile', count(*) filter (where has_google_maps_profile),
+	    'locations_missing_google_maps_profile', count(*) filter (where not has_google_maps_profile),
+	    'locations_with_google_reviews', count(*) filter (where has_google_reviews),
+	    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews),
+	    'clinics_with_location_proposals', (select count(*) from location_review_proposals),
+	    'proposed_location_rows', coalesce((select sum(proposed_location_count) from location_review_proposals), 0),
+	    'clinics_with_location_claims', (select count(*) from location_claims),
+	    'internal_location_rows', coalesce((select sum(location_claim_count) from location_claims), 0)
+	  ) as data
+	  from location_checks
+	),
 pending_locations as (
   select coalesce(
     jsonb_agg(
@@ -131,7 +187,7 @@ pending_locations as (
     limit {capped_limit}
   ) items
 ),
-next_location_target as (
+	next_location_target as (
   select coalesce(
     (
       select to_jsonb(items)
@@ -157,14 +213,70 @@ next_location_target as (
       ) items
     ),
     '{{}}'::jsonb
-  ) as data
-)
-select jsonb_build_object(
-  'summary', (select data from summary),
-  'pending_locations', (select data from pending_locations),
-  'next_location_target', (select data from next_location_target),
-  'generated_at', now()
-);
+	  ) as data
+	),
+	pending_location_proposals as (
+	  select coalesce(
+	    jsonb_agg(
+	      to_jsonb(items)
+	      order by items.open_review_count desc,
+	        items.proposed_location_count desc,
+	        case when items.status = 'published' then 0 else 1 end,
+	        items.clinic_name
+	    ),
+	    '[]'::jsonb
+	  ) as data
+	  from (
+	    select
+	      slug,
+	      clinic_name,
+	      clinic_city,
+	      status,
+	      open_review_count,
+	      proposed_location_count
+	    from location_review_proposals
+	    order by open_review_count desc,
+	      proposed_location_count desc,
+	      case when status = 'published' then 0 else 1 end,
+	      clinic_name
+	    limit {capped_limit}
+	  ) items
+	),
+	pending_location_claims as (
+	  select coalesce(
+	    jsonb_agg(
+	      to_jsonb(items)
+	      order by items.location_claim_count desc,
+	        items.claim_count desc,
+	        case when items.status = 'published' then 0 else 1 end,
+	        items.clinic_name
+	    ),
+	    '[]'::jsonb
+	  ) as data
+	  from (
+	    select
+	      slug,
+	      clinic_name,
+	      clinic_city,
+	      status,
+	      claim_count,
+	      location_claim_count
+	    from location_claims
+	    order by location_claim_count desc,
+	      claim_count desc,
+	      case when status = 'published' then 0 else 1 end,
+	      clinic_name
+	    limit {capped_limit}
+	  ) items
+	)
+	select jsonb_build_object(
+	  'summary', (select data from summary),
+	  'pending_locations', (select data from pending_locations),
+	  'next_location_target', (select data from next_location_target),
+	  'pending_location_proposals', (select data from pending_location_proposals),
+	  'pending_location_claims', (select data from pending_location_claims),
+	  'generated_at', now()
+	);
 """
     return json.loads(run_psql(sql, local_env))
 
@@ -192,14 +304,24 @@ def location_name(row: dict[str, Any]) -> str:
 
 def next_location_action(report: dict[str, Any]) -> str:
     target = report.get("next_location_target") or {}
-    if not isinstance(target, dict) or not target:
-        return "sin sedes pendientes medidas"
-    clinic = str(target.get("clinic_name") or target.get("slug") or "la primera clínica")
-    location = location_name(target)
-    pending = [str(item) for item in target.get("pending_fields") or [] if str(item).strip()]
-    if pending:
-        return f"Revisar {location} de {clinic}: pendiente {', '.join(pending)}"
-    return f"Revisar sedes de {clinic}"
+    if isinstance(target, dict) and target:
+        clinic = str(target.get("clinic_name") or target.get("slug") or "la primera clínica")
+        location = location_name(target)
+        pending = [str(item) for item in target.get("pending_fields") or [] if str(item).strip()]
+        if pending:
+            return f"Revisar {location} de {clinic}: pendiente {', '.join(pending)}"
+        return f"Revisar sedes de {clinic}"
+    proposal = first_location_proposal(report)
+    if proposal:
+        clinic = str(proposal.get("clinic_name") or proposal.get("slug") or "la primera clínica")
+        count = as_int(proposal.get("proposed_location_count"))
+        return f"Revisar sedes propuestas de {clinic}: {count} {plural(count, 'sede detectada', 'sedes detectadas')} en bandeja"
+    claim = first_location_claim(report)
+    if claim:
+        clinic = str(claim.get("clinic_name") or claim.get("slug") or "la primera clínica")
+        count = as_int(claim.get("location_claim_count"))
+        return f"Preparar revisión de sedes para {clinic}: {count} {plural(count, 'sede detectada interna', 'sedes detectadas internas')}"
+    return "sin sedes pendientes medidas"
 
 
 def format_location_row(row: dict[str, Any]) -> str:
@@ -213,6 +335,42 @@ def format_location_row(row: dict[str, Any]) -> str:
     return f"- {clinic} · {city} · {status} · {location} · {location_note} · pendiente: {pending}"
 
 
+def first_location_proposal(report: dict[str, Any]) -> dict[str, Any] | None:
+    rows = [row for row in report.get("pending_location_proposals") or [] if isinstance(row, dict)]
+    return rows[0] if rows else None
+
+
+def first_location_claim(report: dict[str, Any]) -> dict[str, Any] | None:
+    rows = [row for row in report.get("pending_location_claims") or [] if isinstance(row, dict)]
+    return rows[0] if rows else None
+
+
+def format_location_proposal_row(row: dict[str, Any]) -> str:
+    clinic = row.get("clinic_name") or row.get("slug") or "sin nombre"
+    city = row.get("clinic_city") or "sin ciudad"
+    status = status_label(str(row.get("status") or ""))
+    proposed = as_int(row.get("proposed_location_count"))
+    reviews = as_int(row.get("open_review_count"))
+    return (
+        f"- {clinic} · {city} · {status} · "
+        f"{proposed} {plural(proposed, 'sede detectada', 'sedes detectadas')} · "
+        f"{reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}"
+    )
+
+
+def format_location_claim_row(row: dict[str, Any]) -> str:
+    clinic = row.get("clinic_name") or row.get("slug") or "sin nombre"
+    city = row.get("clinic_city") or "sin ciudad"
+    status = status_label(str(row.get("status") or ""))
+    detected = as_int(row.get("location_claim_count"))
+    claims = as_int(row.get("claim_count"))
+    return (
+        f"- {clinic} · {city} · {status} · "
+        f"{detected} {plural(detected, 'sede detectada interna', 'sedes detectadas internas')} · "
+        f"{claims} {plural(claims, 'evidencia', 'evidencias')}"
+    )
+
+
 def format_location_coverage(report: dict[str, Any]) -> str:
     summary = report.get("summary") or {}
     total_locations = as_int(summary.get("total_locations"))
@@ -220,6 +378,8 @@ def format_location_coverage(report: dict[str, Any]) -> str:
     reviews_ready = as_int(summary.get("locations_with_google_reviews"))
     address_ready = as_int(summary.get("locations_with_address"))
     rows = report.get("pending_locations") or []
+    proposal_rows = report.get("pending_location_proposals") or []
+    claim_rows = report.get("pending_location_claims") or []
     lines = [
         "# Vitalarga location coverage",
         "",
@@ -233,6 +393,10 @@ def format_location_coverage(report: dict[str, Any]) -> str:
         f"- Sedes con dirección: {address_ready}/{total_locations} ({pct(address_ready, total_locations)})",
         f"- Sedes con Google Maps de clínica: {maps_ready}/{total_locations} ({pct(maps_ready, total_locations)})",
         f"- Sedes con valoraciones Google: {reviews_ready}/{total_locations} ({pct(reviews_ready, total_locations)})",
+        f"- Clínicas con sedes propuestas en bandeja: {as_int(summary.get('clinics_with_location_proposals'))}",
+        f"- Sedes propuestas en bandeja: {as_int(summary.get('proposed_location_rows'))}",
+        f"- Clínicas con sedes detectadas internas: {as_int(summary.get('clinics_with_location_claims'))}",
+        f"- Sedes detectadas internas: {as_int(summary.get('internal_location_rows'))}",
         "- Writes data: no",
         "",
         "## Siguiente acción",
@@ -244,6 +408,16 @@ def format_location_coverage(report: dict[str, Any]) -> str:
         lines.append("- No hay sedes explícitas con campos pendientes medidos.")
     for row in rows:
         lines.append(format_location_row(row))
+    lines.extend(["", "## Sedes propuestas en bandeja"])
+    if not proposal_rows:
+        lines.append("- No hay sedes propuestas esperando revisión.")
+    for row in proposal_rows:
+        lines.append(format_location_proposal_row(row))
+    lines.extend(["", "## Sedes detectadas internas"])
+    if not claim_rows:
+        lines.append("- No hay sedes detectadas en evidencias internas.")
+    for row in claim_rows:
+        lines.append(format_location_claim_row(row))
     lines.append("")
     lines.append("Nota: este informe no publica, no edita clínicas y no ordena clínicas por calidad.")
     return "\n".join(lines) + "\n"
