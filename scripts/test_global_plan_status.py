@@ -9,6 +9,7 @@ from global_plan_status import (
     location_status,
     not_ready_status,
     plan_phase,
+    review_backlog_needs_care,
     source_monitoring_status,
     specialist_status,
     visible_clinic_status,
@@ -208,6 +209,18 @@ def main():
     check(
         codex_can_continue_status(specialist_queue) == "mejorar revisión de Google Maps de clínica sin publicar",
         "Codex should improve publication blockers before specialist-review tooling",
+    )
+    margin_short = sample_digest()
+    margin_short["summary"]["reviews"] = {"open": 43}
+    margin_short["source_coverage"]["clinics_needing_source_work"] = 0
+    check(review_backlog_needs_care(margin_short), "short backlog margin should count as work needing care")
+    check(
+        plan_phase(margin_short) == "centro de control y reducción de bandeja",
+        "short backlog margin should move the plan phase to review reduction",
+    )
+    check(
+        codex_can_continue_status(margin_short) == "mejorar panel, extractores y checks sin crear tarjetas nuevas",
+        "Codex should avoid new review-card work when only a few safe slots remain",
     )
     specialist_only = sample_digest()
     specialist_only["summary"]["reviews"] = {"open": 20}

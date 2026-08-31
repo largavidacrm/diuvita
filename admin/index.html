@@ -2564,11 +2564,16 @@
       return "Sin acción urgente";
     }
 
+    function reviewBacklogNeedsCare(openCount) {
+      return Number(openCount || 0) >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT ||
+        safeWriteReviewSlots(openCount) <= 3;
+    }
+
     function globalPlanPhase(summary, openReviews, failedJobs) {
       var reviews = summary.reviews || {};
       var count = Number(reviews.open || (openReviews || []).length || 0);
       if (Number(failedJobs || 0)) return "Estabilización técnica";
-      if (count >= 45) return "Reducir bandeja de revisión";
+      if (reviewBacklogNeedsCare(count)) return "Reducir bandeja de revisión";
       return "Trazabilidad y ciclo sombra";
     }
 
@@ -2712,7 +2717,7 @@
     function globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck) {
       if (!openCount) return "La bandeja está limpia. El siguiente bloque es completar fuentes, sedes y especialistas.";
       var detail = openCount + " tarjetas abiertas. Primero: " + nextClick + ". Atasco: " + bottleneck + ".";
-      if (openCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) {
+      if (reviewBacklogNeedsCare(openCount)) {
         return "No crees trabajos nuevos. " + detail;
       }
       return detail;
@@ -2734,7 +2739,7 @@
 
     function globalPlanCodexWorkDetail(openCount, failedJobs, sources, specialists, completeness) {
       if (Number(failedJobs || 0)) return "Resolver fallos técnicos y volver a medir antes de tocar fichas.";
-      if (Number(openCount || 0) >= 45) return "Seguir mejorando el panel, extractores y checks sin crear más tarjetas.";
+      if (reviewBacklogNeedsCare(openCount)) return "Seguir mejorando el panel, extractores y checks sin crear más tarjetas.";
       if (sources && sources.needingSourceWork) return "Completar trazabilidad de fuentes y preparar mejores propuestas internas.";
       if (specialists && specialists.withOpenSpecialistReviews) return "Consolidar especialistas ya propuestos en tarjetas abiertas, sin publicarlos automáticamente.";
       if (specialists && specialists.withSpecialistClaims) return "Convertir nombres internos de especialistas en propuestas revisables.";
@@ -2745,20 +2750,20 @@
 
     function globalPlanBlockerLabel(openCount, failedJobs, blockers) {
       if (Number(failedJobs || 0)) return "Fallos técnicos";
-      if (Number(openCount || 0) >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) return "Bandeja casi llena";
+      if (reviewBacklogNeedsCare(openCount)) return "Bandeja casi llena";
       if (blockers && blockers.length) return "Autonomía no lista";
       return "Sin bloqueo crítico";
     }
 
     function globalPlanBlockerDetail(openCount, failedJobs, blockers) {
       if (Number(failedJobs || 0)) return "Primero se revisan trabajos fallidos para no construir sobre datos inestables.";
-      if (Number(openCount || 0) >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) return "Hay que bajar revisiones antes de crear más propuestas internas.";
+      if (reviewBacklogNeedsCare(openCount)) return "Hay que bajar revisiones antes de crear más propuestas internas.";
       if (blockers && blockers.length) return blockers[0] + ".";
       return "Se puede seguir avanzando por el carril técnico normal.";
     }
 
     function globalPlanAfterText(openCount, candidateOpenCount, specialists, sources) {
-      if (Number(openCount || 0) >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5) return "Después de bajar bandeja: generar nuevas propuestas de sedes, Maps y especialistas.";
+      if (reviewBacklogNeedsCare(openCount)) return "Después de bajar bandeja: generar nuevas propuestas de sedes, Maps y especialistas.";
       if (candidateOpenCount) return "Después de candidatas: completar ficha y decidir publicación manual.";
       if (specialists && specialists.withoutSpecialists) return "Después: revisar especialistas detectados y cubrir sedes/precios.";
       if (sources && sources.needingSourceWork) return "Después: convertir fuentes guardadas en claims útiles.";
@@ -2804,13 +2809,13 @@
       globalPlanNextGroupId = !nextReview && group && group.clinicId ? group.clinicId : "";
 
       el("globalPlanPhase").textContent = phase;
-      el("globalPlanPhase").className = "pill" + (failedJobs || openCount >= 45 ? " warning" : "");
+      el("globalPlanPhase").className = "pill" + (failedJobs || reviewBacklogNeedsCare(openCount) ? " warning" : "");
       el("globalPlanUpdated").textContent = "Primero mira tu próximo clic. Lo demás es contexto.";
       el("globalPlanFocus").textContent = focus.title;
       el("globalPlanWhy").textContent = focus.detail;
       el("globalPlanCheckpoints").innerHTML = [
         globalPlanCheckpoint("Ahora", nextClick, globalPlanNowDetail(openCount, backlogGuard, nextClick, bottleneck), "is-active", openCount ? "warning-text" : ""),
-        globalPlanCheckpoint("Bloqueo", globalPlanBlockerLabel(openCount, failedJobs, blockers), globalPlanBlockerDetail(openCount, failedJobs, blockers), "", failedJobs ? "danger-text" : (openCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5 || blockers.length ? "warning-text" : "")),
+        globalPlanCheckpoint("Bloqueo", globalPlanBlockerLabel(openCount, failedJobs, blockers), globalPlanBlockerDetail(openCount, failedJobs, blockers), "", failedJobs ? "danger-text" : (reviewBacklogNeedsCare(openCount) || blockers.length ? "warning-text" : "")),
         globalPlanCheckpoint("Después", "Siguiente bloque", globalPlanAfterText(openCount, candidateOpenCount, specialists, sources), "", "")
       ].join("");
       el("globalPlanGrid").innerHTML = [

@@ -43,6 +43,8 @@ def main() -> None:
         "function globalPlanCodexWorkDetail",
         "Consolidar especialistas ya propuestos en tarjetas abiertas, sin publicarlos automáticamente.",
         "Convertir nombres internos de especialistas en propuestas revisables.",
+        "function reviewBacklogNeedsCare",
+        "safeWriteReviewSlots(openCount) <= 3",
         "function globalPlanNowDetail",
         "function globalPlanBlockerLabel",
         "function globalPlanBlockerDetail",

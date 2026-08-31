@@ -97,15 +97,18 @@ def location_status(digest: dict[str, Any]) -> str:
     return location_coverage_status(digest)
 
 
+def review_backlog_needs_care(digest: dict[str, Any]) -> bool:
+    guard = review_backlog_guard_status(digest)
+    return guard.startswith(("margen corto", "pausa preventiva", "freno activo"))
+
+
 def plan_phase(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     jobs = summary.get("jobs") or {}
-    reviews = summary.get("reviews") or {}
     failed_jobs = as_int(jobs.get("failed")) + as_int(jobs.get("dead_letter"))
-    open_reviews = as_int(reviews.get("open"))
     if failed_jobs:
         return "estabilización técnica"
-    if open_reviews >= 45:
+    if review_backlog_needs_care(digest):
         return "centro de control y reducción de bandeja"
     return "centro de control, trazabilidad y ciclo sombra"
 
@@ -146,7 +149,7 @@ def codex_can_continue_status(digest: dict[str, Any]) -> str:
 
     if failed_jobs:
         return "resolver fallos técnicos y volver a medir"
-    if open_reviews >= 45:
+    if review_backlog_needs_care(digest):
         return "mejorar panel, extractores y checks sin crear tarjetas nuevas"
     if as_int(source_coverage.get("clinics_needing_source_work")):
         return "mejorar trazabilidad de fuentes y propuestas internas"

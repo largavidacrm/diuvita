@@ -1016,6 +1016,11 @@ Next 10 technical steps:
      field after opening the ficha, queue mode keeps explicit list/side-panel
      columns, and Google review URLs cannot be approved unless a real clinic
      Google Maps profile is already confirmed or included in the same proposal.
+195. Align short-backlog signals across the control center. Done locally in
+     `/admin/` and `scripts/global_plan_status.py`: when the review inbox has
+     only a few safe-write slots left, Daniel sees reduction of the review
+     queue as the active phase and Codex is routed toward panel/extractor/check
+     improvements that do not create more review cards.
 
 ## Daniel decision checkpoints
 
