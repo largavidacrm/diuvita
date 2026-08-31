@@ -454,9 +454,15 @@ def specialist_reconciliation_status(step: dict[str, Any] | None) -> str:
     if not step.get("ok"):
         return "revisar"
     summary = safe_step_summary(step)
-    count = as_int(summary.get("clinics_count"))
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    count = as_int(counts.get("clinics") or summary.get("clinics_count"))
     if not count:
         return "sin fichas medidas"
+    pending_total = as_int(counts.get("pending_professionals"))
+    cards_total = as_int(counts.get("review_cards"))
+    pending_clinics = as_int(counts.get("clinics_with_pending_professionals"))
+    if pending_total:
+        return f"{pending_total} pendientes en {cards_total} tarjetas ({pending_clinics}/{count} fichas)"
     sample = summary.get("sample_clinics") if isinstance(summary.get("sample_clinics"), list) else []
     first = sample[0] if sample and isinstance(sample[0], dict) else {}
     name = first.get("clinic_name") or first.get("slug") or "primera ficha"

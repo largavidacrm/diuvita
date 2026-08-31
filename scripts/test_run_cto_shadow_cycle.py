@@ -358,6 +358,23 @@ def main():
         specialist_reconciliation_status(specialist_step) == "Kairos Longevity Clinic: 6 pendientes en 2 tarjetas",
         "specialist reconciliation status should be readable",
     )
+    aggregate_specialist_step = {
+        "name": "specialist_review_reconciliation",
+        "ok": True,
+        "summary": {
+            "summary": {
+                "clinics": 5,
+                "clinics_with_pending_professionals": 4,
+                "review_cards": 7,
+                "pending_professionals": 22,
+            },
+            "clinics_count": 5,
+        },
+    }
+    check(
+        specialist_reconciliation_status(aggregate_specialist_step) == "22 pendientes en 7 tarjetas (4/5 fichas)",
+        "specialist reconciliation aggregate status should be readable",
+    )
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {

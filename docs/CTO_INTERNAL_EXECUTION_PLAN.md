@@ -569,6 +569,10 @@ Next 10 technical steps:
      panel now shows the recommended action before filters, keeps action titles
      short, moves long clinic/review names into detail copy and uses a stable
      button grid that stays readable on mobile.
+110. Summarize specialist reconciliation batches. Done locally in
+     `scripts/specialist_review_reconciliation.py`: specialist reports now show
+     aggregate pending-name/card counts and compact source URLs per review card,
+     so Daniel can see why names are proposed without publishing them.
 
 ## Daniel decision checkpoints
 

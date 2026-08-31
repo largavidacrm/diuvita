@@ -11,6 +11,7 @@ from specialist_review_reconciliation import (
     normalize_person_key,
     reconcile_row,
     specialist_reconciliation_next_step,
+    summarize_clinics,
 )
 
 
@@ -32,16 +33,19 @@ def main() -> None:
                 "title": "Ampliar ficha: Clinic A",
                 "priority": 60,
                 "created_at": "2026-08-30T10:00:00+00:00",
+                "source_url": "https://clinic-a.example/equipo-medico/",
                 "professionals": ["Dra. Ana Lopez", "Dr. Luis Pérez - Director médico"],
             }
         ],
         "claim_professionals": ["Dr Luis Perez", "Dra. Carla Ruiz", "Alergología Anestesiología"],
     }
     reconciled = reconcile_row(row)
+    summary = summarize_clinics([reconciled])
     output = format_reconciliation({
         "generated_at": "2026-08-31T08:40:00+00:00",
         "query": "Clinic A",
         "writes_data": False,
+        "summary": summary,
         "clinics": [reconciled],
     })
 
@@ -54,11 +58,15 @@ def main() -> None:
     check("Dr. Luis Pérez" in reconciled["pending_professionals"], "review-only pending person missing")
     check("Dra. Carla Ruiz" in reconciled["pending_professionals"], "claim-only pending person missing")
     check("Dra. Ana Lopez" in reconciled["already_published_detected"], "already-published detected person missing")
+    check(summary["pending_professionals"] == 2, "summary should count pending names")
+    check(summary["review_cards"] == 1, "summary should count review cards")
     check("cargar nombres al formulario" in reconciled["next_step"], "next step should route to existing review cards")
     check("# Vitalarga specialist reconciliation" in output, "title missing")
     check("Writes data: no" in output, "read-only marker missing")
+    check("Clínicas medidas: 1" in output, "summary clinic count missing")
     check("Pendientes de decidir: 2" in output, "pending count line missing")
     check("Tarjetas:" in output, "review card breakdown missing")
+    check("fuente: https://clinic-a.example/equipo-medico/" in output, "review source URL missing")
 
     check(
         "preparar una propuesta revisable" in specialist_reconciliation_next_step({
@@ -89,10 +97,12 @@ def main() -> None:
 
     sql = captured.get("sql", "")
     check(loaded["clinics"][0]["pending_professional_count"] == 2, "loaded report should reconcile rows")
+    check(loaded["summary"]["pending_professionals"] == 2, "loaded report should include summary")
     check("public.review_queue" in sql, "query should read review cards")
     check("public.field_claims" in sql, "query should read internal claims")
     check("professionals.published" in sql, "query should include specialist claim paths")
     check("team.public_professionals" in sql, "query should include team specialist claim paths")
+    check("source_url" in sql, "query should carry review card source context")
     check("c.status in ('published', 'preliminary')" in sql, "query should stay on visible clinics")
     print("OK specialist reconciliation: report is read-only")
 

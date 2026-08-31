@@ -35,7 +35,9 @@ python3 scripts/specialist_review_reconciliation.py --clinic "Kairos"
 ```
 
 That report is also read-only. It does not publish professional names; it points
-to the next human review step.
+to the next human review step. Its top summary shows how many visible clinics
+were measured, how many specialist names are still pending, how many open cards
+contain those names and, when available, the source URL attached to each card.
 
 The same top-line coverage signal is included in `/admin/`,
 `scripts/admin_digest.py` and `scripts/daniel_review_brief.py`.

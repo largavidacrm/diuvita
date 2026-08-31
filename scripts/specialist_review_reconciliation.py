@@ -69,6 +69,11 @@ def review_card_people(card: dict[str, Any]) -> list[str]:
     return clean_person_list(card.get("professionals") or [])
 
 
+def compact_url(value: Any, limit: int = 72) -> str:
+    clean = str(value or "").strip()
+    return clean if len(clean) <= limit else clean[: limit - 1].rstrip() + "…"
+
+
 def review_people(row: dict[str, Any]) -> list[str]:
     people: list[str] = []
     for card in row.get("review_cards") or []:
@@ -116,6 +121,23 @@ def specialist_reconciliation_next_step(row: dict[str, Any]) -> str:
     if internal:
         return "comprobar si los nombres internos ya están representados o necesitan propuesta"
     return "buscar una página pública de equipo antes de proponer especialistas"
+
+
+def summarize_clinics(clinics: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "clinics": len(clinics),
+        "clinics_with_pending_professionals": sum(
+            1 for row in clinics if as_int(row.get("pending_professional_count")) > 0
+        ),
+        "clinics_with_review_cards": sum(
+            1 for row in clinics if as_int(row.get("review_card_count")) > 0
+        ),
+        "published_professionals": sum(as_int(row.get("published_count")) for row in clinics),
+        "review_cards": sum(as_int(row.get("review_card_count")) for row in clinics),
+        "review_professionals": sum(as_int(row.get("review_professional_count")) for row in clinics),
+        "claim_professionals": sum(as_int(row.get("claim_professional_count")) for row in clinics),
+        "pending_professionals": sum(as_int(row.get("pending_professional_count")) for row in clinics),
+    }
 
 
 def clinic_lookup_filter(query: str) -> str:
@@ -175,6 +197,16 @@ review_name_rows as (
     rq.title,
     rq.priority,
     rq.created_at,
+    coalesce(
+      nullif(btrim(rq.payload ->> 'source_url'), ''),
+      nullif(btrim(rq.payload #>> '{{source,source_url}}'), ''),
+      nullif(btrim(rq.payload #>> '{{source,url}}'), ''),
+      nullif(btrim(rq.payload #>> '{{candidate,source_url}}'), ''),
+      nullif(btrim(rq.payload #>> '{{candidate,website}}'), ''),
+      nullif(btrim(rq.payload #>> '{{candidate,web}}'), ''),
+      nullif(btrim(rq.payload #>> '{{proposed_fields,source_url}}'), ''),
+      ''
+    ) as source_url,
     btrim(person.value) as person_name
   from public.review_queue rq
   join target_clinics c on c.id = rq.clinic_id
@@ -201,6 +233,7 @@ review_cards as (
         'title', title,
         'priority', priority,
         'created_at', created_at,
+        'source_url', source_url,
         'professionals', professionals
       )
       order by jsonb_array_length(professionals) desc, priority desc, created_at asc
@@ -212,12 +245,13 @@ review_cards as (
       title,
       priority,
       created_at,
+      source_url,
       coalesce(
         jsonb_agg(distinct person_name order by person_name) filter (where person_name <> ''),
         '[]'::jsonb
       ) as professionals
     from review_name_rows
-    group by clinic_id, id, title, priority, created_at
+    group by clinic_id, id, title, priority, created_at, source_url
   ) rows
   group by clinic_id
 ),
@@ -276,6 +310,7 @@ from clinic_items;
             row.get("clinic_name") or row.get("slug") or "",
         ),
     )
+    raw["summary"] = summarize_clinics(raw["clinics"])
     return raw
 
 
@@ -293,8 +328,10 @@ def format_review_cards(cards: list[dict[str, Any]], limit: int = 4) -> list[str
         people = review_card_people(card)
         title = card.get("title") or "Revisión interna"
         count = len(people)
+        source = compact_url(card.get("source_url"))
+        source_note = f" · fuente: {source}" if source else ""
         lines.append(
-            f"  - {title}: {count} {plural(count, 'nombre', 'nombres')} ({compact_people(people, 4)})"
+            f"  - {title}: {count} {plural(count, 'nombre', 'nombres')} ({compact_people(people, 4)}){source_note}"
         )
     if len(cards) > limit:
         lines.append(f"  - +{len(cards) - limit} tarjetas más")
@@ -303,12 +340,16 @@ def format_review_cards(cards: list[dict[str, Any]], limit: int = 4) -> list[str
 
 def format_reconciliation(report: dict[str, Any]) -> str:
     clinics = report.get("clinics") or []
+    summary = report.get("summary") or {}
     lines = [
         "# Vitalarga specialist reconciliation",
         "",
         f"Generado: {parse_timestamp(report.get('generated_at'))}",
         f"Consulta: {report.get('query') or 'todas las fichas visibles'}",
         "- Writes data: no",
+        f"- Clínicas medidas: {as_int(summary.get('clinics') or len(clinics))}",
+        f"- Pendientes de decidir: {as_int(summary.get('pending_professionals'))}",
+        f"- Tarjetas con especialistas: {as_int(summary.get('review_cards'))}",
         "",
     ]
     if not clinics:
