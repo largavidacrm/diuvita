@@ -285,6 +285,10 @@ unir, qué fuentes hay detrás y si hay conflictos como dos teléfonos principal
 distintos. Si no hay conflictos, lo normal es abrir el caso y usar **Cargar
 mejoras juntas**.
 
+Antes de cargar mejoras juntas, el panel puede destacar cuántas sedes,
+teléfonos o especialistas entran en la propuesta agrupada. Es una señal para
+revisar con calma esos campos antes de guardar la ficha.
+
 Si al cargar mejoras aparece un aviso bajo un teléfono, no guardes la ficha tal
 cual. Ese valor no parece un teléfono español real; bórralo o sustitúyelo por el
 contacto correcto antes de guardar. Así evitamos convertir identificadores,

@@ -3809,6 +3809,43 @@
       return warnings;
     }
 
+    function proposalReviewHotspotsForRows(rows) {
+      var locations = {};
+      var professionals = {};
+      var phones = {};
+      (rows || []).forEach(function (row) {
+        var payload = (row && row.payload) || {};
+        proposalLocations(payload).forEach(function (location) {
+          var key = locationIdentityKey(location) || locationLine(location).toLowerCase();
+          if (key) locations[key] = true;
+        });
+        proposalProfessionals(payload).forEach(function (person) {
+          var key = normalizedPersonKey(person);
+          if (key) professionals[key] = true;
+        });
+        var fields = proposedFields(payload);
+        Object.keys(fields).forEach(function (rawKey) {
+          var key = canonicalProposalField(rawKey);
+          if (!clinicPhoneFieldByKey(key)) return;
+          var splitPhones = expandedPhoneProposalFields(key, fields[rawKey]);
+          var values = splitPhones.length ? splitPhones.map(function (item) { return item.value; }) : splitSpanishPhones(fields[rawKey]);
+          if (!values.length && proposalListValue(fields[rawKey])) values = [proposalListValue(fields[rawKey])];
+          values.forEach(function (value) {
+            var digits = spanishPhoneDigits(value);
+            if (isPlausibleSpanishPhone(digits)) phones[digits] = true;
+          });
+        });
+      });
+      var items = [];
+      var locationCount = Object.keys(locations).length;
+      var phoneCount = Object.keys(phones).length;
+      var professionalCount = Object.keys(professionals).length;
+      if (locationCount) items.push("Sedes propuestas: " + locationCount);
+      if (phoneCount) items.push("Teléfonos propuestos: " + phoneCount);
+      if (professionalCount) items.push("Especialistas propuestos: " + professionalCount);
+      return items;
+    }
+
     function reviewWorkgroupRecommendation(rows) {
       rows = rows || [];
       if (rows.some(isBlockingClaimReview)) {
@@ -3822,6 +3859,9 @@
       }
       if (proposalPhoneWarningsForRows(rows).length) {
         return "Corrige teléfonos dudosos antes de guardar mejoras juntas.";
+      }
+      if (proposalReviewHotspotsForRows(rows).length) {
+        return "Carga mejoras juntas como propuesta y revisa los campos destacados antes de guardar.";
       }
       if (rows.some(function (item) { return item.review_type === "clinic_profile_enrichment"; })) {
         return "Revisa las mejoras juntas y guarda una sola versión coherente de la ficha.";
@@ -3854,6 +3894,9 @@
       if (phoneWarnings.length) {
         chips += '<span class="pill warning">Contacto dudoso: ' + html(phoneWarnings.length) + '</span>';
       }
+      proposalReviewHotspotsForRows(bundle).forEach(function (item) {
+        chips += '<span class="pill warning">' + html(item) + '</span>';
+      });
       var groupAction = enrichmentRows.length > 1
         ? '<button class="link-btn" type="button" data-load-related-proposals>Cargar mejoras juntas</button>'
         : "";

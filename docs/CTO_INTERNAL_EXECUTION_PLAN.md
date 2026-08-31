@@ -680,6 +680,11 @@ Next 10 technical steps:
      clinic claim request is open, secondary profile and duplicate-backlog
      signals stay aggregate instead of repeatedly naming a lower-priority
      clinic.
+132. Make grouped enrichment payload size visible before loading it. Done
+     locally in `/admin/`: the clinic-case panel now highlights how many
+     proposed locations, phone numbers and specialists are about to be loaded
+     when Daniel uses **Cargar mejoras juntas**, keeping high-volume cases like
+     IMDA reviewable without auto-saving or publishing data.
 
 ## Daniel decision checkpoints
 
