@@ -129,6 +129,26 @@ Verdicts:
 
 Medical claims, physician credentials and prices need stronger verification than address/contact fields.
 
+## PREPARE_REVIEW_DECISION_PACKET
+
+Purpose: turn one open `review_queue` card into the exact information needed
+for a human decision or future LLM-assisted preparation.
+
+Required behavior:
+
+- One packet represents one review card and one decision.
+- Include the affected clinic, proposal type, current relevant fields, proposed
+  fields, evidence and essential warnings.
+- Include the packet schema version, allowed actions and `editable_fields` so
+  automated preparation cannot introduce unrelated clinic changes.
+- Default output must be safe: no raw proposed values or full evidence URLs.
+- Full values are allowed only with an explicit local operator flag for
+  assisted preparation.
+- Never approve, reject, resolve, edit clinics or publish pages.
+- LLM output may suggest or organize the decision, but the card remains
+  reviewable and Daniel's action is still `approve`, `reject` or `modify`.
+- `modify` may only change fields listed in that packet's `editable_fields`.
+
 ## APPLY_PUBLICATION_RULES
 
 Purpose: deterministic arbiter.

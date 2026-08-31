@@ -1,0 +1,531 @@
+#!/usr/bin/env python3
+"""Build read-only one-decision packets from open clinic review proposals."""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlparse
+
+from google_maps_url_rules import google_maps_review_status
+from review_backlog_brief import (
+    compact_lookup_key,
+    count_visible_items,
+    field_label,
+    has_visible_value,
+    nested_text_values,
+    normalized_phone_digits,
+    proposed_fields,
+)
+from submit_discovery_candidates import load_env_file, run_psql, sql_literal
+
+
+PACKET_SCHEMA_VERSION = "review_decision_packet.v1"
+DECISION_ACTIONS = ["approve", "reject", "modify"]
+FIELD_ALIASES = {
+    "name": "display_name",
+    "web": "website",
+    "phone": "telefono",
+    "telephone": "telefono",
+    "google_maps_url": "maps_url",
+    "reviews_url": "google_reviews_url",
+    "professionals": "profesionales",
+}
+FIELD_ORDER = [
+    "display_name",
+    "website",
+    "country",
+    "city",
+    "region",
+    "address",
+    "locations",
+    "maps_url",
+    "google_reviews_url",
+    "summary",
+    "services",
+    "specialties",
+    "unidades",
+    "profesionales",
+    "years_in_practice",
+    "specialists_count",
+    "team_credentialing_visible",
+    "public_pricing",
+    "pricing_url",
+    "tech",
+    "email",
+    "telefono",
+    "phone_fixed",
+    "phone_mobile",
+    "phone_whatsapp",
+    "instagram",
+]
+REVIEW_TYPE_LABELS = {
+    "candidate_clinic": "Clínica nueva",
+    "clinic_profile_enrichment": "Mejora de ficha",
+    "blocking_claim_review": "Claim bloqueante",
+    "clinic_claim_request": "Reclamación de ficha",
+    "clinic_quality_audit": "Auditoría de calidad",
+    "source_change_detected": "Cambio de fuente",
+    "specialist_review": "Especialistas",
+}
+PHONE_FIELDS = {"telefono", "phone_fixed", "phone_mobile", "phone_whatsapp"}
+SENSITIVE_FIELDS = {"public_pricing", "pricing_url", "team_credentialing_visible", "profesionales"}
+SYNTHETIC_PREFIXES = ("quality_issue", "source_change")
+EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", flags=re.I)
+URL_RE = re.compile(r"https?://[^\s)>\]]+", flags=re.I)
+PHONE_TEXT_RE = re.compile(r"(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}")
+
+
+def canonical_field(key: Any) -> str:
+    clean = str(key or "").strip()
+    return FIELD_ALIASES.get(clean, clean)
+
+
+def review_type_label(value: Any) -> str:
+    return REVIEW_TYPE_LABELS.get(str(value or ""), str(value or "Revisión").replace("_", " "))
+
+
+def is_synthetic_field(key: Any) -> bool:
+    clean = canonical_field(key)
+    return clean == "claim_request" or any(clean.startswith(prefix) for prefix in SYNTHETIC_PREFIXES)
+
+
+def candidate_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    candidate = payload.get("candidate")
+    return candidate if isinstance(candidate, dict) else payload
+
+
+def value_kind(value: Any) -> str:
+    if not has_visible_value(value):
+        return "empty"
+    if isinstance(value, list):
+        return "list"
+    if isinstance(value, dict):
+        return "object"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, (int, float)):
+        return "number"
+    return "text"
+
+
+def value_count(value: Any) -> int:
+    if isinstance(value, list):
+        return count_visible_items(value)
+    if isinstance(value, dict):
+        return 1 if has_visible_value(value) else 0
+    if isinstance(value, str) and "\n" in value:
+        return count_visible_items(value)
+    return 1 if has_visible_value(value) else 0
+
+
+def value_packet(value: Any, include_values: bool) -> dict[str, Any]:
+    packet = {
+        "present": has_visible_value(value),
+        "kind": value_kind(value),
+        "count": value_count(value),
+    }
+    if include_values:
+        packet["value"] = value
+    return packet
+
+
+def as_float(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def redacted_text(value: Any, include_values: bool) -> str:
+    clean = str(value or "").strip()
+    if include_values:
+        return clean
+    clean = URL_RE.sub("[url]", clean)
+    clean = EMAIL_RE.sub("[email]", clean)
+    return PHONE_TEXT_RE.sub("[telefono]", clean)
+
+
+def field_values(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        values: list[Any] = []
+        for item in value:
+            values.extend(field_values(item))
+        return values
+    if isinstance(value, dict):
+        values = []
+        for item in value.values():
+            values.extend(field_values(item))
+        return values
+    return [value]
+
+
+def current_field_value(clinic: dict[str, Any], key: str) -> Any:
+    data = clinic.get("current_data") if isinstance(clinic.get("current_data"), dict) else {}
+    clean = canonical_field(key)
+    direct = {
+        "display_name": clinic.get("display_name") or data.get("name") or data.get("display_name"),
+        "website": clinic.get("website") or data.get("web") or data.get("website"),
+        "country": clinic.get("country") or data.get("country"),
+        "city": clinic.get("city") or data.get("city"),
+        "region": clinic.get("region") or data.get("region"),
+        "address": clinic.get("address") or data.get("address"),
+        "summary": clinic.get("summary") or data.get("summary"),
+        "status": clinic.get("status") or data.get("status"),
+    }
+    if clean in direct:
+        return direct[clean]
+    if clean == "locations":
+        return data.get("locations")
+    for raw, canonical in FIELD_ALIASES.items():
+        if canonical == clean and raw in data:
+            return data.get(raw)
+    return data.get(clean)
+
+
+def ordered_proposed_items(row: dict[str, Any]) -> list[dict[str, Any]]:
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    fields = proposed_fields(payload)
+    items: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def add(key: Any, value: Any, label: str = "") -> None:
+        clean = canonical_field(key)
+        if clean in seen or not has_visible_value(value):
+            return
+        seen.add(clean)
+        items.append({"key": clean, "label": label or field_label(clean), "value": value})
+
+    for key in FIELD_ORDER:
+        if key in fields:
+            add(key, fields[key])
+        for raw, canonical in FIELD_ALIASES.items():
+            if canonical == key and raw in fields:
+                add(raw, fields[raw])
+    for key, value in fields.items():
+        add(key, value)
+
+    review_type = str(row.get("review_type") or "")
+    candidate = candidate_from_payload(payload)
+    if not items and review_type == "candidate_clinic":
+        for key in ("display_name", "website", "city", "country", "services", "profesionales"):
+            if key == "display_name":
+                value = candidate.get("name") or candidate.get("clinic_name") or candidate.get("display_name")
+            elif key == "profesionales":
+                value = candidate.get("profesionales") or candidate.get("professionals")
+            else:
+                value = candidate.get(key)
+            add(key, value)
+    if not items and review_type == "source_change_detected":
+        hints = payload.get("material_hints")
+        if isinstance(hints, list):
+            for index, value in enumerate(hints):
+                add(f"source_change_{index}", value, "Cambio posible")
+    if not items and review_type == "clinic_quality_audit":
+        issues = payload.get("issues")
+        if isinstance(issues, list):
+            for index, issue in enumerate(issues):
+                label = issue.get("label") if isinstance(issue, dict) else ""
+                add(f"quality_issue_{index}", label or issue, "Campo pendiente")
+    if not items and review_type == "clinic_claim_request":
+        claim_parts = [
+            payload.get("clinic_name") or candidate.get("clinic_name") or candidate.get("name") or row.get("title"),
+            payload.get("requester_name"),
+            payload.get("requester_email") or payload.get("email"),
+            payload.get("message"),
+        ]
+        add("claim_request", "\n".join(str(part) for part in claim_parts if str(part or "").strip()), "Solicitud de ficha")
+    return items
+
+
+def source_candidates(payload: dict[str, Any]) -> list[tuple[str, str]]:
+    candidate = candidate_from_payload(payload)
+    values: list[tuple[str, str]] = []
+
+    def add(label: str, value: Any) -> None:
+        if isinstance(value, list):
+            for item in value:
+                add(label, item)
+            return
+        clean = str(value or "").strip()
+        if not clean or any(existing == clean for _, existing in values):
+            return
+        values.append((label, clean))
+
+    add("Fuente", payload.get("source_url"))
+    add("Fuente", payload.get("source_urls"))
+    add("Fuente", payload.get("sources"))
+    add("Fuente", payload.get("candidate_source_url"))
+    add("Fuente", candidate.get("source_url"))
+    add("Fuente", candidate.get("source_urls"))
+    add("Fuente", candidate.get("sources"))
+    add("Web propuesta", candidate.get("website") or candidate.get("web") or payload.get("website"))
+    for key, label in [
+        ("maps_url", "Google Maps propuesto"),
+        ("google_maps_url", "Google Maps propuesto"),
+        ("google_reviews_url", "Valoraciones propuestas"),
+        ("reviews_url", "Valoraciones propuestas"),
+        ("pricing_url", "Fuente de precios"),
+    ]:
+        add(label, proposed_fields(payload).get(key))
+    return values
+
+
+def evidence_packet(label: str, value: str, include_values: bool) -> dict[str, Any]:
+    parsed = urlparse(value)
+    packet = {
+        "label": label,
+        "kind": "url" if parsed.scheme and parsed.netloc else "text",
+    }
+    if parsed.netloc:
+        packet["host"] = parsed.netloc
+    if include_values:
+        packet["value"] = value
+    return packet
+
+
+def phone_warning(key: str, value: Any) -> str:
+    if canonical_field(key) not in PHONE_FIELDS:
+        return ""
+    digits = {normalized_phone_digits(str(item)) for item in field_values(value)}
+    digits = {item for item in digits if item}
+    if not digits:
+        return ""
+    if any(len(item) != 9 or item[0] not in {"6", "7", "8", "9"} for item in digits):
+        return "Teléfono dudoso: corrige o rechaza antes de aprobar."
+    return ""
+
+
+def maps_warning(key: str, value: Any) -> str:
+    if canonical_field(key) != "maps_url":
+        return ""
+    for item in field_values(value):
+        status = google_maps_review_status(item)
+        if status in {"search_or_route", "street_address", "needs_manual_review"}:
+            return "Google Maps debe ser el perfil real de la clínica, no una búsqueda, ruta o dirección."
+    return ""
+
+
+def warning_items(row: dict[str, Any], proposed_items: list[dict[str, Any]], include_values: bool = False) -> list[str]:
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    warnings: list[str] = []
+
+    def add(value: Any) -> None:
+        clean = redacted_text(value, include_values)
+        if clean and clean not in warnings:
+            warnings.append(clean)
+
+    if row.get("review_type") == "clinic_claim_request":
+        add("Reclamación de ficha: no confirma identidad, no concede acceso y no cambia datos por sí sola.")
+    if row.get("review_type") == "clinic_quality_audit" and payload.get("quality_context") == "blocking_claims":
+        add("Claim bloqueante: compara la evidencia antes de aprobar datos públicos.")
+    if as_float(payload.get("duplicate_probability")) >= 0.9:
+        add("Duplicado probable: no crear una ficha nueva sin revisión humana.")
+    payload_warnings = payload.get("warnings")
+    if isinstance(payload_warnings, list):
+        for warning in payload_warnings:
+            add(warning)
+    for item in proposed_items:
+        key = item["key"]
+        value = item["value"]
+        add(phone_warning(key, value))
+        add(maps_warning(key, value))
+        if key == "locations":
+            for location in value if isinstance(value, list) else []:
+                if isinstance(location, dict):
+                    add(maps_warning("maps_url", location.get("maps_url") or location.get("google_maps_url")))
+        if key in {"status", "profile_confidence", "verification_status"}:
+            add(f"{field_label(key)} no se cambia desde aprobación directa.")
+        if key in SENSITIVE_FIELDS:
+            add(f"{field_label(key)} requiere revisión humana antes de uso público.")
+    return warnings
+
+
+def clinic_identity(row: dict[str, Any]) -> dict[str, Any]:
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    candidate = candidate_from_payload(payload)
+    clinic = row.get("clinic") if isinstance(row.get("clinic"), dict) else {}
+    name = (
+        clinic.get("display_name")
+        or candidate.get("name")
+        or candidate.get("clinic_name")
+        or payload.get("clinic_name")
+        or row.get("clinic_name")
+        or row.get("title")
+        or "Clínica sin nombre"
+    )
+    city = clinic.get("city") or candidate.get("city") or payload.get("city") or row.get("city")
+    country = clinic.get("country") or candidate.get("country") or payload.get("country")
+    return {
+        "id": clinic.get("id") or row.get("clinic_id"),
+        "name": name,
+        "slug": clinic.get("slug") or row.get("clinic_slug"),
+        "city": city,
+        "country": country,
+        "status": clinic.get("status") or row.get("clinic_status") or ("candidate" if row.get("review_type") == "candidate_clinic" else None),
+    }
+
+
+def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[str, Any]:
+    clinic = row.get("clinic") if isinstance(row.get("clinic"), dict) else {}
+    proposed_items = ordered_proposed_items(row)
+    proposal_fields = []
+    for item in proposed_items:
+        key = item["key"]
+        proposal_fields.append({
+            "key": key,
+            "label": item["label"],
+            "synthetic": is_synthetic_field(key),
+            "current": value_packet(None if is_synthetic_field(key) else current_field_value(clinic, key), include_values),
+            "proposed": value_packet(item["value"], include_values),
+        })
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    evidence = [evidence_packet(label, value, include_values) for label, value in source_candidates(payload)]
+    warnings = warning_items(row, proposed_items, include_values=include_values)
+    editable_fields = [
+        {"key": item["key"], "label": item["label"]}
+        for item in proposal_fields
+        if not item["synthetic"]
+    ]
+    packet = {
+        "schema_version": PACKET_SCHEMA_VERSION,
+        "review_id": row.get("id"),
+        "title": row.get("title"),
+        "decision_scope": "single_review_item",
+        "review_type": row.get("review_type"),
+        "proposal_type": review_type_label(row.get("review_type")),
+        "priority": row.get("priority"),
+        "created_at": row.get("created_at"),
+        "clinic": clinic_identity(row),
+        "current_relevant": [item for item in proposal_fields if not item["synthetic"]],
+        "proposed_change": proposal_fields,
+        "evidence": evidence,
+        "warnings": warnings,
+        "allowed_actions": DECISION_ACTIONS,
+        "editable_fields": editable_fields,
+        "automation_contract": {
+            "llm_role": "prepare_suggestions_only",
+            "human_gate": "Daniel must choose approve, reject or modify in the review card.",
+            "write_policy": "read_only_packet",
+            "scope": "single_review_item",
+            "after_decision": "resolve_current_review_then_advance_to_next_pending",
+        },
+    }
+    if not include_values:
+        packet["safe_default"] = True
+    return packet
+
+
+def build_report(rows: list[dict[str, Any]], include_values: bool = False) -> dict[str, Any]:
+    packets = [decision_packet(row, include_values=include_values) for row in rows if isinstance(row, dict)]
+    return {
+        "schema_version": PACKET_SCHEMA_VERSION,
+        "writes_data": False,
+        "include_values": include_values,
+        "decision_scope": "one_card_one_decision",
+        "packet_count": len(packets),
+        "packets": packets,
+    }
+
+
+def load_rows(limit: int, local_env: dict[str, str], clinic: str = "", review_id: str = "") -> list[dict[str, Any]]:
+    filters = ["rq.status = 'open'"]
+    if review_id:
+        filters.append(f"rq.id = {sql_literal(review_id)}::uuid")
+    clean_clinic = clinic.strip()
+    if clean_clinic:
+        like_literal = sql_literal(f"%{clean_clinic}%")
+        compact_literal = sql_literal(f"%{compact_lookup_key(clean_clinic)}%")
+        filters.append(f"""
+        (
+          rq.title ilike {like_literal}
+          or c.slug ilike {like_literal}
+          or c.display_name ilike {like_literal}
+          or regexp_replace(translate(lower(coalesce(c.slug, '')), 'áéíóúüñ', 'aeiouun'), '[^a-z0-9]+', '', 'g') like {compact_literal}
+          or regexp_replace(translate(lower(coalesce(c.display_name, '')), 'áéíóúüñ', 'aeiouun'), '[^a-z0-9]+', '', 'g') like {compact_literal}
+        )
+""")
+    where_sql = "\n    and ".join(filters)
+    capped_limit = max(1, min(50, int(limit)))
+    sql = f"""
+with review_rows as (
+  select
+    rq.id,
+    rq.review_type,
+    rq.priority,
+    rq.title,
+    rq.payload,
+    rq.created_at,
+    rq.updated_at,
+    rq.clinic_id,
+    c.slug as clinic_slug,
+    c.display_name as clinic_name,
+    c.city,
+    c.country,
+    c.status as clinic_status,
+    case
+      when c.id is null then null
+      else jsonb_build_object(
+        'id', c.id,
+        'slug', c.slug,
+        'display_name', c.display_name,
+        'website', c.website,
+        'country', c.country,
+        'city', c.city,
+        'region', c.region,
+        'address', c.address,
+        'status', c.status,
+        'summary', c.summary,
+        'profile_confidence', c.profile_confidence,
+        'verification_status', c.verification_status,
+        'current_data', c.current_data
+      )
+    end as clinic
+  from public.review_queue rq
+  left join public.clinics c on c.id = rq.clinic_id
+  where {where_sql}
+  order by rq.priority desc, rq.created_at asc
+  limit {capped_limit}
+)
+select coalesce(jsonb_agg(to_jsonb(review_rows) order by priority desc, created_at asc), '[]'::jsonb)
+from review_rows;
+"""
+    return json.loads(run_psql(sql, local_env))
+
+
+def load_input_file(path: Path) -> list[dict[str, Any]]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, list):
+        return [item for item in data if isinstance(item, dict)]
+    if isinstance(data, dict):
+        for key in ("reviews", "open_reviews", "items", "rows"):
+            if isinstance(data.get(key), list):
+                return [item for item in data[key] if isinstance(item, dict)]
+    raise SystemExit("Input file must contain a review list.")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument("--clinic", default="", help="Clinic name, slug or review-title fragment.")
+    parser.add_argument("--review-id", default="", help="Open review_queue id.")
+    parser.add_argument("--input-file", type=Path, help="Read review rows from a local JSON file instead of Supabase.")
+    parser.add_argument("--include-values", action="store_true", help="Include proposed/current values and full evidence URLs for local LLM preparation.")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    if args.input_file:
+        rows = load_input_file(args.input_file)
+    else:
+        rows = load_rows(args.limit, load_env_file(), clinic=args.clinic, review_id=args.review_id)
+    print(json.dumps(build_report(rows, include_values=args.include_values), ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

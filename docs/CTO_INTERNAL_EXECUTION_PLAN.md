@@ -744,6 +744,14 @@ Next 10 technical steps:
      resolves that one card and advances to the next open proposal, while
      group-analysis helpers remain available for future LLM-assisted
      prioritisation without grouping human decisions.
+144. Add LLM-ready decision packets for review proposals. Done locally in
+     `scripts/review_proposal_decision_packets.py`: open `review_queue` cards
+     can be converted into read-only one-card/one-decision packets with clinic
+     identity, current/proposed field shapes, evidence hosts and warnings. The
+     default output omits raw values and full URLs; explicit value mode is
+     reserved for local assisted preparation. Each packet carries a schema
+     version, allowed actions and editable fields, and never resolves cards,
+     edits clinics or publishes pages.
 
 ## Daniel decision checkpoints
 
