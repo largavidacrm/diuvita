@@ -72,8 +72,14 @@ def main() -> None:
         "Sin faltantes obligatorios",
         "Con faltantes",
         "Visibles con pendientes",
+        "Pendientes de web pública",
+        "Pendiente de web",
+        "Guardada en admin",
+        "Guardada; pendiente de actualizar web pública.",
+        "La web pública va por detrás; se verá tras la actualización agrupada.",
         "No visibles",
         'el("clinicPublishFilter").addEventListener("change", renderClinics)',
+        'if (filter === "web_pending") return clinicHasPendingPublicChange(row, publicationControlCache);',
         "no aparecerá en la web",
         "aparecerá en la web",
     ]:
@@ -89,6 +95,8 @@ def main() -> None:
     check(".publish-missing-chip" in css, "publish missing chip style missing")
     check(".publish-cell" in css, "clinic publish cell style missing")
     check(".publish-cell strong" in css, "clinic first missing field style missing")
+    check(".publish-cell.is-web-pending strong" in css, "clinic web-pending style missing")
+    check(".publish-web-note" in css, "clinic table web-pending note style missing")
     check(".field-attention" in css, "field attention style missing")
     check(".review-action-note" in css, "review action note style missing")
     check(".review-flow" in css, "review flow style missing")

@@ -689,6 +689,7 @@
               <option value="ready">Sin faltantes obligatorios</option>
               <option value="needs_work">Con faltantes</option>
               <option value="visible_pending">Visibles con pendientes</option>
+              <option value="web_pending">Pendientes de web pública</option>
               <option value="hidden">No visibles</option>
             </select>
             <span class="pill" id="clinicCount">0 fichas</span>
@@ -1146,10 +1147,17 @@
     function clinicPublishReadinessCell(row) {
       var missing = clinicPublicationMissingLabels(row);
       var visible = row.status === "published" || row.status === "preliminary";
+      var webPending = clinicHasPendingPublicChange(row, publicationControlCache);
+      var webPendingNote = webPending
+        ? '<small class="publish-web-note">Guardada; pendiente de actualizar web pública.</small>'
+        : "";
       if (!missing.length) {
+        if (webPending) {
+          return '<div class="publish-cell is-web-pending"><span class="pill warning">Pendiente de web</span><strong>Guardada en admin</strong><small>La web pública va por detrás; se verá tras la actualización agrupada.</small></div>';
+        }
         return '<div class="publish-cell"><span class="pill">Lista</span><small>' +
           html(visible ? "Visible sin faltantes obligatorios." : "Puede pasar a preliminar/publicada.") +
-          '</small></div>';
+          '</small>' + webPendingNote + '</div>';
       }
       var label = visible
         ? "Visible con pendientes"
@@ -1158,7 +1166,7 @@
       if (missing.length > 3) rest += " · +" + (missing.length - 3);
       var detail = rest || "Abre la ficha y completa ese campo.";
       return '<div class="publish-cell"><span class="pill warning">' + html(label) +
-        '</span><strong>' + html(missing[0]) + '</strong><small>' + html(detail) + '</small></div>';
+        '</span><strong>' + html(missing[0]) + '</strong><small>' + html(detail) + '</small>' + webPendingNote + '</div>';
     }
 
     function clinicMatchesPublishFilter(row, filter) {
@@ -1168,6 +1176,7 @@
       if (filter === "ready") return missing.length === 0;
       if (filter === "needs_work") return missing.length > 0;
       if (filter === "visible_pending") return visible && missing.length > 0;
+      if (filter === "web_pending") return clinicHasPendingPublicChange(row, publicationControlCache);
       if (filter === "hidden") return !visible;
       return true;
     }

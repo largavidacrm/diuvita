@@ -582,6 +582,11 @@ Next 10 technical steps:
      the review inbox now shows a case-oriented panel above filters with the
      recommended clinic group, card counts, suggested order and direct actions
      to work the case or return to the full inbox.
+113. Surface saved-but-not-public clinic edits in the clinic table. Done locally
+     in `/admin/`: visible fichas whose latest edit is newer than the last public
+     web update now show a "Pendiente de web" state and can be filtered as
+     "Pendientes de web pública", making cases like Monarka understandable before
+     opening the editor.
 
 ## Daniel decision checkpoints
 
