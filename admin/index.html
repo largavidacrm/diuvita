@@ -49,6 +49,36 @@
     </section>
 
     <section class="admin-shell hidden" id="appPanel">
+      <div class="control-layout">
+        <aside class="control-sidebar" aria-label="Menú del centro de control">
+          <nav class="control-nav">
+            <button class="control-nav-item active" type="button" data-control-jump="globalPlanPanel">
+              <span>Plan</span>
+              <strong id="navPlanMeta">Ahora</strong>
+            </button>
+            <button class="control-nav-item" type="button" data-control-jump="systemPanel">
+              <span>Sistema</span>
+              <strong id="navSystemMeta">Cargando</strong>
+            </button>
+            <button class="control-nav-item" type="button" data-control-jump="reviewWorkArea">
+              <span>Revisión</span>
+              <strong id="navReviewMeta">0 abiertas</strong>
+            </button>
+            <button class="control-nav-item" type="button" data-control-jump="clinicsPanel">
+              <span>Clínicas</span>
+              <strong id="navClinicMeta">0 fichas</strong>
+            </button>
+            <button class="control-nav-item" type="button" data-control-jump="jobsPanel">
+              <span>Trabajos</span>
+              <strong id="navJobMeta">0 activos</strong>
+            </button>
+            <button class="control-nav-item" type="button" data-control-jump="eventsPanel">
+              <span>Actividad</span>
+              <strong id="navEventMeta">0 movs.</strong>
+            </button>
+          </nav>
+        </aside>
+        <div class="control-content">
       <div class="hero-row">
         <div>
           <h1>Centro de control</h1>
@@ -174,6 +204,14 @@
             <span class="pill warning" id="clinicValidationStatus">Pendiente</span>
           </div>
           <p class="publication-hint" id="clinicPublicationHint">Elige el estado de la ficha.</p>
+          <div class="publish-readiness" id="clinicPublishReadiness">
+            <div>
+              <span>Para publicar</span>
+              <strong id="clinicPublishReadinessTitle">Revisando requisitos.</strong>
+              <p id="clinicPublishReadinessMeta">Abre una clínica para ver qué falta.</p>
+            </div>
+            <div class="publish-missing-list" id="clinicPublishMissingList"></div>
+          </div>
           <div class="validation-list" id="clinicValidationList"></div>
         </section>
         <form class="edit-form" id="clinicForm">
@@ -466,7 +504,7 @@
         </div>
       </section>
 
-      <section class="work-grid">
+      <section class="work-grid" id="reviewWorkArea">
         <section class="panel">
           <div class="panel-head">
             <div>
@@ -517,7 +555,7 @@
           </div>
         </section>
 
-        <section class="panel">
+        <section class="panel" id="jobCreatePanel">
           <div class="panel-head">
             <h2>Crear trabajo</h2>
           </div>
@@ -545,7 +583,7 @@
         </section>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="jobsPanel">
         <div class="panel-head">
           <h2>Trabajos recientes</h2>
           <span class="pill" id="jobCount">0 en cola</span>
@@ -566,7 +604,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="eventsPanel">
         <div class="panel-head">
           <h2>Actividad reciente</h2>
           <span class="pill" id="eventCount">0 movimientos</span>
@@ -586,7 +624,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel" id="clinicsPanel">
         <div class="panel-head">
           <h2>Clínicas</h2>
           <div class="panel-tools">
@@ -610,6 +648,7 @@
                 <th>Clínica</th>
                 <th>Ciudad</th>
                 <th>Estado</th>
+                <th>Falta para publicar</th>
                 <th>Confianza</th>
                 <th>Actualizada</th>
                 <th></th>
@@ -619,6 +658,8 @@
           </table>
         </div>
       </section>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -730,6 +771,47 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+    }
+
+    function setControlNavActive(targetId) {
+      Array.prototype.slice.call(document.querySelectorAll("[data-control-jump]")).forEach(function (button) {
+        button.classList.toggle("active", button.getAttribute("data-control-jump") === targetId);
+      });
+    }
+
+    function jumpToControlSection(targetId) {
+      var target = el(targetId);
+      if (!target) return;
+      setControlNavActive(targetId);
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function updateControlNav(summary, openReviews, clinicRows, jobRows, eventRows, failedJobs, phase) {
+      var jobs = (summary && summary.jobs) || {};
+      var activeJobs = Number(jobs.queued || 0) + Number(jobs.running || 0);
+      el("navPlanMeta").textContent = phase || "Ahora";
+      el("navSystemMeta").textContent = Number(failedJobs || 0) ? "Atención" : "Sano";
+      el("navReviewMeta").textContent = (openReviews || []).length + " abiertas";
+      el("navClinicMeta").textContent = (clinicRows || []).length + " fichas";
+      el("navJobMeta").textContent = activeJobs + " activos";
+      el("navEventMeta").textContent = (eventRows || []).length + " movs.";
+    }
+
+    function focusPublishField(targetId) {
+      var target = el(targetId);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (typeof target.focus === "function") {
+        try {
+          target.focus({ preventScroll: true });
+        } catch (error) {
+          target.focus();
+        }
+      }
+      target.classList.add("field-attention");
+      window.setTimeout(function () {
+        target.classList.remove("field-attention");
+      }, 1600);
     }
 
     function date(value) {
@@ -942,6 +1024,64 @@
         ["pendingTeamCredentialingVisible", "Colegiación visible"],
         ["pendingPublicPricing", "Precio público"]
       ];
+    }
+
+    function profilePendingFieldLabel(key) {
+      var match = profileCompletenessFields().find(function (field) {
+        return field[0] === key;
+      });
+      return match ? match[1] : key;
+    }
+
+    function publicRequiredProfileFields() {
+      return {
+        pendingSummary: "Resumen suficiente",
+        pendingWebsite: "Web oficial",
+        pendingAddress: "Dirección o sede",
+        pendingGoogleMaps: "Google Maps de clínica",
+        pendingServices: "Servicios principales"
+      };
+    }
+
+    function clinicHasOpenBlockingReview(clinicId) {
+      return (reviewCache || []).some(function (row) {
+        return row.clinic_id === clinicId && row.status === "open" && isBlockingClaimReview(row);
+      });
+    }
+
+    function clinicPublicationMissingLabels(row) {
+      var data = row.current_data || {};
+      var requiredFields = publicRequiredProfileFields();
+      var labels = [];
+      if (!hasVisibleText(row.display_name, data.name)) labels.push("Nombre");
+      if (!hasVisibleText(row.city, data.city)) labels.push("Ciudad");
+      if (!hasVisibleText(row.country, data.country)) labels.push("País");
+      profilePendingFields(row).forEach(function (key) {
+        if (requiredFields[key]) labels.push(requiredFields[key]);
+      });
+      if (clinicHasOpenBlockingReview(row.id)) labels.push("Claims bloqueantes");
+      return labels.filter(function (label, index) {
+        return labels.indexOf(label) === index;
+      });
+    }
+
+    function clinicPublishReadinessCell(row) {
+      var missing = clinicPublicationMissingLabels(row);
+      var visible = row.status === "published" || row.status === "preliminary";
+      if (!missing.length) {
+        return '<div class="publish-cell"><span class="pill">Lista</span><small>' +
+          html(visible ? "Visible sin faltantes obligatorios." : "Puede pasar a preliminar/publicada.") +
+          '</small></div>';
+      }
+      var shown = missing.slice(0, 3).join(" · ");
+      if (missing.length > 3) shown += " · +" + (missing.length - 3);
+      var label = visible
+        ? "Visible con pendientes"
+        : missing.length === 1
+          ? "Falta 1 punto"
+          : "Faltan " + missing.length + " puntos";
+      return '<div class="publish-cell"><span class="pill warning">' + html(label) +
+        '</span><small>' + html(shown) + '</small></div>';
     }
 
     function topPendingProfileField(completeness) {
@@ -3655,11 +3795,12 @@
       renderClinicSources(sources, snapshots);
     }
 
-    function validationItem(label, ok, required) {
+    function validationItem(label, ok, required, targetId) {
       return {
         label: label,
         ok: Boolean(ok),
-        required: required !== false
+        required: required !== false,
+        targetId: targetId || ""
       };
     }
 
@@ -3697,17 +3838,40 @@
       var hasClinicMapsProfile = hasReviewedClinicMapsProfile();
       var hasGenericMapsCandidate = hasGenericClinicMapsCandidate();
       return [
-        validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry")),
-        validationItem("Web oficial revisada", /^https?:\/\//i.test(trimmed("clinicWebsite"))),
-        validationItem("Dirección o sede completa", hasLocation),
-        validationItem("Resumen suficiente", trimmed("clinicSummary").length >= 120),
-        validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0),
-        validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget),
-        validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false),
-        validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, publicTarget || hasGenericMapsCandidate),
-        validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false),
-        validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false)
+        validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry"), true, "clinicName"),
+        validationItem("Web oficial revisada", /^https?:\/\//i.test(trimmed("clinicWebsite")), true, "clinicWebsite"),
+        validationItem("Dirección o sede completa", hasLocation, true, "clinicAddress"),
+        validationItem("Resumen suficiente", trimmed("clinicSummary").length >= 120, true, "clinicSummary"),
+        validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0, true, "clinicServices"),
+        validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget, "clinicEvidencePanel"),
+        validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false, "clinicSourcePanel"),
+        validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, publicTarget || hasGenericMapsCandidate, "clinicMapsUrl"),
+        validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false, "clinicProfessionals"),
+        validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false, "clinicYearsInPractice")
       ];
+    }
+
+    function renderPublishReadiness(publicItems, targetStatus) {
+      var requiredMissing = (publicItems || []).filter(function (item) {
+        return item.required && !item.ok;
+      });
+      var box = el("clinicPublishReadiness");
+      box.className = "publish-readiness" + (requiredMissing.length ? " warning" : " ready");
+      if (!requiredMissing.length) {
+        el("clinicPublishReadinessTitle").textContent = (targetStatus === "published" || targetStatus === "preliminary")
+          ? "Lista para guardar como visible."
+          : "Lista si decides hacerla visible.";
+        el("clinicPublishReadinessMeta").textContent = "No faltan requisitos obligatorios para publicar o dejar en preliminar.";
+        el("clinicPublishMissingList").innerHTML = '<span class="pill">Sin faltantes obligatorios</span>';
+        return;
+      }
+      el("clinicPublishReadinessTitle").textContent = requiredMissing.length +
+        (requiredMissing.length === 1 ? " punto falta para publicar." : " puntos faltan para publicar.");
+      el("clinicPublishReadinessMeta").textContent = "Completa estos puntos o guarda la ficha como borrador/revisión interna.";
+      el("clinicPublishMissingList").innerHTML = requiredMissing.map(function (item) {
+        return '<button class="publish-missing-chip" type="button" data-publish-field="' + html(item.targetId || "") + '">' +
+          html(item.label) + '</button>';
+      }).join("");
     }
 
     function updateFinalValidation() {
@@ -3715,10 +3879,12 @@
       var targetStatus = trimmed("clinicStatus");
       var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
       var items = finalValidationItems(publicTarget);
+      var publicItems = publicTarget ? items : finalValidationItems(true);
       var missingRequired = items.filter(function (item) {
         return item.required && !item.ok;
       });
       updateClinicSaveButtonLabel();
+      renderPublishReadiness(publicItems, targetStatus);
       el("clinicPublicationHint").textContent = publicVisibilityText(targetStatus);
       el("clinicPublicationHint").className = "publication-hint" + (publicTarget ? " visible-target" : "");
       el("clinicValidationStatus").className = "pill" + (missingRequired.length ? " warning" : "");
@@ -4756,7 +4922,7 @@
 
       el("clinicCount").textContent = rows.length + " fichas";
       if (!rows.length) {
-        emptyRow(clinicsBody, 6, "Sin clínicas");
+        emptyRow(clinicsBody, 7, "Sin clínicas");
         return;
       }
 
@@ -4764,6 +4930,7 @@
         return "<tr><td><strong>" + html(row.display_name) + "</strong><small>" + html(row.slug) + "</small></td><td>" +
           html(row.city + ", " + row.country) + "</td><td>" +
           clinicStatusPill(row.status) + "</td><td>" +
+          clinicPublishReadinessCell(row) + "</td><td>" +
           pct(row.profile_confidence) + "</td><td>" +
           date(row.updated_at) + '</td><td><button class="link-btn" type="button" data-edit-clinic="' +
           html(row.id) + '">Editar</button></td></tr>';
@@ -5229,11 +5396,20 @@
 
         if (clinicRows.error || !clinicRows.data || clinicRows.data.length === 0) {
           clinicCache = [];
-          emptyRow(el("clinicsBody"), 6, "Sin clínicas");
+          emptyRow(el("clinicsBody"), 7, "Sin clínicas");
         } else {
           clinicCache = clinicRows.data;
           renderClinics();
         }
+        updateControlNav(
+          summary,
+          reviewCache,
+          clinicCache,
+          jobRows.data || [],
+          eventRows.data || [],
+          Number((summary.jobs || {}).failed || 0) + Number((summary.jobs || {}).dead_letter || 0),
+          globalPlanPhase(summary, reviewCache, Number((summary.jobs || {}).failed || 0) + Number((summary.jobs || {}).dead_letter || 0))
+        );
 
         if (manual) toast("Panel actualizado.");
         return true;
@@ -5401,11 +5577,20 @@
         return;
       }
       client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey);
+      Array.prototype.slice.call(document.querySelectorAll("[data-control-jump]")).forEach(function (button) {
+        button.addEventListener("click", function () {
+          jumpToControlSection(button.getAttribute("data-control-jump"));
+        });
+      });
       el("loginForm").addEventListener("submit", signIn);
       el("jobForm").addEventListener("submit", createJob);
       el("clinicForm").addEventListener("submit", saveClinic);
       el("clinicForm").addEventListener("input", updateFinalValidation);
       el("clinicForm").addEventListener("change", updateFinalValidation);
+      el("clinicPublishReadiness").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-publish-field]");
+        if (button) focusPublishField(button.getAttribute("data-publish-field"));
+      });
       el("clinicAddLocationBtn").addEventListener("click", function () {
         addClinicLocation({});
         renderPendingLocationsForClinic();

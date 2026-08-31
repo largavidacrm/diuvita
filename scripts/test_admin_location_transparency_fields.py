@@ -68,7 +68,7 @@ def main() -> None:
         "\"prices.url\": trimmed(\"clinicPricingUrl\")",
         "Dirección o sede completa",
         "Google Maps de clínica, no dirección suelta",
-        'validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, publicTarget || hasGenericMapsCandidate)',
+        'validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, publicTarget || hasGenericMapsCandidate, "clinicMapsUrl")',
         'setJsonText(currentData, "maps_url", reviewedMapsProfileValue(trimmed("clinicMapsUrl")))',
         'setJsonLocations(currentData, "locations", sanitizedLocationsForSave(currentClinicLocations()))',
         'if ((key === "maps_url" || key === "google_maps_url") && !reviewedMapsProfileValue(proposalListValue(fields[key]))) return;',

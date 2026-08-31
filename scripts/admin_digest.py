@@ -979,6 +979,52 @@ visible_location_checks as (
     count(*) over (partition by id) as clinic_location_count
   from visible_location_rows
 ),
+visible_location_review_proposals as (
+  select
+    rq.clinic_id,
+    count(*) as open_review_count,
+    coalesce(sum(jsonb_array_length(proposed.locations)), 0) as proposed_location_count
+  from public.review_queue rq
+  join public.clinics c on c.id = rq.clinic_id
+    and c.status in ('published', 'preliminary')
+  cross join lateral (
+    select case
+      when jsonb_typeof(coalesce(
+        rq.payload #> '{{proposed_fields,locations}}',
+        rq.payload #> '{{proposed_current_data,locations}}',
+        rq.payload #> '{{fields,locations}}'
+      )) = 'array'
+        then coalesce(
+          rq.payload #> '{{proposed_fields,locations}}',
+          rq.payload #> '{{proposed_current_data,locations}}',
+          rq.payload #> '{{fields,locations}}'
+        )
+      else '[]'::jsonb
+    end as locations
+  ) proposed
+  where rq.status = 'open'
+    and rq.review_type = 'clinic_profile_enrichment'
+    and jsonb_array_length(proposed.locations) > 0
+  group by rq.clinic_id
+),
+visible_location_claims as (
+  select
+    fc.clinic_id,
+    count(*) as claim_count,
+    coalesce(sum(
+      case
+        when jsonb_typeof(fc.value) = 'array' then jsonb_array_length(fc.value)
+        when fc.value is not null then 1
+        else 0
+      end
+    ), 0) as location_claim_count
+  from public.field_claims fc
+  join public.clinics c on c.id = fc.clinic_id
+    and c.status in ('published', 'preliminary')
+  where fc.field_path = 'location.locations'
+    and coalesce(fc.verification_status, '') not in ('rejected', 'stale')
+  group by fc.clinic_id
+),
 location_coverage as (
   select jsonb_build_object(
     'clinics_with_locations', count(distinct id),
@@ -986,7 +1032,11 @@ location_coverage as (
     'total_locations', count(*),
     'locations_missing_address', count(*) filter (where not has_address),
     'locations_missing_google_maps_profile', count(*) filter (where not has_google_maps_profile),
-    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews)
+    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews),
+    'clinics_with_location_proposals', coalesce((select count(*) from visible_location_review_proposals), 0),
+    'proposed_location_rows', coalesce((select sum(proposed_location_count) from visible_location_review_proposals), 0),
+    'clinics_with_location_claims', coalesce((select count(*) from visible_location_claims), 0),
+    'internal_location_rows', coalesce((select sum(location_claim_count) from visible_location_claims), 0)
   ) as data
   from visible_location_checks
 )
@@ -1213,19 +1263,28 @@ def source_coverage_status(digest: dict[str, Any]) -> str:
 def location_coverage_status(digest: dict[str, Any]) -> str:
     coverage = digest.get("location_coverage") or {}
     total = as_int(coverage.get("total_locations"))
+    proposals = as_int(coverage.get("proposed_location_rows"))
+    internal = as_int(coverage.get("internal_location_rows"))
+    parts = [
+        f"{total} sedes explícitas",
+    ]
     if not total:
-        return "0 sedes explícitas"
+        parts.append(f"{proposals} {plural(proposals, 'propuesta en bandeja', 'propuestas en bandeja')}")
+        parts.append(f"{internal} {plural(internal, 'interna detectada', 'internas detectadas')}")
+        return "; ".join(parts)
     multi = as_int(coverage.get("multi_location_clinics"))
     missing_maps = as_int(coverage.get("locations_missing_google_maps_profile"))
     missing_reviews = as_int(coverage.get("locations_missing_google_reviews"))
     missing_address = as_int(coverage.get("locations_missing_address"))
-    return (
-        f"{total} sedes explícitas; "
-        f"{multi} {plural(multi, 'clínica multisede', 'clínicas multisede')}; "
-        f"{missing_maps} sin Maps de clínica; "
-        f"{missing_reviews} sin valoraciones; "
-        f"{missing_address} sin dirección"
-    )
+    parts.extend([
+        f"{multi} {plural(multi, 'clínica multisede', 'clínicas multisede')}",
+        f"{proposals} {plural(proposals, 'propuesta en bandeja', 'propuestas en bandeja')}",
+        f"{internal} {plural(internal, 'interna detectada', 'internas detectadas')}",
+        f"{missing_maps} sin Maps de clínica",
+        f"{missing_reviews} sin valoraciones",
+        f"{missing_address} sin dirección",
+    ])
+    return "; ".join(parts)
 
 
 def next_action_label(digest: dict[str, Any]) -> str:

@@ -17,11 +17,20 @@ def main() -> None:
 
     for marker in [
         'id="clinicPublicationHint"',
+        'id="clinicPublishReadiness"',
+        'id="clinicPublishReadinessTitle"',
+        'id="clinicPublishReadinessMeta"',
+        'id="clinicPublishMissingList"',
         'id="reviewActionNote"',
         'id="reviewFlowPanel"',
         'id="reviewFlowMeta"',
         'id="reviewFlowSteps"',
         "function publicVisibilityText",
+        "function renderPublishReadiness",
+        "function focusPublishField",
+        "function publicRequiredProfileFields",
+        "function clinicPublicationMissingLabels",
+        "function clinicPublishReadinessCell",
         "function updateClinicSaveButtonLabel",
         "function isBlockingClinicClaim",
         "function reviewActionNote",
@@ -36,6 +45,12 @@ def main() -> None:
         "La publicación se decide después en el editor, en Validación final.",
         "Guardar como publicada",
         "Guardar borrador",
+        "Falta para publicar",
+        "Para publicar",
+        "Completa estos puntos o guarda la ficha como borrador/revisión interna.",
+        "Dirección o sede",
+        "Google Maps de clínica",
+        "data-publish-field",
         "no aparecerá en la web",
         "aparecerá en la web",
     ]:
@@ -44,6 +59,10 @@ def main() -> None:
     check("updateClinicSaveButtonLabel();" in index, "validation should refresh save button label")
     check(".publication-hint" in css, "publication hint style missing")
     check(".publication-hint.visible-target" in css, "public-target hint style missing")
+    check(".publish-readiness" in css, "publish readiness style missing")
+    check(".publish-missing-chip" in css, "publish missing chip style missing")
+    check(".publish-cell" in css, "clinic publish cell style missing")
+    check(".field-attention" in css, "field attention style missing")
     check(".review-action-note" in css, "review action note style missing")
     check(".review-flow" in css, "review flow style missing")
     check(".review-flow-steps" in css, "review flow steps style missing")

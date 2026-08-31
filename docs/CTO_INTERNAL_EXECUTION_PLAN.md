@@ -408,6 +408,14 @@ Next 10 technical steps:
     shows explicit saved sedes, review-card proposals and internal location
     evidence separately, so the next safe action is clearer while the inbox is
     near full.
+73. Make publication blockers visible in the control center. Done locally in
+    `/admin/`: the clinic table now shows what is missing before publication,
+    and the clinic editor has a "Para publicar" block with direct jumps to the
+    missing fields.
+74. Add a manageable control-center sidebar. Done locally in `/admin/`: the
+    admin now has persistent navigation for Plan, Sistema, Revisión, Clínicas,
+    Trabajos and Actividad, with compact status counters and a mobile
+    horizontal layout.
 
 ## Daniel decision checkpoints
 
