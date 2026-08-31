@@ -587,6 +587,11 @@ Next 10 technical steps:
      web update now show a "Pendiente de web" state and can be filtered as
      "Pendientes de web pública", making cases like Monarka understandable before
      opening the editor.
+114. Explain proposal-only specialist cards in the review table. Done locally in
+     `/admin/`: review rows with specialist proposals now show a short second
+     line clarifying that names are internal proposals and are not published
+     automatically, while Google Maps rows remind Daniel to accept only the real
+     clinic profile.
 
 ## Daniel decision checkpoints
 

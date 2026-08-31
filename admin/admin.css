@@ -1100,6 +1100,23 @@ button:disabled {
   overflow-x: auto;
 }
 
+.review-subject-cell {
+  display: grid;
+  gap: 0.16rem;
+  min-width: 0;
+}
+
+.review-subject-cell strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.review-subject-cell small {
+  max-width: 34rem;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

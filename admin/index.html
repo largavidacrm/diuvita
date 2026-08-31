@@ -2712,6 +2712,29 @@
       return html(reviewVisibleLabel(row)) + extra + reviewProfessionalsBadge(row);
     }
 
+    function reviewRowDetail(row) {
+      var specialistCount = reviewProfessionalsCount(row);
+      if (specialistCount) {
+        return "Especialistas propuestos: " + specialistCount + ". Se revisan como propuesta interna; no se publican solos.";
+      }
+      if (reviewHasGoogleLinkProposal(row)) {
+        return "Google Maps propuesto. Acepta solo el perfil real de la clínica.";
+      }
+      if (isBlockingClaimReview(row)) {
+        return "Hay datos dudosos o sin fuente suficiente; primero corregir o dejar fuera.";
+      }
+      if (isDuplicateEnrichmentReview(row)) {
+        return "Varias mejoras abiertas para la misma clínica; conviene consolidarlas.";
+      }
+      return "";
+    }
+
+    function reviewSubjectCell(row) {
+      var detail = reviewRowDetail(row);
+      return '<div class="review-subject-cell"><strong>' + html(row.title || "Revisión abierta") +
+        '</strong>' + (detail ? '<small>' + html(detail) + '</small>' : "") + '</div>';
+    }
+
     function reviewSummary(rows) {
       var parts = [
         ["Clínica nueva", countWhere(rows, function (row) { return row.review_type === "candidate_clinic"; })],
@@ -5593,7 +5616,7 @@
         return;
       }
       reviewsBody.innerHTML = rows.map(function (row) {
-        return "<tr><td>" + html(row.title) + "</td><td>" + reviewTypeCell(row) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
+        return "<tr><td>" + reviewSubjectCell(row) + "</td><td>" + reviewTypeCell(row) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
           date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
           html(row.id) + '">Revisar</button></td></tr>';
       }).join("");
