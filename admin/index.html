@@ -220,6 +220,18 @@
               <div class="location-rows" id="clinicLocationRows"></div>
               <textarea class="hidden" id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones"></textarea>
             </div>
+            <section class="pending-specialists hidden" id="clinicPendingLocationsPanel">
+              <div class="pending-specialists-head">
+                <div>
+                  <h3>Sedes detectadas en revisión interna</h3>
+                  <p id="clinicPendingLocationsMeta">Están recogidas como propuesta, pendientes de revisar.</p>
+                </div>
+                <span class="pill warning" id="clinicPendingLocationsCount">0 pendientes</span>
+              </div>
+              <ul class="compact-list" id="clinicPendingLocationsList"></ul>
+              <div class="pending-specialists-actions" id="clinicPendingLocationsActions"></div>
+              <p class="pending-specialists-source" id="clinicPendingLocationsSource"></p>
+            </section>
           </div>
           <div class="field">
             <label for="clinicStatus">Estado</label>
@@ -3057,6 +3069,33 @@
       return linesToLocations(value);
     }
 
+    function locationIdentityKey(location) {
+      var item = normalizedLocation(location);
+      if (!item) return "";
+      var clean = [item.name, item.city, item.address].map(function (part) {
+        return text(part).trim().toLowerCase();
+      }).join("|");
+      if (clean.normalize) clean = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return clean.replace(/\s+/g, " ").trim();
+    }
+
+    function currentLocationKeys() {
+      var keys = {};
+      currentClinicLocations().forEach(function (location) {
+        var key = locationIdentityKey(location);
+        if (key) keys[key] = true;
+      });
+      return keys;
+    }
+
+    function locationDisplayText(location) {
+      var item = normalizedLocation(location) || {};
+      var parts = [item.name, item.city, item.address].filter(function (part) {
+        return text(part).trim();
+      });
+      return parts.join(" · ") || locationLine(item) || "Sede propuesta";
+    }
+
     function decodedLowerUrl(value) {
       var clean = text(value).trim();
       if (!clean) return "";
@@ -3900,6 +3939,11 @@
       return candidateList(fields, "profesionales", "professionals");
     }
 
+    function proposalLocations(payload) {
+      var fields = proposedFields(payload);
+      return normalizedLocations(fields.locations || []);
+    }
+
     function proposalLinkUrl(value) {
       var clean = text(value).trim();
       return /^https?:\/\//i.test(clean) ? clean : "";
@@ -4067,6 +4111,102 @@
       renderUnsavedChanges();
       updateFinalValidation();
       toast(added.length + (added.length === 1 ? " especialista cargado. Revisa y guarda." : " especialistas cargados. Revisa y guarda."));
+    }
+
+    function pendingLocationsForClinic(clinic) {
+      if (!clinic || !clinic.id) return [];
+      var existingKeys = currentLocationKeys();
+      var pendingByKey = {};
+      reviewCache.forEach(function (row) {
+        if (row.clinic_id !== clinic.id) return;
+        if (row.status !== "open") return;
+        if (row.review_type !== "clinic_profile_enrichment") return;
+        var payload = row.payload || {};
+        proposalLocations(payload).forEach(function (location) {
+          var key = locationIdentityKey(location);
+          if (!key || existingKeys[key] || pendingByKey[key]) return;
+          pendingByKey[key] = {
+            location: location,
+            reviewId: row.id,
+            reviewTitle: row.title || "Propuesta interna",
+            sources: sourceList(payload)
+          };
+        });
+      });
+      return Object.keys(pendingByKey).map(function (key) { return pendingByKey[key]; });
+    }
+
+    function renderPendingLocationsForClinic() {
+      var panel = el("clinicPendingLocationsPanel");
+      if (!panel) return;
+      var pending = pendingLocationsForClinic(activeClinic);
+      if (!pending.length) {
+        show(panel, false);
+        return;
+      }
+      var shown = pending.slice(0, 8);
+      el("clinicPendingLocationsCount").textContent = pending.length + (pending.length === 1 ? " pendiente" : " pendientes");
+      el("clinicPendingLocationsMeta").textContent = "Están recogidas como propuesta. Solo aparecerán en la web si revisas y guardas la ficha.";
+      el("clinicPendingLocationsList").innerHTML = shown.map(function (item) {
+        return "<li>" + html(locationDisplayText(item.location)) + "</li>";
+      }).join("") + (pending.length > shown.length ? "<li>" + html("+" + (pending.length - shown.length) + " más") + "</li>" : "");
+
+      var actionReviews = [];
+      var actionSeen = {};
+      pending.forEach(function (item) {
+        if (!item.reviewId || actionSeen[item.reviewId]) return;
+        actionSeen[item.reviewId] = true;
+        actionReviews.push(item);
+      });
+      el("clinicPendingLocationsActions").innerHTML = '<button class="btn secondary" type="button" data-add-pending-locations>Cargar sedes al formulario</button>' +
+        actionReviews.slice(0, 3).map(function (item) {
+        return '<button class="link-btn" type="button" data-review-id="' + html(item.reviewId) + '">Abrir propuesta</button>';
+      }).join("");
+
+      var source = "";
+      pending.some(function (item) {
+        if (item.sources && item.sources.length) {
+          source = item.sources[0];
+          return true;
+        }
+        return false;
+      });
+      el("clinicPendingLocationsSource").innerHTML = source
+        ? 'Fuente detectada: <a href="' + html(source) + '" rel="nofollow noopener" target="_blank">' + html(source) + "</a>"
+        : "";
+      show(panel, true);
+    }
+
+    function addPendingLocationsToForm() {
+      var pending = pendingLocationsForClinic(activeClinic);
+      if (!pending.length) {
+        toast("No hay sedes pendientes para cargar.");
+        return;
+      }
+      var existing = readLocationEditorRows();
+      var seen = {};
+      existing.forEach(function (location) {
+        var key = locationIdentityKey(location);
+        if (key) seen[key] = true;
+      });
+      var added = [];
+      pending.forEach(function (item) {
+        var location = normalizedLocation(item.location);
+        var key = locationIdentityKey(location);
+        if (!location || !key || seen[key]) return;
+        seen[key] = true;
+        added.push(location);
+      });
+      if (!added.length) {
+        toast("Las sedes detectadas ya están en el formulario.");
+        renderPendingLocationsForClinic();
+        return;
+      }
+      renderLocationEditor(existing.concat(added));
+      renderPendingLocationsForClinic();
+      renderUnsavedChanges();
+      updateFinalValidation();
+      toast(added.length + (added.length === 1 ? " sede cargada. Revisa y guarda." : " sedes cargadas. Revisa y guarda."));
     }
 
     function proposalLabel(key) {
@@ -4701,6 +4841,7 @@
       activeClinicSourceCount = 0;
       resetProposalPreview();
       renderPendingSpecialistsForClinic();
+      renderPendingLocationsForClinic();
       updateFinalValidation();
       loadClinicVersions(activeClinic.id);
       loadClinicFieldLocks(activeClinic.id);
@@ -4748,6 +4889,7 @@
       if (hasOwn(fields, "profesionales")) setInput("clinicProfessionals", arrayLines(fields.profesionales));
       if (hasOwn(fields, "locations")) renderLocationEditor(fields.locations);
       renderPendingSpecialistsForClinic();
+      renderPendingLocationsForClinic();
       updateFinalValidation();
 
       var note = ["Propuesta interna cargada. Revisa antes de guardar."];
@@ -5247,13 +5389,17 @@
       el("clinicForm").addEventListener("change", updateFinalValidation);
       el("clinicAddLocationBtn").addEventListener("click", function () {
         addClinicLocation({});
+        renderPendingLocationsForClinic();
         updateFinalValidation();
         var fields = el("clinicLocationRows").querySelectorAll("[data-location-field]");
         var firstNewField = fields[Math.max(0, fields.length - 5)];
         if (firstNewField) firstNewField.focus();
       });
       el("clinicLocationRows").addEventListener("input", function (event) {
-        if (event.target.closest("[data-location-field]")) syncLocationEditorTextarea();
+        if (event.target.closest("[data-location-field]")) {
+          syncLocationEditorTextarea();
+          renderPendingLocationsForClinic();
+        }
       });
       el("clinicLocationRows").addEventListener("click", function (event) {
         var button = event.target.closest("[data-remove-location]");
@@ -5261,7 +5407,17 @@
         var row = button.closest("[data-location-row]");
         if (row) row.remove();
         renderLocationEditor(readLocationEditorRows());
+        renderPendingLocationsForClinic();
         updateFinalValidation();
+      });
+      el("clinicPendingLocationsPanel").addEventListener("click", function (event) {
+        var addButton = event.target.closest("[data-add-pending-locations]");
+        if (addButton) {
+          addPendingLocationsToForm();
+          return;
+        }
+        var button = event.target.closest("[data-review-id]");
+        if (button) openReviewEditor(button.getAttribute("data-review-id"));
       });
       el("clinicProfessionals").addEventListener("input", renderPendingSpecialistsForClinic);
       el("clinicPendingSpecialistsPanel").addEventListener("click", function (event) {

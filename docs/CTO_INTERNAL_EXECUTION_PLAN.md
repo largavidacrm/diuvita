@@ -392,6 +392,10 @@ Next 10 technical steps:
     `/admin/`, `scripts/admin_digest.py` and the admin guide: specialist
     evidence is presented as detected names, counted from actual proposed
     names and excluding rejected/stale internal evidence.
+69. Add a pending-locations loader to the clinic editor. Done locally in
+    `/admin/`: open location proposals for the active clinic now appear as
+    "Sedes detectadas" and can be loaded into the location editor for manual
+    review before any save or publication.
 
 ## Daniel decision checkpoints
 
