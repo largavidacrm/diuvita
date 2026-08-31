@@ -150,6 +150,9 @@ Required behavior:
 - LLM output may suggest or organize the decision, but the card remains
   reviewable and Daniel's action is still `approve`, `reject` or `modify`.
 - `modify` may only change fields listed in that packet's `editable_fields`.
+- Future LLM suggestions must pass
+  `scripts/validate_review_decision_suggestion.py` before they are shown or
+  transformed into any review UI state.
 
 ## APPLY_PUBLICATION_RULES
 

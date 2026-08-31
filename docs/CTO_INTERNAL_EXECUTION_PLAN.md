@@ -756,6 +756,12 @@ Next 10 technical steps:
      `scripts/daniel_review_brief.py`: JSON output now omits operator/account
      fields by default for LLM or automation plumbing, with an explicit local
      debugging flag when those fields are genuinely needed.
+146. Add a guard for future LLM review suggestions. Done locally in
+     `scripts/validate_review_decision_suggestion.py`: advisory LLM output can
+     be validated against a one-card decision packet before being shown or used,
+     blocking publication/control keys, mismatched review ids and field changes
+     outside `editable_fields`. The guard has no Supabase access and writes no
+     data.
 
 ## Daniel decision checkpoints
 

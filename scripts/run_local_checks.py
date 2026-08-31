@@ -65,6 +65,7 @@ TEST_STEPS = [
     ("test: blocking claim brief", "scripts/test_blocking_claim_brief.py"),
     ("test: review backlog brief", "scripts/test_review_backlog_brief.py"),
     ("test: review proposal packets", "scripts/test_review_proposal_decision_packets.py"),
+    ("test: review suggestion guard", "scripts/test_validate_review_decision_suggestion.py"),
     ("test: enrichment consolidation", "scripts/test_consolidate_profile_enrichment_reviews.py"),
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: specialist coverage", "scripts/test_measure_specialist_coverage.py"),

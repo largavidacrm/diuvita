@@ -58,6 +58,33 @@ Si el paquete incluye Google Maps, especialistas, precios, colegiación visible 
 una reclamación de ficha, el resultado debe seguir marcado como revisión humana
 obligatoria.
 
+Antes de enseñar o usar una sugerencia de LLM, pásala por el validador local:
+
+```bash
+python3 scripts/validate_review_decision_suggestion.py \
+  --packet-file packet.json \
+  --suggestion-file suggestion.json
+```
+
+El validador no se conecta a Supabase y no escribe datos. Solo comprueba que la
+sugerencia:
+
+- usa una acción permitida;
+- corresponde a la misma tarjeta;
+- no trae escrituras, publicación, Supabase, Netlify ni SQL;
+- no modifica campos fuera de `editable_fields`;
+- mantiene la decisión final como revisión humana.
+
+Por defecto también oculta valores crudos de la sugerencia. Para depuración
+local deliberada:
+
+```bash
+python3 scripts/validate_review_decision_suggestion.py \
+  --packet-file packet.json \
+  --suggestion-file suggestion.json \
+  --include-values
+```
+
 ## Relación con el panel
 
 El panel `/admin/` mantiene la experiencia humana simple:

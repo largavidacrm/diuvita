@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Checks that LLM review suggestions cannot bypass the human decision gate."""
+from pathlib import Path
+
+from review_proposal_decision_packets import decision_packet
+from validate_review_decision_suggestion import validate_suggestion
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def check(condition, message):
+    if not condition:
+        raise AssertionError(message)
+
+
+def sample_packet():
+    return decision_packet({
+        "id": "review-1",
+        "title": "Revisar extracción shadow: Unidad de Longevidad IMDA",
+        "review_type": "clinic_profile_enrichment",
+        "priority": 60,
+        "payload": {
+            "source_url": "https://imda.example/contacto",
+            "warnings": ["Contrastar https://imda.example/equipo con persona@example.com y +34 600 111 222."],
+            "proposed_fields": {
+                "telefono": "916 000 000",
+                "profesionales": ["Dra. Example"],
+            },
+        },
+        "clinic": {
+            "id": "clinic-1",
+            "slug": "unidad-de-longevidad-imda",
+            "display_name": "Unidad de Longevidad IMDA",
+            "city": "Madrid",
+            "country": "España",
+            "status": "preliminary",
+            "current_data": {"telefono": ""},
+        },
+    })
+
+
+def main():
+    packet = sample_packet()
+    approved = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "aprobar",
+        "reason": "La fuente oficial parece suficiente.",
+    })
+    check(approved["valid"], "Spanish approve action should be accepted")
+    check(approved["action"] == "approve", "Spanish approve action should normalize")
+    check(approved["human_required"] is True, "human gate should always remain")
+    check(approved["field_change_keys"] == [], "approve should not include field changes")
+    check("field_requires_human_attention" in approved["attention_flags"], "sensitive proposed fields should be flagged")
+    check("packet_contains_warnings" in approved["attention_flags"], "packet warnings should be flagged")
+
+    modified = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "modificar",
+        "field_changes": {
+            "phone": "916 000 000",
+        },
+        "reason": "Corregir contacto visto en https://imda.example/contacto y +34 600 111 222.",
+        "warnings_to_show": ["Confirmar con persona@example.com antes de guardar."],
+    })
+    check(modified["valid"], "valid modify should pass")
+    check(modified["action"] == "modify", "Spanish modify action should normalize")
+    check(modified["field_change_keys"] == ["telefono"], "field aliases should normalize")
+    check("field_changes" not in modified, "default output should omit raw change values")
+    joined = " ".join([modified["reason"], *modified["warnings"]])
+    check("https://imda.example/contacto" not in joined, "default suggestion output should redact URLs")
+    check("+34 600 111 222" not in joined, "default suggestion output should redact phones")
+    check("persona@example.com" not in joined, "default suggestion output should redact emails")
+
+    modified_with_values = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "modify",
+        "field_changes": {"telefono": "916 000 000"},
+        "warnings": ["Confirmar con persona@example.com."],
+    }, include_values=True)
+    check(modified_with_values["field_changes"]["telefono"] == "916 000 000", "explicit value mode should keep changes")
+    check("persona@example.com" in " ".join(modified_with_values["warnings"]), "explicit value mode should keep details")
+
+    bad_field = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "modify",
+        "field_changes": {"status": "published"},
+    })
+    check(not bad_field["valid"], "non-editable status change should be blocked")
+    check("field is not editable in this packet: status" in bad_field["errors"], "status block reason missing")
+
+    bad_publish = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "approve",
+        "publish": True,
+        "sql": "select admin_update_clinic();",
+    })
+    check(not bad_publish["valid"], "publish/control suggestions should be blocked")
+    check(any("publish" in error for error in bad_publish["errors"]), "publish block missing")
+    check(any("sql" in error for error in bad_publish["errors"]), "SQL block missing")
+
+    bad_review = validate_suggestion(packet, {
+        "review_id": "another-review",
+        "action": "reject",
+    })
+    check(not bad_review["valid"], "review_id mismatch should be blocked")
+
+    approve_with_changes = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "approve",
+        "field_changes": {"telefono": "916 000 000"},
+    })
+    check(not approve_with_changes["valid"], "approve should not carry modifications")
+    check("field changes are only allowed when action is modify" in approve_with_changes["errors"], "approve/change error missing")
+
+    empty_modify = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "modify",
+    })
+    check(not empty_modify["valid"], "modify should require concrete field changes")
+
+    source = (ROOT / "scripts" / "validate_review_decision_suggestion.py").read_text(encoding="utf-8")
+    check("admin_update_clinic" in source, "forbidden operation list should name risky admin writes")
+    check("run_psql" not in source, "suggestion validator should not connect to Supabase")
+    check("load_env_file" not in source, "suggestion validator should not read credentials")
+    print("OK review suggestion guard: LLM output stays advisory")
+
+
+if __name__ == "__main__":
+    main()
