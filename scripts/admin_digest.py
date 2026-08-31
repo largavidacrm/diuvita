@@ -1351,8 +1351,8 @@ def first_clinic_workgroup(digest: dict[str, Any]) -> str:
             parts.append(f"{count} {plural(count, singular, plural_text)}")
     detail = " / ".join(parts)
     if detail:
-        return f"Trabajar {name}: {open_count} {plural(open_count, 'tarjeta', 'tarjetas')} ({detail})"
-    return f"Trabajar {name}: {open_count} {plural(open_count, 'tarjeta', 'tarjetas')}"
+        return f"Abrir {name}: {open_count} {plural(open_count, 'tarjeta', 'tarjetas')} ({detail})"
+    return f"Abrir {name}: {open_count} {plural(open_count, 'tarjeta', 'tarjetas')}"
 
 
 def next_specialist_action(digest: dict[str, Any]) -> str:

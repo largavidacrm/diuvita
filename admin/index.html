@@ -569,11 +569,11 @@
             <div class="review-case-lead">
               <span id="reviewCaseEyebrow">Caso recomendado</span>
               <strong id="reviewCaseTitle">Cargando grupo.</strong>
-              <p id="reviewCaseDetail">Revisa este grupo como una unidad antes de guardar cambios.</p>
+              <p id="reviewCaseDetail">Filtra este grupo y abre una propuesta cada vez.</p>
             </div>
             <div class="review-case-meta" id="reviewCaseMeta"></div>
             <div class="review-case-actions">
-              <button class="btn secondary quick-primary" id="openCaseGroupBtn" type="button">Trabajar caso</button>
+              <button class="btn secondary quick-primary" id="openCaseGroupBtn" type="button">Filtrar caso</button>
               <button class="link-btn hidden" id="clearCaseGroupBtn" type="button">Ver toda la bandeja</button>
             </div>
           </section>
@@ -2515,7 +2515,7 @@
       var enrichmentOpenCount = countOpenReviewsByType(openReviews, "clinic_profile_enrichment");
       var blockingOpenCount = countOpenReviewsByType(openReviews, "blocking_claim_review");
       var focus = globalPlanFocusCopy(openCount, failedJobs, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers);
-      var nextClick = group ? "Trabajar " + clinicWorkgroupSubject(group) : next;
+      var nextClick = group ? "Filtrar grupo: " + clinicWorkgroupSubject(group) : next;
       var nextDetail = globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount);
       if (preferClaimRequest && !group) {
         nextDetail = "Abre la reclamación, revisa quién la solicita y decide el siguiente paso sin conceder acceso ni cambiar la ficha automáticamente.";
@@ -2620,7 +2620,7 @@
       }
       if (clinicGroup) {
         return {
-          title: "Trabajar grupo",
+          title: "Filtrar grupo",
           detail: clinicWorkgroupSubject(clinicGroup) + ". Varias tarjetas de una misma clínica; abre una propuesta cada vez."
         };
       }
@@ -3249,7 +3249,7 @@
       el("reviewCaseTitle").textContent = clinicWorkgroupSubject(group);
       el("reviewCaseDetail").textContent = reviewWorkgroupDetail(group, isActive);
       el("reviewCaseMeta").innerHTML = reviewWorkgroupMetaHtml(group);
-      el("openCaseGroupBtn").textContent = isActive ? "Abrir primera tarjeta" : "Trabajar caso";
+      el("openCaseGroupBtn").textContent = isActive ? "Abrir primera tarjeta" : "Filtrar caso";
       show(el("clearCaseGroupBtn"), isActive);
       show(panel, true);
     }

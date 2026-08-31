@@ -311,7 +311,7 @@ def main():
     check(next_action_label(claim_request_digest) == "Revisar reclamación de ficha", "claim request should be next before candidates")
     check(
         first_clinic_workgroup(claim_request_digest)
-        == "Trabajar Monarka Clinic: 1 tarjeta (1 reclamación de ficha)",
+        == "Abrir Monarka Clinic: 1 tarjeta (1 reclamación de ficha)",
         "claim request should be visible in clinic workgroup detail",
     )
     check(next_specialist_action(digest) == "Revisar Age Reversal: ya tiene 2 revisiones abiertas", "next specialist action missing")
@@ -337,7 +337,7 @@ def main():
     )
     check(next_source_action(digest) == "Revisar 2 claims bloqueantes de Kairos Longevity Clinic", "next source action missing")
     check(
-        first_clinic_workgroup(digest) == "Trabajar Sensabell: 5 tarjetas (1 claim bloqueante / 3 mejoras / 1 auditoría)",
+        first_clinic_workgroup(digest) == "Abrir Sensabell: 5 tarjetas (1 claim bloqueante / 3 mejoras / 1 auditoría)",
         "first clinic workgroup missing",
     )
     check(
@@ -421,7 +421,7 @@ def main():
     check("publication_readiness_base as (" in source, "digest should calculate publication readiness")
     check("'publication_readiness', (select data from publication_readiness)" in source, "digest should expose publication readiness")
     check("Especialistas pendientes: 2 tarjetas; 17 especialistas propuestos" in output, "specialist pending line missing")
-    check("Grupo por clinica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
+    check("Grupo por clinica: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck line missing")
     check("## Vigilancia de fuentes" in output, "source monitoring section missing")

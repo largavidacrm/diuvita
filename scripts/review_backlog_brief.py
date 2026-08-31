@@ -567,7 +567,7 @@ def format_backlog(report: dict[str, Any]) -> str:
         "## Empezar por",
         f"- {first_backlog_action(report)}",
         "",
-        "## Trabajar por clínica",
+        "## Filtrar por clínica",
     ])
     if not workgroups:
         output.append("- No hay grupos de revisión por clínica.")

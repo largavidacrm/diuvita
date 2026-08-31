@@ -221,7 +221,7 @@ def main():
     check("Tarjetas en grupos duplicados: 5" in output, "duplicate card count missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "guard line missing")
     check("Writes data: no" in output, "read-only signal missing")
-    check("## Trabajar por clínica" in output, "clinic workgroup section missing")
+    check("## Filtrar por clínica" in output, "clinic workgroup section missing")
     check("Sensabell · Valencia · publicada · 5 tarjetas" in output, "clinic workgroup missing")
     check("Kairos Longevity Clinic · Madrid · publicada · 4 tarjetas" in output, "second workgroup missing")
     check("2 claims bloqueantes / 2 mejoras" in output, "workgroup type counts missing")

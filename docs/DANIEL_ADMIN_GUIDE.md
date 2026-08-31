@@ -90,7 +90,7 @@ En **Estado del sistema**, mira especialmente:
 - **Sedes sin valoraciones**: avisa si alguna sede guardada no tiene enlace directo a valoraciones de Google.
 - **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas.
 - **Reclamaciones de ficha**: solicitudes de una clínica para revisar una ficha; siempre requieren decisión humana.
-- **Grupo por clínica**: señala qué clínica conviene revisar en bloque porque concentra varias tarjetas abiertas.
+- **Grupo por clínica**: señala qué clínica concentra varias tarjetas abiertas para que puedas filtrarlas y abrirlas una por una.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.
 - **Tarjetas duplicadas**: muestra cuántas tarjetas forman parte de esas repeticiones.
 - **Primer atasco**: señala qué clínica con tarjetas repetidas conviene ordenar primero.
@@ -110,14 +110,14 @@ En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta d
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
 clínica.
 
-El bloque **Caso recomendado** resume la clínica que conviene trabajar como un
+El bloque **Caso recomendado** resume la clínica que conviene filtrar como un
 caso completo. Muestra cuántas tarjetas tiene abiertas, el orden sugerido y el
-botón **Trabajar caso**. Cuando ya estás dentro de ese grupo, el botón cambia a
+botón **Filtrar caso**. Cuando ya estás dentro de ese grupo, el botón cambia a
 **Abrir primera tarjeta** y aparece **Ver toda la bandeja** para salir del
 filtro.
 
 El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
-que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
+que más conviene ordenar. Es útil cuando una misma clínica tiene claim,
 auditoría, cambio de fuente y mejoras abiertas a la vez.
 
 El filtro **Reclamaciones** muestra solicitudes de clínicas sobre una ficha.
