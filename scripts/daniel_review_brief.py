@@ -40,6 +40,14 @@ TYPE_LABELS = {
     "clinic_quality_audit": ("auditoría de calidad", "auditorías de calidad"),
 }
 ACCOUNT_FIELD_KEYS = {"admin_email"}
+ACTION_TYPE_ORDER = {
+    "blocking_claim_review": 0,
+    "clinic_claim_request": 1,
+    "candidate_clinic": 2,
+    "source_change_detected": 3,
+    "clinic_profile_enrichment": 4,
+    "clinic_quality_audit": 5,
+}
 
 
 def review_counts(digest: dict[str, Any]) -> dict[str, int]:
@@ -71,17 +79,52 @@ def review_label(review_type: str, count: int) -> str:
     return review_type.replace("_", " ")
 
 
+def normalized_review_type(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    review_type = str(item.get("review_type") or "")
+    payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+    if review_type == "clinic_quality_audit" and payload.get("quality_context") == "blocking_claims":
+        return "blocking_claim_review"
+    return review_type
+
+
 def plural(value: int, singular: str, plural_text: str) -> str:
     return singular if value == 1 else plural_text
 
 
 def first_review(digest: dict[str, Any], review_type: str) -> dict[str, Any] | None:
-    for item in digest.get("open_reviews") or []:
-        if item.get("review_type") == review_type:
-            return item
-    for item in digest.get("review_examples_by_type") or []:
-        if item.get("review_type") == review_type:
-            return item
+    for key in ("open_reviews", "sample_open_reviews", "review_examples_by_type", "sample_review_examples_by_type"):
+        for item in digest.get(key) or []:
+            if isinstance(item, dict) and normalized_review_type(item) == review_type:
+                return item
+    return None
+
+
+def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int]:
+    review_type = normalized_review_type(item)
+    priority = as_int(item.get("priority"))
+    if review_type in {"blocking_claim_review", "clinic_claim_request"}:
+        priority_bucket = 1000 + priority
+    elif review_type == "candidate_clinic" and priority >= 90:
+        priority_bucket = 900 + priority
+    else:
+        priority_bucket = priority
+    return (-priority_bucket, ACTION_TYPE_ORDER.get(review_type, 9))
+
+
+def first_action_review(digest: dict[str, Any]) -> dict[str, Any] | None:
+    for source in (
+        digest.get("open_reviews"),
+        digest.get("sample_open_reviews"),
+        digest.get("review_examples_by_type"),
+        digest.get("sample_review_examples_by_type"),
+    ):
+        if not isinstance(source, list):
+            continue
+        candidates = [item for item in source if isinstance(item, dict) and normalized_review_type(item)]
+        if candidates:
+            return sorted(candidates, key=action_review_sort_key)[0]
     return None
 
 
@@ -92,7 +135,7 @@ def review_name(item: dict[str, Any] | None, fallback_filter: str = "correspondi
     title = str(item.get("title") or "").strip()
     if clinic and title and clinic.lower() not in title.lower():
         return f"{clinic}: {title}"
-    return title or clinic or "revisión abierta"
+    return title or clinic or f"abre el filtro {fallback_filter} en el panel"
 
 
 def source_status(digest: dict[str, Any]) -> str:
@@ -136,6 +179,27 @@ def profile_completeness_status(digest: dict[str, Any]) -> str:
     return f"{ready}/{visible} fichas sin campos pendientes medidos; {pending} con pendientes"
 
 
+def review_clinic_key(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    return str(item.get("clinic_slug") or item.get("clinic_name") or "").strip().lower()
+
+
+def target_clinic_key(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    return str(item.get("slug") or item.get("clinic_slug") or item.get("clinic_name") or "").strip().lower()
+
+
+def aggregate_profile_queue_status(digest: dict[str, Any]) -> str:
+    completeness = digest.get("profile_completeness") or {}
+    visible = as_int(completeness.get("visible_clinics"))
+    pending = as_int(completeness.get("with_pending_fields"))
+    if visible and pending:
+        return f"{pending}/{visible} fichas con campos pendientes; se revisan después de la prioridad actual"
+    return "sin ficha pendiente medida"
+
+
 def review_backlog_status(digest: dict[str, Any]) -> str:
     quality = digest.get("review_backlog_quality") or {}
     duplicate_clinics = as_int(quality.get("duplicate_enrichment_clinics"))
@@ -149,13 +213,14 @@ def review_backlog_status(digest: dict[str, Any]) -> str:
 def profile_queue_signal(digest: dict[str, Any]) -> str:
     next_action = next_action_label(digest)
     if next_action in {"Mejorar fichas existentes", "Completar fichas"}:
+        action_review = first_action_review(digest)
+        target = digest.get("profile_next_target") if isinstance(digest.get("profile_next_target"), dict) else {}
+        action_key = review_clinic_key(action_review)
+        target_key = target_clinic_key(target)
+        if action_key and target_key and action_key != target_key:
+            return aggregate_profile_queue_status(digest)
         return next_profile_action(digest)
-    completeness = digest.get("profile_completeness") or {}
-    visible = as_int(completeness.get("visible_clinics"))
-    pending = as_int(completeness.get("with_pending_fields"))
-    if visible and pending:
-        return f"{pending}/{visible} fichas con campos pendientes; se revisan después de la prioridad actual"
-    return "sin ficha pendiente medida"
+    return aggregate_profile_queue_status(digest)
 
 
 def backlog_bottleneck_signal(digest: dict[str, Any]) -> str:
@@ -180,6 +245,67 @@ def review_professionals_note(item: dict[str, Any] | None) -> str:
 
 def review_case_line(item: dict[str, Any] | None, fallback_filter: str) -> str:
     return f"Caso visible: {review_name(item, fallback_filter)}." + review_professionals_note(item)
+
+
+def review_first_step_copy(item: dict[str, Any]) -> list[str]:
+    review_type = normalized_review_type(item)
+    if review_type == "blocking_claim_review":
+        return [
+            "Primero revisa claims bloqueantes.",
+            review_case_line(item, "Claims bloqueantes"),
+        ]
+    if review_type == "clinic_claim_request":
+        return [
+            "Primero revisa reclamaciones de ficha.",
+            review_case_line(item, "Reclamaciones")
+            + " No confirma identidad, no da acceso y no cambia datos por sí sola.",
+        ]
+    if review_type == "candidate_clinic":
+        return [
+            "Primero valida clínicas nuevas.",
+            review_case_line(item, "Clínicas nuevas"),
+        ]
+    if review_type == "source_change_detected":
+        return [
+            "Primero revisa cambios de fuente.",
+            review_case_line(item, "Cambios de fuente"),
+        ]
+    if review_type == "clinic_profile_enrichment":
+        return [
+            "Primero revisa mejoras de fichas existentes.",
+            review_case_line(item, "Mejoras de ficha"),
+        ]
+    if review_type == "clinic_quality_audit":
+        return [
+            "Primero completa fichas incompletas.",
+            review_case_line(item, "Auditorías"),
+        ]
+    return [
+        "Primero abre la revisión prioritaria.",
+        review_case_line(item, "Prioridad"),
+    ]
+
+
+def priority_review_click(digest: dict[str, Any]) -> str:
+    counts = review_counts(digest)
+    if counts.get("blocking_claim_review"):
+        item = first_review(digest, "blocking_claim_review")
+        if not item:
+            return "Pulsa Abrir prioridad y abre el filtro Claims bloqueantes."
+        return f"Pulsa Abrir prioridad: {review_name(item, 'Claims bloqueantes')}."
+    if counts.get("clinic_claim_request"):
+        return claim_request_click(digest)
+    item = first_action_review(digest)
+    if not item:
+        return ""
+    review_type = normalized_review_type(item)
+    if review_type == "clinic_claim_request":
+        return claim_request_click(digest)
+    label = review_name(item, "Prioridad")
+    note = review_professionals_note(item)
+    if review_type == "clinic_quality_audit":
+        return f"Pulsa Abrir prioridad: {label}; si falta un dato, usa Revisión manual en ese campo."
+    return f"Pulsa Abrir prioridad: {label}.{note}"
 
 
 def clinic_workgroup_click(digest: dict[str, Any]) -> str:
@@ -230,10 +356,10 @@ def next_clicks(digest: dict[str, Any]) -> list[str]:
     if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
         clicks.append(f"No crees trabajos nuevos hasta bajar la bandeja; ahora está {guard}.")
     for candidate in (
-        claim_request_click(digest),
-        clinic_workgroup_click(digest),
+        priority_review_click(digest),
         specialists_click(digest),
         google_maps_click(digest),
+        clinic_workgroup_click(digest),
     ):
         if candidate and candidate not in clicks:
             clicks.append(candidate)
@@ -256,17 +382,10 @@ def production_health_status(report: dict[str, Any]) -> str:
 def first_step(digest: dict[str, Any]) -> list[str]:
     counts = review_counts(digest)
     failed = digest.get("recent_failed_jobs") or []
-    guard = review_backlog_guard_status(digest)
-    group = first_clinic_workgroup(digest)
     if failed:
         return [
             "Primero revisa fallos técnicos.",
             "Hay trabajos fallidos; conviene corregirlos antes de aceptar nuevas fichas.",
-        ]
-    if (guard.startswith("cerca del freno") or guard.startswith("freno activo")) and group != "sin grupo por clínica medido":
-        return [
-            "Primero baja un grupo repetido.",
-            f"Caso visible: {group}.",
         ]
     if counts.get("blocking_claim_review"):
         return [
@@ -279,6 +398,9 @@ def first_step(digest: dict[str, Any]) -> list[str]:
             review_case_line(first_review(digest, "clinic_claim_request"), "Reclamaciones")
             + " No confirma identidad, no da acceso y no cambia datos por sí sola.",
         ]
+    action_review = first_action_review(digest)
+    if action_review:
+        return review_first_step_copy(action_review)
     if counts.get("candidate_clinic"):
         return [
             "Primero valida clínicas nuevas.",

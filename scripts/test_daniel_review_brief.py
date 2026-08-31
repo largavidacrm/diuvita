@@ -243,15 +243,15 @@ def main():
         "claim-request brief should keep duplicate backlog secondary",
     )
     check("Primer atasco:" not in claim_output, "claim-request brief should avoid old bottleneck wording")
-    check(first_step(digest)[0] == "Primero baja un grupo repetido.", "near-limit clinic groups should be first")
+    check(first_step(digest)[0] == "Primero revisa claims bloqueantes.", "priority review should beat clinic groups")
     check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")
     check("Próximos clics" in output, "next-clicks section missing")
     check("No crees trabajos nuevos hasta bajar la bandeja; ahora está cerca del freno: 48/50 abiertas." in output, "near-limit click guard missing")
-    check("Pulsa Filtrar grupo y abre Sensabell: 5 tarjetas, una por una." in output, "clinic-group click missing")
+    check("Pulsa Abrir prioridad: Revisar claims bloqueantes: Sensabell." in output, "priority review click missing")
     check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad. En total hay 17 especialistas propuestos en la bandeja." in output, "specialist click missing")
     check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "Google Maps click missing")
-    check("Caso visible: Abrir Sensabell: 5 tarjetas" in output, "visible clinic group missing")
+    check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible priority case missing")
     check("Señal automática base: Revisar claim bloqueante." in output, "base next action missing")
     check("48 revisiones abiertas" in output, "open review count missing")
     check("1 claim bloqueante pendiente" in output, "blocking count missing")
@@ -282,6 +282,56 @@ def main():
     check("Atascos de mejoras: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
     check(len(next_clicks(digest)) == 4, "next clicks should stay short")
+
+    audit_priority_digest = sample_digest()
+    audit_priority_digest["summary"]["reviews"]["open"] = 22
+    audit_priority_digest["reviews_by_type"] = [
+        {"review_type": "clinic_profile_enrichment", "open_count": 20},
+        {"review_type": "clinic_quality_audit", "open_count": 2},
+    ]
+    audit_priority_digest["open_reviews"] = [
+        {
+            "review_type": "clinic_quality_audit",
+            "priority": 85,
+            "clinic_name": "Clínica Benzaquén",
+            "title": "Completar ficha: Clínica Benzaquén",
+        },
+        {
+            "review_type": "clinic_profile_enrichment",
+            "priority": 65,
+            "clinic_name": "Sensabell",
+            "title": "Ampliar ficha: Sensabell",
+        },
+    ]
+    audit_priority_digest["review_examples_by_type"] = list(audit_priority_digest["open_reviews"])
+    audit_priority_digest["review_first_clinic_workgroup"] = {
+        "clinic_slug": "sensabell",
+        "clinic_name": "Sensabell",
+        "city": "Valencia",
+        "clinic_status": "published",
+        "open_count": 4,
+        "blocking_claim_reviews": 0,
+        "quality_reviews": 1,
+        "enrichment_reviews": 3,
+        "source_change_reviews": 0,
+        "candidate_reviews": 0,
+        "max_priority": 65,
+        "oldest_created_at": "2026-08-30T08:30:00+00:00",
+    }
+    audit_priority_output = format_brief(audit_priority_digest)
+    check(
+        first_step(audit_priority_digest)[1] == "Caso visible: Completar ficha: Clínica Benzaquén.",
+        "quality audit should open the concrete higher-priority ficha",
+    )
+    check(
+        "Pulsa Abrir prioridad: Completar ficha: Clínica Benzaquén; si falta un dato, usa Revisión manual en ese campo."
+        in audit_priority_output,
+        "quality audit next click should point to manual review",
+    )
+    check(
+        "Grupo por clínica: Abrir Sensabell: 4 tarjetas" in audit_priority_output,
+        "clinic workgroup should remain as secondary context",
+    )
 
     production_report = {
         "ok": True,

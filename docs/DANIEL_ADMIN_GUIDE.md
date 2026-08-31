@@ -50,13 +50,15 @@ Arriba del panel verás **Plan global**. Léelo de arriba abajo:
 4. **Mapa simple del plan**: muestra el camino completo sin numeritos
    decorativos.
 
-Puedes pulsar **Filtrar grupo** o **Abrir siguiente** para ir directamente al
-grupo o tarjeta que el panel considera más importante. Si ves “control interno”,
-no significa que la web esté rota: significa que toca limpiar revisiones antes
-de subir la autonomía.
+Puedes pulsar **Abrir prioridad** para ir directamente a la tarjeta concreta
+que conviene decidir primero. **Filtrar grupo** sigue disponible como ayuda
+secundaria cuando una clínica concentra varias tarjetas, pero no sustituye la
+decisión una por una. Si ves “control interno”, no significa que la web esté
+rota: significa que toca limpiar revisiones antes de subir la autonomía.
 
-Si **Tú ahora** dice **No crees trabajos nuevos**, usa primero **Filtrar grupo**,
-**Especialistas** o **Google Maps** para cerrar tarjetas abiertas.
+Si **Tú ahora** dice **No crees trabajos nuevos**, usa primero **Abrir
+prioridad** para cerrar la propuesta pendiente. Después puedes usar
+**Especialistas**, **Google Maps** o **Filtrar grupo** si ayudan a bajar la cola.
 
 Si **Tu próximo clic** dice **Revisar reclamación**, abre esa tarjeta antes de
 crear nuevas fichas. Una reclamación de ficha no confirma identidad, no concede

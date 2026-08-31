@@ -157,18 +157,21 @@ def main():
     check(specialist_status(digest) == "2/19 fichas con especialistas; 17 pendientes", "specialist status missing")
     check(location_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sin Maps de clínica; 3 sin valoraciones; 0 sin dirección", "location status missing")
     check(source_monitoring_status(digest) == "todo reciente; próxima revisión 2026-09-29 09:58", "source monitoring missing")
-    check(daniel_now_status(digest).startswith("Abrir Sensabell"), "Daniel next step should use clinic workgroup")
+    check(
+        daniel_now_status(digest) == "Abrir prioridad: abre el filtro Claims bloqueantes en el panel",
+        "Daniel next step should open the concrete priority review",
+    )
     check(codex_can_continue_status(digest) == "mejorar panel, extractores y checks sin crear tarjetas nuevas", "Codex safe next step missing")
     check(not_ready_status(digest) == "muestra humana insuficiente: 2/200 candidatas", "not-ready reason missing")
     check("# Vitalarga: estado del plan global" in output, "title missing")
     check("Git: main · abc123 Test commit" in output, "git label missing")
     check("## Lectura rápida" in output, "quick-read section missing")
-    check("Daniel ahora: Abrir Sensabell: 5 tarjetas" in output, "Daniel quick action missing")
+    check("Daniel ahora: Abrir prioridad: abre el filtro Claims bloqueantes en el panel" in output, "Daniel quick action missing")
     check("Codex puede seguir con: mejorar panel, extractores y checks sin crear tarjetas nuevas" in output, "Codex safe work missing")
     check("No activar todavía: muestra humana insuficiente: 2/200 candidatas" in output, "not-ready quick line missing")
     check("## Siguiente en el panel" in output, "panel next-click section missing")
     check("No crees trabajos nuevos hasta bajar la bandeja; ahora está cerca del freno: 48/50 abiertas." in output, "panel backlog guard missing")
-    check("Pulsa Filtrar grupo y abre Sensabell: 5 tarjetas, una por una." in output, "panel clinic-group click missing")
+    check("Pulsa Abrir prioridad: abre el filtro Claims bloqueantes en el panel." in output, "panel priority click missing")
     check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad." in output, "panel specialist click missing")
     check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "panel Google Maps click missing")
     check("Fase activa: centro de control y reducción de bandeja" in output, "phase line missing")
@@ -208,6 +211,48 @@ def main():
     check(
         codex_can_continue_status(specialist_only) == "mejorar revisión de especialistas propuestos sin publicarlos",
         "Codex should still improve specialist-review tooling when publication blockers are clear",
+    )
+
+    audit_priority = sample_digest()
+    audit_priority["summary"]["reviews"] = {"open": 22}
+    audit_priority["reviews_by_type"] = [
+        {"review_type": "clinic_profile_enrichment", "open_count": 20},
+        {"review_type": "clinic_quality_audit", "open_count": 2},
+    ]
+    audit_priority["open_reviews"] = [
+        {
+            "review_type": "clinic_quality_audit",
+            "priority": 85,
+            "clinic_name": "Clínica Benzaquén",
+            "title": "Completar ficha: Clínica Benzaquén",
+        },
+        {
+            "review_type": "clinic_profile_enrichment",
+            "priority": 65,
+            "clinic_name": "Sensabell",
+            "title": "Ampliar ficha: Sensabell",
+        },
+    ]
+    audit_priority["review_first_clinic_workgroup"] = {
+        "clinic_name": "Sensabell",
+        "open_count": 4,
+        "enrichment_reviews": 3,
+        "quality_reviews": 1,
+        "max_priority": 65,
+    }
+    audit_output = format_global_plan_status(audit_priority, "main · audit")
+    check(
+        daniel_now_status(audit_priority) == "Abrir prioridad: Completar ficha: Clínica Benzaquén",
+        "Daniel should see the concrete higher-priority audit before the group",
+    )
+    check(
+        "Pulsa Abrir prioridad: Completar ficha: Clínica Benzaquén; si falta un dato, usa Revisión manual en ese campo."
+        in audit_output,
+        "global status should send Daniel to manual review for quality-audit fields",
+    )
+    check(
+        "Grupo por clínica: Abrir Sensabell: 4 tarjetas" in audit_output,
+        "global status should keep clinic groups as secondary context",
     )
     print("OK global plan status: roadmap snapshot is readable")
 

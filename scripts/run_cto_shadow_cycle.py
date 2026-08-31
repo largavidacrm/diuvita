@@ -19,13 +19,13 @@ from admin_digest import (
     as_int,
     google_link_review_status,
     next_action_label,
-    next_profile_action,
     next_source_action,
     review_backlog_guard_status,
     source_coverage_status,
     specialist_review_status,
     top_pending_profile_field,
 )
+from daniel_review_brief import priority_review_click, profile_queue_signal
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -461,27 +461,23 @@ def cycle_next_clicks(digest: dict[str, Any]) -> list[str]:
     guard = review_backlog_guard_status(digest)
     if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
         clicks.append(f"No crear trabajos nuevos: {guard}.")
-    workgroup = clinic_workgroup_click_from_digest(digest)
-    if workgroup:
-        clicks.append(workgroup)
+    priority_click = priority_review_click(digest)
+    if priority_click:
+        clicks.append(priority_click)
     specialists = specialist_review_status(digest)
     if not specialists.startswith("sin tarjetas"):
         clicks.append(f"Abrir Especialistas: {specialists}.")
     google_links = google_link_review_status(digest)
     if not google_links.startswith("sin tarjetas"):
         clicks.append(f"Abrir Google Maps: {google_links}.")
+    workgroup = clinic_workgroup_click_from_digest(digest)
+    if workgroup:
+        clicks.append(workgroup)
     return clicks[:4] or ["Abrir el panel y usar Abrir prioridad."]
 
 
 def cycle_profile_queue_signal(digest: dict[str, Any], next_action: str) -> str:
-    if next_action in {"Mejorar fichas existentes", "Completar fichas"}:
-        return next_profile_action(digest)
-    completeness = digest.get("profile_completeness") or {}
-    visible = as_int(completeness.get("visible_clinics"))
-    pending = as_int(completeness.get("with_pending_fields"))
-    if visible and pending:
-        return f"{pending}/{visible} fichas con campos pendientes; se revisan después de la prioridad actual"
-    return "sin ficha pendiente medida"
+    return profile_queue_signal(digest)
 
 
 def step_label(name: str) -> str:

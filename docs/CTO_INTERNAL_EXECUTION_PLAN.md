@@ -104,7 +104,7 @@ Already built:
 - Safe CTO shadow cycle can optionally run the strict editorial-limit scan.
 - Admin system status shows public website health from lightweight public checks.
 - Admin system status and review inbox show duplicated profile-enrichment review pressure.
-- Admin system status and review inbox show the first clinic workgroup so Daniel can review clustered cards together.
+- Admin system status and review inbox show the concrete priority review first, while clinic workgroups remain available as secondary context for clustered cards and future LLM assistance.
 - Duplicated review pressure has a read-only brief with concrete clinics to start from, and the safe CTO cycle includes that measurement.
 - Blocking-claim briefs now show a plain recommended next step per affected clinic without resolving the claim.
 - Global plan status can be generated as a read-only executive snapshot from real Supabase state.
@@ -805,6 +805,12 @@ Next 10 technical steps:
      only name missing fields now carry safe admin targets and bounded
      source-job fields, so a future LLM can suggest "open this field manually"
      without inventing values, writing Supabase data or changing publication.
+154. Prioritize concrete review decisions over clinic groups. Done locally in
+     `/admin/`, `scripts/admin_digest.py`, `scripts/daniel_review_brief.py`,
+     `scripts/global_plan_status.py` and `scripts/run_cto_shadow_cycle.py`:
+     Daniel's first action now opens the highest-priority actionable review
+     card, while clinic groups such as repeated Sensabell work stay visible as
+     secondary backlog context and LLM-ready signals.
 
 ## Daniel decision checkpoints
 

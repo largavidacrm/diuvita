@@ -1427,6 +1427,65 @@ def next_source_action(digest: dict[str, Any]) -> str:
     return f"Revisar soporte de fuentes de {name}"
 
 
+ACTION_REVIEW_TYPE_ORDER = {
+    "blocking_claim_review": 0,
+    "clinic_claim_request": 1,
+    "candidate_clinic": 2,
+    "source_change_detected": 3,
+    "clinic_profile_enrichment": 4,
+    "clinic_quality_audit": 5,
+}
+
+
+def normalized_action_review_type(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    review_type = str(item.get("review_type") or "")
+    payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+    if review_type == "clinic_quality_audit" and payload.get("quality_context") == "blocking_claims":
+        return "blocking_claim_review"
+    return review_type
+
+
+def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int]:
+    review_type = normalized_action_review_type(item)
+    priority = as_int(item.get("priority"))
+    if review_type in {"blocking_claim_review", "clinic_claim_request"}:
+        priority_bucket = 1000 + priority
+    elif review_type == "candidate_clinic" and priority >= 90:
+        priority_bucket = 900 + priority
+    else:
+        priority_bucket = priority
+    return (-priority_bucket, ACTION_REVIEW_TYPE_ORDER.get(review_type, 9))
+
+
+def first_action_review_type(digest: dict[str, Any]) -> str:
+    for key in ("open_reviews", "sample_open_reviews"):
+        open_reviews = digest.get(key) or []
+        if not isinstance(open_reviews, list):
+            continue
+        candidates = [item for item in open_reviews if isinstance(item, dict) and normalized_action_review_type(item)]
+        if candidates:
+            return normalized_action_review_type(sorted(candidates, key=action_review_sort_key)[0])
+    return ""
+
+
+def action_label_for_review_type(review_type: str) -> str:
+    if review_type == "blocking_claim_review":
+        return "Revisar claim bloqueante"
+    if review_type == "clinic_claim_request":
+        return "Revisar reclamación de ficha"
+    if review_type == "candidate_clinic":
+        return "Validar candidatas"
+    if review_type == "source_change_detected":
+        return "Revisar cambios de fuente"
+    if review_type == "clinic_profile_enrichment":
+        return "Mejorar fichas existentes"
+    if review_type == "clinic_quality_audit":
+        return "Completar fichas"
+    return ""
+
+
 def source_coverage_status(digest: dict[str, Any]) -> str:
     coverage = digest.get("source_coverage") or {}
     visible = as_int(coverage.get("visible_clinics"))
@@ -1485,6 +1544,10 @@ def next_action_label(digest: dict[str, Any]) -> str:
         return "Revisar claim bloqueante"
     if reviews_by_type.get("clinic_claim_request"):
         return "Revisar reclamación de ficha"
+    action_type = first_action_review_type(digest)
+    action_label = action_label_for_review_type(action_type)
+    if action_label:
+        return action_label
     if any(item.get("review_type") == "candidate_clinic" and as_int(item.get("priority")) >= 90 for item in open_reviews):
         return "Validar candidatas"
     if reviews_by_type.get("candidate_clinic"):

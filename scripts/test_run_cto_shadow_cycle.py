@@ -604,6 +604,7 @@ def main():
     check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
     next_click_text = " ".join(cycle_next_clicks(cycle_digest))
     check("No crear trabajos nuevos" in next_click_text, "cycle brief should show the backlog guard next click")
+    check("Pulsa Abrir prioridad" in next_click_text, "cycle brief should show the concrete priority click")
     check("Abrir Especialistas" in next_click_text, "cycle brief should show specialist next click")
     check("Abrir Google Maps" in next_click_text, "cycle brief should show Google Maps next click")
     brief_text = format_cycle_brief(cycle_brief)
@@ -623,6 +624,50 @@ def main():
     check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
     check("Propuestas especialistas: no comprobadas en este ciclo" in brief_text, "plain brief specialist proposal line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
+
+    compact_priority_digest = {
+        "summary": {
+            "reviews": {"open": 41},
+            "jobs": {"failed": 0, "dead_letter": 0},
+            "automation": {"auto_publish_enabled": False, "shadow_mode_active": True},
+        },
+        "reviews_by_type": [
+            {"review_type": "clinic_profile_enrichment", "open_count": 20},
+            {"review_type": "clinic_quality_audit", "open_count": 18},
+            {"review_type": "candidate_clinic", "open_count": 3},
+        ],
+        "sample_open_reviews": [
+            {
+                "title": "Completar ficha: Clínica Benzaquén",
+                "review_type": "clinic_quality_audit",
+                "priority": 85,
+                "clinic_name": "Clínica Benzaquén",
+            },
+            {
+                "title": "Revisar extracción shadow: Sensabell",
+                "review_type": "clinic_profile_enrichment",
+                "priority": 60,
+                "clinic_name": "Sensabell",
+            },
+        ],
+        "review_first_clinic_workgroup": {
+            "clinic_name": "Sensabell",
+            "open_count": 4,
+        },
+    }
+    compact_priority_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [{"name": "admin_digest", "ok": True, "summary": compact_priority_digest}],
+    })
+    compact_priority_clicks = cycle_next_clicks(compact_priority_digest)
+    compact_priority_click_text = " ".join(compact_priority_clicks)
+    check(compact_priority_brief["next_action"] == "Completar fichas", "compact cycle should prefer sampled higher-priority audits")
+    check(
+        compact_priority_clicks[0].startswith("Pulsa Abrir prioridad: Completar ficha: Clínica Benzaquén"),
+        "compact cycle should open the sampled priority card before group context",
+    )
+    check("Sensabell" in compact_priority_click_text, "compact cycle should keep the lower-priority group as context")
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",
         "ok": True,

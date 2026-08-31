@@ -2452,6 +2452,15 @@
     function nextActionLabel(rows, failedJobs) {
       rows = Array.isArray(rows) ? rows : [];
       if (Number(failedJobs || 0)) return "Revisar fallos";
+      var actionReview = firstActionReview(rows, failedJobs);
+      if (actionReview) {
+        if (isBlockingClaimReview(actionReview)) return "Revisar claim bloqueante";
+        if (isClinicClaimRequestReview(actionReview)) return "Revisar reclamación";
+        if (actionReview.review_type === "candidate_clinic") return "Validar candidatas";
+        if (actionReview.review_type === "source_change_detected") return "Revisar cambios de fuente";
+        if (actionReview.review_type === "clinic_profile_enrichment") return "Mejorar fichas existentes";
+        if (actionReview.review_type === "clinic_quality_audit") return "Completar fichas";
+      }
       if (rows.some(isBlockingClaimReview)) return "Revisar claim bloqueante";
       if (rows.some(isClinicClaimRequestReview)) return "Revisar reclamación";
       if (rows.some(function (row) { return row.review_type === "candidate_clinic" && Number(row.priority || 0) >= 90; })) {
@@ -2542,7 +2551,7 @@
         '</article>';
     }
 
-    function globalPlanFocusCopy(openCount, failedJobs, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers) {
+    function globalPlanFocusCopy(openCount, failedJobs, nextReview, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers) {
       if (Number(failedJobs || 0)) {
         return {
           title: "Estamos arreglando estabilidad técnica antes de avanzar.",
@@ -2550,10 +2559,12 @@
         };
       }
       if (openCount) {
-        var groupText = group ? " Empieza por " + clinicWorkgroupLabel(group) + "." : "";
+        var focusText = nextReview
+          ? " Empieza por " + reviewPrimarySubject(nextReview) + "."
+          : (group ? " Empieza por " + clinicWorkgroupLabel(group) + "." : "");
         return {
           title: "Estamos bajando la bandeja antes de crear más trabajo.",
-          detail: "La web funciona. Tu parte es validar; mi parte es mejorar herramientas sin publicar ni llenar más la cola." + groupText
+          detail: "La web funciona. Tu parte es validar una propuesta cada vez; mi parte es mejorar herramientas sin publicar ni llenar más la cola." + focusText
         };
       }
       if (specialists && specialists.withoutSpecialists) {
@@ -2583,7 +2594,16 @@
       return "sin cuello de botella claro";
     }
 
-    function globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount) {
+    function globalPlanNextDetailText(nextReview, group, sourceTarget, profileTarget, candidateOpenCount) {
+      if (nextReview) {
+        if (isClinicClaimRequestReview(nextReview)) {
+          return "Ruta: Abrir reclamación · revisar quién escribe · registrar contacto interno o descartar · siguiente automática.";
+        }
+        if (nextReview.review_type === "clinic_quality_audit" && !isBlockingClaimReview(nextReview)) {
+          return "Ruta: Abrir prioridad · Revisión manual del campo pendiente · guardar ficha · siguiente automática.";
+        }
+        return "Ruta: Abrir prioridad · revisar solo ese cambio · aprobar, rechazar o modificar · siguiente automática.";
+      }
       if (group) {
         var enrichmentCount = countOpenReviewsByType(group.rows || [], "clinic_profile_enrichment");
         if (enrichmentCount > 1) {
@@ -2676,21 +2696,20 @@
       var profileTarget = profileNextTargetLabel(completeness.nextTarget);
       var next = nextActionLabel(openReviews || [], failedJobs);
       var groupRows = group && Array.isArray(group.rows) ? group.rows : [];
-      var nextReview = groupRows.length
-        ? firstActionReview(groupRows, 0) || sortReviewWorkgroup(groupRows)[0]
-        : firstActionReview(openReviews || [], failedJobs);
+      var nextReview = firstActionReview(openReviews || [], failedJobs) ||
+        (groupRows.length ? firstActionReview(groupRows, 0) || sortReviewWorkgroup(groupRows)[0] : null);
       var candidateOpenCount = countOpenReviewsByType(openReviews, "candidate_clinic");
       var enrichmentOpenCount = countOpenReviewsByType(openReviews, "clinic_profile_enrichment");
       var blockingOpenCount = countOpenReviewsByType(openReviews, "blocking_claim_review");
-      var focus = globalPlanFocusCopy(openCount, failedJobs, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers);
-      var nextClick = group ? "Filtrar grupo: " + clinicWorkgroupSubject(group) : next;
-      var nextDetail = globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount);
-      if (preferClaimRequest && !group) {
+      var focus = globalPlanFocusCopy(openCount, failedJobs, nextReview, group, candidateOpenCount, enrichmentOpenCount, specialists, blockers);
+      var nextClick = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : (group ? "Filtrar grupo: " + clinicWorkgroupSubject(group) : next);
+      var nextDetail = globalPlanNextDetailText(nextReview, group, sourceTarget, profileTarget, candidateOpenCount);
+      if (preferClaimRequest && !nextReview && !group) {
         nextDetail = "Abre la reclamación, revisa quién la solicita y decide el siguiente paso sin conceder acceso ni cambiar la ficha automáticamente.";
       }
       var bottleneck = globalPlanBottleneckText(openCount, group, blockers, sourceTarget, specialists);
       globalPlanNextReviewId = nextReview && nextReview.id ? nextReview.id : "";
-      globalPlanNextGroupId = group && group.clinicId ? group.clinicId : "";
+      globalPlanNextGroupId = !nextReview && group && group.clinicId ? group.clinicId : "";
 
       el("globalPlanPhase").textContent = phase;
       el("globalPlanPhase").className = "pill" + (failedJobs || openCount >= 45 ? " warning" : "");
@@ -2718,7 +2737,7 @@
       ].join("");
       el("globalPlanNextAction").textContent = nextClick;
       el("globalPlanNextDetail").textContent = nextDetail;
-      el("globalPlanOpenNextBtn").textContent = group ? "Filtrar grupo" : (preferClaimRequest ? "Abrir reclamación" : "Abrir siguiente");
+      el("globalPlanOpenNextBtn").textContent = nextReview ? "Abrir prioridad" : (group ? "Filtrar grupo" : (preferClaimRequest ? "Abrir reclamación" : "Abrir siguiente"));
       show(el("globalPlanOpenNextBtn"), Boolean(globalPlanNextReviewId || globalPlanNextGroupId));
     }
 
@@ -2752,21 +2771,33 @@
         "Revisión abierta";
     }
 
+    function reviewActionBucket(row) {
+      var priority = Number((row && row.priority) || 0);
+      if (isBlockingClaimReview(row)) return 1000 + priority;
+      if (isClinicClaimRequestReview(row)) return 900 + priority;
+      if (row && row.review_type === "candidate_clinic" && priority >= 90) return 800 + priority;
+      return priority;
+    }
+
+    function reviewActionTypeOrder(row) {
+      if (isBlockingClaimReview(row)) return 1;
+      if (isClinicClaimRequestReview(row)) return 2;
+      if (row && row.review_type === "candidate_clinic") return 3;
+      if (row && row.review_type === "source_change_detected") return 4;
+      if (row && row.review_type === "clinic_profile_enrichment") return 5;
+      if (row && row.review_type === "clinic_quality_audit") return 6;
+      return 9;
+    }
+
     function firstActionReview(rows, failedJobs) {
       rows = Array.isArray(rows) ? rows : [];
       if (Number(failedJobs || 0) || !rows.length) return null;
-      var match = rows.find(isBlockingClaimReview);
-      if (match) return match;
-      match = firstClinicClaimRequestReview(rows);
-      if (match) return match;
-      match = rows.find(function (row) { return row.review_type === "candidate_clinic" && Number(row.priority || 0) >= 90; });
-      if (match) return match;
-      match = rows.find(function (row) { return row.review_type === "source_change_detected"; });
-      if (match) return match;
-      match = rows.find(function (row) { return row.review_type === "clinic_profile_enrichment"; });
-      if (match) return match;
-      match = rows.find(function (row) { return row.review_type === "clinic_quality_audit"; });
-      return match || null;
+      return rows.slice().sort(function (a, b) {
+        return reviewActionBucket(b) - reviewActionBucket(a) ||
+          reviewActionTypeOrder(a) - reviewActionTypeOrder(b) ||
+          (parseDateValue(a.created_at) || new Date(8640000000000000)) -
+          (parseDateValue(b.created_at) || new Date(8640000000000000));
+      })[0] || null;
     }
 
     function firstClinicClaimRequestReview(rows) {

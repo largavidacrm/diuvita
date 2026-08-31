@@ -29,7 +29,7 @@ from admin_digest import (
     top_publication_missing_field,
     top_pending_profile_field,
 )
-from daniel_review_brief import next_clicks
+from daniel_review_brief import first_action_review, first_review, next_clicks, review_name
 from submit_discovery_candidates import get_default_admin_email, load_env_file
 
 
@@ -111,10 +111,19 @@ def plan_phase(digest: dict[str, Any]) -> str:
 
 
 def daniel_now_status(digest: dict[str, Any]) -> str:
+    action = next_action_label(digest)
+    if action == "Revisar claim bloqueante":
+        review = first_review(digest, "blocking_claim_review")
+        return f"Abrir prioridad: {review_name(review, 'Claims bloqueantes')}"
+    if action == "Revisar reclamación de ficha":
+        review = first_review(digest, "clinic_claim_request")
+        return f"Abrir prioridad: {review_name(review, 'Reclamaciones')}"
+    review = first_action_review(digest)
+    if review:
+        return f"Abrir prioridad: {review_name(review, 'Prioridad')}"
     group = first_clinic_workgroup(digest)
     if group != "sin grupo por clínica medido":
         return group
-    action = next_action_label(digest)
     if action != "Sin accion urgente":
         return action
     profile = next_profile_action(digest)
