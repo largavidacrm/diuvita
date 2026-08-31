@@ -27,6 +27,16 @@ Machine-readable output:
 python3 scripts/measure_specialist_coverage.py --json
 ```
 
+For one clinic, use the reconciliation report when Daniel needs to compare what
+is already public with open review cards and internal detected names:
+
+```bash
+python3 scripts/specialist_review_reconciliation.py --clinic "Kairos"
+```
+
+That report is also read-only. It does not publish professional names; it points
+to the next human review step.
+
 The same top-line coverage signal is included in `/admin/`,
 `scripts/admin_digest.py` and `scripts/daniel_review_brief.py`.
 The admin review inbox also has an **Especialistas** filter and an

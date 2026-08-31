@@ -543,6 +543,11 @@ Next 10 technical steps:
      internal professional claims, while location evidence remains separate; the
      panel refreshes after claims load and still requires manual save before
      anything appears publicly.
+104. Add read-only specialist reconciliation. Done locally in
+     `scripts/specialist_review_reconciliation.py`: one clinic can now show
+     published specialists, specialists proposed in open cards, internal
+     detected names, duplicates already represented and the next manual review
+     step without editing Supabase.
 
 ## Daniel decision checkpoints
 
