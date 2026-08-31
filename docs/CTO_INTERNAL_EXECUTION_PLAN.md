@@ -421,6 +421,11 @@ Next 10 technical steps:
     system now tracks the last saved public change separately from the last
     Netlify rebuild request, shows when saved edits are not online yet, and
     gives Daniel a single "Actualizar web ahora" action for batched publishing.
+76. Add a public-site freshness diagnostic. Done locally in
+    `scripts/check_public_site_freshness.py`: it compares the public Supabase
+    clinic feed with the currently deployed clinic pages so stale production
+    pages like a not-yet-rebuilt Monarka profile can be identified without
+    editing data or triggering Netlify.
 
 ## Daniel decision checkpoints
 
