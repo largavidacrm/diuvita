@@ -119,6 +119,9 @@ Operator bridge:
 - Decision packets for those generated cards expose the same provenance as
   `source_job_context`, redacting full URLs by default and keeping the allowed
   output as review-proposal-only.
+- `scripts/audit_review_source_job_context.py` can read open enrichment cards
+  and report which ones already have that context, which can recover it from
+  the originating `agent_jobs` row, and which should remain purely manual.
 - Human-supplied URLs are treated as evidence pointers, not approvals. They can
   guide the future LLM/worker, but the only allowed output is a new review
   proposal.

@@ -932,6 +932,10 @@ Next 10 technical steps:
      active field removes only that issue from the open card and then reopens
      the next pending field. If the active field is still incomplete, the card
      stays open instead of being silently resolved.
+178. Audit old review cards for source-job context. Done locally in
+     `scripts/audit_review_source_job_context.py`: open enrichment proposals can
+     now be checked for LLM-source provenance, including whether missing context
+     is recoverable from `agent_jobs` or must stay as purely manual review.
 
 ## Daniel decision checkpoints
 

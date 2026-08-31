@@ -136,6 +136,17 @@ python3 scripts/prepare_review_decision_llm_prompt.py \
   --allow-full-values
 ```
 
+Para auditar si las propuestas antiguas conservan el contexto del trabajo de
+fuente que las originó:
+
+```bash
+python3 scripts/audit_review_source_job_context.py --compact
+```
+
+Este auditor es de solo lectura: ayuda a decidir si una tarjeta ya está lista
+para asistencia LLM, si el contexto se puede recuperar desde `agent_jobs`, o si
+debe tratarse como revisión manual sin inferir intención original.
+
 ## Relación con el panel
 
 El panel `/admin/` mantiene la experiencia humana simple:

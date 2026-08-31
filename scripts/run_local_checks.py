@@ -69,6 +69,7 @@ TEST_STEPS = [
     ("test: review proposal packets", "scripts/test_review_proposal_decision_packets.py"),
     ("test: review LLM prompt", "scripts/test_prepare_review_decision_llm_prompt.py"),
     ("test: review suggestion guard", "scripts/test_validate_review_decision_suggestion.py"),
+    ("test: review source-job context audit", "scripts/test_audit_review_source_job_context.py"),
     ("test: enrichment consolidation", "scripts/test_consolidate_profile_enrichment_reviews.py"),
     ("test: review maturity", "scripts/test_measure_review_maturity.py"),
     ("test: specialist coverage", "scripts/test_measure_specialist_coverage.py"),
