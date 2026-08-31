@@ -762,6 +762,12 @@ Next 10 technical steps:
      blocking publication/control keys, mismatched review ids and field changes
      outside `editable_fields`, plus weak Google Maps and doubtful phone
      modifications. The guard has no Supabase access and writes no data.
+147. Standardize future LLM review prompts. Done locally in
+     `scripts/prepare_review_decision_llm_prompt.py`: a one-card decision
+     packet can become a safe prompt bundle with system/user messages, expected
+     JSON schema and validator reference. The default prompt strips raw values
+     even if the packet input contains them; full values require an explicit
+     local flag and still produce no writes.
 
 ## Daniel decision checkpoints
 

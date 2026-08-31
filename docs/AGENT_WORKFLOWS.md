@@ -153,6 +153,9 @@ Required behavior:
 - Future LLM suggestions must pass
   `scripts/validate_review_decision_suggestion.py` before they are shown or
   transformed into any review UI state.
+- Future LLM prompts should be generated through
+  `scripts/prepare_review_decision_llm_prompt.py` so prompt wording, expected
+  JSON schema and validation requirements stay consistent.
 
 ## APPLY_PUBLICATION_RULES
 

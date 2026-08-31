@@ -86,6 +86,23 @@ python3 scripts/validate_review_decision_suggestion.py \
   --include-values
 ```
 
+Para preparar el prompt estándar que recibirá el LLM:
+
+```bash
+python3 scripts/prepare_review_decision_llm_prompt.py \
+  --packet-file packet.json
+```
+
+El preparador devuelve mensajes, esquema esperado y referencia al validador.
+Por defecto limpia valores crudos aunque el paquete de entrada los trajera.
+Para una preparación local deliberada con valores completos:
+
+```bash
+python3 scripts/prepare_review_decision_llm_prompt.py \
+  --packet-file packet.json \
+  --allow-full-values
+```
+
 ## Relación con el panel
 
 El panel `/admin/` mantiene la experiencia humana simple:
