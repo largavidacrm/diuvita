@@ -627,6 +627,11 @@ Next 10 technical steps:
      `/admin/`: review rows with proposed specialists now show whether a source
      is visible or still pending, so Daniel can prioritize review quality
      without treating names as automatically publishable.
+123. Reconcile specialist claim sources. Done locally in
+     `scripts/specialist_review_reconciliation.py`: when a specialist review
+     card lacks its own source URL, the read-only report now also shows source
+     URLs linked to internal specialist claims, making cases like Neolife
+     reviewable without publishing names automatically.
 
 ## Daniel decision checkpoints
 

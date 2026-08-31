@@ -40,6 +40,7 @@ def main() -> None:
             }
         ],
         "claim_professionals": ["Dr Luis Perez", "Dra. Carla Ruiz", "Alergología Anestesiología"],
+        "claim_source_urls": ["https://clinic-a.example/equipo-medico/"],
     }
     reconciled = reconcile_row(row)
     summary = summarize_clinics([reconciled])
@@ -61,12 +62,16 @@ def main() -> None:
     check(reconciled["published_count"] == 1, "published count missing")
     check(reconciled["review_professional_count"] == 2, "review professional count missing")
     check(reconciled["claim_professional_count"] == 2, "claim professional count should keep only clear names")
+    check(reconciled["claim_source_count"] == 1, "claim source count missing")
+    check(reconciled["claim_source_urls_clean"] == ["https://clinic-a.example/equipo-medico/"], "claim source URL missing")
     check(reconciled["pending_professional_count"] == 2, "pending names should exclude already published duplicates")
     check("Dr. Luis Pérez" in reconciled["pending_professionals"], "review-only pending person missing")
     check("Dra. Carla Ruiz" in reconciled["pending_professionals"], "claim-only pending person missing")
     check("Dra. Ana Lopez" in reconciled["already_published_detected"], "already-published detected person missing")
     check(summary["pending_professionals"] == 2, "summary should count pending names")
     check(summary["review_cards"] == 1, "summary should count review cards")
+    check(summary["claim_source_urls"] == 1, "summary should count internal specialist sources")
+    check(summary["clinics_with_claim_sources"] == 1, "summary should count clinics with claim sources")
     check(summary["review_cards_with_source"] == 1, "summary should count cards with source")
     check(summary["review_cards_without_source"] == 0, "summary should count cards without source")
     check(summary["review_cards_with_pending_professionals"] == 1, "summary should count cards with pending people")
@@ -77,7 +82,9 @@ def main() -> None:
     check("Clínicas medidas: 1" in output, "summary clinic count missing")
     check("Pendientes de decidir: 2" in output, "pending count line missing")
     check("Tarjetas con fuente clara: 1/1" in output, "source-card summary missing")
+    check("Fuentes internas de especialistas: 1" in output, "internal specialist source summary missing")
     check("Tarjetas con nombres nuevos: 1" in output, "new-name card summary missing")
+    check("Fuentes internas: https://clinic-a.example/equipo-medico/" in output, "internal specialist source URL missing from output")
     check("Tarjetas:" in output, "review card breakdown missing")
     check("nuevos: 1; ya en ficha: 1" in output, "card pending/already counts missing")
     check("fuente: https://clinic-a.example/equipo-medico/" in output, "review source URL missing")
@@ -117,6 +124,7 @@ def main() -> None:
     check(loaded["summary"]["pending_professionals"] == 2, "loaded report should include summary")
     check("public.review_queue" in sql, "query should read review cards")
     check("public.field_claims" in sql, "query should read internal claims")
+    check("left join public.source_records sr on sr.id = fc.source_record_id" in sql, "query should read claim sources")
     check("professionals.published" in sql, "query should include specialist claim paths")
     check("team.public_professionals" in sql, "query should include team specialist claim paths")
     check("source_url" in sql, "query should carry review card source context")

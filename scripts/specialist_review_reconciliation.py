@@ -82,6 +82,23 @@ def review_people(row: dict[str, Any]) -> list[str]:
     return people
 
 
+def clean_urls(values: Any) -> list[str]:
+    if not isinstance(values, list):
+        values = [values]
+    urls: list[str] = []
+    seen = set()
+    for value in values:
+        clean = str(value or "").strip()
+        if not clean or not clean.lower().startswith(("http://", "https://")):
+            continue
+        key = clean.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        urls.append(clean)
+    return urls
+
+
 def annotated_review_cards(cards: list[dict[str, Any]], published_keys: set[str]) -> list[dict[str, Any]]:
     annotated: list[dict[str, Any]] = []
     for card in cards:
@@ -116,6 +133,7 @@ def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
     )
     proposed = merge_people(*[card.get("professionals_clean") or [] for card in review_cards])
     internal = clean_person_list(row.get("claim_professionals") or [])
+    claim_sources = clean_urls(row.get("claim_source_urls") or [])
     all_detected = merge_people(proposed, internal)
     pending = [person for person in all_detected if normalize_person_key(person) not in published_keys]
     already = [person for person in all_detected if normalize_person_key(person) in published_keys]
@@ -124,6 +142,7 @@ def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
         "published_professionals_clean": published,
         "review_professionals_clean": proposed,
         "claim_professionals_clean": internal,
+        "claim_source_urls_clean": claim_sources,
         "review_cards": review_cards,
         "pending_professionals": pending,
         "already_published_detected": already,
@@ -131,6 +150,7 @@ def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
         "review_card_count": len(review_cards),
         "review_professional_count": len(proposed),
         "claim_professional_count": len(internal),
+        "claim_source_count": len(claim_sources),
         "pending_professional_count": len(pending),
     }
     result["next_step"] = specialist_reconciliation_next_step(result)
@@ -171,6 +191,10 @@ def summarize_clinics(clinics: list[dict[str, Any]]) -> dict[str, int]:
         "review_cards": sum(as_int(row.get("review_card_count")) for row in clinics),
         "review_professionals": sum(as_int(row.get("review_professional_count")) for row in clinics),
         "claim_professionals": sum(as_int(row.get("claim_professional_count")) for row in clinics),
+        "claim_source_urls": sum(as_int(row.get("claim_source_count")) for row in clinics),
+        "clinics_with_claim_sources": sum(
+            1 for row in clinics if as_int(row.get("claim_source_count")) > 0
+        ),
         "pending_professionals": sum(as_int(row.get("pending_professional_count")) for row in clinics),
         "review_cards_with_source": sum(1 for card in cards if card.get("has_source_url")),
         "review_cards_without_source": sum(1 for card in cards if not card.get("has_source_url")),
@@ -301,16 +325,14 @@ review_cards as (
   ) rows
   group by clinic_id
 ),
-claim_names as (
+claim_name_rows as (
   select
     fc.clinic_id,
-    coalesce(
-      jsonb_agg(distinct btrim(person.value) order by btrim(person.value))
-        filter (where btrim(person.value) <> '' and btrim(person.value) <> 'null'),
-      '[]'::jsonb
-    ) as professionals
+    btrim(person.value) as person_name,
+    sr.source_url
   from public.field_claims fc
   join target_clinics c on c.id = fc.clinic_id
+  left join public.source_records sr on sr.id = fc.source_record_id
   cross join lateral jsonb_array_elements_text(
     case
       when jsonb_typeof(fc.value) = 'array' then fc.value
@@ -323,7 +345,24 @@ claim_names as (
   ) person(value)
   where fc.field_path in ({field_path_list})
     and coalesce(fc.verification_status, '') not in ('rejected', 'stale', 'conflict')
-  group by fc.clinic_id
+    and btrim(person.value) <> ''
+    and btrim(person.value) <> 'null'
+),
+claim_names as (
+  select
+    clinic_id,
+    coalesce(
+      jsonb_agg(distinct person_name order by person_name)
+        filter (where person_name <> '' and person_name <> 'null'),
+      '[]'::jsonb
+    ) as professionals,
+    coalesce(
+      jsonb_agg(distinct btrim(source_url) order by btrim(source_url))
+        filter (where btrim(coalesce(source_url, '')) <> ''),
+      '[]'::jsonb
+    ) as source_urls
+  from claim_name_rows
+  group by clinic_id
 ),
 clinic_items as (
   select
@@ -333,7 +372,8 @@ clinic_items as (
     c.status,
     coalesce(p.professionals, '[]'::jsonb) as published_professionals,
     coalesce(r.data, '[]'::jsonb) as review_cards,
-    coalesce(cl.professionals, '[]'::jsonb) as claim_professionals
+    coalesce(cl.professionals, '[]'::jsonb) as claim_professionals,
+    coalesce(cl.source_urls, '[]'::jsonb) as claim_source_urls
   from target_clinics c
   left join published_names p on p.clinic_id = c.id
   left join review_cards r on r.clinic_id = c.id
@@ -404,6 +444,7 @@ def format_reconciliation(report: dict[str, Any]) -> str:
         f"- Pendientes de decidir: {as_int(summary.get('pending_professionals'))}",
         f"- Tarjetas con especialistas: {as_int(summary.get('review_cards'))}",
         f"- Tarjetas con fuente clara: {as_int(summary.get('review_cards_with_source'))}/{as_int(summary.get('review_cards'))}",
+        f"- Fuentes internas de especialistas: {as_int(summary.get('claim_source_urls'))}",
         f"- Tarjetas con nombres nuevos: {as_int(summary.get('review_cards_with_pending_professionals'))}",
         "",
     ]
@@ -420,12 +461,14 @@ def format_reconciliation(report: dict[str, Any]) -> str:
         cards = row.get("review_cards") or []
         pending = row.get("pending_professionals") or []
         already = row.get("already_published_detected") or []
+        claim_sources = row.get("claim_source_urls_clean") or []
         lines.extend([
             f"## {name}",
             f"- Ciudad/estado: {city} · {status_label(str(row.get('status') or ''))}",
             f"- Publicados en ficha: {as_int(row.get('published_count'))}",
             f"- En tarjetas abiertas: {as_int(row.get('review_professional_count'))} nombres en {as_int(row.get('review_card_count'))} tarjetas",
             f"- En evidencias internas: {as_int(row.get('claim_professional_count'))} nombres",
+            f"- Fuentes internas: {compact_people([compact_url(url) for url in claim_sources], 3)}",
             f"- Pendientes de decidir: {as_int(row.get('pending_professional_count'))}",
             f"- Siguiente paso: {row.get('next_step')}",
             f"- Pendientes: {compact_people(pending)}",
