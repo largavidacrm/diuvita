@@ -716,6 +716,12 @@ Next 10 technical steps:
      fichas with required blockers, the most common blocker and the next ficha
      to work, reusing the same direct Google Maps and blocking-claim rules as
      the editor.
+139. Add publication-readiness guidance to Daniel's brief. Done locally in
+     `scripts/admin_digest.py` and `scripts/daniel_review_brief.py`: the
+     read-only digest now separates required publication blockers from broader
+     profile-completeness gaps, showing ready fichas, the main blocker and the
+     next ficha to work without creating review cards or exposing proposal
+     payloads.
 
 ## Daniel decision checkpoints
 

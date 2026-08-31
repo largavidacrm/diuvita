@@ -173,6 +173,27 @@ def sample_digest():
             "open_source_change_reviews": 1,
             "open_relevant_reviews": 4,
         },
+        "publication_readiness": {
+            "clinics_measured": 24,
+            "visible_clinics": 20,
+            "ready_clinics": 3,
+            "clinics_with_missing_fields": 21,
+            "clinics_with_blocking_reviews": 1,
+            "top_missing_fields": [
+                {"field": "Google Maps de clínica", "count": 20},
+            ],
+        },
+        "publication_next_target": {
+            "slug": "longevity-marbella",
+            "clinic_name": "Longevity Marbella",
+            "city": "Marbella",
+            "status": "draft",
+            "missing_fields": ["Google Maps de clínica", "Dirección o sede"],
+            "missing_count": 2,
+            "next_missing_field": "Google Maps de clínica",
+            "open_reviews": 1,
+            "open_blocking_reviews": 0,
+        },
     }
 
 
@@ -226,6 +247,9 @@ def main():
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
     check("Publicación web: con cambios pendientes de verse online" in output, "publication control state missing")
+    check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness state missing")
+    check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "publication top blocker missing")
+    check("Siguiente publicación: Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total" in output, "publication next action missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
     check("Completitud de fichas: 0/19 fichas sin campos pendientes medidos; 19 con pendientes" in output, "profile completeness missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending profile field missing")

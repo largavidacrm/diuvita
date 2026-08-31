@@ -12,6 +12,10 @@ It is designed for future morning or weekly automations. It answers:
 - how many open cards exist by type;
 - whether auto-publication is still off;
 - whether public-site publication has saved changes pending to appear online;
+- how many non-archived fichas have no required publication blockers;
+- which required publication blocker is most common;
+- which ficha should be worked first before Daniel decides whether to make it
+  visible;
 - how many visible profiles still have measured public fields pending;
 - which measured public field is missing from the most visible profiles;
 - whether there are open Google Maps/review-link proposals and which one to

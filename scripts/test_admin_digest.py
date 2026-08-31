@@ -10,13 +10,16 @@ from admin_digest import (
     google_link_review_status,
     location_coverage_status,
     next_action_label,
+    next_publication_action,
     next_profile_action,
     next_source_action,
     next_specialist_action,
     publication_control_status,
+    publication_readiness_status,
     review_backlog_guard_status,
     source_coverage_status,
     specialist_review_status,
+    top_publication_missing_field,
     top_pending_profile_field,
 )
 
@@ -257,6 +260,28 @@ def main():
             "open_source_change_reviews": 1,
             "open_relevant_reviews": 4,
         },
+        "publication_readiness": {
+            "clinics_measured": 24,
+            "visible_clinics": 20,
+            "ready_clinics": 3,
+            "clinics_with_missing_fields": 21,
+            "clinics_with_blocking_reviews": 1,
+            "top_missing_fields": [
+                {"field": "Google Maps de clínica", "count": 20},
+                {"field": "Dirección o sede", "count": 3},
+            ],
+        },
+        "publication_next_target": {
+            "slug": "longevity-marbella",
+            "clinic_name": "Longevity Marbella",
+            "city": "Marbella",
+            "status": "draft",
+            "missing_fields": ["Google Maps de clínica", "Dirección o sede"],
+            "missing_count": 2,
+            "next_missing_field": "Google Maps de clínica",
+            "open_reviews": 1,
+            "open_blocking_reviews": 0,
+        },
     }
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
@@ -299,6 +324,16 @@ def main():
     check(
         next_profile_action(digest) == "Revisar Kairos Longevity Clinic: ya tiene 4 revisiones abiertas relacionadas. Primer campo: Google Maps de clínica",
         "next profile action missing",
+    )
+    check(
+        publication_readiness_status(digest) == "3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes",
+        "publication readiness status missing",
+    )
+    check(top_publication_missing_field(digest) == "Google Maps de clínica · 20 fichas", "top publication blocker missing")
+    check(
+        next_publication_action(digest)
+        == "Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total",
+        "next publication action missing",
     )
     check(next_source_action(digest) == "Revisar 2 claims bloqueantes de Kairos Longevity Clinic", "next source action missing")
     check(
@@ -347,6 +382,9 @@ def main():
     check("Campo mas pendiente: Google Maps · 19 fichas" in output, "top pending profile field line missing")
     check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending field should use operational priority on ties")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile line missing")
+    check("Fichas listas para publicar: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
+    check("Principal faltante publicacion: Google Maps de clínica · 20 fichas" in output, "publication blocker line missing")
+    check("Siguiente publicacion: Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total" in output, "next publication line missing")
     check("Sedes: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
     check("Publicacion web: agrupada cada 30 min" in output, "publication batching missing")
@@ -380,6 +418,8 @@ def main():
     check("proposed.key in ('maps_url', 'google_maps_url')" in source, "review digest should detect proposed Maps fields")
     check("proposed.key in ('google_reviews_url', 'reviews_url')" in source, "review digest should still include Google review links")
     check("where {location_maps_check}" in source, "review digest should use direct-only location Maps SQL")
+    check("publication_readiness_base as (" in source, "digest should calculate publication readiness")
+    check("'publication_readiness', (select data from publication_readiness)" in source, "digest should expose publication readiness")
     check("Especialistas pendientes: 2 tarjetas; 17 especialistas propuestos" in output, "specialist pending line missing")
     check("Grupo por clinica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")

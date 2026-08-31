@@ -945,6 +945,140 @@ profile_next_target as (
     '{{}}'::jsonb
   ) as data
 ),
+publication_readiness_base as (
+  select
+    c.id,
+    c.slug,
+    c.display_name as clinic_name,
+    c.city,
+    c.status,
+    nullif(btrim(coalesce(c.display_name, c.current_data ->> 'name', '')), '') is not null as has_name,
+    nullif(btrim(coalesce(c.city, c.current_data ->> 'city', '')), '') is not null as has_city,
+    nullif(btrim(coalesce(c.country, c.current_data ->> 'country', '')), '') is not null as has_country,
+    nullif(btrim(coalesce(c.website, c.current_data ->> 'web', '')), '') is not null as has_website,
+    (
+      nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'address',
+          location.value ->> 'direccion',
+          location.value ->> 'dirección',
+          case
+            when jsonb_typeof(location.value) = 'string'
+              then location.value #>> '{{}}'
+            else ''
+          end
+        )), '') is not null
+      )
+    ) as has_address,
+    length(btrim(coalesce(c.summary, c.current_data ->> 'summary', ''))) >= 120 as has_summary,
+    case
+      when jsonb_typeof(c.current_data -> 'services') = 'array'
+        then jsonb_array_length(c.current_data -> 'services') > 0
+      else false
+    end as has_services,
+    {has_google_maps} as has_google_maps,
+    coalesce(reviews.open_reviews, 0) as open_reviews,
+    coalesce(reviews.open_blocking_reviews, 0) as open_blocking_reviews
+  from public.clinics c
+  left join lateral (
+    select
+      count(*) as open_reviews,
+      count(*) filter (
+        where rq.review_type = 'clinic_quality_audit'
+          and rq.payload ->> 'quality_context' = 'blocking_claims'
+      ) as open_blocking_reviews
+    from public.review_queue rq
+    where rq.clinic_id = c.id
+      and rq.status = 'open'
+  ) reviews on true
+  where coalesce(c.status, '') <> 'archived'
+),
+publication_readiness_checks as (
+  select
+    *,
+    array_remove(array[
+      case when not has_name then 'Nombre' end,
+      case when not has_city then 'Ciudad' end,
+      case when not has_country then 'País' end,
+      case when not has_website then 'Web oficial' end,
+      case when not has_address then 'Dirección o sede' end,
+      case when not has_summary then 'Resumen suficiente' end,
+      case when not has_services then 'Servicios principales' end,
+      case when not has_google_maps then 'Google Maps de clínica' end,
+      case when open_blocking_reviews > 0 then 'Claims bloqueantes' end
+    ], null) as missing_fields
+  from publication_readiness_base
+),
+publication_missing_counts as (
+  select
+    field,
+    count(*) as field_count
+  from publication_readiness_checks
+  cross join lateral unnest(missing_fields) as field
+  group by field
+),
+publication_readiness as (
+  select jsonb_build_object(
+    'clinics_measured', count(*),
+    'visible_clinics', count(*) filter (where status in ('published', 'preliminary')),
+    'ready_clinics', count(*) filter (
+      where coalesce(array_length(missing_fields, 1), 0) = 0
+    ),
+    'clinics_with_missing_fields', count(*) filter (
+      where coalesce(array_length(missing_fields, 1), 0) > 0
+    ),
+    'clinics_with_blocking_reviews', count(*) filter (where open_blocking_reviews > 0),
+    'top_missing_fields', (
+      select coalesce(
+        jsonb_agg(jsonb_build_object('field', field, 'count', field_count) order by field_count desc, field),
+        '[]'::jsonb
+      )
+      from (
+        select field, field_count
+        from publication_missing_counts
+        order by field_count desc, field
+        limit 5
+      ) fields
+    )
+  ) as data
+  from publication_readiness_checks
+),
+publication_next_target as (
+  select coalesce(
+    (
+      select to_jsonb(items)
+      from (
+        select
+          slug,
+          clinic_name,
+          city,
+          status,
+          missing_fields,
+          coalesce(array_length(missing_fields, 1), 0) as missing_count,
+          missing_fields[1] as next_missing_field,
+          open_reviews,
+          open_blocking_reviews
+        from publication_readiness_checks
+        where coalesce(array_length(missing_fields, 1), 0) > 0
+        order by coalesce(array_length(missing_fields, 1), 0) desc,
+          open_blocking_reviews desc,
+          case when status in ('published', 'preliminary') then 1 else 0 end,
+          clinic_name
+        limit 1
+      ) items
+    ),
+    '{{}}'::jsonb
+  ) as data
+),
 visible_location_rows as (
   select
     c.id,
@@ -1066,6 +1200,8 @@ select jsonb_build_object(
   'specialist_next_target', (select data from specialist_next_target),
   'profile_completeness', (select data from profile_completeness),
   'profile_next_target', (select data from profile_next_target),
+  'publication_readiness', (select data from publication_readiness),
+  'publication_next_target', (select data from publication_next_target),
   'location_coverage', (select data from location_coverage),
   'generated_at', now()
 );
@@ -1166,6 +1302,31 @@ def top_pending_profile_field(digest: dict[str, Any]) -> str:
     return f"{label} · {count} fichas"
 
 
+def publication_readiness_status(digest: dict[str, Any]) -> str:
+    readiness = digest.get("publication_readiness") or {}
+    measured = as_int(readiness.get("clinics_measured"))
+    if not measured:
+        return "sin fichas medidas"
+    ready = as_int(readiness.get("ready_clinics"))
+    missing = as_int(readiness.get("clinics_with_missing_fields"))
+    blocking = as_int(readiness.get("clinics_with_blocking_reviews"))
+    detail = f"{ready}/{measured} fichas sin faltantes obligatorios; {missing} con faltantes"
+    if blocking:
+        detail += f"; {blocking} con claims bloqueantes"
+    return detail
+
+
+def top_publication_missing_field(digest: dict[str, Any]) -> str:
+    readiness = digest.get("publication_readiness") or {}
+    fields = readiness.get("top_missing_fields") if isinstance(readiness.get("top_missing_fields"), list) else []
+    first = fields[0] if fields and isinstance(fields[0], dict) else {}
+    label = str(first.get("field") or "").strip()
+    count = as_int(first.get("count"))
+    if not label or not count:
+        return "sin faltantes obligatorios"
+    return f"{label} · {count} fichas"
+
+
 def plural(value: int, singular: str, plural_text: str) -> str:
     return singular if value == 1 else plural_text
 
@@ -1225,6 +1386,22 @@ def next_profile_action(digest: dict[str, Any]) -> str:
     if first_field:
         return f"Revisar {name}: {reason}. Primer campo: {first_field}"
     return f"Revisar {name}: {reason}"
+
+
+def next_publication_action(digest: dict[str, Any]) -> str:
+    target = digest.get("publication_next_target") or {}
+    if not isinstance(target, dict) or not target:
+        return "sin ficha pendiente medida"
+    name = str(target.get("clinic_name") or target.get("slug") or "la primera ficha pendiente")
+    first_field = str(target.get("next_missing_field") or "").strip()
+    if not first_field:
+        missing_fields = target.get("missing_fields") if isinstance(target.get("missing_fields"), list) else []
+        first_field = str(missing_fields[0]).strip() if missing_fields else "revisar ficha"
+    missing = as_int(target.get("missing_count"))
+    detail = f"primer faltante obligatorio: {first_field}"
+    if missing > 1:
+        detail += f"; {missing} faltantes en total"
+    return f"Revisar {name}: {detail}"
 
 
 def next_source_action(digest: dict[str, Any]) -> str:
@@ -1430,6 +1607,11 @@ def format_digest(digest: dict[str, Any]) -> str:
         output.append(line("Fichas sin campos pendientes medidos", f"{completeness_ready}/{completeness_visible}"))
         output.append(line("Campo mas pendiente", top_pending_profile_field(digest)))
         output.append(line("Siguiente ficha", next_profile_action(digest)))
+    publication_readiness = digest.get("publication_readiness") or {}
+    if as_int(publication_readiness.get("clinics_measured")):
+        output.append(line("Fichas listas para publicar", publication_readiness_status(digest)))
+        output.append(line("Principal faltante publicacion", top_publication_missing_field(digest)))
+        output.append(line("Siguiente publicacion", next_publication_action(digest)))
     if location_coverage:
         output.append(line("Sedes", location_coverage_status(digest)))
     output.append("")
