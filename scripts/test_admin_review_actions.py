@@ -77,6 +77,24 @@ def main() -> None:
     check("Ver solicitud" not in index and "Confirmar identidad" not in index and "Cerrar tarjeta" not in index, "old review steps should be removed")
     check('class="review-flow-step"' not in index, "old oversized step cards should be removed")
 
+    editor_start = index.index('id="reviewEditor"')
+    editor_end = index.index('<section class="panel" id="jobsPanel"', editor_start)
+    review_editor = index[editor_start:editor_end]
+    for forbidden in [
+        "Crear trabajo",
+        "Camino de publicación",
+        "Recomendaciones generales",
+        "Resumen de cola",
+        "Trabajos recientes",
+        "Otras revisiones",
+        "Atajos",
+        "Auditorías",
+        "Cargar mejoras juntas",
+    ]:
+        check(forbidden not in review_editor, f"open proposal editor should stay focused, found: {forbidden}")
+    decision_tail = review_editor[review_editor.index('id="reviewModifyBtn"'):]
+    check("<section" not in decision_tail, "no extra proposal content should appear after the three decisions")
+
     check(
         index.index('id="reviewCurrentRelevantPanel"')
         < index.index('id="reviewProposalFocus"')
