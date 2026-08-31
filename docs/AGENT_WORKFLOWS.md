@@ -100,6 +100,11 @@ Operator bridge:
   `source_url`, `clinic_slug`, `from_review_id`, `requested_fields`,
   `requested_field_labels`, `human_supplied_source`, `operator_intent` and an
   `allowed_output` of `review_queue_proposal_only`.
+- When the source is supplied from a manual-review field banner, the job should
+  carry `target_scope: "primary_target_first"` and `ui_route:
+  "manual_review_banner_source_handoff"` so the worker/LLM treats Daniel's URL
+  as evidence for the active field first, not as permission to fill every gap in
+  the ficha.
 - `scripts/process_extract_clinic_profile_jobs.py` can process those jobs in
   shadow mode and turn clear findings into a `clinic_profile_enrichment` review
   card.
@@ -164,6 +169,9 @@ Required behavior:
   `manual_review_targets` and, when useful, a bounded `source_job_request`.
   This lets a future LLM suggest the exact manual field or official source job
   without inventing clinic data.
+- If `source_job_request.target_scope` is `primary_target_first`, the LLM should
+  keep its help focused on the packet's primary manual target and should not
+  broaden the job unless the packet has no unique primary target.
 - Default output must be safe: no raw proposed values or full evidence URLs.
 - Full values are allowed only with an explicit local operator flag for
   assisted preparation.

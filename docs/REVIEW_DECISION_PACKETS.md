@@ -17,6 +17,11 @@ El contrato principal es:
   resumen seguro con el título legible, el campo del admin, el motivo pendiente
   y el paso humano esperado. Sirve para asistencia futura con LLM sin darle
   permiso para escribir datos ni resolver la tarjeta.
+- Si Daniel aporta una URL oficial desde **Pasar URL al agente**, el paquete
+  conserva `source_handoff` y `source_job_request` con alcance
+  `primary_target_first`: primero se pide al agente el campo principal de esa
+  revisión manual; solo se usan los demás campos pendientes como fallback cuando
+  no hay un campo único claro.
 - La salida por defecto no incluye valores completos, emails, teléfonos crudos
   ni URLs completas de evidencia.
 - El script no resuelve tarjetas, no edita clínicas y no publica páginas.
@@ -55,6 +60,8 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - campo manual que abrir si la tarjeta es una revisión manual sin valores
   propuestos.
 - contexto manual de campo, motivo y siguiente paso cuando exista.
+- fuente oficial a pedir o usar como trabajo interno, respetando siempre el
+  alcance `primary_target_first` si está presente.
 
 El LLM no debe:
 
