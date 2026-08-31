@@ -505,38 +505,40 @@
       </section>
 
       <section class="work-grid" id="reviewWorkArea">
-        <section class="panel">
-          <div class="panel-head">
-            <div>
+        <section class="panel review-panel">
+          <div class="panel-head review-panel-head">
+            <div class="review-title-block">
               <h2>Necesitan revisión</h2>
               <span class="muted" id="reviewFilterMeta">Sin revisiones abiertas</span>
             </div>
-            <div class="panel-tools">
-              <input id="reviewSearch" type="search" placeholder="Buscar revisión">
-              <select id="reviewTypeFilter" aria-label="Filtrar revisiones">
-                <option value="">Todas</option>
-                <option value="candidate_clinic">Clínicas nuevas</option>
-                <option value="clinic_profile_enrichment">Mejoras de ficha</option>
-                <option value="blocking_claim_review">Claims bloqueantes</option>
-                <option value="clinic_quality_audit">Auditorías</option>
-                <option value="source_change_detected">Cambios de fuente</option>
-                <option value="specialist_review">Especialistas</option>
-              </select>
-              <select id="reviewPriorityFilter" aria-label="Filtrar por prioridad">
-                <option value="">Todas las prioridades</option>
-                <option value="high">Alta</option>
-                <option value="medium">Media</option>
-                <option value="low">Baja</option>
-              </select>
-              <button class="btn secondary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
-              <button class="btn secondary hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
-              <button class="btn secondary hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
-              <button class="btn secondary hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
-              <button class="btn secondary hidden" id="openGoogleLinksBtn" type="button">Abrir Google Maps</button>
-              <button class="btn secondary hidden" id="openSpecialistTargetBtn" type="button">Abrir especialistas</button>
-              <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
-              <span class="pill" id="reviewCount">0 abiertas</span>
-            </div>
+            <span class="pill" id="reviewCount">0 abiertas</span>
+          </div>
+          <div class="review-toolbar">
+            <input id="reviewSearch" type="search" placeholder="Buscar revisión">
+            <select id="reviewTypeFilter" aria-label="Filtrar revisiones">
+              <option value="">Todas</option>
+              <option value="candidate_clinic">Clínicas nuevas</option>
+              <option value="clinic_profile_enrichment">Mejoras de ficha</option>
+              <option value="blocking_claim_review">Claims bloqueantes</option>
+              <option value="clinic_quality_audit">Auditorías</option>
+              <option value="source_change_detected">Cambios de fuente</option>
+              <option value="specialist_review">Especialistas</option>
+            </select>
+            <select id="reviewPriorityFilter" aria-label="Filtrar por prioridad">
+              <option value="">Todas las prioridades</option>
+              <option value="high">Alta</option>
+              <option value="medium">Media</option>
+              <option value="low">Baja</option>
+            </select>
+            <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
+          </div>
+          <div class="review-action-strip hidden" id="reviewActionStrip">
+            <button class="btn secondary hidden" id="openPriorityReviewBtn" type="button">Abrir prioridad</button>
+            <button class="btn secondary hidden" id="openClinicGroupBtn" type="button">Filtrar grupo</button>
+            <button class="btn secondary hidden" id="openDuplicateReviewBtn" type="button">Abrir atasco</button>
+            <button class="btn secondary hidden" id="openSourceTargetBtn" type="button">Abrir fuente</button>
+            <button class="btn secondary hidden" id="openGoogleLinksBtn" type="button">Abrir Google Maps</button>
+            <button class="btn secondary hidden" id="openSpecialistTargetBtn" type="button">Abrir especialistas</button>
           </div>
           <div class="review-filter-panel" id="reviewFilterChips" aria-label="Filtros rápidos de revisiones"></div>
           <div class="table-wrap">
@@ -2453,9 +2455,9 @@
       });
       var duplicateCount = countWhere(duplicateBase, isDuplicateEnrichmentReview);
       var duplicateChips = duplicateCount || reviewDuplicateFilter
-        ? '<div class="filter-chip-row"><strong>Atascos</strong>' +
+        ? '<div class="filter-chip-row"><strong>Atascos</strong><span class="filter-chip-group">' +
           filterChip("Varias propuestas", duplicateCount, reviewDuplicateFilter, { "data-review-duplicate": "true" }) +
-          '</div>'
+          '</span></div>'
         : "";
       var fieldBase = reviewCache.filter(function (row) {
         return reviewMatchesClinicGroup(row) &&
@@ -2474,22 +2476,22 @@
         fieldChipItems.push(filterChip("Especialistas", specialistCount, reviewSpecialistsFilter, { "data-review-specialists": "true" }));
       }
       var fieldChips = fieldChipItems.length
-        ? '<div class="filter-chip-row"><strong>Campo</strong>' + fieldChipItems.join("") + '</div>'
+        ? '<div class="filter-chip-row"><strong>Campo</strong><span class="filter-chip-group">' + fieldChipItems.join("") + '</span></div>'
         : "";
       var activeGroup = activeClinicWorkgroup();
       var recommendedGroup = firstClinicWorkgroup(reviewCache);
       var groupChips = reviewClinicGroupFilter
-        ? '<div class="filter-chip-row"><strong>Grupo</strong>' +
+        ? '<div class="filter-chip-row"><strong>Grupo</strong><span class="filter-chip-group">' +
           filterChip(clinicWorkgroupSubject(activeGroup), activeGroup ? activeGroup.count : 0, true, { "data-review-group-clear": "true" }) +
-          '</div>'
+          '</span></div>'
         : recommendedGroup
-          ? '<div class="filter-chip-row"><strong>Grupo recomendado</strong>' +
+          ? '<div class="filter-chip-row"><strong>Grupo recomendado</strong><span class="filter-chip-group">' +
             filterChip(clinicWorkgroupSubject(recommendedGroup), recommendedGroup.count, false, { "data-review-group": recommendedGroup.clinicId }) +
-            '</div>'
+            '</span></div>'
         : "";
 
-      container.innerHTML = '<div class="filter-chip-row"><strong>Tipo</strong>' + typeChips + '</div>' +
-        '<div class="filter-chip-row"><strong>Prioridad</strong>' + priorityChips + '</div>' +
+      container.innerHTML = '<div class="filter-chip-row"><strong>Tipo</strong><span class="filter-chip-group">' + typeChips + '</span></div>' +
+        '<div class="filter-chip-row"><strong>Prioridad</strong><span class="filter-chip-group">' + priorityChips + '</span></div>' +
         duplicateChips +
         fieldChips +
         groupChips;
@@ -4951,24 +4953,37 @@
       var specialistReview = firstSpecialistTargetReview(reviewCache);
       var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
       renderReviewFilterChips();
+      show(el("reviewActionStrip"), Boolean(nextReview || clinicGroup || duplicateReview || sourceTarget || googleLinkReview || specialistTarget));
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
-      el("openPriorityReviewBtn").textContent = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "Abrir prioridad";
+      el("openPriorityReviewBtn").textContent = nextReview ? "Prioridad · " + reviewPrimarySubject(nextReview) : "Prioridad";
+      el("openPriorityReviewBtn").title = nextReview ? "Abrir prioridad: " + reviewPrimarySubject(nextReview) : "";
       show(el("openClinicGroupBtn"), Boolean(clinicGroup));
-      el("openClinicGroupBtn").textContent = clinicGroup ? "Filtrar grupo: " + clinicWorkgroupSubject(clinicGroup) : "Filtrar grupo";
+      el("openClinicGroupBtn").textContent = clinicGroup ? "Grupo · " + clinicWorkgroupSubject(clinicGroup) : "Grupo";
+      el("openClinicGroupBtn").title = clinicGroup ? "Filtrar grupo: " + clinicWorkgroupSubject(clinicGroup) : "";
       show(el("openDuplicateReviewBtn"), Boolean(duplicateReview));
-      el("openDuplicateReviewBtn").textContent = duplicateReview ? "Abrir atasco: " + reviewPrimarySubject(duplicateReview) : "Abrir atasco";
+      el("openDuplicateReviewBtn").textContent = duplicateReview ? "Atasco · " + reviewPrimarySubject(duplicateReview) : "Atasco";
+      el("openDuplicateReviewBtn").title = duplicateReview ? "Abrir atasco: " + reviewPrimarySubject(duplicateReview) : "";
       show(el("openSourceTargetBtn"), Boolean(sourceTarget));
       el("openSourceTargetBtn").textContent = sourceTarget
+        ? "Fuente · " + sourceTargetSubject(sourceTarget)
+        : "Fuente";
+      el("openSourceTargetBtn").title = sourceTarget
         ? (sourceReview ? "Abrir fuente: " : "Filtrar fuente: ") + sourceTargetSubject(sourceTarget)
-        : "Abrir fuente";
+        : "";
       show(el("openGoogleLinksBtn"), Boolean(googleLinkReview));
       el("openGoogleLinksBtn").textContent = googleLinkReview
-        ? "Abrir Google Maps: " + reviewPrimarySubject(googleLinkReview)
+        ? "Maps · " + reviewPrimarySubject(googleLinkReview)
         : "Abrir Google Maps";
+      el("openGoogleLinksBtn").title = googleLinkReview
+        ? "Abrir Google Maps: " + reviewPrimarySubject(googleLinkReview)
+        : "";
       show(el("openSpecialistTargetBtn"), Boolean(specialistTarget));
       el("openSpecialistTargetBtn").textContent = specialistTarget
+        ? "Especialistas · " + specialistTargetSubject(specialistTarget)
+        : "Especialistas";
+      el("openSpecialistTargetBtn").title = specialistTarget
         ? (specialistReview ? "Abrir especialistas: " : "Filtrar especialistas: ") + specialistTargetSubject(specialistTarget)
-        : "Abrir especialistas";
+        : "";
       el("reviewCount").textContent = hasFilters
         ? rows.length + " visibles"
         : reviewCache.length + " abiertas";
@@ -5273,7 +5288,7 @@
       } else if (resolveWarning) {
         toast("Clínica guardada, pero alguna tarjeta no se cerró automáticamente.");
       } else if (selectedStatus === "published" || selectedStatus === "preliminary") {
-        toast("Clínica guardada. Publicación iniciada.");
+        toast("Clínica guardada. La web pública se actualiza en una publicación agrupada.");
       } else {
         toast("Clínica guardada. No está publicada.");
       }

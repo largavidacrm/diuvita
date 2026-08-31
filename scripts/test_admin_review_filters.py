@@ -18,6 +18,10 @@ def main() -> None:
     for marker in [
         'id="reviewFilterChips"',
         'id="reviewClearFilters"',
+        'class="panel review-panel"',
+        'class="review-toolbar"',
+        'id="reviewActionStrip"',
+        'class="filter-chip-group"',
         "REVIEW_TYPE_FILTERS",
         "REVIEW_PRIORITY_FILTERS",
         "function renderReviewFilterChips",
@@ -51,7 +55,10 @@ def main() -> None:
 
     for marker in [
         ".review-filter-panel",
+        ".review-toolbar",
+        ".review-action-strip",
         ".filter-chip-row",
+        ".filter-chip-group",
         ".filter-chip",
         ".filter-chip.active",
     ]:
