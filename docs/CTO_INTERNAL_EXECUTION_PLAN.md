@@ -396,6 +396,10 @@ Next 10 technical steps:
     `/admin/`: open location proposals for the active clinic now appear as
     "Sedes detectadas" and can be loaded into the location editor for manual
     review before any save or publication.
+70. Prevent weak Maps links from being saved as clinic profile links. Done
+    locally in `/admin/`: proposed and manually saved Maps URLs are kept only
+    when they look like a direct clinic profile; search, route or street-address
+    links remain pending and are not written into public clinic data.
 
 ## Daniel decision checkpoints
 

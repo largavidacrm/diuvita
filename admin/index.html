@@ -3178,6 +3178,24 @@
       return currentClinicMapsUrls().some(googleMapsUrlNeedsManualReview);
     }
 
+    function reviewedMapsProfileValue(value) {
+      var clean = text(value).trim();
+      return isReviewedGoogleMapsProfileUrl(clean) ? clean : "";
+    }
+
+    function sanitizeLocationMaps(location) {
+      var item = normalizedLocation(location);
+      if (!item) return null;
+      if (item.maps_url && !isReviewedGoogleMapsProfileUrl(item.maps_url)) {
+        delete item.maps_url;
+      }
+      return Object.keys(item).length ? item : null;
+    }
+
+    function sanitizedLocationsForSave(value) {
+      return normalizedLocations(value).map(sanitizeLocationMaps).filter(Boolean);
+    }
+
     function locationRowHtml(location, index) {
       location = normalizedLocation(location) || {};
       var rowLabel = index === 0 ? "Sede principal" : "Sede adicional";
@@ -3686,7 +3704,7 @@
         validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0),
         validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false),
-        validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, false),
+        validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, publicTarget || hasGenericMapsCandidate),
         validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false),
         validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false)
       ];
@@ -3941,7 +3959,7 @@
 
     function proposalLocations(payload) {
       var fields = proposedFields(payload);
-      return normalizedLocations(fields.locations || []);
+      return sanitizedLocationsForSave(fields.locations || []);
     }
 
     function proposalLinkUrl(value) {
@@ -4880,6 +4898,7 @@
       };
       Object.keys(textFields).forEach(function (key) {
         if (hasOwn(fields, key) && proposalListValue(fields[key])) {
+          if ((key === "maps_url" || key === "google_maps_url") && !reviewedMapsProfileValue(proposalListValue(fields[key]))) return;
           setInput(textFields[key], proposalListValue(fields[key]));
         }
       });
@@ -5010,7 +5029,7 @@
       setJsonText(currentData, "city", city);
       setJsonText(currentData, "region", trimmed("clinicRegion"));
       setJsonText(currentData, "address", trimmed("clinicAddress"));
-      setJsonText(currentData, "maps_url", trimmed("clinicMapsUrl"));
+      setJsonText(currentData, "maps_url", reviewedMapsProfileValue(trimmed("clinicMapsUrl")));
       setJsonText(currentData, "google_reviews_url", trimmed("clinicGoogleReviewsUrl"));
       setJsonText(currentData, "summary", trimmed("clinicSummary"));
       setJsonText(currentData, "years_in_practice", trimmed("clinicYearsInPractice"));
@@ -5026,7 +5045,7 @@
       setJsonArray(currentData, "specialties", el("clinicSpecialties").value);
       setJsonArray(currentData, "unidades", el("clinicUnits").value);
       setJsonArray(currentData, "profesionales", el("clinicProfessionals").value);
-      setJsonLocations(currentData, "locations", currentClinicLocations());
+      setJsonLocations(currentData, "locations", sanitizedLocationsForSave(currentClinicLocations()));
 
       var clinicId = activeClinic.id;
       el("clinicSaveBtn").disabled = true;
