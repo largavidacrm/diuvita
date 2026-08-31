@@ -34,7 +34,11 @@ def sanitize_for_prompt(value: Any, allow_full_values: bool = False) -> Any:
 def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
     clinic = packet.get("clinic") if isinstance(packet.get("clinic"), dict) else {}
     fields = [
-        {"key": item.get("key"), "label": item.get("label")}
+        {
+            "key": item.get("key"),
+            "label": item.get("label"),
+            "google_maps_review": sanitize_for_prompt(item.get("google_maps_review") or {}),
+        }
         for item in packet.get("proposed_change") or []
         if isinstance(item, dict)
     ]

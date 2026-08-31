@@ -1768,6 +1768,44 @@ td small {
   line-height: 1.35;
 }
 
+.review-link-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 0.48rem 0.55rem;
+  border: 1px solid rgba(14, 79, 74, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.review-link-status strong,
+.review-link-status span {
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.review-link-status strong {
+  flex: 0 0 auto;
+  max-width: 38%;
+}
+
+.review-link-status span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.review-link-status-ready {
+  border-color: rgba(14, 79, 74, 0.26);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.review-link-status-warning {
+  border-color: rgba(166, 129, 62, 0.36);
+  background: #fff7e8;
+}
+
 .review-proposal-hint {
   margin: 0.42rem 0 0;
   color: var(--muted);
@@ -2837,6 +2875,14 @@ td small {
     grid-auto-flow: column;
     grid-auto-columns: minmax(118px, 1fr);
     overflow-x: auto;
+  }
+
+  .review-link-status {
+    display: grid;
+  }
+
+  .review-link-status strong {
+    max-width: none;
   }
 }
 

@@ -338,6 +338,14 @@ def main() -> None:
         "Google Maps proposals should show actionable in-card review hints",
     )
     check(
+        "function proposalGoogleMapsStatus" in index
+        and "function proposalReviewStatusHtml" in index
+        and "Parece perfil directo" in index
+        and "No guardar tal cual" in index
+        and "review-link-status" in index,
+        "Google Maps proposals should show a compact link-status verdict",
+    )
+    check(
         'show(el("reviewClinicPanel"), false)' in index
         and 'show(el("reviewListPanel"), true)' in index
         and 'el("reviewBackToListBtn").addEventListener("click", closeReviewEditor)' in index,
@@ -383,6 +391,7 @@ def main() -> None:
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
     check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css, "manual review context and source handoff should be styled")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
+    check(".review-link-status" in css and ".review-link-status-warning" in css, "proposal link status should be styled")
     check(".review-source-origin" in css, "Daniel-supplied source origin should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")

@@ -33,6 +33,7 @@ def sample_packet(include_values=False):
             "ui_route": "manual_review_banner_source_handoff",
             "allowed_output": "review_queue_proposal_only",
             "proposed_fields": {
+                "maps_url": "https://www.google.com/maps/search/Unidad+de+Longevidad+IMDA",
                 "telefono": "916 000 000",
                 "profesionales": ["Dra. Example"],
             },
@@ -81,7 +82,10 @@ def main():
     check(prompt["write_policy"] == "no_writes", "prompt should not allow writes")
     check(prompt["validation_required"] == "scripts/validate_review_decision_suggestion.py", "validator link missing")
     check(prompt["packet_digest"]["review_id"] == "review-1", "packet digest review id missing")
-    check(prompt["packet_digest"]["field_count"] == 2, "packet digest field count missing")
+    check(prompt["packet_digest"]["field_count"] == 3, "packet digest field count missing")
+    maps_digest = prompt["packet_digest"]["fields"][0]["google_maps_review"]
+    check(maps_digest["overall_status"] == "needs_correction_before_approval", "prompt digest should keep Maps review status")
+    check(maps_digest["safe_to_auto_publish"] is False, "prompt digest should keep Maps human gate")
     source_context = prompt["packet_digest"]["source_job_context"]
     check(source_context["human_supplied_source"] is True, "prompt digest should keep Daniel-supplied source signal")
     check(source_context["source_host"] == "imda.example", "prompt digest should keep source host")
@@ -100,7 +104,7 @@ def main():
     check(schema["required"] == ["review_id", "action", "reason"], "response schema required fields missing")
     check(schema["properties"]["action"]["enum"] == ["approve", "reject", "modify"], "action enum missing")
     check(
-        schema["properties"]["field_changes"]["propertyNames"]["enum"] == ["profesionales", "telefono"],
+        schema["properties"]["field_changes"]["propertyNames"]["enum"] == ["maps_url", "profesionales", "telefono"],
         "field_changes should be limited to editable fields",
     )
 

@@ -100,6 +100,11 @@ def main():
         "current relevant field missing",
     )
     check("value" not in safe_packet["proposed_change"][0]["proposed"], "safe default should omit proposed values")
+    maps_context = safe_packet["proposed_change"][0]["google_maps_review"]
+    check(maps_context["kind"] == "google_maps_profile_link", "Maps review context kind missing")
+    check(maps_context["overall_status"] == "needs_correction_before_approval", "unsafe Maps status should be explicit")
+    check(maps_context["status_counts"]["search_or_route"] == 1, "Maps status counts should identify search URLs")
+    check(maps_context["safe_to_auto_publish"] is False, "Maps proposals should never become auto-publishable")
     check("value" not in safe_packet["current_relevant"][0]["current"], "safe default should omit current values")
     check(safe_packet["evidence"][0]["host"] == "imda.example", "safe evidence should keep host")
     check("value" not in safe_packet["evidence"][0], "safe default should omit evidence URLs")

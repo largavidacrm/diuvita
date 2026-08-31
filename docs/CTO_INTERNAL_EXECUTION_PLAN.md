@@ -922,6 +922,11 @@ Next 10 technical steps:
      a Daniel-supplied URL now carry safe `source_job_context` metadata, so a
      future LLM can understand the original field request and source handoff
      without receiving write permission or broadening the review.
+176. Make Google Maps review status explicit. Done locally in `/admin/` and LLM
+     decision packets: Maps proposals now show a compact link verdict such as
+     **Parece perfil directo** or **No guardar tal cual**, and packets carry a
+     non-auto-publishable `google_maps_review` context so future assistance
+     preserves the human Google Business/Profile check.
 
 ## Daniel decision checkpoints
 

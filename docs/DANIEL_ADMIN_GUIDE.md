@@ -166,6 +166,12 @@ espera ese campo. **Perfil revisable** no significa aprobado: significa que el
 enlace tiene forma de ficha de Google Maps y aun así debes abrirlo y comprobar
 que es la clínica correcta.
 
+En las propuestas de Google Maps también verás un estado compacto del enlace.
+**Parece perfil directo** significa que el formato encaja con una ficha de
+Google Maps, pero sigue siendo obligatorio abrirlo y confirmar que corresponde
+a esa clínica. **No guardar tal cual** significa que parece búsqueda, ruta,
+dirección suelta o enlace insuficiente.
+
 En las revisiones manuales de calidad, al pulsar **Revisar** se abre la ficha
 directamente en el dato pendiente. Al guardar la ficha, esa revisión queda
 cerrada y el panel pasa a la siguiente propuesta pendiente. Al entrar en la

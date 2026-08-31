@@ -92,6 +92,14 @@ REVIEW_TYPE_LABELS = {
 PHONE_FIELDS = {"telefono", "phone_fixed", "phone_mobile", "phone_whatsapp"}
 SENSITIVE_FIELDS = {"public_pricing", "pricing_url", "team_credentialing_visible", "profesionales"}
 SYNTHETIC_PREFIXES = ("quality_issue", "source_change")
+GOOGLE_MAPS_STATUS_LABELS = {
+    "direct_profile": "Parece perfil directo; confirmar clínica",
+    "search_or_route": "No guardar tal cual: parece búsqueda o ruta",
+    "street_address": "No guardar tal cual: parece dirección suelta",
+    "needs_manual_review": "Revisar manualmente antes de guardar",
+    "not_google_maps": "No parece Google Maps",
+    "empty": "Sin enlace",
+}
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", flags=re.I)
 URL_RE = re.compile(r"https?://[^\s)>\]]+", flags=re.I)
 PHONE_TEXT_RE = re.compile(r"(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}")
@@ -433,6 +441,57 @@ def source_job_context(payload: dict[str, Any], include_values: bool = False) ->
     return {key: value for key, value in context.items() if has_visible_value(value)}
 
 
+def google_maps_urls_from_value(key: str, value: Any) -> list[str]:
+    clean_key = canonical_field(key)
+    if clean_key == "maps_url":
+        return [str(item).strip() for item in field_values(value) if str(item or "").strip()]
+    if clean_key != "locations":
+        return []
+    locations = value if isinstance(value, list) else [value]
+    urls: list[str] = []
+    for location in locations:
+        if not isinstance(location, dict):
+            continue
+        for map_key in ("maps_url", "google_maps_url", "map_url"):
+            clean = str(location.get(map_key) or "").strip()
+            if clean:
+                urls.append(clean)
+    return urls
+
+
+def google_maps_review_context(key: str, value: Any) -> dict[str, Any]:
+    urls = google_maps_urls_from_value(key, value)
+    if not urls:
+        return {}
+    counts: dict[str, int] = {}
+    for url in urls:
+        status = google_maps_review_status(url)
+        counts[status] = counts.get(status, 0) + 1
+    has_direct = counts.get("direct_profile", 0) > 0
+    has_unsafe = any(counts.get(status, 0) > 0 for status in ("search_or_route", "street_address", "needs_manual_review", "not_google_maps"))
+    if has_unsafe:
+        overall = "needs_correction_before_approval"
+        label = "No guardar tal cual"
+        next_step = "reject_or_modify_with_real_clinic_google_business_profile"
+    elif has_direct:
+        overall = "direct_profile_needs_human_confirmation"
+        label = GOOGLE_MAPS_STATUS_LABELS["direct_profile"]
+        next_step = "open_link_and_confirm_same_clinic_before_approval"
+    else:
+        overall = "no_usable_maps_link"
+        label = "Sin perfil de Google Maps útil"
+        next_step = "keep_google_maps_pending"
+    return {
+        "kind": "google_maps_profile_link",
+        "overall_status": overall,
+        "status_counts": counts,
+        "human_label": label,
+        "required_human_check": "confirm_real_clinic_google_business_profile",
+        "next_step": next_step,
+        "safe_to_auto_publish": False,
+    }
+
+
 def phone_warning(key: str, value: Any) -> str:
     if canonical_field(key) not in PHONE_FIELDS:
         return ""
@@ -529,6 +588,9 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             "current": value_packet(None if is_synthetic_field(key) else current_field_value(clinic, key), include_values),
             "proposed": value_packet(item["value"], include_values),
         }
+        maps_context = google_maps_review_context(key, item["value"])
+        if maps_context:
+            field_packet["google_maps_review"] = maps_context
         targets = manual_review_targets(row, item)
         if targets:
             field_packet["manual_review_targets"] = targets

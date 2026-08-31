@@ -6808,6 +6808,51 @@
       return '<span class="pill">' + html(item.action) + '</span>';
     }
 
+    function proposalGoogleMapsStatus(value) {
+      var url = proposalLinkUrl(proposalListValue(value));
+      if (!url) return null;
+      if (!isGoogleMapsLikeUrl(url)) {
+        return {
+          tone: "warning",
+          label: "No parece Google Maps",
+          detail: "No lo guardes como Maps de clínica."
+        };
+      }
+      if (isReviewedGoogleMapsProfileUrl(url)) {
+        return {
+          tone: "ready",
+          label: "Parece perfil directo",
+          detail: "Ábrelo y confirma que es la ficha real de esta clínica."
+        };
+      }
+      return {
+        tone: "warning",
+        label: "No guardar tal cual",
+        detail: googleMapsReviewMessage(url) || "Busca o pega el perfil real de Google Business."
+      };
+    }
+
+    function proposalGoogleReviewsStatus(value) {
+      var url = proposalLinkUrl(proposalListValue(value));
+      if (!url) return null;
+      return {
+        tone: "neutral",
+        label: "Valoraciones Google",
+        detail: "Confirma que pertenecen a la misma ficha de Google Maps."
+      };
+    }
+
+    function proposalReviewStatusHtml(item) {
+      var status = null;
+      if (item.key === "maps_url") status = proposalGoogleMapsStatus(item.value);
+      if (item.key === "google_reviews_url") status = proposalGoogleReviewsStatus(item.value);
+      if (!status) return "";
+      return '<div class="review-link-status ' + html("review-link-status-" + status.tone) + '">' +
+        '<strong>' + html(status.label) + '</strong>' +
+        '<span>' + html(status.detail) + '</span>' +
+        '</div>';
+    }
+
     function renderReviewProposalFocus(row) {
       var list = el("reviewProposalFocusList");
       if (!row) {
@@ -6824,9 +6869,11 @@
       list.innerHTML = items.length
         ? items.map(function (item) {
           var hint = reviewProposalFocusHint(item);
+          var status = proposalReviewStatusHtml(item);
           return '<article class="review-proposal-item"><div class="review-proposal-title"><h4>' + html(item.label) +
             '</h4>' + reviewProposalFocusActionHtml(row, item) + '</div><div class="review-proposal-value">' +
             snapshotValueHtml(item.key, item.value) + '</div>' +
+            status +
             (hint ? '<p class="review-proposal-hint">' + html(hint) + '</p>' : '') + '</article>';
         }).join("")
         : '<p class="empty">Esta tarjeta no trae campos nuevos detectados; puedes aprobarla como revisada o rechazarla.</p>';

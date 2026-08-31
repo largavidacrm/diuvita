@@ -68,6 +68,9 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
   alcance `primary_target_first` si está presente.
 - contexto del trabajo de fuente que produjo la propuesta, para saber si nació
   de una URL aportada por Daniel y qué campo debía resolver primero.
+- estado estructurado de Google Maps cuando la propuesta trae ese campo,
+  recordando que incluso un enlace con pinta de perfil directo requiere
+  comprobación humana antes de aprobar.
 
 El LLM no debe:
 
