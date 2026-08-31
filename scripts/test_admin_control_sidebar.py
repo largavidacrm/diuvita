@@ -37,6 +37,7 @@ def main() -> None:
         'id="jobCreatePanel"',
         'id="jobForm"',
         "Buscar y proponer",
+        "Prioridad: todas",
         'id="reviewWorkArea"',
         'id="clinicsPanel"',
         'id="jobsPanel"',
@@ -77,6 +78,13 @@ def main() -> None:
         ".job-side-panel",
         "grid-auto-flow: column",
         "overflow-x: auto",
+        "--text-label",
+        "--text-ui",
+        "--text-body",
+        "--text-stat",
+        "font-size: var(--text-ui)",
+        "font-size: var(--text-body)",
+        "font-size: var(--text-title-sm)",
     ]:
         check(marker in css, f"missing control sidebar style: {marker}")
 

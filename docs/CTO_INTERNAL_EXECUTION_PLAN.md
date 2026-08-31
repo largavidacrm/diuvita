@@ -864,6 +864,10 @@ Next 10 technical steps:
      source-change/proposal cards on the single-decision approve/reject/modify
      path. The review queue also uses a full-width compact table when no
      proposal is open so dates, priorities and actions fit more consistently.
+164. Normalize dashboard visual scale. Done locally in `/admin/`: shared
+     typography tokens now control labels, controls, panel copy, card titles and
+     metric numbers across the control center, the page title is less oversized,
+     and the review priority filter uses a shorter label to avoid clipped text.
 
 ## Daniel decision checkpoints
 
