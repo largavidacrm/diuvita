@@ -876,6 +876,10 @@ Next 10 technical steps:
      also paste an official clinic URL in the same review banner so the agent
      creates a new internal proposal for those fields without publishing or
      saving data automatically.
+167. Scope manual-review source jobs to the active field. Done locally in
+     `/admin/`: source URLs submitted from the manual-review banner now target
+     the field Daniel is editing first, falling back to the full card only when
+     no unique field target is available.
 
 ## Daniel decision checkpoints
 

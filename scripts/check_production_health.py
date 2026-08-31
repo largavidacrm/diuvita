@@ -53,6 +53,7 @@ CHECKS = [
             "clinicInternalContactName",
             "clinicManualReviewSourceBtn",
             "createReviewSourceJobFor",
+            "reviewSourceJobTargets",
             "firstReviewMissingFieldTargetId",
             "Prioridad: todas",
             "finishReviewDecision",

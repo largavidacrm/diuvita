@@ -237,6 +237,8 @@ def main() -> None:
         and "function reviewManualFieldTarget" in index
         and "function openClinicEditorForReview" in index
         and "function openReviewManualField" in index
+        and "function reviewSourceJobTargets" in index
+        and "function reviewSourceJobContext" in index
         and "function createReviewSourceJobFor" in index
         and "function createClinicManualReviewSourceJob" in index
         and "function createReviewSourceJob" in index
@@ -283,13 +285,19 @@ def main() -> None:
     check(
         "function renderClinicManualReviewContext" in index
         and "function reviewManualIssueForTarget" in index
-        and "reviewSourceJobContext(activeClinicReview)" in index
+        and "reviewSourceJobContext(activeClinicReview, activeClinicReviewFocusTarget)" in index
         and "createClinicManualReviewSourceJob" in index
         and "activeClinicReviewFocusTarget" in index
         and "focusPublishField(activeClinicReviewFocusTarget.inputId)" in index
         and "renderClinicManualReviewContext();" in index
         and "activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget)" in index,
         "manual review clinic editor should show the exact field and refocus it",
+    )
+    check(
+        "return focusedTargets.length ? focusedTargets : fallbackTargets;" in index
+        and 'createReviewSourceJobFor(activeClinicReview, "clinicManualReviewSourceUrl", "clinicManualReviewSourceBtn", activeClinicReviewFocusTarget)' in index
+        and "var targets = sourceJob.targets;" in index,
+        "manual-review source jobs should target the focused field before falling back to all missing fields",
     )
     check(
         'show(el("jobCreatePanel"), false)' in index

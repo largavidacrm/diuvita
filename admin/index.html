@@ -5650,7 +5650,7 @@
       el("clinicManualReviewMeta").textContent =
         reviewDisplayTitle(activeClinicReview) + " · una ficha, una decisión.";
       el("clinicManualReviewFocusBtn").disabled = !target || !target.inputId;
-      var sourceJob = reviewSourceJobContext(activeClinicReview);
+      var sourceJob = reviewSourceJobContext(activeClinicReview, activeClinicReviewFocusTarget);
       show(el("clinicManualReviewSourceWrap"), Boolean(sourceJob));
       if (sourceJob) {
         el("clinicManualReviewSourceUrl").placeholder = sourceJob.example.placeholder;
@@ -5674,9 +5674,18 @@
       return Boolean(row && row.clinic_id && row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row) && reviewMissingFieldTargets(row).length);
     }
 
-    function reviewSourceJobContext(row) {
+    function reviewSourceJobTargets(row, target) {
+      var fallbackTargets = reviewMissingFieldTargets(row);
+      var targetList = Array.isArray(target) ? target : target ? [target] : [];
+      var focusedTargets = targetList.filter(function (item) {
+        return item && item.key;
+      });
+      return focusedTargets.length ? focusedTargets : fallbackTargets;
+    }
+
+    function reviewSourceJobContext(row, target) {
       if (!reviewSourceJobEligible(row)) return null;
-      var targets = reviewMissingFieldTargets(row);
+      var targets = reviewSourceJobTargets(row, target);
       var example = reviewSourceJobExampleForTargets(targets);
       var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
       var paused = !full && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
@@ -8679,8 +8688,10 @@
       toast(defaultDismissNote(reviewType));
     }
 
-    async function createReviewSourceJobFor(row, urlInputId, buttonId) {
+    async function createReviewSourceJobFor(row, urlInputId, buttonId, target) {
       if (!reviewSourceJobEligible(row)) return;
+      var sourceJob = reviewSourceJobContext(row, target);
+      if (!sourceJob) return;
       if (dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT) {
         updateJobBacklogHint(dashboardOpenReviewCount);
         toast("Freno de bandeja activo. Primero limpia revisiones.");
@@ -8702,7 +8713,7 @@
         toast("No encuentro la ficha enlazada para crear el trabajo.");
         return;
       }
-      var targets = reviewMissingFieldTargets(row);
+      var targets = sourceJob.targets;
       el(buttonId).disabled = true;
       var payload = {
         job_type: "EXTRACT_CLINIC_PROFILE",
@@ -8749,7 +8760,7 @@
     }
 
     async function createClinicManualReviewSourceJob() {
-      await createReviewSourceJobFor(activeClinicReview, "clinicManualReviewSourceUrl", "clinicManualReviewSourceBtn");
+      await createReviewSourceJobFor(activeClinicReview, "clinicManualReviewSourceUrl", "clinicManualReviewSourceBtn", activeClinicReviewFocusTarget);
     }
 
     async function createJob(event) {
