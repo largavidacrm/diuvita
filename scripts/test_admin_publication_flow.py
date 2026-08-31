@@ -56,6 +56,7 @@ def main() -> None:
         "Guardar como publicada",
         "Guardar borrador",
         "Falta para publicar",
+        "Abre la ficha y completa ese campo.",
         "Para publicar",
         "Completa estos puntos o guarda la ficha como borrador/revisión interna.",
         "Cambios todavía no guardados.",
@@ -87,6 +88,7 @@ def main() -> None:
     check(".publish-readiness" in css, "publish readiness style missing")
     check(".publish-missing-chip" in css, "publish missing chip style missing")
     check(".publish-cell" in css, "clinic publish cell style missing")
+    check(".publish-cell strong" in css, "clinic first missing field style missing")
     check(".field-attention" in css, "field attention style missing")
     check(".review-action-note" in css, "review action note style missing")
     check(".review-flow" in css, "review flow style missing")

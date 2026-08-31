@@ -473,6 +473,10 @@ Next 10 technical steps:
     `/admin/`: the side menu now opens one major section at a time, with a
     `Todo` option for the old long view, so the control center is less
     overwhelming on desktop and mobile.
+88. Show the first publication blocker directly in the clinic table. Done
+    locally in `/admin/`: the "Falta para publicar" column now names the first
+    missing field, such as Google Maps or Dirección, instead of only showing a
+    generic count.
 
 ## Daniel decision checkpoints
 

@@ -218,12 +218,14 @@ tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
 2. Busca la clínica por nombre o ciudad.
 3. Usa el filtro de preparación si quieres ver solo fichas sin faltantes,
    fichas con faltantes, visibles con pendientes o no visibles.
-4. Pulsa **Editar**.
-5. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, sedes, Google Maps, valoraciones Google y transparencia pública.
-6. Mira el bloque **Validación final**.
-7. El botón de guardar cambia según el estado elegido: **Guardar borrador**,
+4. Mira la columna **Falta para publicar**: el primer campo en negrita es lo
+   primero que conviene completar.
+5. Pulsa **Editar**.
+6. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, sedes, Google Maps, valoraciones Google y transparencia pública.
+7. Mira el bloque **Validación final**.
+8. El botón de guardar cambia según el estado elegido: **Guardar borrador**,
    **Guardar en revisión**, **Guardar como preliminar** o **Guardar como publicada**.
-8. Guarda cuando esté correcto.
+9. Guarda cuando esté correcto.
 
 Si eliges **Preliminar** o **Publicada** y todavía hay claims bloqueantes,
 **Validación final** lo marcará como pendiente y el aviso de guardado te lo

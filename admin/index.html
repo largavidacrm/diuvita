@@ -1131,15 +1131,14 @@
           html(visible ? "Visible sin faltantes obligatorios." : "Puede pasar a preliminar/publicada.") +
           '</small></div>';
       }
-      var shown = missing.slice(0, 3).join(" · ");
-      if (missing.length > 3) shown += " · +" + (missing.length - 3);
       var label = visible
         ? "Visible con pendientes"
-        : missing.length === 1
-          ? "Falta 1 punto"
-          : "Faltan " + missing.length + " puntos";
+        : "Falta para publicar";
+      var rest = missing.slice(1, 3).join(" · ");
+      if (missing.length > 3) rest += " · +" + (missing.length - 3);
+      var detail = rest || "Abre la ficha y completa ese campo.";
       return '<div class="publish-cell"><span class="pill warning">' + html(label) +
-        '</span><small>' + html(shown) + '</small></div>';
+        '</span><strong>' + html(missing[0]) + '</strong><small>' + html(detail) + '</small></div>';
     }
 
     function clinicMatchesPublishFilter(row, filter) {

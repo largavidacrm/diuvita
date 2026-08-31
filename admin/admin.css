@@ -1620,6 +1620,12 @@ td small {
   min-width: 150px;
 }
 
+.publish-cell strong {
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1.18;
+}
+
 .publish-cell small {
   color: var(--muted);
   font-size: 0.78rem;
