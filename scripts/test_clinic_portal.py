@@ -81,6 +81,10 @@ def main() -> None:
         "p_accept_manual_review",
         "proposedFieldsFromForm",
         "Nada se publica automáticamente",
+        "completeIntakeSubmission",
+        'show(el("claimForm"), false)',
+        'show(el("recommendForm"), false)',
+        "¡Muchas gracias! Revisaremos tu solicitud manualmente con la mayor brevedad posible.",
     ]:
         combined = portal_js + "\n" + portal_html
         check(marker in combined, f"missing portal JS/HTML marker: {marker}")
@@ -90,6 +94,8 @@ def main() -> None:
         "mode-tabs",
         "workspace-grid",
         "status-pill",
+        ".btn{",
+        ".portal-message.success",
         "@media(max-width:900px)",
     ]:
         check(marker in portal_css, f"missing portal style marker: {marker}")
@@ -104,6 +110,12 @@ def main() -> None:
         "admin_resolve_clinic_profile_change_request",
         "clinicClaimReviewItems",
         "portalRiskItems",
+        "reviewProfilePanel",
+        "reviewCurrentProfileHtml",
+        "portalChangeComparisonHtml",
+        "Ficha actual en Vitalarga",
+        "Cambios propuestos",
+        "Mensaje del formulario",
         "Datos confirmados por el centro",
         "Pedir más información",
     ]:

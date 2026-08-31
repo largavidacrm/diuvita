@@ -53,8 +53,10 @@ def main() -> None:
         'id="reviewContextPanel"' in index
         and 'id="reviewContextTitle"' in index
         and 'id="reviewContextDetail"' in index
+        and 'id="reviewProfilePanel"' in index
         and "function reviewContextCopy" in index
         and "function renderReviewContext" in index
+        and "function renderReviewProfilePanel" in index
         and "renderReviewContext(activeReview, payload, blocksDraft);" in index,
         "review editor should show publication context for every review card",
     )
@@ -65,6 +67,24 @@ def main() -> None:
         and "Mejora de ficha existente." in index
         and "La información está recogida como propuesta interna" in index,
         "candidate and enrichment review context should explain why data is not public yet",
+    )
+    check(
+        "Solicitud de acceso a una ficha existente." in index
+        and "Cambio pedido por una clínica." in index
+        and "Ficha actual en Vitalarga" in index
+        and "Cambios propuestos" in index
+        and "campo impactado" in index
+        and "Mensaje del formulario" in index
+        and "Quién pide acceso o revisión" in index
+        and "Ficha actual" in index
+        and "Propuesto" in index
+        and "renderReviewProfilePanel(activeReview, payload)" in index,
+        "portal review cards should show current profile and field-by-field proposals",
+    )
+    check(
+        "Sin alertas automáticas del portal" not in index
+        and 'show(el("reviewCandidateServicesBlock"), !usesProfilePanel)' in index,
+        "portal requests should not lead with an empty automatic-alert list",
     )
     check(
         'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
@@ -97,6 +117,8 @@ def main() -> None:
     )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".review-context" in css, "review context should be styled")
+    check(".review-profile-panel" in css, "portal review profile panel should be styled")
+    check(".review-change-list" in css, "portal field proposals should be styled")
     check(".compact-list small" in css, "proposed link URLs should remain readable on mobile")
     check(".compact-list em" in css, "proposed link warnings should be styled")
     check("quick-primary" in index and "quick-action" in index, "quick review actions should be classified")

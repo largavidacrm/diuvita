@@ -23,8 +23,12 @@
 .check-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.55rem;align-items:start;padding:.75rem;border:1px solid var(--line);border-radius:8px;background:#fff}
 .check-row input{margin-top:.18rem}
 .form-actions{display:flex;justify-content:flex-end;gap:.5rem;align-items:center}
+.btn{min-height:2.5rem;border:1px solid transparent;border-radius:8px;background:var(--green);color:#fff;font:inherit;font-weight:800;padding:.55rem .9rem;cursor:pointer}
+.btn:hover{background:var(--green-deep)}
+.btn.secondary{border-color:var(--line);background:#fff;color:var(--ink)}
+.btn.secondary:hover{background:var(--wash)}
 .portal-message{min-height:1.35rem;margin:.8rem 0 0;color:var(--muted);font-weight:700}
-.portal-message.success{color:var(--portal-ok)}
+.portal-message.success{border:1px solid #cbd9ce;border-radius:8px;background:#f3faf6;color:var(--portal-ok);padding:.8rem .9rem}
 .portal-message.error{color:#9d2f29}
 .portal-status{margin:0 0 1rem;padding:.75rem .85rem;border:1px solid var(--line);border-radius:8px;background:#fff;font-weight:800}
 .portal-status.warning{border-color:#efcfa8;background:#fff7eb;color:var(--portal-warn)}
