@@ -95,6 +95,7 @@ def main():
     check("clinicManualReviewSourceBtn" in admin_check["markers"], "admin deployment should include manual-review source handoff marker")
     check("createReviewSourceJobFor" in admin_check["markers"], "admin deployment should include shared source-job creator")
     check("reviewSourceJobTargets" in admin_check["markers"], "admin deployment should include scoped source-job targets")
+    check("target_scope: sourceJob.targetScope" in admin_check["markers"], "admin deployment should include source-job scope metadata")
     check("firstReviewMissingFieldTargetId" in admin_check["markers"], "admin deployment should include manual review field-focus marker")
     check("Prioridad: todas" in admin_check["markers"], "admin deployment should include compact priority filter marker")
     check("--text-ui" in admin_css_check["markers"], "admin css deployment should include UI text scale token")

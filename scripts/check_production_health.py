@@ -54,6 +54,7 @@ CHECKS = [
             "clinicManualReviewSourceBtn",
             "createReviewSourceJobFor",
             "reviewSourceJobTargets",
+            "target_scope: sourceJob.targetScope",
             "firstReviewMissingFieldTargetId",
             "Prioridad: todas",
             "finishReviewDecision",

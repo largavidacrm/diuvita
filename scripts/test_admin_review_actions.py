@@ -238,6 +238,7 @@ def main() -> None:
         and "function openClinicEditorForReview" in index
         and "function openReviewManualField" in index
         and "function reviewSourceJobTargets" in index
+        and "function reviewSourceJobTargetScope" in index
         and "function reviewSourceJobContext" in index
         and "function createReviewSourceJobFor" in index
         and "function createClinicManualReviewSourceJob" in index
@@ -298,6 +299,13 @@ def main() -> None:
         and 'createReviewSourceJobFor(activeClinicReview, "clinicManualReviewSourceUrl", "clinicManualReviewSourceBtn", activeClinicReviewFocusTarget)' in index
         and "var targets = sourceJob.targets;" in index,
         "manual-review source jobs should target the focused field before falling back to all missing fields",
+    )
+    check(
+        'target_scope: sourceJob.targetScope' in index
+        and 'ui_route: sourceJob.uiRoute' in index
+        and 'primary_requested_fields: targets.slice(0, 1).map(function (item) { return item.key; })' in index
+        and 'primary_requested_field_labels: targets.slice(0, 1).map(function (item) { return item.label; })' in index,
+        "source jobs should persist the UI route and primary field scope",
     )
     check(
         'show(el("jobCreatePanel"), false)' in index

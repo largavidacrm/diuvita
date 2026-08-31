@@ -886,6 +886,11 @@ Next 10 technical steps:
      describe the **Pasar URL al agente** route, the official-source requirement
      and the `primary_target_first` scope so future LLM assistance matches the
      admin workflow.
+169. Persist source-job scope metadata from the admin. Done locally in
+     `/admin/`: review-supplied `EXTRACT_CLINIC_PROFILE` jobs now carry
+     `target_scope`, `ui_route`, `primary_requested_fields` and
+     `primary_requested_field_labels`, so future workers can respect Daniel's
+     exact manual-review field instead of broadening the source task.
 
 ## Daniel decision checkpoints
 
