@@ -99,7 +99,7 @@ def main() -> None:
         "Google Maps de clínica, no dirección suelta",
         "Pega el perfil de Google Business de la clínica",
         "Google Maps pendiente: pega el perfil real de la clínica",
-        'validationItem("Google Maps de clínica, no dirección suelta", !hasPhysicalLocation || (hasClinicMapsProfile && !hasGenericMapsCandidate), (publicTarget && hasPhysicalLocation) || hasGenericMapsCandidate, "clinicMapsUrl")',
+        'validationItem("Google Maps de clínica, no dirección suelta", !hasPhysicalLocation || (hasClinicMapsProfile && !hasGenericMapsCandidate), hasGenericMapsCandidate, "clinicMapsUrl")',
         "if (publicTarget && hasGenericClinicMapsCandidate(true))",
         "focusFirstGenericMapsCandidate();",
         "updateClinicMapsWarnings();",

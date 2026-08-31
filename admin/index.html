@@ -4758,7 +4758,7 @@
         validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0, true, "clinicServices"),
         validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget, "clinicEvidencePanel"),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false, "clinicSourcePanel"),
-        validationItem("Google Maps de clínica, no dirección suelta", !hasPhysicalLocation || (hasClinicMapsProfile && !hasGenericMapsCandidate), (publicTarget && hasPhysicalLocation) || hasGenericMapsCandidate, "clinicMapsUrl"),
+        validationItem("Google Maps de clínica, no dirección suelta", !hasPhysicalLocation || (hasClinicMapsProfile && !hasGenericMapsCandidate), hasGenericMapsCandidate, "clinicMapsUrl"),
         validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false, "clinicProfessionals"),
         validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false, "clinicYearsInPractice")
       ];
