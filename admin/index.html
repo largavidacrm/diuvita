@@ -1744,9 +1744,9 @@
       if (group) {
         var enrichmentCount = countOpenReviewsByType(group.rows || [], "clinic_profile_enrichment");
         if (enrichmentCount > 1) {
-          return "Pulsa Filtrar grupo, abre una mejora y usa Cargar mejoras juntas. Después revisa y guarda una vez.";
+          return "Ruta: Filtrar grupo · Abrir una mejora · Cargar mejoras juntas · Revisar y guardar.";
         }
-        return "Trabaja esa clínica en bloque para no revisar lo mismo varias veces.";
+        return "Ruta: Filtrar grupo · Abrir tarjeta · Revisar ficha · Guardar o cerrar.";
       }
       if (candidateOpenCount) return "Revisa las candidatas buenas: crear borrador no publica, solo prepara la ficha interna.";
       if (sourceTarget && sourceTarget !== "—") return "Revisa esa fuente para convertir información guardada en datos aprovechables.";

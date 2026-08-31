@@ -400,6 +400,9 @@ Next 10 technical steps:
     locally in `/admin/`: proposed and manually saved Maps URLs are kept only
     when they look like a direct clinic profile; search, route or street-address
     links remain pending and are not written into public clinic data.
+71. Make the global-plan next step more scannable. Done locally in `/admin/`:
+    grouped review work now appears as a short route such as filter group, open
+    one improvement, load grouped improvements, review and save.
 
 ## Daniel decision checkpoints
 

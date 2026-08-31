@@ -69,7 +69,7 @@ def main() -> None:
         "Después de bajar bandeja",
         "Primero mira tu próximo clic. Lo demás es contexto.",
         "Estamos bajando la bandeja antes de crear más trabajo.",
-        "Pulsa Filtrar grupo, abre una mejora y usa Cargar mejoras juntas.",
+        "Ruta: Filtrar grupo · Abrir una mejora · Cargar mejoras juntas · Revisar y guardar.",
         "Tu foco",
         "Trabajo Codex",
         "Mejoras seguras",
