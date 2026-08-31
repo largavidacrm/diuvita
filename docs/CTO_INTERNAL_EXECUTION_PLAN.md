@@ -660,6 +660,11 @@ Next 10 technical steps:
      do not verify identity, grant access, edit clinic data or publish anything.
      They open the existing clinic context for Daniel's decision instead of
      being treated like draft-creation cards.
+128. Warn about weak contact data before grouped proposal loading. Done locally
+     in `/admin/`: related review groups now show a **Contacto dudoso** warning
+     inside the recommended-order block when grouped enrichment cards contain
+     phone-like values that do not look like plausible Spanish contact numbers,
+     so Daniel sees the issue before using "Cargar mejoras juntas".
 
 ## Daniel decision checkpoints
 

@@ -3792,6 +3792,22 @@
       return sortReviewWorkgroup([row].concat(relatedOpenReviews(row)));
     }
 
+    function proposalPhoneWarningsForRows(rows) {
+      var warnings = [];
+      var seen = {};
+      (rows || []).forEach(function (row) {
+        var fields = proposedFields((row && row.payload) || {});
+        Object.keys(fields).forEach(function (rawKey) {
+          var key = canonicalProposalField(rawKey);
+          var warning = proposalPhoneWarning(key, fields[rawKey]);
+          if (!warning || seen[warning]) return;
+          seen[warning] = true;
+          warnings.push(warning);
+        });
+      });
+      return warnings;
+    }
+
     function reviewWorkgroupRecommendation(rows) {
       rows = rows || [];
       if (rows.some(isBlockingClaimReview)) {
@@ -3802,6 +3818,9 @@
       }
       if (rows.some(function (item) { return item.review_type === "source_change_detected"; })) {
         return "Empieza por la fuente cambiada y después consolida las mejoras de ficha.";
+      }
+      if (proposalPhoneWarningsForRows(rows).length) {
+        return "Corrige teléfonos dudosos antes de guardar mejoras juntas.";
       }
       if (rows.some(function (item) { return item.review_type === "clinic_profile_enrichment"; })) {
         return "Revisa las mejoras juntas y guarda una sola versión coherente de la ficha.";
@@ -3829,6 +3848,10 @@
       if (duplicateFields.length) {
         chips += '<span class="pill warning">Campos repetidos: ' + html(duplicateFields.slice(0, 3).join(", ")) +
           (duplicateFields.length > 3 ? html(" +" + (duplicateFields.length - 3)) : "") + '</span>';
+      }
+      var phoneWarnings = proposalPhoneWarningsForRows(bundle);
+      if (phoneWarnings.length) {
+        chips += '<span class="pill warning">Contacto dudoso: ' + html(phoneWarnings.length) + '</span>';
       }
       var groupAction = enrichmentRows.length > 1
         ? '<button class="link-btn" type="button" data-load-related-proposals>Cargar mejoras juntas</button>'

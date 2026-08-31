@@ -146,6 +146,11 @@ Dentro de una tarjeta con varias revisiones relacionadas verás **Orden
 recomendado**. Empieza por lo que marque ahí: normalmente claims bloqueantes o
 fuentes cambiadas antes de guardar la ficha final.
 
+Si ese bloque muestra **Contacto dudoso**, no cargues y guardes de corrido:
+significa que alguna propuesta trae un teléfono con forma rara o mezclada.
+Puedes cargar las mejoras, pero antes de guardar corrige el teléfono, sepáralo
+en fijo/móvil/WhatsApp si procede o bórralo si no es claramente un contacto.
+
 El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
 marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la
 bandeja por esa clínica.
