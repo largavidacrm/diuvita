@@ -44,6 +44,7 @@ CHECKS = [
             "reviewClinicPanel",
             "reviewProposalFocus",
             "reviewEvidencePanel",
+            "reviewSourceOrigin",
             "reviewWarningPanel",
             "reviewApproveBtn",
             "reviewRejectBtn",

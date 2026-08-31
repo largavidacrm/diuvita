@@ -48,6 +48,7 @@ def main() -> None:
         'id="reviewProposalFocusList"',
         'id="reviewEvidencePanel"',
         'id="reviewEvidenceCount"',
+        'id="reviewSourceOrigin"',
         'id="reviewEvidenceList"',
         'id="reviewWarningPanel"',
         'id="reviewWarningCount"',
@@ -97,6 +98,7 @@ def main() -> None:
         "Datos actuales relevantes",
         "Cambio propuesto",
         "Fuente o evidencia",
+        "URL aportada por Daniel",
         "Advertencias imprescindibles",
         "Observación breve",
     ]:
@@ -308,6 +310,12 @@ def main() -> None:
         "source jobs should persist the UI route and primary field scope",
     )
     check(
+        'payload.ui_route === "manual_review_banner_source_handoff"' in index
+        and "Campo pedido: " in index
+        and "Alcance: primero el campo activo" in index,
+        "review evidence should explain Daniel-supplied source scope",
+    )
+    check(
         'show(el("jobCreatePanel"), false)' in index
         and 'show(el("reviewListPanel"), false)' in index
         and 'show(el("reviewClinicPanel"), true)' in index
@@ -375,6 +383,7 @@ def main() -> None:
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
     check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css, "manual review context and source handoff should be styled")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
+    check(".review-source-origin" in css, "Daniel-supplied source origin should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")
     check(".review-modify-panel" in css and ".review-source-job-panel" in css and ".review-decision-actions" in css, "modify, source job and action panels should be styled")

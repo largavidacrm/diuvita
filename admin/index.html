@@ -739,6 +739,7 @@
                 <h3>Fuente o evidencia</h3>
                 <span class="pill" id="reviewEvidenceCount">0 fuentes</span>
               </div>
+              <div class="review-source-origin hidden" id="reviewSourceOrigin"></div>
               <div class="review-evidence-list" id="reviewEvidenceList"></div>
             </section>
             <section class="review-warning-panel hidden" id="reviewWarningPanel">
@@ -6860,6 +6861,23 @@
 
     function renderReviewEvidence(row) {
       var items = reviewEvidenceItems(row);
+      var payload = (row && row.payload) || {};
+      var primaryLabels = Array.isArray(payload.primary_requested_field_labels)
+        ? payload.primary_requested_field_labels.filter(function (item) { return text(item).trim(); })
+        : [];
+      var requestedLabels = Array.isArray(payload.requested_field_labels)
+        ? payload.requested_field_labels.filter(function (item) { return text(item).trim(); })
+        : [];
+      var targetLabels = primaryLabels.length ? primaryLabels : requestedLabels;
+      var hasHumanSource = Boolean(payload.human_supplied_source || payload.ui_route === "manual_review_banner_source_handoff");
+      var originParts = [];
+      if (hasHumanSource) originParts.push("URL aportada por Daniel");
+      if (targetLabels.length) originParts.push("Campo pedido: " + targetLabels.join(", "));
+      if (payload.target_scope === "primary_target_first") originParts.push("Alcance: primero el campo activo");
+      el("reviewSourceOrigin").innerHTML = originParts.length
+        ? '<span>' + html(originParts.join(" · ")) + '</span>'
+        : "";
+      show(el("reviewSourceOrigin"), Boolean(originParts.length));
       el("reviewEvidenceCount").textContent = items.length + (items.length === 1 ? " fuente" : " fuentes");
       el("reviewEvidenceList").innerHTML = items.length
         ? '<ul class="compact-list">' + items.map(function (item) {

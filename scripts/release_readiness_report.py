@@ -25,6 +25,7 @@ SOURCE_MARKERS = [
     ("admin modify action", "admin/index.html", 'id="reviewModifyBtn"'),
     ("admin collapsible sidebar", "admin/index.html", 'id="sidebarToggleBtn"'),
     ("admin review source handoff", "admin/index.html", 'id="reviewSourceJobPanel"'),
+    ("admin review source origin", "admin/index.html", 'id="reviewSourceOrigin"'),
     ("admin internal clinic contact", "admin/index.html", 'id="clinicInternalContactName"'),
     ("admin manual review context", "admin/index.html", 'id="clinicManualReviewContext"'),
     ("admin manual review source handoff", "admin/index.html", 'id="clinicManualReviewSourceBtn"'),
@@ -43,6 +44,7 @@ SOURCE_MARKERS = [
 DIST_MARKERS = [
     ("built admin clinic-centered review", "dist/admin/index.html", "reviewClinicPanel"),
     ("built admin decision actions", "dist/admin/index.html", "reviewApproveBtn"),
+    ("built admin review source origin", "dist/admin/index.html", "reviewSourceOrigin"),
     ("built admin manual review context", "dist/admin/index.html", "clinicManualReviewContext"),
     ("built admin manual review source handoff", "dist/admin/index.html", "clinicManualReviewSourceBtn"),
     ("built admin manual review scoped source", "dist/admin/index.html", "function reviewSourceJobTargets"),

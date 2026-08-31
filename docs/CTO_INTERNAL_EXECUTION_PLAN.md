@@ -911,6 +911,11 @@ Next 10 technical steps:
      now reject unexpected keys such as stray `source_url` fields and return
      the validated manual admin target when `modify` means opening a field
      manually, keeping source jobs separate from decision suggestions.
+174. Show Daniel-supplied source scope in review evidence. Done locally in
+     `/admin/`: review cards created from an operator-supplied URL now show a
+     compact internal origin line with the requested field and
+     `primary_target_first` scope, so Daniel can see why that evidence is being
+     considered without opening other queue context.
 
 ## Daniel decision checkpoints
 

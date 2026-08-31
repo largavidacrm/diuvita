@@ -1775,6 +1775,20 @@ td small {
   line-height: 1.32;
 }
 
+.review-source-origin {
+  padding: 0.5rem 0.62rem;
+  border: 1px solid rgba(14, 79, 74, 0.18);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.review-source-origin span {
+  color: var(--green-deep);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.28;
+}
+
 .review-source-job-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
