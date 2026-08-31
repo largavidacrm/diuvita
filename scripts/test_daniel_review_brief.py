@@ -23,6 +23,13 @@ def sample_digest():
                 "shadow_review_target": 200,
             },
         },
+        "publication_control": {
+            "rebuild_hook_configured": True,
+            "rebuild_batch_minutes": 30,
+            "last_public_site_rebuild_requested_at": "2026-08-31T06:24:00+00:00",
+            "last_public_site_change_at": "2026-08-31T06:47:00+00:00",
+            "pending_public_site_rebuild": True,
+        },
         "reviews_by_type": [
             {"review_type": "clinic_profile_enrichment", "open_count": 12},
             {"review_type": "candidate_clinic", "open_count": 8},
@@ -191,6 +198,7 @@ def main():
     check("1 cambio de fuente pendiente" in output, "source-change singular missing")
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
+    check("Publicación web: con cambios pendientes de verse online" in output, "publication control state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
     check("Completitud de fichas: 0/19 fichas sin campos pendientes medidos; 19 con pendientes" in output, "profile completeness missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending profile field missing")

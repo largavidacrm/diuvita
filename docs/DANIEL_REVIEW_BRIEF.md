@@ -11,6 +11,7 @@ It is designed for future morning or weekly automations. It answers:
 - a fallback example by review type when the first priority list is limited;
 - how many open cards exist by type;
 - whether auto-publication is still off;
+- whether public-site publication has saved changes pending to appear online;
 - how many visible profiles still have measured public fields pending;
 - which measured public field is missing from the most visible profiles;
 - whether there are open Google Maps/review-link proposals and which one to

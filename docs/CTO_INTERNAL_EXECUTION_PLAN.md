@@ -477,6 +477,10 @@ Next 10 technical steps:
     locally in `/admin/`: the "Falta para publicar" column now names the first
     missing field, such as Google Maps or Dirección, instead of only showing a
     generic count.
+89. Include public-site publication state in Daniel's brief. Done locally in
+    `scripts/daniel_review_brief.py`: the plain-Spanish review brief now says
+    whether the web has saved changes pending to appear online, keeping cases
+    like Monarka visible without a separate diagnostic.
 
 ## Daniel decision checkpoints
 
