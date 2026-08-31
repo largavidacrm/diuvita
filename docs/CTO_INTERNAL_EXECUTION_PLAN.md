@@ -481,6 +481,10 @@ Next 10 technical steps:
     `scripts/daniel_review_brief.py`: the plain-Spanish review brief now says
     whether the web has saved changes pending to appear online, keeping cases
     like Monarka visible without a separate diagnostic.
+90. Let public freshness diagnostics accept normal clinic names. Done locally in
+    `scripts/check_public_site_freshness.py`: CTO checks can use
+    `--clinic "Monarka"` or `--clinic "Rose Bar"` instead of requiring Daniel
+    or the operator to know the exact slug.
 
 ## Daniel decision checkpoints
 

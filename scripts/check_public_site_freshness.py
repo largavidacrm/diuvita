@@ -180,12 +180,36 @@ def check_clinic(clinic: dict[str, Any], page_html: str, missing_limit: int) -> 
     }
 
 
-def run_freshness_check(base_url: str, timeout: int, slug: str = "", missing_limit: int = 8) -> dict[str, Any]:
+def clinic_matches_query(clinic: dict[str, Any], query: str) -> bool:
+    clean = str(query or "").strip().lower()
+    if not clean:
+        return True
+    values = [
+        clinic.get("slug"),
+        clinic.get("name"),
+        clinic.get("display_name"),
+        clinic.get("canonical_name"),
+        clinic.get("city"),
+        clinic.get("country"),
+    ]
+    haystack = " ".join(str(value or "").lower() for value in values)
+    return clean in haystack
+
+
+def run_freshness_check(
+    base_url: str,
+    timeout: int,
+    slug: str = "",
+    missing_limit: int = 8,
+    clinic_query: str = "",
+) -> dict[str, Any]:
     local_env = load_env_file()
     base = clean_base_url(base_url)
     clinics = load_public_clinics(timeout, local_env)
     if slug:
         clinics = [clinic for clinic in clinics if str(clinic.get("slug") or "") == slug]
+    if clinic_query:
+        clinics = [clinic for clinic in clinics if clinic_matches_query(clinic, clinic_query)]
     results = []
     for clinic in clinics:
         clinic_slug = str(clinic.get("slug") or "").strip()
@@ -218,6 +242,7 @@ def run_freshness_check(base_url: str, timeout: int, slug: str = "", missing_lim
         "stale_count": len(stale),
         "ok": not stale,
         "writes_data": False,
+        "clinic_query": clinic_query,
         "checks": results,
     }
 
@@ -227,13 +252,17 @@ def format_report(report: dict[str, Any]) -> str:
         "# Vitalarga public-site freshness",
         "",
         f"Base: {report.get('base_url')}",
+    ]
+    if report.get("clinic_query"):
+        lines.append(f"Consulta: {report.get('clinic_query')}")
+    lines.extend([
         f"Estado: {'OK' if report.get('ok') else 'Atención'}",
         "- Writes data: no",
         f"- Clínicas revisadas: {report.get('clinic_count', 0)}",
         f"- Con desfase: {report.get('stale_count', 0)}",
         "",
         "## Desfases",
-    ]
+    ])
     stale = [item for item in report.get("checks") or [] if not item.get("fresh")]
     if not stale:
         lines.append("- Ninguno detectado.")
@@ -254,6 +283,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--timeout", type=int, default=12)
     parser.add_argument("--slug", default="", help="Check one clinic slug only.")
+    parser.add_argument("--clinic", default="", help="Check clinics matching a normal name, city or slug.")
     parser.add_argument("--missing-limit", type=int, default=8)
     parser.add_argument("--json", action="store_true", help="Print raw JSON.")
     return parser.parse_args()
@@ -265,7 +295,7 @@ def main() -> int:
         raise SystemExit("--timeout must be between 3 and 60 seconds.")
     if args.missing_limit < 1 or args.missing_limit > 30:
         raise SystemExit("--missing-limit must be between 1 and 30.")
-    report = run_freshness_check(args.base_url, args.timeout, args.slug.strip(), args.missing_limit)
+    report = run_freshness_check(args.base_url, args.timeout, args.slug.strip(), args.missing_limit, args.clinic.strip())
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:

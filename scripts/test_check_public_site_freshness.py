@@ -5,6 +5,7 @@ import check_public_site_freshness as freshness
 from check_public_site_freshness import (
     check_clinic,
     clean_base_url,
+    clinic_matches_query,
     format_report,
     marker_present,
     normalize_digits,
@@ -22,6 +23,8 @@ def sample_clinic():
         "slug": "monarka-clinic",
         "name": "Monarka Clinic",
         "status": "publicada",
+        "city": "Barcelona",
+        "country": "España",
         "email": "info@monarkaclinic.com",
         "telefono": "+34 930 490 300",
         "instagram": "@monarkaclinic",
@@ -57,6 +60,9 @@ def main():
     check(clean_base_url("https://example.test/") == "https://example.test", "base URL should be normalized")
     check(normalize_digits("+34 930 490 300") == "34930490300", "phone digits should normalize")
     check(marker_present("Tel. 930 49 03 00", {"value": "+34 930 490 300", "mode": "digits"}), "phone marker should be spacing tolerant")
+    check(clinic_matches_query(clinic, "Monarka"), "normal clinic names should match freshness checks")
+    check(clinic_matches_query(clinic, "barcelona"), "clinic city should match freshness checks")
+    check(not clinic_matches_query(clinic, "Rose Bar"), "unrelated clinic query should not match")
     check(fresh_result["fresh"] is True, "fresh page should have all public markers")
     check(old_result["fresh"] is False, "old page should miss new public markers")
     check(old_result["missing_markers"] > 0, "old page should report missing markers")
@@ -67,16 +73,18 @@ def main():
     try:
         freshness.load_public_clinics = lambda timeout, local_env: [clinic]
         freshness.fetch_text = lambda url, timeout: (200, old_html)
-        report = run_freshness_check("https://example.test", timeout=3, slug="monarka-clinic", missing_limit=2)
+        report = run_freshness_check("https://example.test", timeout=3, slug="", missing_limit=2, clinic_query="Monarka")
     finally:
         freshness.load_public_clinics = original_load
         freshness.fetch_text = original_fetch
 
     output = format_report(report)
     check(report["writes_data"] is False, "freshness check must be read-only")
+    check(report["clinic_query"] == "Monarka", "clinic query should be kept in the report")
     check(report["ok"] is False, "stale public page should fail freshness")
     check(report["stale_count"] == 1, "stale clinic should be counted")
     check("# Vitalarga public-site freshness" in output, "title missing")
+    check("Consulta: Monarka" in output, "normal clinic query should be shown")
     check("Con desfase: 1" in output, "stale count missing")
     check("Monarka Clinic" in output, "clinic name missing")
     check("campos no aparecen" in output, "missing field summary missing")

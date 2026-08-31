@@ -30,8 +30,11 @@ in `/admin/` but Daniel cannot see it online yet.
 Example:
 
 ```bash
-python3 scripts/check_public_site_freshness.py --slug monarka-clinic
+python3 scripts/check_public_site_freshness.py --clinic "Monarka"
 ```
+
+The exact slug still works when needed, for example
+`--slug monarka-clinic`.
 
 It is read-only: it does not trigger Netlify, change Supabase, resolve review
 cards or publish clinics. If it reports a desfase, the likely next step is to
