@@ -578,6 +578,10 @@ Next 10 technical steps:
      route, street-address page or non-Maps URL, focuses the problematic field
      and blocks saving until it is removed or replaced with the clinic's direct
      Google Business/Profile URL.
+112. Make review workgroups visible as clinic cases. Done locally in `/admin/`:
+     the review inbox now shows a case-oriented panel above filters with the
+     recommended clinic group, card counts, suggested order and direct actions
+     to work the case or return to the full inbox.
 
 ## Daniel decision checkpoints
 

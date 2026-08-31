@@ -951,6 +951,74 @@ button:disabled {
   background: var(--panel-strong);
 }
 
+.review-case-panel {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.85fr) minmax(0, 1.15fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(247, 244, 238, 0.72);
+}
+
+.review-case-lead {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.review-case-lead span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-case-lead strong {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.review-case-lead p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.review-case-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.review-case-meta .pill {
+  max-width: 100%;
+}
+
+.review-case-meta .pill.wide {
+  white-space: normal;
+}
+
+.review-case-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.review-case-actions .btn {
+  min-height: 2rem;
+  padding: 0.34rem 0.58rem;
+  white-space: nowrap;
+}
+
 .panel-body {
   padding: 1rem;
 }
@@ -2020,6 +2088,20 @@ td small {
     width: 100%;
     max-width: none;
     text-align: center;
+  }
+
+  .review-case-panel {
+    grid-template-columns: 1fr;
+    padding: 0.65rem 0.7rem;
+  }
+
+  .review-case-actions {
+    justify-content: flex-start;
+  }
+
+  .review-case-actions .btn,
+  .review-case-actions .link-btn {
+    width: 100%;
   }
 
   .publication-banner {
