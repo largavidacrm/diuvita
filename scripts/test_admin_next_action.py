@@ -98,6 +98,8 @@ def main() -> None:
         "data-review-group",
         "Siguiente acción",
         "Caso prioritario",
+        "Contexto de grupo",
+        "Fichas pendientes",
         "Revisar claim bloqueante",
         "Revisar reclamación",
         "Abrir reclamación",
@@ -118,6 +120,8 @@ def main() -> None:
     check("global-plan-step" not in index, "global plan should not render decorative step numbers")
     check('"Prioridad · "' not in index, "quick-action buttons should not carry long dynamic labels")
     check('"Maps · "' not in index, "Google Maps quick action should stay compact")
+    check('systemItem("Grupo por clínica"' not in index, "clinic groups should be secondary context")
+    check('systemItem("Siguiente ficha"' not in index, "profile queue should not name secondary clinics as the next action")
 
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     for marker in [

@@ -1561,6 +1561,59 @@ def next_action_label(digest: dict[str, Any]) -> str:
     return "Sin accion urgente"
 
 
+def first_action_review(digest: dict[str, Any]) -> dict[str, Any] | None:
+    for key in ("open_reviews", "sample_open_reviews", "review_examples_by_type", "sample_review_examples_by_type"):
+        source = digest.get(key) or []
+        if not isinstance(source, list):
+            continue
+        candidates = [
+            item
+            for item in source
+            if isinstance(item, dict) and normalized_action_review_type(item)
+        ]
+        if candidates:
+            return sorted(candidates, key=action_review_sort_key)[0]
+    return None
+
+
+def review_clinic_key(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    return str(item.get("clinic_id") or item.get("clinic_slug") or item.get("clinic_name") or "").strip().lower()
+
+
+def target_clinic_key(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    return str(item.get("clinic_id") or item.get("slug") or item.get("clinic_slug") or item.get("clinic_name") or "").strip().lower()
+
+
+def aggregate_profile_queue_status(digest: dict[str, Any]) -> str:
+    completeness = digest.get("profile_completeness") or {}
+    visible = as_int(completeness.get("visible_clinics"))
+    pending = as_int(completeness.get("with_pending_fields"))
+    if not pending and visible:
+        without_pending = as_int(completeness.get("without_pending_fields"))
+        if without_pending:
+            pending = max(0, visible - without_pending)
+    if visible and pending:
+        return f"{pending}/{visible} fichas con campos pendientes; se revisan después de la prioridad actual"
+    return "sin ficha pendiente medida"
+
+
+def profile_queue_signal(digest: dict[str, Any]) -> str:
+    next_action = next_action_label(digest)
+    if next_action in {"Mejorar fichas existentes", "Revisión manual de fichas"}:
+        action_review = first_action_review(digest)
+        target = digest.get("profile_next_target") if isinstance(digest.get("profile_next_target"), dict) else {}
+        action_key = review_clinic_key(action_review)
+        target_key = target_clinic_key(target)
+        if action_key and target_key and action_key != target_key:
+            return aggregate_profile_queue_status(digest)
+        return next_profile_action(digest)
+    return aggregate_profile_queue_status(digest)
+
+
 def review_backlog_guard_status(
     digest: dict[str, Any],
     limit: int = SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
@@ -1677,7 +1730,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     if completeness_visible:
         output.append(line("Fichas sin campos pendientes medidos", f"{completeness_ready}/{completeness_visible}"))
         output.append(line("Campo mas pendiente", top_pending_profile_field(digest)))
-        output.append(line("Siguiente ficha", next_profile_action(digest)))
+        output.append(line("Fichas pendientes", profile_queue_signal(digest)))
     publication_readiness = digest.get("publication_readiness") or {}
     if as_int(publication_readiness.get("clinics_measured")):
         output.append(line("Fichas listas para publicar", publication_readiness_status(digest)))

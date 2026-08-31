@@ -278,7 +278,7 @@ def main():
     check("Cobertura fuentes: 11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente" in output, "source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
-    check("Grupo por clínica: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
+    check("Contexto de grupo: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Atascos de mejoras: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard status missing")
     check(len(next_clicks(digest)) == 4, "next clicks should stay short")
@@ -329,7 +329,7 @@ def main():
         "quality audit next click should point to manual review",
     )
     check(
-        "Grupo por clínica: Abrir Sensabell: 4 tarjetas" in audit_priority_output,
+        "Contexto de grupo: Abrir Sensabell: 4 tarjetas" in audit_priority_output,
         "clinic workgroup should remain as secondary context",
     )
 

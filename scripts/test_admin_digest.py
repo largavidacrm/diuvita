@@ -393,7 +393,7 @@ def main():
     check("Fichas sin campos pendientes medidos: 0/19" in output, "profile completeness missing")
     check("Campo mas pendiente: Google Maps · 19 fichas" in output, "top pending profile field line missing")
     check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending field should use operational priority on ties")
-    check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile line missing")
+    check("Fichas pendientes:" in output, "profile queue line missing")
     check("Fichas listas para publicar: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
     check("Principal faltante publicacion: Google Maps de clínica · 20 fichas" in output, "publication blocker line missing")
     check("Siguiente publicacion: Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total" in output, "next publication line missing")

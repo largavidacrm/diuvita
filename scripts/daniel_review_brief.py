@@ -504,7 +504,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Cobertura fuentes: {source_coverage_status(digest)}.",
         f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Bandeja: {review_backlog_status(digest)}.",
-        f"- Grupo por clínica: {first_clinic_workgroup(digest)}.",
+        f"- Contexto de grupo: {first_clinic_workgroup(digest)}.",
         f"- Atascos de mejoras: {backlog_bottleneck_signal(digest)}.",
         f"- Freno de bandeja: {review_backlog_guard_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",

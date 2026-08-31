@@ -51,7 +51,7 @@ The top-line signal is also shown in `/admin/` as:
 - `Fichas completas`;
 - `Fichas con pendientes`.
 - `Campo más pendiente`;
-- `Siguiente ficha`.
+- `Fichas pendientes`.
 
 The transparency fields are measured separately from the underlying content.
 For example, a clinic can have named professionals listed but still be missing

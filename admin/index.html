@@ -1525,6 +1525,19 @@
       return name + " · revisión manual";
     }
 
+    function profileQueueSignal(completeness, nextReview) {
+      if (!completeness || completeness.unavailable) return "—";
+      var target = completeness.nextTarget;
+      if (!target) return "Sin ficha pendiente medida";
+      var nextClinicId = nextReview && nextReview.clinic_id ? String(nextReview.clinic_id) : "";
+      var targetClinicId = target.clinicId ? String(target.clinicId) : "";
+      if (nextClinicId && targetClinicId && nextClinicId !== targetClinicId) {
+        return completeness.withPendingFields + "/" + completeness.visibleClinics +
+          " fichas con campos pendientes; después de la prioridad actual";
+      }
+      return profileNextTargetLabel(target);
+    }
+
     function emptyPublicHealth() {
       return {
         checks: 0,
@@ -2742,11 +2755,11 @@
       var preferClaimRequest = claimRequest && !hasBlockingClaim && !failedJobs;
       var group = preferClaimRequest ? null : firstClinicWorkgroup(openReviews || []);
       var sourceTarget = sourceCoverageTargetLabel(sources.nextTarget);
-      var profileTarget = profileNextTargetLabel(completeness.nextTarget);
       var next = nextActionLabel(openReviews || [], failedJobs);
       var groupRows = group && Array.isArray(group.rows) ? group.rows : [];
       var nextReview = firstActionReview(openReviews || [], failedJobs) ||
         (groupRows.length ? firstActionReview(groupRows, 0) || sortReviewWorkgroup(groupRows)[0] : null);
+      var profileTarget = profileQueueSignal(completeness, nextReview);
       var candidateOpenCount = countOpenReviewsByType(openReviews, "candidate_clinic");
       var enrichmentOpenCount = countOpenReviewsByType(openReviews, "clinic_profile_enrichment");
       var blockingOpenCount = countOpenReviewsByType(openReviews, "blocking_claim_review");
@@ -3613,7 +3626,7 @@
         systemItem("Siguiente fuente", sourceCoverageNextLabel, sourceCoverageStatus.nextTarget ? "warning-text" : ""),
         systemItem("Revisiones abiertas", reviews.open || 0, Number(reviews.open || 0) ? "warning-text" : ""),
         systemItem("Freno bandeja", backlogGuard.label, backlogGuard.tone),
-        systemItem("Grupo por clínica", clinicWorkgroupLabel(clinicWorkgroup), clinicWorkgroup ? "warning-text" : ""),
+        systemItem("Contexto de grupo", clinicWorkgroupLabel(clinicWorkgroup), clinicWorkgroup ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
         systemItem("Listas para publicar", publicationReadinessLabel(publishReadiness), publishReadiness.unavailable || publishReadiness.clinicsWithMissingFields ? "warning-text" : ""),
@@ -3626,7 +3639,7 @@
         systemItem("Fichas completas", completenessLabel, completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Fichas con pendientes", completenessPendingLabel, completeness.withPendingFields ? "warning-text" : ""),
         systemItem("Campo más pendiente", topPendingProfileField(completeness), completeness.unavailable || completeness.withPendingFields ? "warning-text" : ""),
-        systemItem("Siguiente ficha", profileNextTargetLabel(completeness.nextTarget), completeness.nextTarget ? "warning-text" : ""),
+        systemItem("Fichas pendientes", profileQueueSignal(completeness, nextReview), completeness.nextTarget ? "warning-text" : ""),
         systemItem("Sedes explícitas", locationRowsLabel, completeness.locationRowsMissingAddress ? "warning-text" : ""),
         systemItem("Sedes sin Maps", locationMapsLabel, completeness.locationRowsMissingMaps ? "warning-text" : ""),
         systemItem("Sedes sin valoraciones", locationReviewsLabel, completeness.locationRowsMissingReviews ? "warning-text" : ""),

@@ -29,7 +29,7 @@ from admin_digest import (
     top_publication_missing_field,
     top_pending_profile_field,
 )
-from daniel_review_brief import first_action_review, first_review, next_clicks, review_name
+from daniel_review_brief import first_action_review, first_review, next_clicks, profile_queue_signal, review_name
 from submit_discovery_candidates import get_default_admin_email, load_env_file
 
 
@@ -206,12 +206,12 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         "",
         "## Siguiente trabajo recomendado",
         f"- Señal automática base: {next_action_label(digest)}.",
-        f"- Grupo por clínica: {first_clinic_workgroup(digest)}.",
+        f"- Contexto de grupo: {first_clinic_workgroup(digest)}.",
         f"- Google Maps propuestos: {google_link_review_status(digest)}.",
         f"- Especialistas propuestos: {specialist_review_status(digest)}.",
         f"- Siguiente publicación: {next_publication_action(digest)}.",
         f"- Siguiente fuente: {next_source_action(digest)}.",
-        f"- Siguiente ficha: {next_profile_action(digest)}.",
+        f"- Fichas pendientes: {profile_queue_signal(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
         f"- Campo más pendiente: {top_pending_profile_field(digest)}.",
         "",

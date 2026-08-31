@@ -92,7 +92,7 @@ En **Estado del sistema**, mira especialmente:
 - **Fichas completas**: muestra cuántas fichas visibles no tienen campos importantes pendientes.
 - **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
 - **Campo más pendiente**: resume qué tipo de dato falta en más fichas visibles.
-- **Siguiente ficha**: señala la ficha incompleta que conviene revisar primero.
+- **Fichas pendientes**: resume las fichas incompletas sin convertir una clínica secundaria en prioridad si ya hay una tarjeta concreta que revisar.
 - **Listas para publicar**: cuenta cuántas fichas no archivadas no tienen faltantes obligatorios.
 - **Faltantes publicación**: indica cuántas fichas siguen bloqueadas antes de poder pasar a preliminar o publicada.
 - **Principal faltante**: resume el primer tipo de bloqueo repetido, por ejemplo Google Maps de clínica.
@@ -104,7 +104,7 @@ En **Estado del sistema**, mira especialmente:
   más tarjetas internas y cuántas propuestas quedan antes de la pausa
   preventiva. La pausa empieza antes del límite máximo para no llenar la cola.
 - **Reclamaciones de ficha**: solicitudes de una clínica para revisar una ficha; siempre requieren decisión humana.
-- **Grupo por clínica**: señala qué clínica concentra varias tarjetas abiertas para que puedas filtrarlas y abrirlas una por una.
+- **Contexto de grupo**: señala qué clínica concentra varias tarjetas abiertas para que puedas filtrarlas y abrirlas una por una, pero no sustituye la prioridad principal.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.
 - **Tarjetas duplicadas**: muestra cuántas tarjetas forman parte de esas repeticiones.
 - **Primer atasco**: señala qué clínica con tarjetas repetidas conviene ordenar primero.

@@ -69,7 +69,7 @@ def main() -> None:
         "Duplicados mejoras",
         "Tarjetas duplicadas",
         "Primer atasco",
-        "Grupo por clínica",
+        "Contexto de grupo",
         'id="openClinicGroupBtn"',
         "Filtrar grupo",
         "Grupo",

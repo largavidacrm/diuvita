@@ -1005,6 +1005,12 @@ Next 10 technical steps:
      includes **Lectura para Daniel**, stating whether changes are prepared only
      in the worktree, whether commits remain local and whether production was
      actually checked, without push, deploy or Supabase writes.
+193. Reduce secondary clinic-name bias in status panels. Done locally in
+     `/admin/`, `scripts/global_plan_status.py` and
+     `scripts/daniel_review_brief.py`: clinic clusters such as Sensabell now
+     appear as **Contexto de grupo**, while unrelated incomplete-profile queues
+     are summarized as **Fichas pendientes** after the current priority instead
+     of being presented as Daniel's next action.
 
 ## Daniel decision checkpoints
 

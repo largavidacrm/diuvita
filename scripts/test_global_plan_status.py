@@ -93,6 +93,8 @@ def sample_digest():
         },
         "profile_completeness": {
             "visible_clinics": 19,
+            "with_pending_fields": 19,
+            "without_pending_fields": 0,
             "pending_google_maps": 19,
             "pending_google_reviews": 18,
             "pending_specialists": 17,
@@ -183,13 +185,16 @@ def main():
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
     check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "top publication blocker missing")
-    check("Grupo por clínica: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
+    check("Contexto de grupo: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Señal automática base: Revisar claim bloqueante" in output, "base review signal missing")
     check("Google Maps propuestos: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps proposed line missing")
     check("Especialistas propuestos: 2 tarjetas; 17 especialistas propuestos" in output, "specialist proposed line missing")
     check("Siguiente publicación: Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total" in output, "next publication line missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
-    check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")
+    check(
+        "Fichas pendientes: 19/19 fichas con campos pendientes; se revisan después de la prioridad actual" in output,
+        "secondary profile queue should not name a non-primary clinic",
+    )
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending field missing")
     check("muestra humana insuficiente: 2/200 candidatas" in output, "maturity blocker missing")
     check("no publica, no edita clínicas" in output, "read-only note missing")
@@ -251,7 +256,7 @@ def main():
         "global status should send Daniel to manual review for quality-audit fields",
     )
     check(
-        "Grupo por clínica: Abrir Sensabell: 4 tarjetas" in audit_output,
+        "Contexto de grupo: Abrir Sensabell: 4 tarjetas" in audit_output,
         "global status should keep clinic groups as secondary context",
     )
     print("OK global plan status: roadmap snapshot is readable")
