@@ -33,8 +33,8 @@ def main() -> None:
     check(".work-grid.review-work-queue" in css, "review queue layout mode missing")
     check(".work-grid.review-work-decision" in css, "review decision layout mode missing")
     check(
-        "minmax(420px, 0.78fr) minmax(280px, 0.22fr)" in css
-        and "minmax(360px, 0.95fr) minmax(360px, 1.05fr)" in css,
+        "minmax(0, 1fr) minmax(260px, 320px)" in css
+        and "minmax(0, 0.95fr) minmax(400px, 1.05fr)" in css,
         "review workspace should keep stable desktop columns",
     )
 

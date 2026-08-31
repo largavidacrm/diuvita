@@ -278,7 +278,8 @@ def main() -> None:
     check(
         "if (reviewHasManualFieldRoute(activeReview))" not in index
         and "visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1)" in index
-        and "focusPublishField(activeClinicReviewFocusTarget.inputId);" in index,
+        and "focusPublishField(manualTarget.inputId);" in index
+        and "activeClinicReviewFocusTarget = manualTarget;" in index,
         "manual review cards should first open the two-column decision view and expose one field at a time",
     )
     check(
@@ -298,7 +299,8 @@ def main() -> None:
         and "activeClinicReviewFocusTarget" in index
         and "focusPublishField(activeClinicReviewFocusTarget.inputId)" in index
         and "renderClinicManualReviewContext();" in index
-        and "activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget)" in index,
+        and "activeClinicReviewFocusTarget = manualTarget;" in index
+        and "var manualTarget = reviewManualTargetForInput(row, focusTarget)" in index,
         "manual review clinic editor should show the exact field and refocus it",
     )
     check(
@@ -411,8 +413,10 @@ def main() -> None:
     check(".review-work-list-only" not in css and "review-work-list-only" not in index, "review queue should keep the two-column work area")
     check(
         "review-selection-empty" in index
+        and 'id="reviewSelectionOpenBtn"' in index
+        and "function renderReviewQueueSelection" in index
         and "Pulsa Revisar y verás aquí la ficha afectada y el cambio concreto para decidir." in index,
-        "review queue should keep a visible right-side selection panel",
+        "review queue should keep a visible right-side selection panel with a next-review action",
     )
     tablet_chunk = css[css.index("@media (max-width: 860px)"):css.index("@media (max-width: 700px)")]
     check(".work-grid" not in tablet_chunk, "review work area should not collapse before narrow mobile widths")
@@ -426,9 +430,14 @@ def main() -> None:
     check(
         ".work-grid.review-work-queue" in css
         and ".work-grid.review-work-decision" in css
-        and "minmax(420px, 0.78fr) minmax(280px, 0.22fr)" in css
-        and "minmax(360px, 0.95fr) minmax(360px, 1.05fr)" in css,
+        and "minmax(0, 1fr) minmax(260px, 320px)" in css
+        and "minmax(0, 0.95fr) minmax(400px, 1.05fr)" in css,
         "review queue and selected proposal should use stable desktop columns",
+    )
+    check(
+        "window.requestAnimationFrame(function ()" in index
+        and "focusPublishField(manualTarget.inputId)" in index,
+        "manual review should open and focus the exact clinic field directly",
     )
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")

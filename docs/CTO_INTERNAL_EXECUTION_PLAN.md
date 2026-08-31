@@ -995,6 +995,11 @@ Next 10 technical steps:
      `/admin/`: if a proposal includes Google review links, the warning block now
      tells Daniel to confirm the real Google Maps clinic profile first and then
      confirm the reviews belong to that same profile.
+191. Make the review queue visibly non-flat. Done locally in `/admin/`: queue
+     mode now keeps a fixed right-side **Revisión seleccionada** panel with the
+     next useful card and its own **Revisar siguiente** button, while manual
+     review field edits keep the validated target and focus it after the form
+     layout is ready.
 
 ## Daniel decision checkpoints
 

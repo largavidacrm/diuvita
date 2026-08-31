@@ -690,9 +690,10 @@
           </div>
           <div class="panel-body">
             <div class="review-selection-empty">
-              <span class="pill">En espera</span>
-              <h3>Elige una propuesta</h3>
+              <span class="pill" id="reviewSelectionState">En espera</span>
+              <h3 id="reviewSelectionTitle">Elige una propuesta</h3>
               <p id="reviewSelectionMessage">Pulsa Revisar y verás aquí la ficha afectada y el cambio concreto para decidir.</p>
+              <button class="btn secondary hidden" id="reviewSelectionOpenBtn" type="button">Revisar siguiente</button>
             </div>
           </div>
         </section>
@@ -1081,18 +1082,20 @@
       if (!target) return;
       var section = target.closest ? target.closest(".form-section") : null;
       if (section) section.open = true;
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      if (typeof target.focus === "function") {
-        try {
-          target.focus({ preventScroll: true });
-        } catch (error) {
-          target.focus();
+      window.requestAnimationFrame(function () {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (typeof target.focus === "function") {
+          try {
+            target.focus({ preventScroll: true });
+          } catch (error) {
+            target.focus();
+          }
         }
-      }
-      target.classList.add("field-attention");
-      window.setTimeout(function () {
-        target.classList.remove("field-attention");
-      }, 1600);
+        target.classList.add("field-attention");
+        window.setTimeout(function () {
+          target.classList.remove("field-attention");
+        }, 1600);
+      });
     }
 
     function publishMissingTargetId(label) {
@@ -8205,6 +8208,30 @@
       }).join("");
     }
 
+    function renderReviewQueueSelection(row, visibleCount, hasFilters) {
+      var state = el("reviewSelectionState");
+      var title = el("reviewSelectionTitle");
+      var message = el("reviewSelectionMessage");
+      var button = el("reviewSelectionOpenBtn");
+      if (!state || !title || !message || !button) return;
+      button.removeAttribute("data-review-id");
+      if (!row) {
+        state.textContent = hasFilters ? "Sin resultado" : "Cola vacía";
+        title.textContent = hasFilters ? "No hay propuestas con estos filtros" : "Cola terminada";
+        message.textContent = hasFilters
+          ? "Quita filtros para volver a ver las propuestas pendientes."
+          : "No quedan propuestas pendientes en esta cola.";
+        show(button, false);
+        return;
+      }
+      state.textContent = visibleCount === 1 ? "Única visible" : "Siguiente";
+      title.textContent = reviewPrimarySubject(row);
+      message.textContent = reviewVisibleLabel(row) + " · prioridad " + row.priority + " · " + date(row.created_at) +
+        ". Al revisarla, la lista se aparta: ficha en el centro y cambio propuesto a la derecha.";
+      button.setAttribute("data-review-id", row.id);
+      show(button, true);
+    }
+
     function renderReviews() {
       var reviewsBody = el("reviewsBody");
       syncReviewFiltersFromInputs();
@@ -8219,6 +8246,7 @@
       var specialistReview = firstSpecialistTargetReview(reviewCache);
       var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
       var actionLead = reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget);
+      renderReviewQueueSelection(nextReview || rows[0] || null, rows.length, hasFilters);
       renderReviewFilterChips();
       renderReviewCasePanel();
       show(el("reviewActionStrip"), false);
@@ -8486,13 +8514,13 @@
       var reviewType = row.review_type;
       var payload = row.payload || {};
       var focusTarget = focusTargetId || firstReviewMissingFieldTargetId(row);
-      activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget);
+      var manualTarget = reviewManualTargetForInput(row, focusTarget);
+      activeReview = null;
+      activeReviewModifyMode = false;
       activeClinicReview = row;
       activeClinicReviewIds = [row.id];
-      closeReviewEditor();
-      activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget);
-      activeClinicReview = row;
-      activeClinicReviewIds = [row.id];
+      activeClinicReviewFocusTarget = manualTarget;
+      renderReviewValidationView(null);
       openClinicEditor(row.clinic_id);
       activeControlSection = "reviewWorkArea";
       setControlNavActive("reviewWorkArea");
@@ -8509,10 +8537,10 @@
           ? "Ficha actualizada desde revisión manual."
           : "Ficha actualizada desde revisión manual.");
       }
-      if (focusTarget) {
+      if (manualTarget && manualTarget.inputId) {
         window.setTimeout(function () {
-          focusPublishField(focusTarget);
-        }, 0);
+          focusPublishField(manualTarget.inputId);
+        }, 80);
       }
       toast("Edita el campo pendiente y guarda la ficha para cerrar esta revisión.");
       return true;
@@ -9282,6 +9310,10 @@
       el("reviewTypeFilter").addEventListener("change", renderReviews);
       el("reviewPriorityFilter").addEventListener("change", renderReviews);
       el("reviewClearFilters").addEventListener("click", clearReviewFilters);
+      el("reviewSelectionOpenBtn").addEventListener("click", function () {
+        var id = el("reviewSelectionOpenBtn").getAttribute("data-review-id");
+        if (id) openReviewEditor(id);
+      });
       el("reviewFilterChips").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group],[data-review-group-clear]");
         if (!button) return;

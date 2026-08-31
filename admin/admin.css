@@ -825,11 +825,15 @@ body.sidebar-collapsed .control-sidebar {
 }
 
 .work-grid.review-work-queue {
-  grid-template-columns: minmax(420px, 0.78fr) minmax(280px, 0.22fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
 }
 
 .work-grid.review-work-decision {
-  grid-template-columns: minmax(360px, 0.95fr) minmax(360px, 1.05fr);
+  grid-template-columns: minmax(0, 0.95fr) minmax(400px, 1.05fr);
+}
+
+.work-grid.review-work-clinic-edit {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .work-grid > .panel {
@@ -1548,6 +1552,11 @@ td small {
 
 .review-selection-empty .pill {
   justify-self: start;
+}
+
+.review-selection-empty .btn {
+  justify-self: stretch;
+  margin-top: 0.15rem;
 }
 
 .review-selection-empty h3 {
