@@ -596,6 +596,11 @@ Next 10 technical steps:
      `scripts/check_public_site_freshness.py`: stale public-page checks now
      summarize affected field groups, such as contact, specialists or
      technology, before showing individual examples.
+116. Make per-clinic publication blockers actionable. Done locally in
+     `scripts/clinic_publication_readiness.py`: readiness reports now list every
+     missing publication blocker with a plain-language place to fix it in the
+     admin, including the direct-clinic Google Maps rule and blocking-claim
+     review step.
 
 ## Daniel decision checkpoints
 

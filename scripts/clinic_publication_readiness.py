@@ -34,6 +34,17 @@ REQUIRED_FIELDS = (
     ("has_services", "Servicios principales"),
     ("has_google_maps", "Google Maps de clinica"),
 )
+FIX_HINTS = {
+    "Nombre": "campo Nombre del editor de clinica.",
+    "Ciudad": "campo Ciudad del editor de clinica.",
+    "Pais": "campo Pais del editor de clinica.",
+    "Web oficial": "campo Web; debe ser la web oficial de la clinica.",
+    "Direccion o sede": "bloque Sedes y acceso; anade direccion o sede completa.",
+    "Resumen suficiente": "campo Resumen; redacta una descripcion neutra con informacion publica.",
+    "Servicios principales": "campo Servicios; anade servicios publicados por la clinica.",
+    "Google Maps de clinica": "campo Google Maps; pega el perfil real de la clinica, no una busqueda ni una direccion.",
+    "Claims bloqueantes": "bandeja de revision; corrige, deja fuera o descarta los datos dudosos antes de publicar.",
+}
 
 
 def compact_lookup_key(value: Any) -> str:
@@ -162,6 +173,10 @@ def next_publication_step(row: dict[str, Any], missing: list[str]) -> str:
     return "No hay faltantes obligatorios; Daniel puede decidir si pasa a preliminar o publicada."
 
 
+def missing_fix_hints(missing: list[str]) -> list[tuple[str, str]]:
+    return [(label, FIX_HINTS.get(label, "abre la ficha y revisa este punto.")) for label in missing]
+
+
 def format_match(row: dict[str, Any]) -> list[str]:
     missing = missing_required_fields(row)
     name = row.get("clinic_name") or row.get("slug") or "Clinica sin nombre"
@@ -178,6 +193,9 @@ def format_match(row: dict[str, Any]) -> list[str]:
     ]
     if missing:
         lines.append("- Falta para publicar: " + ", ".join(missing))
+        lines.append("- Donde corregirlo:")
+        for label, hint in missing_fix_hints(missing):
+            lines.append(f"  - {label}: {hint}")
     else:
         lines.append("- Falta para publicar: nada obligatorio detectado")
     lines.append(f"- Siguiente paso: {next_publication_step(row, missing)}")
