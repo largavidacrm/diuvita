@@ -388,6 +388,10 @@ Next 10 technical steps:
     `scripts/measure_specialist_coverage.py`: internal specialist signals are
     shown as detected names, cleaned of role/navigation noise and deduplicated
     before Daniel sees the next review target.
+68. Align admin specialist wording with Daniel's review flow. Done locally in
+    `/admin/`, `scripts/admin_digest.py` and the admin guide: specialist
+    evidence is presented as detected names, counted from actual proposed
+    names and excluding rejected/stale internal evidence.
 
 ## Daniel decision checkpoints
 

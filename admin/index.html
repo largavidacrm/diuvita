@@ -1248,6 +1248,16 @@
       return values.filter(function (item) { return text(item).trim(); }).length;
     }
 
+    function countSpecialistClaimNames(claim) {
+      var status = text(claim && claim.verification_status);
+      if (["rejected", "stale"].indexOf(status) >= 0) return 0;
+      var value = claim ? claim.value : null;
+      if (Array.isArray(value)) {
+        return value.filter(function (item) { return text(item).trim(); }).length;
+      }
+      return text(value).trim() ? 1 : 0;
+    }
+
     function countVisibleArray(value) {
       return Array.isArray(value)
         ? value.filter(function (item) { return text(item).trim(); }).length
@@ -1397,7 +1407,7 @@
         return name + " · " + target.openReviewCount + (target.openReviewCount === 1 ? " revisión" : " revisiones");
       }
       if (target.specialistClaims) {
-        return name + " · " + target.specialistClaims + (target.specialistClaims === 1 ? " claim" : " claims");
+        return name + " · " + target.specialistClaims + (target.specialistClaims === 1 ? " nombre detectado" : " nombres detectados");
       }
       return name + " · buscar fuente oficial";
     }
@@ -1451,13 +1461,13 @@
       if (missingIds.length) {
         var claimsResult = await client
           .from("field_claims")
-          .select("clinic_id, field_path")
+          .select("clinic_id, field_path, value, verification_status")
           .in("clinic_id", missingIds)
           .in("field_path", ["professionals.published", "team.public_professionals"])
           .limit(1000);
         if (!claimsResult.error) {
           (claimsResult.data || []).forEach(function (claim) {
-            if (targetById[claim.clinic_id]) targetById[claim.clinic_id].specialistClaims += 1;
+            if (targetById[claim.clinic_id]) targetById[claim.clinic_id].specialistClaims += countSpecialistClaimNames(claim);
           });
         }
       }

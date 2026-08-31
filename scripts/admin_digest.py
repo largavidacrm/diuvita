@@ -1147,7 +1147,7 @@ def next_specialist_action(digest: dict[str, Any]) -> str:
     if reviews:
         return f"Revisar {name}: ya tiene {reviews} {plural(reviews, 'revision abierta', 'revisiones abiertas')}"
     if claims:
-        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'claim interno', 'claims internos')}"
+        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'nombre detectado', 'nombres detectados')}"
     return f"Buscar especialistas publicados para {name} solo en fuentes oficiales"
 
 

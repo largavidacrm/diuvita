@@ -17,6 +17,7 @@ def main() -> None:
     for marker in [
         "function emptySpecialistCoverage",
         "function countPublishedSpecialists",
+        "function countSpecialistClaimNames",
         "function reviewMentionsSpecialists",
         "function specialistNextTargetLabel",
         "function specialistTargetSort",
@@ -44,7 +45,10 @@ def main() -> None:
         '.select("id, slug, display_name, city, status, current_data")',
         '.in("status", ["published", "preliminary"])',
         '.from("field_claims")',
+        '.select("clinic_id, field_path, value, verification_status")',
         '.in("field_path", ["professionals.published", "team.public_professionals"])',
+        "targetById[claim.clinic_id].specialistClaims += countSpecialistClaimNames(claim);",
+        'target.specialistClaims === 1 ? " nombre detectado" : " nombres detectados"',
         "var specialistCoverage = await loadSpecialistCoverage(reviewCache);",
         "specialistCoverageCache = specialistCoverage;",
         "specialistCoverageCache && specialistCoverageCache.nextTarget",

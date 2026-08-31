@@ -253,6 +253,12 @@ def main():
     output = format_digest(digest)
     check(next_action_label(digest) == "Revisar claim bloqueante", "next action should prefer blocking claims")
     check(next_specialist_action(digest) == "Revisar Age Reversal: ya tiene 2 revisiones abiertas", "next specialist action missing")
+    claim_only_digest = dict(digest)
+    claim_only_digest["specialist_next_target"] = dict(digest["specialist_next_target"], open_review_count=0)
+    check(
+        next_specialist_action(claim_only_digest) == "Revisar Age Reversal: ya tiene 1 nombre detectado",
+        "next specialist action should use detected-name wording",
+    )
     check(
         next_profile_action(digest) == "Revisar Kairos Longevity Clinic: ya tiene 4 revisiones abiertas relacionadas. Primer campo: Google Maps de clínica",
         "next profile action missing",
