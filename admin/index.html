@@ -1302,6 +1302,90 @@
       return true;
     }
 
+    function emptyPublicationReadiness() {
+      return {
+        clinicsMeasured: 0,
+        visibleClinics: 0,
+        readyClinics: 0,
+        clinicsWithMissingFields: 0,
+        clinicsWithBlockingReviews: 0,
+        topMissingField: null,
+        nextTarget: null,
+        unavailable: false
+      };
+    }
+
+    function publicationTargetSort(a, b) {
+      return Number(b.blockingReview || 0) - Number(a.blockingReview || 0) ||
+        Number(b.missingCount || 0) - Number(a.missingCount || 0) ||
+        (isPublicClinicStatus(a.status) ? 1 : 0) - (isPublicClinicStatus(b.status) ? 1 : 0) ||
+        text(a.clinicName || a.slug).localeCompare(text(b.clinicName || b.slug));
+    }
+
+    function publicationReadinessSummary(rows) {
+      var readiness = emptyPublicationReadiness();
+      var missingCounts = {};
+      var targets = [];
+      (rows || []).forEach(function (row) {
+        if (row.status === "archived") return;
+        var missing = clinicPublicationMissingLabels(row);
+        readiness.clinicsMeasured += 1;
+        if (isPublicClinicStatus(row.status)) readiness.visibleClinics += 1;
+        if (!missing.length) {
+          readiness.readyClinics += 1;
+          return;
+        }
+        readiness.clinicsWithMissingFields += 1;
+        if (missing.indexOf("Claims bloqueantes") >= 0) readiness.clinicsWithBlockingReviews += 1;
+        missing.forEach(function (label) {
+          missingCounts[label] = Number(missingCounts[label] || 0) + 1;
+        });
+        targets.push({
+          clinicId: row.id,
+          slug: row.slug,
+          clinicName: row.display_name,
+          city: row.city,
+          status: row.status,
+          missingFields: missing,
+          missingCount: missing.length,
+          blockingReview: missing.indexOf("Claims bloqueantes") >= 0
+        });
+      });
+      readiness.topMissingField = Object.keys(missingCounts).sort(function (a, b) {
+        return Number(missingCounts[b] || 0) - Number(missingCounts[a] || 0) || a.localeCompare(b);
+      }).map(function (label) {
+        return { label: label, count: missingCounts[label] };
+      })[0] || null;
+      readiness.nextTarget = targets.sort(publicationTargetSort)[0] || null;
+      return readiness;
+    }
+
+    function publicationReadinessLabel(readiness) {
+      if (!readiness || readiness.unavailable) return "No disponible";
+      if (!readiness.clinicsMeasured) return "Sin fichas";
+      return readiness.readyClinics + "/" + readiness.clinicsMeasured + " listas";
+    }
+
+    function publicationMissingLabel(readiness) {
+      if (!readiness || readiness.unavailable) return "—";
+      var missing = readiness.clinicsWithMissingFields || 0;
+      var blocking = readiness.clinicsWithBlockingReviews || 0;
+      return missing + " con faltantes" + (blocking ? " · " + blocking + " con claims" : "");
+    }
+
+    function publicationTopMissingLabel(readiness) {
+      if (!readiness || readiness.unavailable) return "—";
+      if (!readiness.topMissingField) return "Sin faltantes obligatorios";
+      return readiness.topMissingField.label + " · " + readiness.topMissingField.count + " fichas";
+    }
+
+    function publicationNextTargetLabel(target) {
+      if (!target) return "—";
+      var name = target.clinicName || target.slug || "Ficha pendiente";
+      var first = (target.missingFields || [])[0] || "revisar ficha";
+      return name + " · " + first;
+    }
+
     function topPendingProfileField(completeness) {
       if (!completeness || completeness.unavailable) return "—";
       var fields = profileCompletenessFields().map(function (field, index) {
@@ -3187,7 +3271,7 @@
       show(panel, true);
     }
 
-    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews) {
+    function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews, publicationReadiness) {
       var clinics = summary.clinics || {};
       var reviews = summary.reviews || {};
       var jobs = summary.jobs || {};
@@ -3275,6 +3359,7 @@
         ? "—"
         : publicSite.ok + "/" + publicSite.checks + " comprobaciones";
       var publication = publicationControl || emptyPublicationControl();
+      var publishReadiness = publicationReadiness || emptyPublicationReadiness();
       var nextReview = firstActionReview(openReviews, failedJobs);
       renderPublicationBanner(publication);
 
@@ -3300,6 +3385,10 @@
         systemItem("Grupo por clínica", clinicWorkgroupLabel(clinicWorkgroup), clinicWorkgroup ? "warning-text" : ""),
         systemItem("Candidatas revisadas", target ? completed + "/" + target : completed),
         systemItem("Borradores", clinics.draft || 0, Number(clinics.draft || 0) ? "warning-text" : ""),
+        systemItem("Listas para publicar", publicationReadinessLabel(publishReadiness), publishReadiness.unavailable || publishReadiness.clinicsWithMissingFields ? "warning-text" : ""),
+        systemItem("Faltantes publicación", publicationMissingLabel(publishReadiness), publishReadiness.unavailable || publishReadiness.clinicsWithMissingFields ? "warning-text" : ""),
+        systemItem("Principal faltante", publicationTopMissingLabel(publishReadiness), publishReadiness.unavailable || publishReadiness.clinicsWithMissingFields ? "warning-text" : ""),
+        systemItem("Siguiente publicación", publicationNextTargetLabel(publishReadiness.nextTarget), publishReadiness.nextTarget ? "warning-text" : ""),
         systemItem("Especialistas", specialistLabel, specialists.unavailable || specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Pendientes especialistas", specialistMissingLabel, specialists.withoutSpecialists ? "warning-text" : ""),
         systemItem("Siguiente especialistas", specialistNextLabel, specialists.nextTarget ? "warning-text" : ""),
@@ -6904,10 +6993,7 @@
         var publicHealth = await loadPublicHealth();
         var publicationControl = await loadPublicationControl();
         publicationControlCache = publicationControl;
-        renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
-        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
-        renderReviews();
-
+        var publicationReadiness = emptyPublicationReadiness();
         var clinicRows = await client
           .from("clinics")
           .select("id, slug, canonical_name, display_name, website, country, city, region, address, status, summary, current_data, profile_confidence, verification_status, updated_at")
@@ -6916,11 +7002,16 @@
 
         if (clinicRows.error || !clinicRows.data || clinicRows.data.length === 0) {
           clinicCache = [];
+          if (clinicRows.error) publicationReadiness.unavailable = true;
           emptyRow(el("clinicsBody"), 7, "Sin clínicas");
         } else {
           clinicCache = clinicRows.data;
+          publicationReadiness = publicationReadinessSummary(clinicCache);
           renderClinics();
         }
+        renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
+        renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache, publicationReadiness);
+        renderReviews();
         if (activeClinic) renderClinicPublicSync();
         updateControlNav(
           summary,

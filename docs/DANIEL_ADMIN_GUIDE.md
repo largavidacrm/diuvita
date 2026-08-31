@@ -81,6 +81,10 @@ En **Estado del sistema**, mira especialmente:
 - **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
 - **Campo más pendiente**: resume qué tipo de dato falta en más fichas visibles.
 - **Siguiente ficha**: señala la ficha incompleta que conviene revisar primero.
+- **Listas para publicar**: cuenta cuántas fichas no archivadas no tienen faltantes obligatorios.
+- **Faltantes publicación**: indica cuántas fichas siguen bloqueadas antes de poder pasar a preliminar o publicada.
+- **Principal faltante**: resume el primer tipo de bloqueo repetido, por ejemplo Google Maps de clínica.
+- **Siguiente publicación**: señala la ficha con más puntos obligatorios pendientes para trabajarla primero.
 - **Sedes explícitas**: cuenta cuántas sedes están guardadas como sedes separadas y cuántas clínicas son multisede.
 - **Sedes sin Maps**: avisa si alguna sede guardada no tiene enlace a ficha de clínica en Google Maps.
 - **Sedes sin valoraciones**: avisa si alguna sede guardada no tiene enlace directo a valoraciones de Google.

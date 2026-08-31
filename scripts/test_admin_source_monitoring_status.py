@@ -31,7 +31,7 @@ def main() -> None:
         check(marker in index, f"missing admin source monitoring marker: {marker}")
 
     check(
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);"
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache, publicationReadiness);"
         in index,
         "dashboard should render source monitoring status",
     )

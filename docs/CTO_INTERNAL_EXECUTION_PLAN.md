@@ -711,6 +711,11 @@ Next 10 technical steps:
      `--publication-readiness-clinic` runs now add compact readiness status to
      the Daniel brief without editing clinics, publishing pages or dumping full
      match rows.
+138. Surface publication-readiness status in the admin control center. Done
+     locally in `/admin/`: the system panel now shows ready-to-publish fichas,
+     fichas with required blockers, the most common blocker and the next ficha
+     to work, reusing the same direct Google Maps and blocking-claim rules as
+     the editor.
 
 ## Daniel decision checkpoints
 

@@ -110,7 +110,7 @@ def main() -> None:
         "Completar fichas",
         "Sin acción urgente",
         "renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache, publicationReadiness);",
         "var nextReview = firstActionReview(rows, 0);",
         "var nextReview = firstActionReview(filteredReviewRows(), 0);",
         'el("openGoogleLinksBtn").addEventListener("click", openGoogleLinksTarget);',

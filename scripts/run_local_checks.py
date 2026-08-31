@@ -38,6 +38,7 @@ TEST_STEPS = [
     ("test: admin review actions", "scripts/test_admin_review_actions.py"),
     ("test: admin control sidebar", "scripts/test_admin_control_sidebar.py"),
     ("test: admin publication flow", "scripts/test_admin_publication_flow.py"),
+    ("test: admin publication readiness status", "scripts/test_admin_publication_readiness_status.py"),
     ("test: admin clinic diff", "scripts/test_admin_clinic_diff.py"),
     ("test: admin location transparency", "scripts/test_admin_location_transparency_fields.py"),
     ("test: admin claim rules", "scripts/test_admin_claim_rules.py"),

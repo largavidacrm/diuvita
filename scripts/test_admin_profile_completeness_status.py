@@ -68,7 +68,7 @@ def main() -> None:
         check(marker in index, f"missing admin profile completeness marker: {marker}")
 
     check(
-        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);"
+        "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache, publicationReadiness);"
         in index,
         "dashboard should render profile completeness status",
     )
