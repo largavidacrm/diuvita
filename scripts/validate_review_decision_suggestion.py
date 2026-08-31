@@ -226,6 +226,33 @@ def field_safety_errors(key: str, value: Any) -> list[str]:
     return errors
 
 
+def google_reviews_dependency_errors(
+    packet: dict[str, Any],
+    action: str,
+    change_keys: list[str],
+) -> list[str]:
+    if action not in {"approve", "modify"}:
+        return []
+    touches_reviews = "google_reviews_url" in {canonical_field(key) for key in change_keys}
+    errors: list[str] = []
+    for item in packet.get("proposed_change") or []:
+        if not isinstance(item, dict):
+            continue
+        context = item.get("google_reviews_review")
+        if not isinstance(context, dict):
+            continue
+        dependency = context.get("approval_dependency") or {}
+        if not isinstance(dependency, dict):
+            dependency = {}
+        if dependency.get("satisfied"):
+            continue
+        if action == "approve" or touches_reviews:
+            errors.append(
+                "Google reviews require a confirmed clinic Google Maps profile before approval."
+            )
+    return errors
+
+
 def validate_suggestion(
     packet: dict[str, Any],
     suggestion: dict[str, Any],
@@ -281,6 +308,7 @@ def validate_suggestion(
             errors.append("modify action requires at least one editable field change")
     for key, value in normalized_changes.items():
         errors.extend(field_safety_errors(key, value))
+    errors.extend(google_reviews_dependency_errors(packet, action, list(normalized_changes)))
 
     for path in forbidden_control_paths(suggestion):
         errors.append(f"suggestion tries to control a forbidden operation: {path}")

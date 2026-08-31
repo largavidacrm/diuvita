@@ -147,7 +147,39 @@ def main():
         reviews_context["overall_status"] == "reviews_link_needs_main_profile_confirmation",
         "Google reviews links should depend on the main profile confirmation",
     )
+    check(
+        reviews_context["approval_dependency"]["satisfied"] is False,
+        "Google reviews should expose a missing Maps dependency",
+    )
+    check(
+        reviews_context["next_step"] == "confirm_main_google_maps_profile_before_approval",
+        "Google reviews without Maps should ask for the main profile first",
+    )
     check(reviews_context["safe_to_auto_publish"] is False, "Google reviews should stay human-gated")
+    reviews_with_maps_packet = decision_packet({
+        "id": "reviews-2",
+        "title": "Revisar valoraciones Google: Clinic",
+        "review_type": "clinic_profile_enrichment",
+        "payload": {
+            "source_url": "https://clinic.example/contacto",
+            "proposed_fields": {
+                "google_reviews_url": "https://www.google.com/maps/place/Clinic/reviews",
+            },
+        },
+        "clinic": {
+            "display_name": "Clinic",
+            "current_data": {"maps_url": "https://www.google.com/maps/place/Clinic/"},
+        },
+    })
+    reviews_with_maps_context = reviews_with_maps_packet["proposed_change"][0]["google_reviews_review"]
+    check(
+        reviews_with_maps_context["approval_dependency"]["satisfied"] is True,
+        "Google reviews should detect an existing direct Maps profile",
+    )
+    check(
+        reviews_with_maps_context["next_step"] == "confirm_reviews_match_confirmed_google_maps_profile",
+        "Google reviews with Maps should ask Daniel to match the same profile",
+    )
     check("value" not in safe_packet["current_relevant"][0]["current"], "safe default should omit current values")
     check(safe_packet["evidence"][0]["host"] == "imda.example", "safe evidence should keep host")
     check("value" not in safe_packet["evidence"][0], "safe default should omit evidence URLs")

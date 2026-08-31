@@ -80,7 +80,10 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
   comprobación humana antes de aprobar.
 - estado estructurado de Valoraciones Google cuando la propuesta trae ese
   enlace, recordando que debe pertenecer a la misma ficha principal de Google
-  Maps antes de guardarse.
+  Maps antes de guardarse. El paquete incluye una `approval_dependency` que
+  indica si ya existe un perfil Google Maps directo en la ficha o en la misma
+  propuesta; si no existe, una sugerencia LLM de aprobar o modificar
+  Valoraciones Google debe rechazarse en validación.
 
 El LLM no debe:
 

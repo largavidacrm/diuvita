@@ -1021,6 +1021,12 @@ Next 10 technical steps:
      only a few safe-write slots left, Daniel sees reduction of the review
      queue as the active phase and Codex is routed toward panel/extractor/check
      improvements that do not create more review cards.
+196. Carry Google Reviews dependencies into LLM decision packets. Done locally
+     in `scripts/review_proposal_decision_packets.py` and
+     `scripts/validate_review_decision_suggestion.py`: Google review proposals
+     now expose whether a confirmed clinic Google Maps profile exists, and the
+     LLM suggestion guard rejects approve/modify advice for Google Reviews when
+     that dependency is missing.
 
 ## Daniel decision checkpoints
 

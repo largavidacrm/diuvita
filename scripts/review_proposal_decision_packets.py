@@ -544,19 +544,53 @@ def google_maps_review_context(key: str, value: Any) -> dict[str, Any]:
     }
 
 
-def google_reviews_review_context(key: str, value: Any) -> dict[str, Any]:
+def google_maps_profile_dependency(clinic: dict[str, Any], fields: dict[str, Any]) -> dict[str, Any]:
+    data = clinic.get("current_data") if isinstance(clinic.get("current_data"), dict) else {}
+    current_urls = [
+        str(data.get(key) or "").strip()
+        for key in ("maps_url", "google_maps_url", "map_url")
+        if str(data.get(key) or "").strip()
+    ]
+    current_urls.extend(google_maps_urls_from_value("locations", data.get("locations")))
+    proposed_urls: list[str] = []
+    for key, value in fields.items():
+        if canonical_field(key) in {"maps_url", "locations"}:
+            proposed_urls.extend(google_maps_urls_from_value(key, value))
+    current_direct = any(google_maps_review_status(url) == "direct_profile" for url in current_urls)
+    proposed_direct = any(google_maps_review_status(url) == "direct_profile" for url in proposed_urls)
+    source = "current_clinic_profile" if current_direct else "same_review_packet" if proposed_direct else "missing"
+    return {
+        "field": "maps_url",
+        "required_before_approval": True,
+        "satisfied": current_direct or proposed_direct,
+        "source": source,
+        "current_profile_present": current_direct,
+        "same_packet_profile_proposed": proposed_direct,
+    }
+
+
+def google_reviews_review_context(
+    key: str,
+    value: Any,
+    clinic: dict[str, Any] | None = None,
+    fields: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if canonical_field(key) != "google_reviews_url":
         return {}
     urls = [str(item).strip() for item in field_values(value) if str(item or "").strip()]
     if not urls:
         return {}
+    dependency = google_maps_profile_dependency(clinic or {}, fields or {})
     return {
         "kind": "google_reviews_link",
         "overall_status": "reviews_link_needs_main_profile_confirmation",
         "url_count": len(urls),
         "human_label": "Confirmar misma ficha",
+        "approval_dependency": dependency,
         "required_human_check": "confirm_reviews_match_main_google_business_profile",
-        "next_step": "confirm_main_google_maps_profile_before_approval",
+        "next_step": "confirm_reviews_match_confirmed_google_maps_profile"
+        if dependency["satisfied"]
+        else "confirm_main_google_maps_profile_before_approval",
         "safe_to_auto_publish": False,
     }
 
@@ -585,6 +619,8 @@ def maps_warning(key: str, value: Any) -> str:
 
 def warning_items(row: dict[str, Any], proposed_items: list[dict[str, Any]], include_values: bool = False) -> list[str]:
     payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    fields = proposed_fields(payload)
+    clinic = row.get("clinic") if isinstance(row.get("clinic"), dict) else {}
     warnings: list[str] = []
 
     def add(value: Any) -> None:
@@ -611,6 +647,10 @@ def warning_items(row: dict[str, Any], proposed_items: list[dict[str, Any]], inc
             for location in value if isinstance(value, list) else []:
                 if isinstance(location, dict):
                     add(maps_warning("maps_url", location.get("maps_url") or location.get("google_maps_url")))
+        if key == "google_reviews_url":
+            dependency = google_maps_profile_dependency(clinic if isinstance(clinic, dict) else {}, fields)
+            if not dependency["satisfied"]:
+                add("Valoraciones Google requiere confirmar primero el perfil real de Google Maps de la clínica.")
         if key in {"status", "profile_confidence", "verification_status"}:
             add(f"{field_label(key)} no se cambia desde aprobación directa.")
         if key in SENSITIVE_FIELDS:
@@ -645,6 +685,8 @@ def clinic_identity(row: dict[str, Any]) -> dict[str, Any]:
 
 def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[str, Any]:
     clinic = row.get("clinic") if isinstance(row.get("clinic"), dict) else {}
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    fields = proposed_fields(payload)
     proposed_items = ordered_proposed_items(row)
     proposal_fields = []
     all_manual_targets: list[dict[str, str]] = []
@@ -660,7 +702,7 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
         maps_context = google_maps_review_context(key, item["value"])
         if maps_context:
             field_packet["google_maps_review"] = maps_context
-        reviews_context = google_reviews_review_context(key, item["value"])
+        reviews_context = google_reviews_review_context(key, item["value"], clinic=clinic, fields=fields)
         if reviews_context:
             field_packet["google_reviews_review"] = reviews_context
         targets = manual_review_targets(row, item)
@@ -669,7 +711,6 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             field_packet["manual_review_target"] = targets[0]
             all_manual_targets.extend(targets)
         proposal_fields.append(field_packet)
-    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
     evidence = [evidence_packet(label, value, include_values) for label, value in source_candidates(payload)]
     warnings = warning_items(row, proposed_items, include_values=include_values)
     editable_fields = [

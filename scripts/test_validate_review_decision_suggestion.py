@@ -62,6 +62,26 @@ def sample_quality_packet(multiple_targets=False):
     })
 
 
+def sample_reviews_packet(has_maps=False):
+    current_data = {"maps_url": "https://www.google.com/maps/place/Clinic/"} if has_maps else {}
+    return decision_packet({
+        "id": "reviews-1",
+        "title": "Revisar valoraciones Google: Clinic",
+        "review_type": "clinic_profile_enrichment",
+        "payload": {
+            "source_url": "https://clinic.example/contacto",
+            "proposed_fields": {
+                "google_reviews_url": "https://www.google.com/maps/place/Clinic/reviews",
+            },
+        },
+        "clinic": {
+            "id": "clinic-1",
+            "display_name": "Clinic",
+            "current_data": current_data,
+        },
+    })
+
+
 def main():
     packet = sample_packet()
     approved = validate_suggestion(packet, {
@@ -214,6 +234,31 @@ def main():
     })
     check(not bad_maps["valid"], "weak Google Maps suggestions should be blocked")
     check(any("Google Maps debe ser el perfil real" in error for error in bad_maps["errors"]), "weak Maps error missing")
+
+    reviews_without_maps = validate_suggestion(sample_reviews_packet(), {
+        "review_id": "reviews-1",
+        "action": "approve",
+        "reason": "Las reseñas parecen correctas.",
+    })
+    check(not reviews_without_maps["valid"], "Google reviews should not be approved without confirmed Maps")
+    check(
+        any("Google reviews require a confirmed clinic Google Maps profile" in error for error in reviews_without_maps["errors"]),
+        "Google reviews dependency error missing",
+    )
+
+    reviews_modify_without_maps = validate_suggestion(sample_reviews_packet(), {
+        "review_id": "reviews-1",
+        "action": "modify",
+        "field_changes": {"google_reviews_url": "https://www.google.com/maps/place/Clinic/reviews"},
+    })
+    check(not reviews_modify_without_maps["valid"], "Google reviews modify should require confirmed Maps context")
+
+    reviews_with_maps = validate_suggestion(sample_reviews_packet(has_maps=True), {
+        "review_id": "reviews-1",
+        "action": "approve",
+        "reason": "Daniel confirma que pertenecen al perfil de Maps guardado.",
+    })
+    check(reviews_with_maps["valid"], "Google reviews should pass once the clinic has a direct Maps profile")
 
     source = (ROOT / "scripts" / "validate_review_decision_suggestion.py").read_text(encoding="utf-8")
     check("admin_update_clinic" in source, "forbidden operation list should name risky admin writes")
