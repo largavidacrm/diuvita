@@ -200,10 +200,17 @@ def production_health_status(report: dict[str, Any]) -> str:
 def first_step(digest: dict[str, Any]) -> list[str]:
     counts = review_counts(digest)
     failed = digest.get("recent_failed_jobs") or []
+    guard = review_backlog_guard_status(digest)
+    group = first_clinic_workgroup(digest)
     if failed:
         return [
             "Primero revisa fallos técnicos.",
             "Hay trabajos fallidos; conviene corregirlos antes de aceptar nuevas fichas.",
+        ]
+    if (guard.startswith("cerca del freno") or guard.startswith("freno activo")) and group != "sin grupo por clínica medido":
+        return [
+            "Primero baja un grupo repetido.",
+            f"Caso visible: {group}.",
         ]
     if counts.get("blocking_claim_review"):
         return [
@@ -252,7 +259,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         "## Qué mirar primero",
         f"- {first_lines[0]}",
         f"- {first_lines[1]}",
-        f"- Acción sugerida por el sistema: {next_action}.",
+        f"- Señal automática base: {next_action}.",
         "",
         "## Próximos clics",
         *[f"- {item}" for item in next_clicks(digest)],

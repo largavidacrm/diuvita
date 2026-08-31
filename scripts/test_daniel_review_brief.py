@@ -175,7 +175,7 @@ def main():
     counts = review_counts(digest)
 
     check(counts["blocking_claim_review"] == 1, "blocking-claim count missing")
-    check(first_step(digest)[0] == "Primero revisa claims bloqueantes.", "blocking claims should be first")
+    check(first_step(digest)[0] == "Primero baja un grupo repetido.", "near-limit clinic groups should be first")
     check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")
     check("Próximos clics" in output, "next-clicks section missing")
@@ -183,8 +183,8 @@ def main():
     check("Pulsa Filtrar grupo y trabaja Sensabell: 5 tarjetas juntas." in output, "clinic-group click missing")
     check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad. En total hay 17 especialistas propuestos en la bandeja." in output, "specialist click missing")
     check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "Google Maps click missing")
-    check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible case missing")
-    check("Acción sugerida por el sistema: Revisar claim bloqueante." in output, "next action missing")
+    check("Caso visible: Trabajar Sensabell: 5 tarjetas" in output, "visible clinic group missing")
+    check("Señal automática base: Revisar claim bloqueante." in output, "base next action missing")
     check("48 revisiones abiertas" in output, "open review count missing")
     check("1 claim bloqueante pendiente" in output, "blocking count missing")
     check("8 clínicas nuevas pendientes" in output, "candidate count missing")
@@ -231,18 +231,24 @@ def main():
     hidden_sample_digest = sample_digest()
     hidden_sample_digest["open_reviews"] = []
     hidden_sample_digest["review_examples_by_type"] = []
+    hidden_sample_digest["review_first_clinic_workgroup"] = {}
+    hidden_sample_digest["summary"]["reviews"] = {"open": 12}
     check(
         first_step(hidden_sample_digest)[1] == "Caso visible: abre el filtro Claims bloqueantes en el panel.",
         "missing visible sample should route Daniel to the right filter",
     )
     example_digest = sample_digest()
     example_digest["open_reviews"] = []
+    example_digest["review_first_clinic_workgroup"] = {}
+    example_digest["summary"]["reviews"] = {"open": 12}
     check(
         first_step(example_digest)[1] == "Caso visible: Revisar claims bloqueantes: Sensabell.",
         "type-level review example should guide Daniel when priority list is limited",
     )
     candidate_digest = sample_digest()
+    candidate_digest["summary"]["reviews"] = {"open": 1}
     candidate_digest["reviews_by_type"] = [{"review_type": "candidate_clinic", "open_count": 1}]
+    candidate_digest["review_first_clinic_workgroup"] = {}
     candidate_digest["open_reviews"] = [
         {
             "review_type": "candidate_clinic",
