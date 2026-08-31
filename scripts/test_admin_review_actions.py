@@ -64,6 +64,11 @@ def main() -> None:
         'id="clinicInternalContactEmail"',
         'id="clinicInternalContactPhone"',
         'id="clinicInternalContactNote"',
+        'id="clinicManualReviewContext"',
+        'id="clinicManualReviewField"',
+        'id="clinicManualReviewIssue"',
+        'id="clinicManualReviewMeta"',
+        'id="clinicManualReviewFocusBtn"',
         ">Aprobar</button>",
         ">Rechazar</button>",
         ">Modificar</button>",
@@ -75,6 +80,9 @@ def main() -> None:
         "Ficha de la clínica",
         "Datos visibles en la ficha",
         "Contacto interno",
+        "Campo a corregir: ",
+        "Dato pendiente: ",
+        "Guarda la ficha para cerrar esta revisión y pasar a la siguiente.",
         "Dile al agente dónde mirar",
         "Enviar URL al agente",
         "Confirmar misma ficha",
@@ -260,6 +268,15 @@ def main() -> None:
         "quality-audit review UI should say manual review instead of completing a ficha",
     )
     check(
+        "function renderClinicManualReviewContext" in index
+        and "function reviewManualIssueForTarget" in index
+        and "activeClinicReviewFocusTarget" in index
+        and "focusPublishField(activeClinicReviewFocusTarget.inputId)" in index
+        and "renderClinicManualReviewContext();" in index
+        and "activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget)" in index,
+        "manual review clinic editor should show the exact field and refocus it",
+    )
+    check(
         'show(el("jobCreatePanel"), false)' in index
         and 'show(el("reviewListPanel"), false)' in index
         and 'show(el("reviewClinicPanel"), true)' in index
@@ -311,6 +328,7 @@ def main() -> None:
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
+    check(".clinic-manual-review-context" in css, "manual review context should be styled")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")

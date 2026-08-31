@@ -209,6 +209,15 @@
           </div>
           <div class="proposal-diff" id="clinicProposalChanges"></div>
         </section>
+        <section class="clinic-manual-review-context hidden" id="clinicManualReviewContext">
+          <div>
+            <span>Revisión manual</span>
+            <strong id="clinicManualReviewField">Campo pendiente</strong>
+            <p id="clinicManualReviewIssue">Guarda la ficha para cerrar esta revisión y pasar a la siguiente.</p>
+            <small id="clinicManualReviewMeta">Una ficha, una decisión.</small>
+          </div>
+          <button class="btn secondary" id="clinicManualReviewFocusBtn" type="button">Ir al campo</button>
+        </section>
         <section class="version-history" id="clinicVersionHistory">
           <div class="version-history-head">
             <div>
@@ -873,6 +882,7 @@
     var activeReviewModifyMode = false;
     var activeClinicReview = null;
     var activeClinicReviewIds = [];
+    var activeClinicReviewFocusTarget = null;
     var activeClinicVersions = [];
     var activeClinicVersionEvents = {};
     var activePrimaryLocationSeed = null;
@@ -5575,6 +5585,54 @@
       return directTarget || reviewMissingFieldTargets(row)[0] || null;
     }
 
+    function clinicInputLabel(inputId) {
+      var input = el(inputId);
+      if (input && input.labels && input.labels.length) {
+        return text(input.labels[0].textContent).trim() || "Campo pendiente";
+      }
+      return "Campo pendiente";
+    }
+
+    function reviewManualTargetForInput(row, inputId) {
+      var targets = reviewMissingFieldTargets(row);
+      var target = targets.find(function (item) { return item.inputId === inputId; }) || targets[0] || null;
+      if (target || !inputId) return target;
+      return { inputId: inputId, label: clinicInputLabel(inputId), key: "" };
+    }
+
+    function reviewManualIssueForTarget(row, target) {
+      if (!row || !target) return "";
+      var matchingItem = reviewProposalFocusItems(row).find(function (item) {
+        var itemTarget = reviewManualFieldTarget(row, item);
+        return itemTarget && itemTarget.inputId === target.inputId;
+      });
+      return matchingItem ? proposalListValue(matchingItem.value) : "";
+    }
+
+    function renderClinicManualReviewContext() {
+      var panel = el("clinicManualReviewContext");
+      if (!panel) return;
+      if (!activeClinic || !activeClinicReview || activeClinicReview.clinic_id !== activeClinic.id) {
+        activeClinicReviewFocusTarget = null;
+        show(panel, false);
+        return;
+      }
+      var target = activeClinicReviewFocusTarget ||
+        reviewManualTargetForInput(activeClinicReview, firstReviewMissingFieldTargetId(activeClinicReview));
+      var issue = reviewManualIssueForTarget(activeClinicReview, target);
+      activeClinicReviewFocusTarget = target;
+      el("clinicManualReviewField").textContent = target
+        ? "Campo a corregir: " + target.label
+        : "Campo pendiente";
+      el("clinicManualReviewIssue").textContent = issue
+        ? "Dato pendiente: " + issue
+        : "Guarda la ficha para cerrar esta revisión y pasar a la siguiente.";
+      el("clinicManualReviewMeta").textContent =
+        reviewDisplayTitle(activeClinicReview) + " · una ficha, una decisión.";
+      el("clinicManualReviewFocusBtn").disabled = !target || !target.inputId;
+      show(panel, true);
+    }
+
     function reviewCanEditClinicFields(row) {
       return Boolean(row && row.clinic_id &&
         !isBlockingClaimReview(row) &&
@@ -7998,6 +8056,7 @@
       activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
       resetProposalPreview();
+      renderClinicManualReviewContext();
       renderPendingSpecialistsForClinic();
       renderPendingLocationsForClinic();
       updateFinalValidation();
@@ -8078,6 +8137,7 @@
       activeClinic = null;
       activeClinicReview = null;
       activeClinicReviewIds = [];
+      activeClinicReviewFocusTarget = null;
       activePrimaryLocationSeed = null;
       activeClinicClaims = [];
       activeClinicClaimSources = {};
@@ -8137,9 +8197,11 @@
       var reviewType = row.review_type;
       var payload = row.payload || {};
       var focusTarget = focusTargetId || firstReviewMissingFieldTargetId(row);
+      activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget);
       activeClinicReview = row;
       activeClinicReviewIds = [row.id];
       closeReviewEditor();
+      activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget);
       activeClinicReview = row;
       activeClinicReviewIds = [row.id];
       openClinicEditor(row.clinic_id);
@@ -8767,6 +8829,11 @@
       el("clinicPublishReadiness").addEventListener("click", function (event) {
         var button = event.target.closest("[data-publish-field]");
         if (button) focusPublishField(button.getAttribute("data-publish-field"));
+      });
+      el("clinicManualReviewFocusBtn").addEventListener("click", function () {
+        if (activeClinicReviewFocusTarget && activeClinicReviewFocusTarget.inputId) {
+          focusPublishField(activeClinicReviewFocusTarget.inputId);
+        }
       });
       el("clinicAddLocationBtn").addEventListener("click", function () {
         addClinicLocation({});

@@ -1358,6 +1358,49 @@ td small {
   scroll-margin-top: 5rem;
 }
 
+.clinic-manual-review-context {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(14, 79, 74, 0.22);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.clinic-manual-review-context span,
+.clinic-manual-review-context small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.clinic-manual-review-context strong {
+  display: block;
+  margin-top: 0.24rem;
+  font-size: 1.04rem;
+  line-height: 1.2;
+}
+
+.clinic-manual-review-context p {
+  margin: 0.32rem 0 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.clinic-manual-review-context small {
+  margin-top: 0.38rem;
+}
+
+.clinic-manual-review-context .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .review-selection-panel p {
   margin: 0;
   color: var(--muted);

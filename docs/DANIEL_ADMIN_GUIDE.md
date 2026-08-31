@@ -166,7 +166,9 @@ que es la clínica correcta.
 
 En las auditorías de calidad, usa **Revisión manual** dentro del campo pendiente
 para abrir la ficha directamente en ese dato. Al guardar la ficha, esa revisión
-queda cerrada y el panel pasa a la siguiente propuesta pendiente.
+queda cerrada y el panel pasa a la siguiente propuesta pendiente. Al entrar en
+la ficha desde esa acción, arriba verás una banda de **Revisión manual** con el
+campo afectado y el motivo exacto de la tarjeta.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el

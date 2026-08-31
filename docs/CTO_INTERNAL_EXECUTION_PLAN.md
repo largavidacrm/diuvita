@@ -824,6 +824,11 @@ Next 10 technical steps:
      review-source job panel also shows the remaining safe margin before the
      preventive backlog pause and respects that pause for agent/LLM source
      jobs.
+157. Add manual-review context inside the clinic editor. Done locally in
+     `/admin/`: when Daniel opens a quality-audit field through **Revisión
+     manual**, the clinic editor shows a compact banner with the exact field,
+     the pending issue and a button to refocus that field. Saving still resolves
+     only that review card and advances to the next pending proposal.
 
 ## Daniel decision checkpoints
 
