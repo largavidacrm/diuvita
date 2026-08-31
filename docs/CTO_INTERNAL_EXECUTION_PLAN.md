@@ -961,6 +961,11 @@ Next 10 technical steps:
      action and `safe_to_auto_publish: false`, preserving the rule that even
      direct-looking Google Business/Profile links require human confirmation
      before they enter a clinic ficha.
+184. Structure specialist review decisions without exposing them by default.
+     Done locally in `scripts/specialist_review_reconciliation.py`: specialist
+     reports now expose manual per-card decision items with source presence and
+     `safe_to_auto_publish: false`, plus a compact mode that hides professional
+     names and URLs while still showing counts, source coverage and next action.
 
 ## Daniel decision checkpoints
 

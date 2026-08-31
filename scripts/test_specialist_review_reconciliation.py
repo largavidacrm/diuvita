@@ -7,6 +7,7 @@ import json
 from specialist_review_reconciliation import (
     annotated_review_cards,
     clean_person_list,
+    format_compact_reconciliation,
     format_reconciliation,
     format_review_cards,
     load_reconciliation,
@@ -51,6 +52,13 @@ def main() -> None:
         "summary": summary,
         "clinics": [reconciled],
     })
+    compact_output = format_compact_reconciliation({
+        "generated_at": "2026-08-31T08:40:00+00:00",
+        "query": "Clinic A",
+        "writes_data": False,
+        "summary": summary,
+        "clinics": [reconciled],
+    })
 
     check(normalize_person_key("Dra. Ana López") == normalize_person_key("Ana Lopez"), "person keys should ignore accents and titles")
     check(clean_person_list(["Alergología Anestesiología"]) == [], "specialty menus should not become people")
@@ -65,12 +73,21 @@ def main() -> None:
     check(reconciled["claim_source_count"] == 1, "claim source count missing")
     check(reconciled["claim_source_urls_clean"] == ["https://clinic-a.example/equipo-medico/"], "claim source URL missing")
     check(reconciled["pending_professional_count"] == 2, "pending names should exclude already published duplicates")
+    check(reconciled["manual_decision_count"] == 1, "review card should create one manual decision")
+    check(reconciled["manual_decision_items"][0]["field"] == "profesionales", "manual decision field missing")
+    check(reconciled["manual_decision_items"][0]["source_url_present"] is True, "manual decision source flag missing")
+    check(reconciled["manual_decision_items"][0]["safe_to_auto_publish"] is False, "specialist decisions should never auto-publish")
+    check(
+        reconciled["manual_decision_items"][0]["manual_decision"] == "confirm_specialists_are_publicly_listed_by_clinic",
+        "specialist decision intent missing",
+    )
     check("Dr. Luis Pérez" in reconciled["pending_professionals"], "review-only pending person missing")
     check("Dra. Carla Ruiz" in reconciled["pending_professionals"], "claim-only pending person missing")
     check("Dra. Ana Lopez" in reconciled["already_published_detected"], "already-published detected person missing")
     check(summary["pending_professionals"] == 2, "summary should count pending names")
     check(summary["review_cards"] == 1, "summary should count review cards")
     check(summary["claim_source_urls"] == 1, "summary should count internal specialist sources")
+    check(summary["manual_decision_items"] == 1, "summary should count manual specialist decisions")
     check(summary["clinics_with_claim_sources"] == 1, "summary should count clinics with claim sources")
     check(summary["review_cards_with_source"] == 1, "summary should count cards with source")
     check(summary["review_cards_without_source"] == 0, "summary should count cards without source")
@@ -84,10 +101,14 @@ def main() -> None:
     check("Tarjetas con fuente clara: 1/1" in output, "source-card summary missing")
     check("Fuentes internas de especialistas: 1" in output, "internal specialist source summary missing")
     check("Tarjetas con nombres nuevos: 1" in output, "new-name card summary missing")
+    check("Decisiones manuales: 1" in output, "manual decision summary missing")
     check("Fuentes internas: https://clinic-a.example/equipo-medico/" in output, "internal specialist source URL missing from output")
     check("Tarjetas:" in output, "review card breakdown missing")
     check("nuevos: 1; ya en ficha: 1" in output, "card pending/already counts missing")
     check("fuente: https://clinic-a.example/equipo-medico/" in output, "review source URL missing")
+    check("Clinic A: 2 pendientes · 1 tarjetas · 1 con fuente · 1 decisiones" in compact_output, "compact clinic row missing")
+    check("Nota: salida compacta sin nombres ni URLs" in compact_output, "compact privacy note missing")
+    check("Dra. Ana" not in compact_output and "https://clinic-a.example" not in compact_output, "compact output should hide names and URLs")
     no_source_card = dict(row["review_cards"][0], source_url="")
     no_source_lines = format_review_cards(annotated_review_cards([no_source_card], set()))
     check("fuente: pendiente" in no_source_lines[0], "cards without source should be explicit")
@@ -99,6 +120,21 @@ def main() -> None:
             "claim_professional_count": 2,
         }),
         "internal-only pending names should stay in proposal mode",
+    )
+    internal_only = reconcile_row({
+        "slug": "clinic-b",
+        "clinic_name": "Clinic B",
+        "city": "Madrid",
+        "status": "published",
+        "published_professionals": [],
+        "review_cards": [],
+        "claim_professionals": ["Dra. Marta Sol"],
+        "claim_source_urls": ["https://clinic-b.example/equipo/"],
+    })
+    check(internal_only["manual_decision_count"] == 1, "internal-only names should create a proposal decision")
+    check(
+        internal_only["manual_decision_items"][0]["manual_decision"] == "create_review_proposal_before_profile_edit",
+        "internal-only decision should stay proposal-first",
     )
 
     captured = {}

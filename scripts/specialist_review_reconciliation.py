@@ -15,6 +15,8 @@ from submit_discovery_candidates import load_env_file, run_psql, sql_literal
 
 SPECIALIST_FIELD_PATHS = ("professionals.published", "team.public_professionals")
 PUBLIC_STATUSES = ("published", "preliminary")
+SPECIALIST_DECISION_FIELD = "profesionales"
+SPECIALIST_DECISION_LABEL = "Especialistas publicados"
 
 
 def compact_lookup_key(value: Any) -> str:
@@ -153,8 +155,63 @@ def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
         "claim_source_count": len(claim_sources),
         "pending_professional_count": len(pending),
     }
+    result["manual_decision_items"] = specialist_manual_decision_items(result)
+    result["manual_decision_count"] = len(result["manual_decision_items"])
     result["next_step"] = specialist_reconciliation_next_step(result)
     return result
+
+
+def specialist_review_card_decision_item(card: dict[str, Any]) -> dict[str, Any]:
+    pending = card.get("pending_professionals_from_card") or []
+    already = card.get("already_published_from_card") or []
+    return {
+        "field": SPECIALIST_DECISION_FIELD,
+        "label": SPECIALIST_DECISION_LABEL,
+        "review_id": card.get("id"),
+        "review_title": card.get("title") or "Revisión interna",
+        "source_url": str(card.get("source_url") or "").strip(),
+        "source_url_present": bool(str(card.get("source_url") or "").strip()),
+        "pending_professional_count": len(pending),
+        "already_published_count": len(already),
+        "pending_professionals": pending,
+        "safe_to_auto_publish": False,
+        "manual_decision": "confirm_specialists_are_publicly_listed_by_clinic",
+        "admin_action": "abrir tarjeta, revisar fuente pública y cargar solo nombres confirmados",
+    }
+
+
+def specialist_internal_claim_decision_item(row: dict[str, Any]) -> dict[str, Any] | None:
+    if as_int(row.get("review_card_count")):
+        return None
+    pending = row.get("pending_professionals") or []
+    if not pending:
+        return None
+    return {
+        "field": SPECIALIST_DECISION_FIELD,
+        "label": SPECIALIST_DECISION_LABEL,
+        "review_id": "",
+        "review_title": "Nombres internos sin tarjeta abierta",
+        "source_url": "",
+        "source_url_present": as_int(row.get("claim_source_count")) > 0,
+        "pending_professional_count": len(pending),
+        "already_published_count": len(row.get("already_published_detected") or []),
+        "pending_professionals": pending,
+        "safe_to_auto_publish": False,
+        "manual_decision": "create_review_proposal_before_profile_edit",
+        "admin_action": "preparar una propuesta revisable antes de tocar la ficha pública",
+    }
+
+
+def specialist_manual_decision_items(row: dict[str, Any]) -> list[dict[str, Any]]:
+    items = [
+        specialist_review_card_decision_item(card)
+        for card in row.get("review_cards") or []
+        if isinstance(card, dict) and as_int(card.get("pending_professional_count")) > 0
+    ]
+    internal_item = specialist_internal_claim_decision_item(row)
+    if internal_item:
+        items.append(internal_item)
+    return items
 
 
 def specialist_reconciliation_next_step(row: dict[str, Any]) -> str:
@@ -196,6 +253,7 @@ def summarize_clinics(clinics: list[dict[str, Any]]) -> dict[str, int]:
             1 for row in clinics if as_int(row.get("claim_source_count")) > 0
         ),
         "pending_professionals": sum(as_int(row.get("pending_professional_count")) for row in clinics),
+        "manual_decision_items": sum(as_int(row.get("manual_decision_count")) for row in clinics),
         "review_cards_with_source": sum(1 for card in cards if card.get("has_source_url")),
         "review_cards_without_source": sum(1 for card in cards if not card.get("has_source_url")),
         "review_cards_with_pending_professionals": sum(
@@ -446,6 +504,7 @@ def format_reconciliation(report: dict[str, Any]) -> str:
         f"- Tarjetas con fuente clara: {as_int(summary.get('review_cards_with_source'))}/{as_int(summary.get('review_cards'))}",
         f"- Fuentes internas de especialistas: {as_int(summary.get('claim_source_urls'))}",
         f"- Tarjetas con nombres nuevos: {as_int(summary.get('review_cards_with_pending_professionals'))}",
+        f"- Decisiones manuales: {as_int(summary.get('manual_decision_items'))}",
         "",
     ]
     if not clinics:
@@ -470,6 +529,7 @@ def format_reconciliation(report: dict[str, Any]) -> str:
             f"- En evidencias internas: {as_int(row.get('claim_professional_count'))} nombres",
             f"- Fuentes internas: {compact_people([compact_url(url) for url in claim_sources], 3)}",
             f"- Pendientes de decidir: {as_int(row.get('pending_professional_count'))}",
+            f"- Decisiones manuales: {as_int(row.get('manual_decision_count'))}",
             f"- Siguiente paso: {row.get('next_step')}",
             f"- Pendientes: {compact_people(pending)}",
         ])
@@ -482,11 +542,51 @@ def format_reconciliation(report: dict[str, Any]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def format_compact_reconciliation(report: dict[str, Any]) -> str:
+    clinics = [row for row in report.get("clinics") or [] if isinstance(row, dict)]
+    summary = report.get("summary") or {}
+    lines = [
+        "# Vitalarga specialist reconciliation",
+        "",
+        f"Generado: {parse_timestamp(report.get('generated_at'))}",
+        f"Consulta: {report.get('query') or 'todas las fichas visibles'}",
+        "- Writes data: no",
+        f"- Clínicas medidas: {as_int(summary.get('clinics') or len(clinics))}",
+        f"- Pendientes de decidir: {as_int(summary.get('pending_professionals'))}",
+        f"- Tarjetas con especialistas: {as_int(summary.get('review_cards'))}",
+        f"- Tarjetas con fuente clara: {as_int(summary.get('review_cards_with_source'))}/{as_int(summary.get('review_cards'))}",
+        f"- Decisiones manuales: {as_int(summary.get('manual_decision_items'))}",
+        "",
+        "## Primeras fichas",
+    ]
+    if not clinics:
+        lines.append("- No hay fichas visibles con esa búsqueda.")
+        return "\n".join(lines) + "\n"
+    for row in clinics[:6]:
+        name = row.get("clinic_name") or row.get("slug") or "Clínica sin nombre"
+        cards = as_int(row.get("review_card_count"))
+        pending = as_int(row.get("pending_professional_count"))
+        decisions = as_int(row.get("manual_decision_count"))
+        source_cards = sum(
+            1
+            for card in row.get("review_cards") or []
+            if isinstance(card, dict) and card.get("has_source_url")
+        )
+        lines.append(
+            f"- {name}: {pending} pendientes · {cards} tarjetas · "
+            f"{source_cards} con fuente · {decisions} decisiones · {row.get('next_step')}"
+        )
+    lines.append("")
+    lines.append("Nota: salida compacta sin nombres ni URLs. Abre la tarjeta en el panel para revisar fuente y profesionales.")
+    return "\n".join(lines) + "\n"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--clinic", default="", help="Normal clinic name or slug.")
     parser.add_argument("--limit", type=int, default=12)
     parser.add_argument("--json", action="store_true", help="Print raw JSON.")
+    parser.add_argument("--compact", action="store_true", help="Print counts and next steps without names or URLs.")
     return parser.parse_args()
 
 
@@ -497,6 +597,8 @@ def main() -> int:
     report = load_reconciliation(args.clinic, args.limit, load_env_file())
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
+    elif args.compact:
+        print(format_compact_reconciliation(report), end="")
     else:
         print(format_reconciliation(report), end="")
     return 0
