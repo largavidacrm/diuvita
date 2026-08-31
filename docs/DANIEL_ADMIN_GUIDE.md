@@ -123,6 +123,11 @@ enlace corresponde al perfil real de la clínica y solo entonces carga la
 propuesta en la ficha. Si el enlace abre una búsqueda genérica, una dirección
 suelta o un perfil dudoso, no lo guardes.
 
+En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
+**Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
+perfil real de la clínica, el campo queda pendiente; no usamos enlaces genéricos
+a una dirección.
+
 Si una tarjeta muestra un aviso bajo el enlace de Google Maps, trátalo como
 pendiente: abre el enlace y guárdalo solo si ves la ficha real de la clínica.
 
@@ -142,6 +147,18 @@ Al editar una clínica, si aparecen **Detectados en revisión interna**, puedes
 pulsar **Cargar al formulario** para pasar esos nombres al campo de
 especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
 revises antes de guardar.
+
+En el editor de clínica, **Modalidad de atención** describe si la clínica es
+presencial, online o mixta. No decide la publicación. La publicación se decide
+con **Estado interno** o con el botón **Publicar**. Las sedes pueden ser
+**físicas** u **online**, y cada sede puede quedar visible en la ficha pública o
+solo interna.
+
+Si una ficha está en borrador, puedes usar **Descartar ficha**. No borra la
+clínica: la archiva, la deja fuera de la web y guarda el motivo en el historial.
+
+Para contacto, puedes guardar teléfono principal, fijo, móvil y WhatsApp. La
+búsqueda interna y la búsqueda pública también usan esos teléfonos.
 
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 

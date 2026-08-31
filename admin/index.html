@@ -236,6 +236,9 @@
         </section>
         <form class="edit-form" id="clinicForm">
           <input id="clinicId" name="clinicId" type="hidden">
+          <details class="form-section" open>
+            <summary><span>Publicación y datos básicos</span><small>Nombre, web, ciudad, sedes, modalidad y estado.</small></summary>
+            <div class="form-section-grid">
           <div class="field">
             <label for="clinicName">Nombre</label>
             <input id="clinicName" name="clinicName" required>
@@ -261,6 +264,13 @@
             <input id="clinicAddress" name="clinicAddress">
           </div>
           <div class="field">
+            <label for="clinicPrimaryLocationKind">Tipo de sede principal</label>
+            <select id="clinicPrimaryLocationKind" name="clinicPrimaryLocationKind">
+              <option value="physical">Sede física</option>
+              <option value="online">Sede online</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="clinicMapsUrl">Google Maps</label>
             <input id="clinicMapsUrl" name="clinicMapsUrl" type="url" placeholder="https://">
             <p class="field-warning hidden" id="clinicMapsUrlWarning">Pega el perfil de Google Business de la clínica, no una búsqueda, ruta o dirección.</p>
@@ -268,6 +278,13 @@
           <div class="field">
             <label for="clinicGoogleReviewsUrl">Valoraciones Google</label>
             <input id="clinicGoogleReviewsUrl" name="clinicGoogleReviewsUrl" type="url" placeholder="https://">
+          </div>
+          <div class="field">
+            <label for="clinicPrimaryLocationOnline">Visibilidad sede principal</label>
+            <select id="clinicPrimaryLocationOnline" name="clinicPrimaryLocationOnline">
+              <option value="online">Mostrar en ficha pública</option>
+              <option value="offline">Solo interna</option>
+            </select>
           </div>
           <div class="field field-wide">
             <label>Sedes adicionales</label>
@@ -277,7 +294,7 @@
                 <button class="btn secondary" id="clinicAddLocationBtn" type="button">Añadir sede</button>
               </div>
               <div class="location-rows" id="clinicLocationRows"></div>
-              <textarea class="hidden" id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones"></textarea>
+              <textarea class="hidden" id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones | Tipo | Visibilidad"></textarea>
             </div>
             <section class="pending-specialists hidden" id="clinicPendingLocationsPanel">
               <div class="pending-specialists-head">
@@ -293,7 +310,7 @@
             </section>
           </div>
           <div class="field">
-            <label for="clinicStatus">Estado</label>
+            <label for="clinicStatus">Estado interno</label>
             <select id="clinicStatus" name="clinicStatus">
               <option value="published">Publicada</option>
               <option value="preliminary">Preliminar</option>
@@ -306,9 +323,25 @@
             </select>
           </div>
           <div class="field">
+            <label for="clinicOnline">Modalidad de atención</label>
+            <select id="clinicOnline" name="clinicOnline">
+              <option value=""></option>
+              <option value="presencial">Presencial</option>
+              <option value="online">Online</option>
+              <option value="hibrida">Presencial y online</option>
+              <option value="no_consta">No consta</option>
+            </select>
+            <p class="field-note">Describe cómo atiende la clínica; no decide por sí sola si aparece en Vitalarga.</p>
+          </div>
+          <div class="field">
             <label for="clinicConfidence">Confianza (%)</label>
             <input id="clinicConfidence" name="clinicConfidence" type="number" min="0" max="100" step="1">
           </div>
+            </div>
+          </details>
+          <details class="form-section">
+            <summary><span>Contenido público</span><small>Resumen, servicios, especialidades y especialistas visibles.</small></summary>
+            <div class="form-section-grid">
           <div class="field field-wide">
             <label for="clinicSummary">Resumen</label>
             <textarea id="clinicSummary" name="clinicSummary" rows="4"></textarea>
@@ -341,6 +374,11 @@
             <div class="pending-specialists-actions" id="clinicPendingSpecialistsActions"></div>
             <p class="pending-specialists-source" id="clinicPendingSpecialistsSource"></p>
           </section>
+            </div>
+          </details>
+          <details class="form-section">
+            <summary><span>Transparencia y tecnología</span><small>Años, equipo médico, precios y tecnología.</small></summary>
+            <div class="form-section-grid">
           <div class="field">
             <label for="clinicYearsInPractice">Años en ejercicio</label>
             <input id="clinicYearsInPractice" name="clinicYearsInPractice">
@@ -377,13 +415,30 @@
             <label for="clinicTech">Tecnología</label>
             <textarea id="clinicTech" name="clinicTech" rows="3"></textarea>
           </div>
+            </div>
+          </details>
+          <details class="form-section">
+            <summary><span>Contacto</span><small>Email, teléfonos, WhatsApp e Instagram.</small></summary>
+            <div class="form-section-grid">
           <div class="field">
             <label for="clinicEmail">Email</label>
             <input id="clinicEmail" name="clinicEmail" type="email">
           </div>
           <div class="field">
-            <label for="clinicPhone">Teléfono</label>
+            <label for="clinicPhone">Teléfono principal</label>
             <input id="clinicPhone" name="clinicPhone">
+          </div>
+          <div class="field">
+            <label for="clinicPhoneFixed">Fijo</label>
+            <input id="clinicPhoneFixed" name="clinicPhoneFixed">
+          </div>
+          <div class="field">
+            <label for="clinicPhoneMobile">Móvil</label>
+            <input id="clinicPhoneMobile" name="clinicPhoneMobile">
+          </div>
+          <div class="field">
+            <label for="clinicPhoneWhatsapp">WhatsApp</label>
+            <input id="clinicPhoneWhatsapp" name="clinicPhoneWhatsapp">
           </div>
           <div class="field">
             <label for="clinicInstagram">Instagram</label>
@@ -393,6 +448,11 @@
             <label for="clinicVerification">Verificación</label>
             <input id="clinicVerification" name="clinicVerification">
           </div>
+            </div>
+          </details>
+          <details class="form-section">
+            <summary><span>Control interno</span><small>Campos protegidos y motivo de guardado.</small></summary>
+            <div class="form-section-grid">
           <fieldset class="field field-wide lock-panel">
             <legend>Campos protegidos</legend>
             <p id="clinicLockMeta">Sin protecciones cargadas.</p>
@@ -419,14 +479,22 @@
               <label><input type="checkbox" data-lock-field="technologies.list"> Tecnología</label>
               <label><input type="checkbox" data-lock-field="contact.email"> Email</label>
               <label><input type="checkbox" data-lock-field="contact.phone"> Teléfono</label>
+              <label><input type="checkbox" data-lock-field="contact.phone_fixed"> Fijo</label>
+              <label><input type="checkbox" data-lock-field="contact.phone_mobile"> Móvil</label>
+              <label><input type="checkbox" data-lock-field="contact.phone_whatsapp"> WhatsApp</label>
               <label><input type="checkbox" data-lock-field="contact.instagram"> Instagram</label>
             </div>
           </fieldset>
           <div class="field field-wide">
             <label for="clinicNote">Nota interna</label>
             <textarea id="clinicNote" name="clinicNote" rows="2"></textarea>
+            <p class="field-note">Se guarda como motivo del cambio en el historial de la ficha.</p>
           </div>
+            </div>
+          </details>
           <div class="form-actions field-wide">
+            <button class="btn danger danger-action" id="clinicDiscardBtn" type="button">Descartar ficha</button>
+            <button class="btn secondary" id="clinicPublishBtn" type="button">Publicar</button>
             <button class="btn" id="clinicSaveBtn" type="submit">Guardar cambios</button>
             <button class="btn secondary" id="clinicCancelBtn" type="button">Cancelar</button>
           </div>
@@ -538,7 +606,8 @@
             </div>
             <span class="pill" id="reviewCount">0 abiertas</span>
           </div>
-          <div class="review-action-strip hidden" id="reviewActionStrip">
+          <details class="review-action-strip hidden" id="reviewActionStrip" open>
+            <summary>Acción recomendada</summary>
             <div class="review-action-lead">
               <span>Qué hacer ahora</span>
               <strong id="reviewActionTitle">Abrir prioridad</strong>
@@ -552,7 +621,7 @@
               <button class="btn secondary quick-action hidden" id="openGoogleLinksBtn" type="button">Google Maps</button>
               <button class="btn secondary quick-action hidden" id="openSpecialistTargetBtn" type="button">Especialistas</button>
             </div>
-          </div>
+          </details>
           <section class="review-case-panel hidden" id="reviewCasePanel">
             <div class="review-case-lead">
               <span id="reviewCaseEyebrow">Caso recomendado</span>
@@ -584,7 +653,10 @@
             </select>
             <button class="link-btn hidden" id="reviewClearFilters" type="button">Limpiar</button>
           </div>
-          <div class="review-filter-panel" id="reviewFilterChips" aria-label="Filtros rápidos de revisiones"></div>
+          <details class="review-filter-drawer">
+            <summary>Filtros rápidos</summary>
+            <div class="review-filter-panel" id="reviewFilterChips" aria-label="Filtros rápidos de revisiones"></div>
+          </details>
           <div class="table-wrap">
             <table>
               <thead>
@@ -607,20 +679,29 @@
           </div>
           <div class="panel-body">
             <form class="job-form" id="jobForm">
+              <div class="job-help" id="jobHelp">
+                <strong>Qué hace este trabajo</strong>
+                <p>Busca información y la deja como propuesta interna. Nada se publica solo.</p>
+              </div>
               <div class="field">
                 <label for="jobType">Tipo</label>
                 <select id="jobType" name="jobType">
-                  <option value="DISCOVER_CLINIC">Descubrir clínica</option>
-                  <option value="QUALITY_AUDIT">Auditar fichas</option>
+                  <option value="DISCOVER_CLINIC">Buscar clínicas nuevas</option>
+                  <option value="QUALITY_AUDIT">Auditar fichas existentes</option>
                 </select>
               </div>
               <div class="field">
                 <label for="jobQuery">Búsqueda</label>
-                <input id="jobQuery" name="jobQuery" value="longevity clinic Spain">
+                <input id="jobQuery" name="jobQuery" value="longevity clinic Spain" placeholder="Nombre de clínica, ciudad o dato que falta">
               </div>
               <div class="field">
                 <label for="jobCountry">País</label>
                 <input id="jobCountry" name="jobCountry" value="España">
+              </div>
+              <div class="job-examples" aria-label="Ejemplos de búsqueda">
+                <button class="link-btn" type="button" data-job-query="Unidad de Longevidad IMDA dirección teléfono especialistas">IMDA: dirección y contacto</button>
+                <button class="link-btn" type="button" data-job-query="Regenera Clinic especialistas equipo médico">Regenera: especialistas</button>
+                <button class="link-btn" type="button" data-job-query="RoseBar Longevity Club dirección Google Maps teléfono">RoseBar: ubicación</button>
               </div>
               <p class="job-backlog-hint" id="jobBacklogHint">El freno de bandeja se calculará al cargar el panel.</p>
               <button class="btn" id="jobBtn" type="submit">Enviar a cola</button>
@@ -674,7 +755,7 @@
         <div class="panel-head">
           <h2>Clínicas</h2>
           <div class="panel-tools">
-            <input id="clinicSearch" type="search" placeholder="Buscar clínica">
+            <input id="clinicSearch" type="search" placeholder="Buscar clínica, ciudad, teléfono o WhatsApp">
             <select id="clinicStatusFilter" aria-label="Filtrar clínicas por estado">
               <option value="">Todos los estados</option>
               <option value="draft">Borradores</option>
@@ -743,6 +824,7 @@
     var activeClinicReview = null;
     var activeClinicReviewIds = [];
     var activeClinicVersions = [];
+    var activeClinicVersionEvents = {};
     var activePrimaryLocationSeed = null;
     var activeClinicVersionRequest = 0;
     var activeClinicLockRequest = 0;
@@ -880,6 +962,8 @@
     function focusPublishField(targetId) {
       var target = el(targetId);
       if (!target) return;
+      var section = target.closest ? target.closest(".form-section") : null;
+      if (section) section.open = true;
       target.scrollIntoView({ behavior: "smooth", block: "center" });
       if (typeof target.focus === "function") {
         try {
@@ -892,6 +976,25 @@
       window.setTimeout(function () {
         target.classList.remove("field-attention");
       }, 1600);
+    }
+
+    function publishMissingTargetId(label) {
+      var map = {
+        "Nombre": "clinicName",
+        "Ciudad": "clinicCity",
+        "País": "clinicCountry",
+        "Resumen suficiente": "clinicSummary",
+        "Web oficial": "clinicWebsite",
+        "Sede online completa": "clinicAddress",
+        "Sede física u online completa": "clinicAddress",
+        "Sede física u online": "clinicAddress",
+        "Dirección o sede": "clinicAddress",
+        "Google Maps de clínica": "clinicMapsUrl",
+        "Google Maps de clínica, no dirección suelta": "clinicMapsUrl",
+        "Servicios principales": "clinicServices",
+        "Claims bloqueantes": "clinicEvidencePanel"
+      };
+      return map[label] || "";
     }
 
     function date(value) {
@@ -1117,7 +1220,7 @@
       return {
         pendingSummary: "Resumen suficiente",
         pendingWebsite: "Web oficial",
-        pendingAddress: "Dirección o sede",
+        pendingAddress: "Sede física u online",
         pendingGoogleMaps: "Google Maps de clínica",
         pendingServices: "Servicios principales"
       };
@@ -1168,6 +1271,17 @@
       var detail = rest || "Abre la ficha y completa ese campo.";
       return '<div class="publish-cell"><span class="pill warning">' + html(label) +
         '</span><strong>' + html(missing[0]) + '</strong><small>' + html(detail) + '</small>' + webPendingNote + '</div>';
+    }
+
+    function clinicRowActions(row) {
+      var missing = clinicPublicationMissingLabels(row);
+      var visible = isPublicClinicStatus(row.status);
+      var publishLabel = missing.length ? "Completar" : visible ? "Visible" : "Publicar";
+      var publishDisabled = visible && !missing.length ? " disabled" : "";
+      return '<div class="row-actions">' +
+        '<button class="link-btn" type="button" data-edit-clinic="' + html(row.id) + '">Editar</button>' +
+        '<button class="link-btn" type="button" data-publish-clinic="' + html(row.id) + '"' + publishDisabled + '>' + html(publishLabel) + '</button>' +
+      '</div>';
     }
 
     function clinicMatchesPublishFilter(row, filter) {
@@ -1542,6 +1656,39 @@
       });
     }
 
+    function compactDigits(value) {
+      return text(value).replace(/\D/g, "");
+    }
+
+    function phoneValuesFromData(data) {
+      data = data || {};
+      var values = [];
+      function add(value) {
+        if (Array.isArray(value)) {
+          value.forEach(add);
+          return;
+        }
+        if (value && typeof value === "object") {
+          add(value.value || value.phone || value.telefono || value.number || value.numero);
+          return;
+        }
+        var clean = text(value).trim();
+        if (clean) values.push(clean);
+      }
+      add(data.telefono);
+      add(data.phone);
+      add(data.telephone);
+      add(data.phone_fixed);
+      add(data.phone_mobile);
+      add(data.phone_whatsapp);
+      add(data.phones);
+      return values;
+    }
+
+    function hasPhoneData(data) {
+      return phoneValuesFromData(data).length > 0;
+    }
+
     function locationCoverageForClinic(currentData) {
       var locations = normalizedLocations((currentData || {}).locations);
       return locations.reduce(function (stats, location) {
@@ -1558,15 +1705,46 @@
       });
     }
 
+    function visibleClinicLocationsFromData(data) {
+      return normalizedLocations((data || {}).locations).filter(function (location) {
+        return locationVisibilityValue(location);
+      });
+    }
+
+    function hasOnlineLocationAddress(row) {
+      var data = (row && row.current_data) || {};
+      var explicitLocations = normalizedLocations(data.locations);
+      if (explicitLocations.length) return locationsHavePublicAccess(visibleClinicLocationsFromData(data));
+      return hasVisibleText(row && row.address, data.address);
+    }
+
+    function hasOnlineLocationMaps(row) {
+      var data = (row && row.current_data) || {};
+      var explicitLocations = normalizedLocations(data.locations);
+      var visibleLocations = visibleClinicLocationsFromData(data);
+      if (explicitLocations.length && !locationsHavePhysicalLocation(visibleLocations)) return true;
+      if (explicitLocations.length) return locationsHaveReviewedMapsUrl(visibleLocations);
+      return hasReviewedGoogleMapsUrl(data.maps_url, data.google_maps_url, data.map_url);
+    }
+
+    function hasOnlineLocationReviews(row) {
+      var data = (row && row.current_data) || {};
+      var explicitLocations = normalizedLocations(data.locations);
+      var visibleLocations = visibleClinicLocationsFromData(data);
+      if (explicitLocations.length && !locationsHavePhysicalLocation(visibleLocations)) return true;
+      if (explicitLocations.length) return locationsHaveGoogleReviewsUrl(visibleLocations);
+      return hasVisibleText(data.google_reviews_url, data.reviews_url);
+    }
+
     function profilePendingFields(row) {
       var data = row.current_data || {};
       var fields = [];
       if (text(row.summary || data.summary).trim().length < 120) fields.push("pendingSummary");
       if (!hasVisibleText(row.website, data.web)) fields.push("pendingWebsite");
-      if (!hasVisibleText(row.address, data.address) && !locationsHaveAddress(data.locations)) fields.push("pendingAddress");
-      if (!hasReviewedGoogleMapsUrl(data.maps_url, data.google_maps_url, data.map_url) && !locationsHaveReviewedMapsUrl(data.locations)) fields.push("pendingGoogleMaps");
-      if (!hasVisibleText(data.google_reviews_url, data.reviews_url) && !locationsHaveGoogleReviewsUrl(data.locations)) fields.push("pendingGoogleReviews");
-      if (!hasVisibleText(data.email, data.telefono, data.phone, data.telephone)) fields.push("pendingContact");
+      if (!hasOnlineLocationAddress(row)) fields.push("pendingAddress");
+      if (!hasOnlineLocationMaps(row)) fields.push("pendingGoogleMaps");
+      if (!hasOnlineLocationReviews(row)) fields.push("pendingGoogleReviews");
+      if (!hasVisibleText(data.email) && !hasPhoneData(data)) fields.push("pendingContact");
       if (!countVisibleArray(data.services)) fields.push("pendingServices");
       if (!countVisibleArray(data.specialties)) fields.push("pendingSpecialties");
       if (!countVisibleArray(data.unidades)) fields.push("pendingUnits");
@@ -1839,6 +2017,14 @@
 
     function isPublicClinicStatus(status) {
       return status === "published" || status === "preliminary";
+    }
+
+    function clinicCareModeValue(data) {
+      var clean = text((data || {}).care_mode || (data || {}).clinic_online || "").trim().toLowerCase();
+      if (["online", "presencial", "hibrida", "no_consta"].indexOf(clean) >= 0) return clean;
+      if (clean === "hybrid" || clean === "mixta") return "hibrida";
+      if (clean === "offline" || clean === "physical" || clean === "fisica" || clean === "física") return "presencial";
+      return "";
     }
 
     function clinicHasPendingPublicChange(row, control) {
@@ -2666,6 +2852,17 @@
           ? "Pausa preventiva: limpia revisiones antes de crear más trabajos."
           : "Bandeja con margen: puedes crear trabajos si aportan valor.";
       el("jobBtn").disabled = paused;
+    }
+
+    function updateJobHelp() {
+      var type = el("jobType").value;
+      if (type === "QUALITY_AUDIT") {
+        el("jobHelp").innerHTML = '<strong>Auditar fichas existentes</strong><p>Revisa las clínicas que ya están en Vitalarga y crea tareas internas si falta dirección, Google Maps, contacto, especialistas u otros campos.</p>';
+        el("jobBtn").textContent = "Auditar fichas";
+        return;
+      }
+      el("jobHelp").innerHTML = '<strong>Buscar clínicas o datos concretos</strong><p>Escribe una búsqueda general o una clínica concreta, por ejemplo “IMDA dirección teléfono especialistas”. El resultado va a revisión; no se publica solo.</p>';
+      el("jobBtn").textContent = "Buscar y proponer";
     }
 
     function duplicateEnrichmentClinicIds(rows) {
@@ -3585,7 +3782,9 @@
         location.city || location.ciudad || "",
         location.address || location.direccion || location.dirección || "",
         location.maps_url || location.google_maps_url || location.map_url || "",
-        location.google_reviews_url || location.reviews_url || location.valoraciones_url || ""
+        location.google_reviews_url || location.reviews_url || location.valoraciones_url || "",
+        locationKindValue(location),
+        locationVisibilityValue(location) ? "visible" : "internal"
       ].map(function (item) {
         return text(item).trim();
       }).join(" | ").replace(/(?: \| )+$/g, "");
@@ -3603,20 +3802,24 @@
       if (!clean) return null;
       if (clean.indexOf("|") < 0) return { address: clean };
       var parts = clean.split("|").map(function (part) { return part.trim(); });
-      while (parts.length < 5) parts.push("");
+      while (parts.length < 7) parts.push("");
+      var legacyVisibility = parts[5] && !isLocationKindValue(parts[5]);
       var location = {
         name: parts[0],
         city: parts[1],
         address: parts[2],
         maps_url: parts[3],
-        google_reviews_url: parts[4]
+        google_reviews_url: parts[4],
+        kind: legacyVisibility ? "" : parts[5]
       };
+      if (legacyVisibility) location.public_visible = locationVisibilityValue({ public_visible: parts[5] });
+      else if (parts[6]) location.public_visible = locationVisibilityValue({ public_visible: parts[6] });
       if (!location.address && parts[1] && parts.filter(Boolean).length === 2) {
         location.city = "";
         location.address = parts[1];
       }
       Object.keys(location).forEach(function (key) {
-        if (!location[key]) delete location[key];
+        if (location[key] === "" || location[key] == null) delete location[key];
       });
       return Object.keys(location).length ? location : null;
     }
@@ -3634,6 +3837,45 @@
       return "";
     }
 
+    function locationVisibilityValue(location) {
+      if (!location || typeof location !== "object") return true;
+      var keys = ["public_visible", "online", "visible", "is_public"];
+      for (var i = 0; i < keys.length; i += 1) {
+        if (!hasOwn(location, keys[i])) continue;
+        var value = location[keys[i]];
+        if (typeof value === "boolean") return value;
+        var clean = text(value).trim().toLowerCase();
+        if (!clean) return true;
+        if (["false", "0", "no", "offline", "hidden", "oculta", "oculto", "no online", "private"].indexOf(clean) >= 0) return false;
+        return true;
+      }
+      return true;
+    }
+
+    function locationOnlineFormValue(location) {
+      return locationVisibilityValue(location) ? "online" : "offline";
+    }
+
+    function isLocationKindValue(value) {
+      var clean = text(value).trim().toLowerCase();
+      return ["physical", "fisica", "física", "presencial", "online", "virtual", "remota"].indexOf(clean) >= 0;
+    }
+
+    function locationKindValue(location) {
+      if (!location || typeof location !== "object") return "physical";
+      var clean = text(location.kind || location.type || location.tipo || location.location_type || "").trim().toLowerCase();
+      if (clean === "online" || clean === "virtual" || clean === "remota") return "online";
+      return "physical";
+    }
+
+    function locationIsOnlineKind(location) {
+      return locationKindValue(location) === "online";
+    }
+
+    function locationKindFormValue(location) {
+      return locationIsOnlineKind(location) ? "online" : "physical";
+    }
+
     function normalizedLocation(location) {
       if (typeof location === "string") return parseLocationLine(location);
       if (!location || typeof location !== "object") return null;
@@ -3642,10 +3884,16 @@
         city: locationFieldValue(location, ["city", "ciudad"]),
         address: locationFieldValue(location, ["address", "direccion", "dirección"]),
         maps_url: locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]),
-        google_reviews_url: locationFieldValue(location, ["google_reviews_url", "reviews_url", "valoraciones_url"])
+        google_reviews_url: locationFieldValue(location, ["google_reviews_url", "reviews_url", "valoraciones_url"]),
+        kind: locationKindValue(location),
+        public_visible: locationVisibilityValue(location)
       };
+      var hasMeaningfulData = ["name", "city", "address", "maps_url", "google_reviews_url"].some(function (key) {
+        return Boolean(item[key]);
+      }) || item.kind === "online";
+      if (!hasMeaningfulData) return null;
       Object.keys(item).forEach(function (key) {
-        if (!item[key]) delete item[key];
+        if (item[key] === "" || item[key] == null) delete item[key];
       });
       return Object.keys(item).length ? item : null;
     }
@@ -3678,6 +3926,7 @@
     function primaryLocationFromClinic(clinic) {
       var data = (clinic && clinic.current_data) || {};
       var savedLocations = normalizedLocations(data.locations);
+      var savedPrimary = savedLocations[0] || null;
       var address = (clinic && clinic.address) || data.address;
       var mapsUrl = data.maps_url || data.google_maps_url;
       var reviewsUrl = data.google_reviews_url || data.reviews_url;
@@ -3687,10 +3936,12 @@
           city: (clinic && clinic.city) || data.city,
           address: address,
           maps_url: mapsUrl,
-          google_reviews_url: reviewsUrl
+          google_reviews_url: reviewsUrl,
+          kind: savedPrimary ? locationKindValue(savedPrimary) : locationKindValue(data),
+          public_visible: savedPrimary ? locationVisibilityValue(savedPrimary) : locationVisibilityValue(data)
         });
       }
-      return savedLocations[0] || null;
+      return savedPrimary || null;
     }
 
     function storedClinicLocations(clinic) {
@@ -3702,13 +3953,16 @@
     }
 
     function primaryLocationFromForm() {
-      if (!trimmed("clinicAddress") && !trimmed("clinicMapsUrl") && !trimmed("clinicGoogleReviewsUrl")) return null;
+      var kind = trimmed("clinicPrimaryLocationKind") || "physical";
+      if (kind !== "online" && !trimmed("clinicAddress") && !trimmed("clinicMapsUrl") && !trimmed("clinicGoogleReviewsUrl")) return null;
       return normalizedLocation({
         name: "Sede principal",
         city: trimmed("clinicCity"),
         address: trimmed("clinicAddress"),
         maps_url: trimmed("clinicMapsUrl"),
-        google_reviews_url: trimmed("clinicGoogleReviewsUrl")
+        google_reviews_url: trimmed("clinicGoogleReviewsUrl"),
+        kind: kind,
+        public_visible: trimmed("clinicPrimaryLocationOnline") !== "offline"
       });
     }
 
@@ -3741,7 +3995,7 @@
 
     function locationDisplayText(location) {
       var item = normalizedLocation(location) || {};
-      var parts = [item.name, item.city, item.address].filter(function (part) {
+      var parts = [item.name || (locationIsOnlineKind(item) ? "Sede online" : ""), item.city, item.address].filter(function (part) {
         return text(part).trim();
       });
       return parts.join(" · ") || locationLine(item) || "Sede propuesta";
@@ -3812,21 +4066,25 @@
       return false;
     }
 
-    function currentClinicMapsUrls() {
-      var urls = [trimmed("clinicMapsUrl")];
+    function currentClinicMapsUrls(onlineOnly) {
+      var urls = [];
+      var primary = primaryLocationFromForm();
+      if ((!onlineOnly || locationVisibilityValue(primary)) && !locationIsOnlineKind(primary)) urls.push(trimmed("clinicMapsUrl"));
       currentClinicLocations().forEach(function (location) {
+        if (onlineOnly && !locationVisibilityValue(location)) return;
+        if (locationIsOnlineKind(location)) return;
         var url = locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]);
         if (url) urls.push(url);
       });
       return urls.filter(Boolean);
     }
 
-    function hasReviewedClinicMapsProfile() {
-      return currentClinicMapsUrls().some(isReviewedGoogleMapsProfileUrl);
+    function hasReviewedClinicMapsProfile(onlineOnly) {
+      return currentClinicMapsUrls(onlineOnly).some(isReviewedGoogleMapsProfileUrl);
     }
 
-    function hasGenericClinicMapsCandidate() {
-      return currentClinicMapsUrls().some(function (url) {
+    function hasGenericClinicMapsCandidate(onlineOnly) {
+      return currentClinicMapsUrls(onlineOnly).some(function (url) {
         return Boolean(googleMapsReviewMessage(url));
       });
     }
@@ -3909,10 +4167,18 @@
         '<div class="location-row-grid">' +
           '<label>Nombre<input data-location-field="name" value="' + html(location.name || "") + '" placeholder="Sede principal"></label>' +
           '<label>Ciudad<input data-location-field="city" value="' + html(location.city || "") + '" placeholder="Barcelona"></label>' +
-          '<label>Dirección<input data-location-field="address" value="' + html(location.address || "") + '" placeholder="Calle y número"></label>' +
-          '<label>Google Maps<input data-location-field="maps_url" type="url" value="' + html(location.maps_url || "") + '" placeholder="https://"></label>' +
+          '<label>Tipo de sede<select data-location-field="kind">' +
+            '<option value="physical"' + (locationKindFormValue(location) === "physical" ? " selected" : "") + '>Sede física</option>' +
+            '<option value="online"' + (locationKindFormValue(location) === "online" ? " selected" : "") + '>Sede online</option>' +
+          '</select></label>' +
+          '<label>Visibilidad<select data-location-field="public_visible">' +
+            '<option value="online"' + (locationOnlineFormValue(location) === "online" ? " selected" : "") + '>Mostrar en ficha</option>' +
+            '<option value="offline"' + (locationOnlineFormValue(location) === "offline" ? " selected" : "") + '>Solo interna</option>' +
+          '</select></label>' +
+          '<label class="location-field-wide">Dirección<input data-location-field="address" value="' + html(location.address || "") + '" placeholder="Calle y número"></label>' +
+          '<label class="location-field-wide">Google Maps<input data-location-field="maps_url" type="url" value="' + html(location.maps_url || "") + '" placeholder="https://"></label>' +
           '<p class="location-field-warning hidden" data-location-maps-warning></p>' +
-          '<label>Valoraciones Google<input data-location-field="google_reviews_url" type="url" value="' + html(location.google_reviews_url || "") + '" placeholder="https://"></label>' +
+          '<label class="location-field-wide">Valoraciones Google<input data-location-field="google_reviews_url" type="url" value="' + html(location.google_reviews_url || "") + '" placeholder="https://"></label>' +
         '</div>' +
       '</article>';
     }
@@ -3923,9 +4189,13 @@
         Array.prototype.slice.call(row.querySelectorAll("[data-location-field]")).forEach(function (field) {
           var key = field.getAttribute("data-location-field");
           var value = text(field.value).trim();
+          if (key === "public_visible") {
+            item[key] = value !== "offline";
+            return;
+          }
           if (key && value) item[key] = value;
         });
-        return Object.keys(item).length ? item : null;
+        return normalizedLocation(item);
       }).filter(Boolean);
     }
 
@@ -3938,7 +4208,10 @@
       var locations = currentClinicLocations(false);
       setInput("clinicLocations", locations.map(locationLine).join("\n"));
       var count = Math.max(rowCount, readAdditionalLocationEditorRows().length);
-      var primaryLabel = primaryLocationFromForm() ? "Sede principal arriba" : "Sin sede principal";
+      var primary = primaryLocationFromForm();
+      var primaryLabel = primary
+        ? "Sede principal " + (locationIsOnlineKind(primary) ? "online" : "física") + " · " + (locationVisibilityValue(primary) ? "visible" : "interna")
+        : "Sin sede principal";
       el("clinicLocationCount").textContent = count
         ? primaryLabel + " · " + count + (count === 1 ? " adicional" : " adicionales")
         : primaryLabel + " · sin sedes adicionales";
@@ -3975,6 +4248,21 @@
       return value.some(function (location) {
         if (typeof location === "string") return Boolean(text(location).trim());
         return Boolean(text(location && (location.address || location.direccion || location.dirección)).trim());
+      });
+    }
+
+    function locationsHavePublicAccess(value) {
+      if (!Array.isArray(value)) return false;
+      return value.some(function (location) {
+        if (typeof location === "string") return Boolean(text(location).trim());
+        return locationIsOnlineKind(location) || Boolean(text(location && (location.address || location.direccion || location.dirección)).trim());
+      });
+    }
+
+    function locationsHavePhysicalLocation(value) {
+      if (!Array.isArray(value)) return false;
+      return value.some(function (location) {
+        return location && typeof location === "object" && !locationIsOnlineKind(location);
       });
     }
 
@@ -4088,6 +4376,9 @@
         "technologies.list": trimmed("clinicTech"),
         "contact.email": trimmed("clinicEmail"),
         "contact.phone": trimmed("clinicPhone"),
+        "contact.phone_fixed": trimmed("clinicPhoneFixed"),
+        "contact.phone_mobile": trimmed("clinicPhoneMobile"),
+        "contact.phone_whatsapp": trimmed("clinicPhoneWhatsapp"),
         "contact.instagram": trimmed("clinicInstagram")
       };
     }
@@ -4156,6 +4447,9 @@
         "technologies.list": "Tecnología",
         "contact.email": "Email",
         "contact.phone": "Teléfono",
+        "contact.phone_fixed": "Fijo",
+        "contact.phone_mobile": "Móvil",
+        "contact.phone_whatsapp": "WhatsApp",
         "contact.instagram": "Instagram",
         "prices.public_status": "Precio público",
         "prices.url": "Página de precios",
@@ -4449,18 +4743,22 @@
 
     function finalValidationItems(publicTarget) {
       var noBlockingClaims = activeClinicBlockingClaimCount !== null && activeClinicBlockingClaimCount === 0;
-      var hasLocation = trimmed("clinicAddress") || locationsHaveAddress(currentClinicLocations());
-      var hasClinicMapsProfile = hasReviewedClinicMapsProfile();
-      var hasGenericMapsCandidate = hasGenericClinicMapsCandidate();
+      var locationsForValidation = currentClinicLocations().filter(function (location) {
+        return !publicTarget || locationVisibilityValue(location);
+      });
+      var hasLocation = locationsHavePublicAccess(locationsForValidation);
+      var hasPhysicalLocation = locationsHavePhysicalLocation(locationsForValidation);
+      var hasClinicMapsProfile = hasReviewedClinicMapsProfile(publicTarget);
+      var hasGenericMapsCandidate = hasGenericClinicMapsCandidate(publicTarget);
       return [
         validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry"), true, "clinicName"),
         validationItem("Web oficial revisada", /^https?:\/\//i.test(trimmed("clinicWebsite")), true, "clinicWebsite"),
-        validationItem("Dirección o sede completa", hasLocation, true, "clinicAddress"),
+        validationItem("Sede física u online completa", hasLocation, true, "clinicAddress"),
         validationItem("Resumen suficiente", trimmed("clinicSummary").length >= 120, true, "clinicSummary"),
         validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0, true, "clinicServices"),
         validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget, "clinicEvidencePanel"),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false, "clinicSourcePanel"),
-        validationItem("Google Maps de clínica, no dirección suelta", hasClinicMapsProfile && !hasGenericMapsCandidate, publicTarget || hasGenericMapsCandidate, "clinicMapsUrl"),
+        validationItem("Google Maps de clínica, no dirección suelta", !hasPhysicalLocation || (hasClinicMapsProfile && !hasGenericMapsCandidate), (publicTarget && hasPhysicalLocation) || hasGenericMapsCandidate, "clinicMapsUrl"),
         validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false, "clinicProfessionals"),
         validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false, "clinicYearsInPractice")
       ];
@@ -4542,6 +4840,80 @@
         archived: "archivada"
       };
       return map[status] || status;
+    }
+
+    async function updateClinicWithStatus(targetStatus, notePrefix) {
+      if (!activeClinic) return false;
+      var previousNote = trimmed("clinicNote");
+      setInput("clinicStatus", targetStatus);
+      if (!previousNote) {
+        setInput("clinicNote", notePrefix || ("Estado cambiado a " + clinicStatusLabel(targetStatus).toLowerCase() + "."));
+      }
+      var event = { preventDefault: function () {} };
+      await saveClinic(event);
+      if (activeClinic && !previousNote) setInput("clinicNote", previousNote);
+      return true;
+    }
+
+    async function discardActiveClinic() {
+      if (!activeClinic) return;
+      var note = trimmed("clinicNote");
+      if (!note) {
+        note = window.prompt(
+          "Motivo para descartar esta ficha. Quedará guardado en el historial.",
+          "No encaja con los criterios editoriales de Vitalarga."
+        );
+        if (note === null) return;
+        note = text(note).trim();
+      }
+      if (!note) {
+        toast("Escribe un motivo en Nota interna antes de descartar.");
+        el("clinicNote").focus();
+        return;
+      }
+      var confirmed = window.confirm(
+        "Descartar esta ficha no la borra: quedará archivada, fuera de la web y con el motivo guardado en historial.\n\n¿Descartar ficha?"
+      );
+      if (!confirmed) return;
+      setInput("clinicNote", note.indexOf("Ficha descartada") === 0 ? note : "Ficha descartada: " + note);
+      el("clinicDiscardBtn").disabled = true;
+      await updateClinicWithStatus("archived", trimmed("clinicNote"));
+      if (activeClinic) el("clinicDiscardBtn").disabled = false;
+    }
+
+    async function publishActiveClinic() {
+      if (!activeClinic) return;
+      if (!isPublicClinicStatus(trimmed("clinicStatus"))) setInput("clinicStatus", "preliminary");
+      var missing = missingFinalValidationLabels();
+      if (missing.length) {
+        updateFinalValidation();
+        focusPublishField(publishMissingTargetId(missing[0]));
+        toast("Antes de publicar falta: " + missing[0] + ".");
+        return;
+      }
+      var confirmed = window.confirm(
+        "La ficha pasará a estar online como preliminar. Quedará guardado en el historial y entrará en la próxima publicación agrupada.\n\n¿Publicar?"
+      );
+      if (!confirmed) return;
+      if (!trimmed("clinicNote")) setInput("clinicNote", "Ficha marcada como online desde el panel.");
+      el("clinicPublishBtn").disabled = true;
+      await saveClinic({ preventDefault: function () {} });
+      if (activeClinic) el("clinicPublishBtn").disabled = false;
+    }
+
+    async function publishClinicFromList(clinicId) {
+      var row = clinicCache.find(function (item) { return item.id === clinicId; });
+      if (!row) return;
+      openClinicEditor(clinicId);
+      var missing = clinicPublicationMissingLabels(row);
+      if (missing.length) {
+        toast("Abro la ficha: falta " + missing[0] + " antes de publicar.");
+        window.setTimeout(function () {
+          focusPublishField(publishMissingTargetId(missing[0]));
+        }, 0);
+        return;
+      }
+      window.setTimeout(publishActiveClinic, 0);
     }
 
     function eventLabel(name) {
@@ -4720,6 +5092,9 @@
         tech: "Tecnología",
         email: "Email",
         telefono: "Teléfono",
+        phone_fixed: "Fijo",
+        phone_mobile: "Móvil",
+        phone_whatsapp: "WhatsApp",
         instagram: "Instagram"
       };
       var items = Object.keys(labels).filter(function (key) {
@@ -5119,7 +5494,13 @@
         tech: "Tecnología",
         email: "Email",
         telefono: "Teléfono",
+        phone_fixed: "Fijo",
+        phone_mobile: "Móvil",
+        phone_whatsapp: "WhatsApp",
         instagram: "Instagram",
+        care_mode: "Modalidad de atención",
+        primary_location_kind: "Tipo de sede principal",
+        primary_location_online: "Visibilidad sede principal",
         status: "Estado",
         profile_confidence: "Confianza",
         verification_status: "Verificación"
@@ -5130,6 +5511,9 @@
     function currentClinicField(clinic, key) {
       var data = (clinic && clinic.current_data) || {};
       if (key === "locations") return storedClinicLocations(clinic);
+      if (key === "care_mode") return clinicCareModeValue(data);
+      if (key === "primary_location_kind") return locationKindFormValue(primaryLocationFromClinic(clinic));
+      if (key === "primary_location_online") return locationOnlineFormValue(primaryLocationFromClinic(clinic));
       var topLevel = {
         display_name: clinic && clinic.display_name,
         name: clinic && clinic.display_name,
@@ -5178,6 +5562,9 @@
         maps_url: trimmed("clinicMapsUrl"),
         google_reviews_url: trimmed("clinicGoogleReviewsUrl"),
         status: trimmed("clinicStatus"),
+        care_mode: trimmed("clinicOnline"),
+        primary_location_kind: trimmed("clinicPrimaryLocationKind"),
+        primary_location_online: trimmed("clinicPrimaryLocationOnline"),
         profile_confidence: text(el("clinicConfidence").value).trim(),
         summary: trimmed("clinicSummary"),
         services: linesToArray(el("clinicServices").value),
@@ -5192,6 +5579,9 @@
         tech: trimmed("clinicTech"),
         email: trimmed("clinicEmail"),
         telefono: trimmed("clinicPhone"),
+        phone_fixed: trimmed("clinicPhoneFixed"),
+        phone_mobile: trimmed("clinicPhoneMobile"),
+        phone_whatsapp: trimmed("clinicPhoneWhatsapp"),
         instagram: trimmed("clinicInstagram"),
         verification_status: trimmed("clinicVerification")
       };
@@ -5255,6 +5645,9 @@
         "tech",
         "email",
         "telefono",
+        "phone_fixed",
+        "phone_mobile",
+        "phone_whatsapp",
         "instagram",
         "verification_status"
       ];
@@ -5309,6 +5702,8 @@
       var latestVersion = rows[0] && rows[0].version_number;
       list.innerHTML = rows.map(function (row) {
         var data = versionClinicData(row);
+        var eventPayload = activeClinicVersionEvents[row.source_event_id] || {};
+        var note = text(eventPayload.note).trim();
         var place = [data.city, data.country].filter(Boolean).join(" · ");
         var isCurrent = row.version_number === latestVersion;
         var action = isCurrent
@@ -5319,6 +5714,7 @@
           '<span>' + html(date(row.created_at)) + (place ? " · " + html(place) : "") + '</span>' +
           '<small>' + html(restoreChangeText(row)) + '</small></div>' +
           '<div class="version-tags">' + clinicStatusPill(data.status) + '<span class="pill">' + html(pct(data.confidence)) + '</span>' + action + '</div>' +
+          (note ? '<p class="version-note"><strong>Motivo:</strong> ' + html(note) + '</p>' : '') +
           '<p>' + html(compactText(data.summary, 180)) + '</p>' +
           '</article>';
       }).join("");
@@ -5374,7 +5770,21 @@
         el("clinicVersionList").innerHTML = '<p class="empty">No se pudo leer el historial de esta clínica.</p>';
         return;
       }
-      renderClinicVersions(result.data || []);
+      var rows = result.data || [];
+      var eventIds = rows.map(function (row) { return row.source_event_id; }).filter(Boolean);
+      activeClinicVersionEvents = {};
+      if (eventIds.length) {
+        var eventsResult = await client
+          .from("change_events")
+          .select("id, payload")
+          .in("id", eventIds);
+        if (!eventsResult.error) {
+          (eventsResult.data || []).forEach(function (eventRow) {
+            activeClinicVersionEvents[eventRow.id] = eventRow.payload || {};
+          });
+        }
+      }
+      renderClinicVersions(rows);
     }
 
     function normalizedFieldValue(value) {
@@ -5425,10 +5835,30 @@
       show(el("clinicProposalPreview"), true);
     }
 
+    function unsavedQuickActionHtml(keys) {
+      if (!keys.length) return "";
+      var labels = keys.map(proposalLabel);
+      var direct = "";
+      if (keys.length === 1 && keys[0] === "address") {
+        direct = "Guardar dirección y seguir";
+      } else if (keys.length === 1 && keys[0] === "locations") {
+        direct = "Guardar sede y seguir";
+      } else if (keys.every(function (key) { return ["address", "locations", "maps_url", "google_reviews_url"].indexOf(key) >= 0; })) {
+        direct = "Guardar ubicación y seguir";
+      } else {
+        direct = "Guardar estos cambios";
+      }
+      return '<div class="proposal-actions">' +
+        '<div><strong>' + html(direct) + '</strong><span>Se guardará en historial y podrás continuar revisando la ficha.</span></div>' +
+        '<button class="btn" type="submit" form="clinicForm">' + html(direct) + '</button>' +
+      '</div>';
+    }
+
     function renderUnsavedChanges() {
       if (!activeClinic) return;
       var fields = clinicFormFields();
-      var rows = unsavedClinicFieldKeys().map(function (key) {
+      var keys = unsavedClinicFieldKeys();
+      var rows = keys.map(function (key) {
         return diffItemHtml(key, currentClinicField(activeClinic, key), fields[key], "Guardado", "Formulario");
       });
       if (!rows.length) {
@@ -5439,7 +5869,7 @@
       el("clinicProposalMeta").textContent = rows.length + (rows.length === 1
         ? " campo cambiará al guardar."
         : " campos cambiarán al guardar.");
-      el("clinicProposalChanges").innerHTML = rows.join("");
+      el("clinicProposalChanges").innerHTML = unsavedQuickActionHtml(keys) + rows.join("");
       show(el("clinicProposalPreview"), true);
     }
 
@@ -5613,23 +6043,48 @@
       toast(rows.length + " mejoras cargadas juntas. Revisa y guarda una sola vez.");
     }
 
+    function clinicSearchText(row) {
+      var data = (row && row.current_data) || {};
+      var phones = phoneValuesFromData(data);
+      var parts = [
+        row && row.display_name,
+        row && row.slug,
+        row && row.city,
+        row && row.country,
+        row && row.website,
+        row && row.summary,
+        data.name,
+        data.web,
+        data.address,
+        data.region,
+        data.email,
+        data.instagram,
+        data.care_mode,
+        data.telefono,
+        data.phone_fixed,
+        data.phone_mobile,
+        data.phone_whatsapp,
+        locationsToLines(data.locations),
+        arrayLines(data.services),
+        arrayLines(data.specialties),
+        arrayLines(data.unidades),
+        arrayLines(data.profesionales)
+      ].concat(phones, phones.map(compactDigits));
+      return parts.join(" ").toLowerCase();
+    }
+
     function renderClinics() {
       var clinicsBody = el("clinicsBody");
       var query = trimmed("clinicSearch").toLowerCase();
+      var compactQuery = compactDigits(query);
       clinicStatusFilter = el("clinicStatusFilter").value;
       clinicPublishFilter = el("clinicPublishFilter").value;
       var rows = clinicCache.filter(function (row) {
         if (clinicStatusFilter && row.status !== clinicStatusFilter) return false;
         if (!clinicMatchesPublishFilter(row, clinicPublishFilter)) return false;
         if (!query) return true;
-        return [
-          row.display_name,
-          row.slug,
-          row.city,
-          row.country,
-          row.website,
-          row.summary
-        ].join(" ").toLowerCase().indexOf(query) >= 0;
+        var haystack = clinicSearchText(row);
+        return haystack.indexOf(query) >= 0 || Boolean(compactQuery && haystack.indexOf(compactQuery) >= 0);
       });
 
       el("clinicCount").textContent = rows.length + " fichas";
@@ -5644,8 +6099,7 @@
           clinicStatusPill(row.status) + "</td><td>" +
           clinicPublishReadinessCell(row) + "</td><td>" +
           pct(row.profile_confidence) + "</td><td>" +
-          date(row.updated_at) + '</td><td><button class="link-btn" type="button" data-edit-clinic="' +
-          html(row.id) + '">Editar</button></td></tr>';
+          date(row.updated_at) + "</td><td>" + clinicRowActions(row) + "</td></tr>";
       }).join("");
     }
 
@@ -5731,10 +6185,13 @@
       setInput("clinicCountry", activeClinic.country || data.country);
       setInput("clinicRegion", activeClinic.region || data.region);
       setInput("clinicAddress", activeClinic.address || data.address || (primaryLocation && primaryLocation.address));
+      setInput("clinicPrimaryLocationKind", locationKindFormValue(primaryLocation));
       setInput("clinicMapsUrl", data.maps_url || data.google_maps_url || (primaryLocation && primaryLocation.maps_url));
       setInput("clinicGoogleReviewsUrl", data.google_reviews_url || data.reviews_url || (primaryLocation && primaryLocation.google_reviews_url));
+      setInput("clinicPrimaryLocationOnline", locationOnlineFormValue(primaryLocation));
       renderLocationEditor(data.locations);
       setInput("clinicStatus", activeClinic.status || "review");
+      setInput("clinicOnline", clinicCareModeValue(data));
       setInput("clinicConfidence", activeClinic.profile_confidence == null ? "" : Math.round(Number(activeClinic.profile_confidence) * 100));
       setInput("clinicSummary", activeClinic.summary || data.summary);
       setInput("clinicServices", arrayLines(data.services));
@@ -5749,6 +6206,9 @@
       setInput("clinicTech", data.tech);
       setInput("clinicEmail", data.email);
       setInput("clinicPhone", data.telefono);
+      setInput("clinicPhoneFixed", data.phone_fixed);
+      setInput("clinicPhoneMobile", data.phone_mobile);
+      setInput("clinicPhoneWhatsapp", data.phone_whatsapp);
       setInput("clinicInstagram", data.instagram);
       setInput("clinicVerification", activeClinic.verification_status || "human_curated");
       setInput("clinicNote", "");
@@ -5794,6 +6254,9 @@
         tech: "clinicTech",
         email: "clinicEmail",
         telefono: "clinicPhone",
+        phone_fixed: "clinicPhoneFixed",
+        phone_mobile: "clinicPhoneMobile",
+        phone_whatsapp: "clinicPhoneWhatsapp",
         instagram: "clinicInstagram"
       };
       Object.keys(textFields).forEach(function (key) {
@@ -5916,14 +6379,15 @@
 
       var confidence = Math.max(0, Math.min(100, Number(el("clinicConfidence").value || 0))) / 100;
       var selectedStatus = trimmed("clinicStatus");
-      if (hasGenericClinicMapsCandidate()) {
+      var publicTarget = isPublicClinicStatus(selectedStatus);
+      if (publicTarget && hasGenericClinicMapsCandidate(true)) {
         updateClinicMapsWarnings();
         focusFirstGenericMapsCandidate();
         toast("Google Maps pendiente: pega el perfil real de la clínica, no una búsqueda, ruta o dirección.");
         return;
       }
       var missingValidation = missingFinalValidationLabels();
-      if ((selectedStatus === "published" || selectedStatus === "preliminary") && missingValidation.length) {
+      if (publicTarget && missingValidation.length) {
         var shouldContinue = window.confirm(
           "Validación final incompleta:\n- " + missingValidation.join("\n- ") +
           "\n\n¿Guardar igualmente como visible en la web?"
@@ -5934,6 +6398,7 @@
       currentData.slug = activeClinic.slug;
       currentData.name = name;
       currentData.status = publicStatus(selectedStatus);
+      setJsonText(currentData, "care_mode", trimmed("clinicOnline"));
       setJsonText(currentData, "web", trimmed("clinicWebsite"));
       setJsonText(currentData, "country", country);
       setJsonText(currentData, "city", city);
@@ -5950,6 +6415,9 @@
       setJsonText(currentData, "tech", trimmed("clinicTech"));
       setJsonText(currentData, "email", trimmed("clinicEmail"));
       setJsonText(currentData, "telefono", trimmed("clinicPhone"));
+      setJsonText(currentData, "phone_fixed", trimmed("clinicPhoneFixed"));
+      setJsonText(currentData, "phone_mobile", trimmed("clinicPhoneMobile"));
+      setJsonText(currentData, "phone_whatsapp", trimmed("clinicPhoneWhatsapp"));
       setJsonText(currentData, "instagram", trimmed("clinicInstagram"));
       setJsonArray(currentData, "services", el("clinicServices").value);
       setJsonArray(currentData, "specialties", el("clinicSpecialties").value);
@@ -6364,9 +6832,28 @@
       });
       el("loginForm").addEventListener("submit", signIn);
       el("jobForm").addEventListener("submit", createJob);
+      el("jobType").addEventListener("change", updateJobHelp);
+      Array.prototype.slice.call(document.querySelectorAll("[data-job-query]")).forEach(function (button) {
+        button.addEventListener("click", function () {
+          setInput("jobQuery", button.getAttribute("data-job-query"));
+          setInput("jobCountry", "España");
+          updateJobHelp();
+          el("jobQuery").focus();
+        });
+      });
       el("clinicForm").addEventListener("submit", saveClinic);
       el("clinicForm").addEventListener("input", updateFinalValidation);
       el("clinicForm").addEventListener("change", updateFinalValidation);
+      el("clinicOnline").addEventListener("change", updateFinalValidation);
+      el("clinicStatus").addEventListener("change", updateFinalValidation);
+      el("clinicPrimaryLocationKind").addEventListener("change", function () {
+        syncLocationEditorTextarea();
+        updateFinalValidation();
+      });
+      el("clinicPrimaryLocationOnline").addEventListener("change", function () {
+        syncLocationEditorTextarea();
+        updateFinalValidation();
+      });
       el("clinicPublishReadiness").addEventListener("click", function (event) {
         var button = event.target.closest("[data-publish-field]");
         if (button) focusPublishField(button.getAttribute("data-publish-field"));
@@ -6376,13 +6863,20 @@
         renderPendingLocationsForClinic();
         updateFinalValidation();
         var fields = el("clinicLocationRows").querySelectorAll("[data-location-field]");
-        var firstNewField = fields[Math.max(0, fields.length - 5)];
+        var firstNewField = fields[Math.max(0, fields.length - 6)];
         if (firstNewField) firstNewField.focus();
       });
       el("clinicLocationRows").addEventListener("input", function (event) {
         if (event.target.closest("[data-location-field]")) {
           syncLocationEditorTextarea();
           renderPendingLocationsForClinic();
+        }
+      });
+      el("clinicLocationRows").addEventListener("change", function (event) {
+        if (event.target.closest("[data-location-field]")) {
+          syncLocationEditorTextarea();
+          renderPendingLocationsForClinic();
+          updateFinalValidation();
         }
       });
       el("clinicLocationRows").addEventListener("click", function (event) {
@@ -6415,6 +6909,8 @@
       });
       el("clinicCancelBtn").addEventListener("click", closeClinicEditor);
       el("clinicCancelTop").addEventListener("click", closeClinicEditor);
+      el("clinicDiscardBtn").addEventListener("click", discardActiveClinic);
+      el("clinicPublishBtn").addEventListener("click", publishActiveClinic);
       el("reviewCloseBtn").addEventListener("click", closeReviewEditor);
       el("reviewCloseTop").addEventListener("click", closeReviewEditor);
       el("reviewCreateDraftBtn").addEventListener("click", createClinicDraftFromReview);
@@ -6422,6 +6918,15 @@
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);
       el("clinicPublishFilter").addEventListener("change", renderClinics);
+      el("clinicsBody").addEventListener("click", function (event) {
+        var publishButton = event.target.closest("[data-publish-clinic]");
+        if (publishButton) {
+          publishClinicFromList(publishButton.getAttribute("data-publish-clinic"));
+          return;
+        }
+        var editButton = event.target.closest("[data-edit-clinic]");
+        if (editButton) openClinicEditor(editButton.getAttribute("data-edit-clinic"));
+      });
       el("clinicVersionList").addEventListener("click", function (event) {
         var button = event.target.closest("[data-restore-version]");
         if (!button) return;
@@ -6489,14 +6994,12 @@
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));
       });
-      el("clinicsBody").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-edit-clinic]");
-        if (button) openClinicEditor(button.getAttribute("data-edit-clinic"));
-      });
       el("signOutBtn").addEventListener("click", signOut);
       el("refreshBtn").addEventListener("click", function () {
         loadDashboard({ manual: true });
       });
+
+      updateJobHelp();
 
       var result = await client.auth.getSession();
       session = result.data && result.data.session;

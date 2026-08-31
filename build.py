@@ -108,7 +108,11 @@ def normalize_clinic(clinic):
         "tech",
         "email",
         "telefono",
+        "phone_fixed",
+        "phone_mobile",
+        "phone_whatsapp",
         "instagram",
+        "care_mode",
         "maps_url",
         "google_maps_url",
         "google_reviews_url",
@@ -243,8 +247,11 @@ def location_from_dict(value):
         "address": first_text(value.get("address"), value.get("direccion"), value.get("dirección")),
         "maps_url": external_url(first_text(value.get("maps_url"), value.get("google_maps_url"), value.get("map_url"))),
         "google_reviews_url": external_url(first_text(value.get("google_reviews_url"), value.get("reviews_url"), value.get("valoraciones_url"))),
+        "kind": location_kind_value(value),
+        "public_visible": location_public_visible_value(value),
     }
-    return {key: item for key, item in loc.items() if item}
+    has_content = any(loc.get(key) for key in ("name", "city", "address", "maps_url", "google_reviews_url")) or loc["kind"] == "online"
+    return {key: item for key, item in loc.items() if item or key == "public_visible"} if has_content else {}
 
 def location_from_text(value):
     clean = str(value or "").strip()
@@ -253,19 +260,22 @@ def location_from_text(value):
     if "|" not in clean:
         return {"address": clean}
     parts = [part.strip() for part in clean.split("|")]
-    while len(parts) < 5:
+    while len(parts) < 7:
         parts.append("")
+    legacy_visibility = bool(parts[5]) and not is_location_kind(parts[5])
     loc = {
         "name": parts[0],
         "city": parts[1],
         "address": parts[2],
         "maps_url": external_url(parts[3]),
         "google_reviews_url": external_url(parts[4]),
+        "kind": "" if legacy_visibility else location_kind_value(parts[5]),
+        "public_visible": location_public_visible_value(parts[5] if legacy_visibility else parts[6]),
     }
     if not loc["address"] and parts[1] and len([part for part in parts if part]) == 2:
         loc["city"] = ""
         loc["address"] = parts[1]
-    return {key: item for key, item in loc.items() if item}
+    return {key: item for key, item in loc.items() if item or key == "public_visible"}
 
 def city_from_address(address, fallback=""):
     clean = str(address or "")
@@ -274,17 +284,56 @@ def city_from_address(address, fallback=""):
             return city
     return str(fallback or "").strip()
 
-def unique_locations(locations):
-    seen = set()
-    result = []
-    for loc in locations:
-        key = "|".join(str(loc.get(name, "")).lower() for name in ("name", "city", "address", "maps_url"))
-        if key and key not in seen:
-            seen.add(key)
-            result.append(loc)
-    return result
+def location_public_visible_value(value):
+    if isinstance(value, dict):
+        for key in ("public_visible", "online", "visible", "is_public"):
+            if key in value:
+                return location_public_visible_value(value.get(key))
+        return True
+    if isinstance(value, bool):
+        return value
+    clean = str(value or "").strip().lower()
+    if clean in {"false", "0", "no", "offline", "hidden", "oculta", "oculto", "no online", "private"}:
+        return False
+    return True
 
-def clinic_locations(c):
+def is_location_kind(value):
+    clean = str(value or "").strip().lower()
+    return clean in {"physical", "fisica", "física", "presencial", "online", "virtual", "remota"}
+
+def location_kind_value(value):
+    if isinstance(value, dict):
+        for key in ("kind", "type", "tipo", "location_type"):
+            if key in value:
+                return location_kind_value(value.get(key))
+        return "physical"
+    clean = str(value or "").strip().lower()
+    if clean in {"online", "virtual", "remota"}:
+        return "online"
+    return "physical"
+
+def location_is_online(loc):
+    return location_kind_value(loc) == "online"
+
+def location_is_public(loc):
+    return location_public_visible_value(loc)
+
+def unique_locations(locations):
+    seen = {}
+    order = []
+    for loc in locations:
+        key_parts = [str(loc.get(name, "")).lower() for name in ("name", "city", "address", "maps_url", "kind")]
+        key = "|".join(key_parts).strip("|")
+        if not key:
+            continue
+        if key not in seen:
+            seen[key] = loc
+            order.append(key)
+        elif not location_is_public(seen[key]) and location_is_public(loc):
+            seen[key] = loc
+    return [seen[key] for key in order]
+
+def explicit_clinic_locations(c):
     locations = []
     raw = c.get("locations")
     if isinstance(raw, list):
@@ -300,10 +349,12 @@ def clinic_locations(c):
             loc = location_from_text(line)
             if loc:
                 locations.append(loc)
-    locations = unique_locations(locations)
-    if locations:
-        return locations
+    return unique_locations(locations)
 
+def clinic_locations(c):
+    locations = explicit_clinic_locations(c)
+    if locations:
+        return [loc for loc in locations if location_is_public(loc)]
     address = str(c.get("address") or "").strip()
     if not address:
         return []
@@ -331,12 +382,16 @@ def location_display_name(loc, c, multiple=False):
     name = first_text(loc.get("name"), loc.get("label"), loc.get("sede"))
     if name and not re.match(r"^sede( principal|\s+\d+|\s+en\s+.+)?$", name, flags=re.I):
         return name
+    if location_is_online(loc):
+        return "Sede online"
     city = location_city(loc, c)
     if multiple and city:
         return f"Sede en {city}"
     return "Sede principal" if not multiple else "Sede"
 
 def location_maps_url(loc, c):
+    if location_is_online(loc):
+        return ""
     direct = external_url(first_text(
         loc.get("maps_url"),
         loc.get("google_maps_url"),
@@ -346,6 +401,8 @@ def location_maps_url(loc, c):
     return direct if is_google_maps_profile_url(direct) else ""
 
 def location_reviews_url(loc, c):
+    if location_is_online(loc):
+        return ""
     return external_url(first_text(
         loc.get("google_reviews_url"),
         loc.get("reviews_url"),
@@ -354,6 +411,9 @@ def location_reviews_url(loc, c):
     ))
 
 def location_detail(loc, c):
+    if location_is_online(loc):
+        city = location_city(loc, c)
+        return f"Atención online · {city}" if city else "Atención online"
     address = location_address(loc)
     city = location_city(loc, c)
     if not address:
@@ -361,6 +421,18 @@ def location_detail(loc, c):
     if city and city.lower() not in address.lower():
         return f"{city} · {address}"
     return address
+
+def care_mode_label(value):
+    clean = str(value or "").strip().lower()
+    labels = {
+        "presencial": "Presencial",
+        "online": "Online",
+        "hibrida": "Presencial y online",
+        "hybrid": "Presencial y online",
+        "mixta": "Presencial y online",
+        "no_consta": "No consta",
+    }
+    return labels.get(clean, str(value or "").strip())
 
 def transparency_status_label(value):
     clean = str(value or "").strip()
@@ -424,8 +496,54 @@ def split_text_list(value):
         text = text.replace(sep, ",")
     return visible_values(text.split(","))
 
+def phone_href(value, whatsapp=False):
+    digits = re.sub(r"[^0-9+]", "", str(value or ""))
+    if not digits:
+        return ""
+    if whatsapp:
+        return "https://wa.me/" + re.sub(r"\D", "", digits)
+    return "tel:" + digits
+
+def phone_search_value(value):
+    clean = str(value or "").strip()
+    digits = re.sub(r"\D", "", clean)
+    return " ".join(part for part in (clean, digits) if part)
+
+def add_contact_phone(items, seen, label, value, whatsapp=False):
+    clean = str(value or "").strip()
+    if not clean:
+        return
+    key = re.sub(r"\D", "", clean) or clean.lower()
+    if key in seen:
+        return
+    seen.add(key)
+    href = phone_href(clean, whatsapp)
+    items.append((label, clean, href))
+
+def contact_phone_items(c):
+    items = []
+    seen = set()
+    raw_phones = c.get("phones")
+    if isinstance(raw_phones, list):
+        for item in raw_phones:
+            if isinstance(item, dict):
+                label = first_text(item.get("label"), item.get("type"), item.get("tipo"), "Teléfono")
+                value = first_text(item.get("value"), item.get("phone"), item.get("telefono"), item.get("number"), item.get("numero"))
+                whatsapp = "whatsapp" in label.lower() or str(item.get("whatsapp") or "").lower() in {"true", "1", "si", "sí"}
+                add_contact_phone(items, seen, label, value, whatsapp)
+            else:
+                add_contact_phone(items, seen, "Teléfono", item)
+    add_contact_phone(items, seen, "Teléfono", c.get("telefono"))
+    add_contact_phone(items, seen, "Fijo", c.get("phone_fixed"))
+    add_contact_phone(items, seen, "Móvil", c.get("phone_mobile"))
+    add_contact_phone(items, seen, "WhatsApp", c.get("phone_whatsapp"), True)
+    return items
+
 def contact_count(c):
-    return sum(1 for key in ("email", "telefono", "instagram") if str(c.get(key) or "").strip())
+    count = len(contact_phone_items(c))
+    count += 1 if str(c.get("email") or "").strip() else 0
+    count += 1 if str(c.get("instagram") or "").strip() else 0
+    return count
 
 def stat_items(c):
     locations_count = len(clinic_locations(c))
@@ -670,6 +788,10 @@ def attrs(c):
         " ".join(visible_values([loc.get("name"), loc.get("city"), loc.get("address")]))
         for loc in clinic_locations(c)
     )
+    phone_text = " ".join(
+        " ".join(visible_values([label, value, phone_search_value(value)]))
+        for label, value, _ in contact_phone_items(c)
+    )
     transparency_text = " ".join(value for _, value in transparency_items(c) if "<a " not in str(value))
     search_parts = [
         c["name"],
@@ -682,7 +804,12 @@ def attrs(c):
         c.get("tech", ""),
         c.get("email", ""),
         c.get("telefono", ""),
+        c.get("phone_fixed", ""),
+        c.get("phone_mobile", ""),
+        c.get("phone_whatsapp", ""),
         c.get("instagram", ""),
+        c.get("care_mode", ""),
+        phone_text,
         locations_text,
         transparency_text,
         c.get("years_in_practice", ""),
@@ -756,11 +883,12 @@ featured_logos = "".join(
 
 JS = """<script>
 (function(){
-  var state={city:null,country:null,spec:null,q:""};
+  var state={city:null,country:null,spec:null,q:"",qDigits:""};
   var cards=[].slice.call(document.querySelectorAll(".grid .card"));
   var count=document.getElementById("count");
   var clear=document.getElementById("clearFilters");
   var empty=document.getElementById("emptyState");
+  function digits(value){return (value||"").replace(/\\D/g,"");}
   function hasFilters(){return Boolean(state.city||state.country||state.spec||state.q);}
   function apply(){
     var n=0;
@@ -769,7 +897,7 @@ JS = """<script>
       if(state.city && el.dataset.city.split("|").indexOf(state.city)<0) ok=false;
       if(state.country && el.dataset.country!==state.country) ok=false;
       if(state.spec && el.dataset.spec.split("|").indexOf(state.spec)<0) ok=false;
-      if(state.q && el.dataset.text.indexOf(state.q)<0) ok=false;
+      if(state.q && el.dataset.text.indexOf(state.q)<0 && (!state.qDigits || el.dataset.text.indexOf(state.qDigits)<0)) ok=false;
       el.classList.toggle("hidden",!ok); if(ok) n++;
     });
     count.innerHTML="<b>"+n+"</b> clínica"+(n===1?"":"s")+(state.city?" en "+state.city:"")+(state.spec?" · "+state.spec:"");
@@ -785,9 +913,9 @@ JS = """<script>
       apply();
     });
   });
-  document.getElementById("q").addEventListener("input",function(e){state.q=e.target.value.toLowerCase().trim();apply();});
+  document.getElementById("q").addEventListener("input",function(e){state.q=e.target.value.toLowerCase().trim();state.qDigits=digits(state.q);apply();});
   if(clear) clear.addEventListener("click",function(){
-    state={city:null,country:null,spec:null,q:""};
+    state={city:null,country:null,spec:null,q:"",qDigits:""};
     document.getElementById("q").value="";
     document.querySelectorAll(".chip").forEach(function(ch){ch.classList.remove("on")});
     apply();
@@ -807,7 +935,7 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 <h1>Encuentra clínicas de longevidad con datos claros.</h1>
 <p class="sub">Explora centros por ciudad, país y área médica con una guía independiente: sin rankings, sin publicidad y con revisión humana antes de publicar.</p></div>
 <div class="finder" id="buscar">
-<input id="q" type="search" placeholder="Busca por nombre, ciudad o especialidad…" aria-label="Buscar clínica">
+<input id="q" type="search" placeholder="Busca por nombre, ciudad, especialidad o teléfono…" aria-label="Buscar clínica">
 <div class="filter-grid">
 <div class="fgroup"><span class="flabel">País</span><div class="chips">{country_chips}</div></div>
 <div class="fgroup"><span class="flabel">Ciudad</span><div class="chips">{city_chips}</div></div>
@@ -850,7 +978,11 @@ def facts_block(c):
         facts.append(("Ubicación", h(" · ".join(location))))
     if len(locations) > 1:
         facts.append(("Sedes", h(f"{len(locations)} sedes documentadas")))
-    address = first_text(location_address(primary), c.get("address"))
+    care_mode = care_mode_label(c.get("care_mode"))
+    if care_mode and care_mode != "No consta":
+        facts.append(("Modalidad", h(care_mode)))
+    fallback_address = "" if explicit_clinic_locations(c) else c.get("address")
+    address = first_text(location_address(primary), fallback_address)
     if address:
         maps_url = location_maps_url(primary, c)
         value = f'<a href="{h(maps_url)}" rel="nofollow noopener" target="_blank">{h(address)}</a>' if maps_url else h(address)
@@ -925,10 +1057,11 @@ def contacto_block(c):
     if c.get("email"):
         email = str(c["email"]).strip()
         items.append(f'<li><b>Email:</b> <a href="mailto:{h(email)}">{h(email)}</a></li>')
-    if c.get("telefono"):
-        tel = str(c["telefono"]).strip()
-        tel_href = re.sub(r"[^0-9+]", "", tel)
-        items.append(f'<li><b>Tel\u00e9fono:</b> <a href="tel:{h(tel_href)}">{h(tel)}</a></li>')
+    for label, tel, href in contact_phone_items(c):
+        if href:
+            items.append(f'<li><b>{h(label)}:</b> <a href="{h(href)}" rel="nofollow noopener" target="_blank">{h(tel)}</a></li>')
+        else:
+            items.append(f'<li><b>{h(label)}:</b> {h(tel)}</li>')
     if c.get("instagram"):
         handle, url = instagram_parts(c["instagram"])
         items.append(f'<li><b>Instagram:</b> <a href="{h(url)}" rel="nofollow noopener" target="_blank">{h(handle)}</a></li>')
@@ -984,7 +1117,7 @@ def ficha(c):
     prelim = '<div class="note">Ficha preliminar: elaborada a partir de información pública básica, pendiente de ampliación y verificación detallada.</div>' if c["status"] == "preliminar" else ""
     extra = (" · " + " · ".join(c["cities_extra"])) if c.get("cities_extra") else ""
     city_label = c["city"] + extra
-    hero_address = c.get("address") if len(locations) <= 1 else ""
+    hero_address = location_address(primary_location(c)) or (c.get("address") if not explicit_clinic_locations(c) and len(locations) <= 1 else "")
     loc = " · ".join(visible_values([city_label, c.get("country"), hero_address]))
     visit = ""
     if c.get("web") and external_url(c["web"]):
@@ -1003,8 +1136,9 @@ def ficha(c):
         ld_obj["logo"] = f"{BASE}/assets/logos/{_ls}/{_lf}"
     if c.get("email"):
         ld_obj["email"] = c["email"]
-    if c.get("telefono"):
-        ld_obj["telephone"] = c["telefono"]
+    phone_values = [tel for _, tel, _ in contact_phone_items(c)]
+    if phone_values:
+        ld_obj["telephone"] = phone_values if len(phone_values) > 1 else phone_values[0]
     ld = '<script type="application/ld+json">' + json.dumps(ld_obj, ensure_ascii=False) + "</script>"
     return head(f'{c["name"]} — clínica de longevidad en {c["city"]} | {SITE}', c["summary"][:150], f'/clinica/{c["slug"]}/', ld) + f"""
 <main class="ficha"><p class="crumbs"><a href="/">Vitalarga</a> → <a href="/ciudad/{slugify(c["city"])}/">{h(c["city"])}</a> → {h(c["name"])}</p>
