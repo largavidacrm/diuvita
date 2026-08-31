@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks that the admin review inbox exposes a clinic case work panel."""
+"""Checks that clinic case helpers remain available without crowding the inbox."""
 from pathlib import Path
 
 
@@ -23,10 +23,8 @@ def main() -> None:
         'id="reviewCaseMeta"',
         'id="openCaseGroupBtn"',
         'id="clearCaseGroupBtn"',
-        "Caso recomendado",
-        "Caso en curso",
+        "Caso interno",
         "Filtrar caso",
-        "Abrir primera tarjeta",
         "Ver toda la bandeja",
         "Filtra este grupo",
         "Orden sugerido",
@@ -43,6 +41,13 @@ def main() -> None:
     ]:
         check(marker in index, f"missing review case panel marker: {marker}")
 
+    case_panel_body = index[index.index("function renderReviewCasePanel"):index.index("function renderSystemStatus")]
+    check("Caso recomendado" not in index, "review case panel should not appear as a default recommendation")
+    check("Grupo recomendado" not in index, "review filters should not push a default recommended group")
+    check("recommendedGroup" not in index, "review inbox should not calculate a default recommended group")
+    check("show(panel, false);" in case_panel_body, "review case panel should stay hidden in the inbox")
+    check("show(panel, true);" not in case_panel_body, "review case panel should not render as a visible inbox card")
+
     for marker in [
         ".review-case-panel",
         ".review-case-lead",
@@ -52,7 +57,7 @@ def main() -> None:
     ]:
         check(marker in css, f"missing review case panel style: {marker}")
 
-    print("OK admin review case panel: clinic workgroups are visible")
+    print("OK admin review case panel: clinic workgroups stay available without crowding the inbox")
 
 
 if __name__ == "__main__":

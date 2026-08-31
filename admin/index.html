@@ -16,6 +16,9 @@
 <body class="admin-body">
   <header class="admin-top">
     <div class="brand">
+      <button class="sidebar-toggle" id="sidebarToggleBtn" type="button" aria-label="Reducir menú" aria-pressed="false" title="Reducir menú">
+        <span aria-hidden="true">&#9776;</span>
+      </button>
       <a href="/"><span class="brand-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
       <span>Control</span>
     </div>
@@ -484,6 +487,23 @@
             <input id="clinicInstagram" name="clinicInstagram">
           </div>
           <div class="field">
+            <label for="clinicInternalContactName">Contacto interno</label>
+            <input id="clinicInternalContactName" name="clinicInternalContactName" placeholder="Nombre del interlocutor">
+            <p class="field-note">No visible en la web pública.</p>
+          </div>
+          <div class="field">
+            <label for="clinicInternalContactEmail">Email interno</label>
+            <input id="clinicInternalContactEmail" name="clinicInternalContactEmail" type="email" placeholder="correo de contacto directo">
+          </div>
+          <div class="field">
+            <label for="clinicInternalContactPhone">Teléfono interno</label>
+            <input id="clinicInternalContactPhone" name="clinicInternalContactPhone" placeholder="teléfono directo si lo dejaron">
+          </div>
+          <div class="field field-wide">
+            <label for="clinicInternalContactNote">Nota de contacto interno</label>
+            <textarea id="clinicInternalContactNote" name="clinicInternalContactNote" rows="3" placeholder="Origen, solicitud o contexto operativo."></textarea>
+          </div>
+          <div class="field">
             <label for="clinicVerification">Verificación</label>
             <input id="clinicVerification" name="clinicVerification">
           </div>
@@ -549,8 +569,8 @@
             </div>
             <span class="pill" id="reviewCount">0 abiertas</span>
           </div>
-          <details class="review-action-strip hidden" id="reviewActionStrip" open>
-            <summary>Acción recomendada</summary>
+          <details class="review-action-strip hidden" id="reviewActionStrip">
+            <summary>Sugerencia interna</summary>
             <div class="review-action-lead">
               <span>Qué hacer ahora</span>
               <strong id="reviewActionTitle">Abrir prioridad</strong>
@@ -567,7 +587,7 @@
           </details>
           <section class="review-case-panel hidden" id="reviewCasePanel">
             <div class="review-case-lead">
-              <span id="reviewCaseEyebrow">Caso recomendado</span>
+              <span id="reviewCaseEyebrow">Caso interno</span>
               <strong id="reviewCaseTitle">Cargando grupo.</strong>
               <p id="reviewCaseDetail">Filtra este grupo y abre una propuesta cada vez.</p>
             </div>
@@ -708,6 +728,23 @@
                 <span class="pill">Solo estos campos</span>
               </div>
               <div class="review-modify-fields" id="reviewModifyFields"></div>
+            </section>
+            <section class="review-source-job-panel hidden" id="reviewSourceJobPanel">
+              <div class="review-section-head">
+                <div>
+                  <h3>Fuente para completar esta ficha</h3>
+                  <p id="reviewSourceJobMeta">Pega una URL oficial donde esté el dato pendiente.</p>
+                </div>
+                <span class="pill">Next job</span>
+              </div>
+              <div class="review-source-job-form">
+                <div class="field">
+                  <label for="reviewSourceJobUrl">URL útil</label>
+                  <input id="reviewSourceJobUrl" type="url" placeholder="https://">
+                </div>
+                <button class="btn secondary" id="reviewSourceJobBtn" type="button">Crear trabajo con esta fuente</button>
+              </div>
+              <p class="field-note" id="reviewSourceJobHint">El agente creará propuestas revisables; no publica ni guarda datos en la ficha.</p>
             </section>
             <div class="field review-note-field">
               <label for="reviewResolutionNote">Observación breve</label>
@@ -905,6 +942,7 @@
     var SNAPSHOT_KEEP_LATEST = 3;
     var SAFE_WRITE_REVIEW_BACKLOG_LIMIT = 50;
     var ALL_CONTROL_SECTIONS = "allControlSections";
+    var SIDEBAR_STORAGE_KEY = "vitalargaAdminSidebarCollapsed";
     var activeControlSection = "globalPlanPanel";
     var CONTROL_SECTION_IDS = [
       "globalPlanPanel",
@@ -927,6 +965,33 @@
 
     function show(node, visible) {
       node.classList.toggle("hidden", !visible);
+    }
+
+    function storedSidebarCollapsed() {
+      try {
+        return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function setSidebarCollapsed(collapsed) {
+      var isCollapsed = Boolean(collapsed);
+      document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+      var button = el("sidebarToggleBtn");
+      if (!button) return;
+      button.setAttribute("aria-pressed", isCollapsed ? "true" : "false");
+      button.setAttribute("aria-label", isCollapsed ? "Mostrar menú" : "Reducir menú");
+      button.title = isCollapsed ? "Mostrar menú" : "Reducir menú";
+      try {
+        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, isCollapsed ? "true" : "false");
+      } catch (error) {
+        // El panel sigue funcionando aunque el navegador no permita guardar preferencias.
+      }
+    }
+
+    function toggleSidebar() {
+      setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
     }
 
     function html(value) {
@@ -2185,6 +2250,50 @@
       return "";
     }
 
+    function clinicInternalContactFromData(data) {
+      var raw = (data || {}).internal_contact || {};
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+      return raw;
+    }
+
+    function cleanInternalClinicContact(contact) {
+      var raw = contact || {};
+      var clean = {};
+      [
+        "name",
+        "email",
+        "phone",
+        "note",
+        "clinic_name",
+        "source",
+        "review_id",
+        "received_at",
+        "updated_at"
+      ].forEach(function (key) {
+        var value = text(raw[key]).trim();
+        if (value) clean[key] = value;
+      });
+      if (Object.keys(clean).length) clean.visibility = "internal";
+      return clean;
+    }
+
+    function setClinicInternalContact(data, contact) {
+      var clean = cleanInternalClinicContact(contact);
+      if (Object.keys(clean).length) {
+        var existing = clinicInternalContactFromData(data);
+        ["source", "review_id", "received_at", "updated_at"].forEach(function (key) {
+          if (!clean[key] && existing[key]) clean[key] = existing[key];
+        });
+        data.internal_contact = cleanInternalClinicContact(clean);
+      } else {
+        delete data.internal_contact;
+      }
+    }
+
+    function mergeClinicInternalContact(existing, incoming) {
+      return cleanInternalClinicContact(Object.assign({}, existing || {}, incoming || {}));
+    }
+
     function clinicHasPendingPublicChange(row, control) {
       if (!row || !isPublicClinicStatus(row.status)) return false;
       var updated = parseDateValue(row.updated_at);
@@ -2289,6 +2398,40 @@
 
     function isClinicClaimRequestReview(row) {
       return row && row.review_type === "clinic_claim_request";
+    }
+
+    function reviewFieldOverride(fields, key) {
+      if (!fields || !hasOwn(fields, key)) return null;
+      return text(fields[key]).trim();
+    }
+
+    function claimRequestContactFromReview(row, fields) {
+      var payload = (row && row.payload) || {};
+      var candidate = candidateFromReview(row || {});
+      function value(key, fallback) {
+        var override = reviewFieldOverride(fields, key);
+        return override === null ? text(fallback).trim() : override;
+      }
+      return cleanInternalClinicContact({
+        name: value("internal_contact.name", payload.requester_name || payload.contact_name || payload.name),
+        email: value("internal_contact.email", payload.requester_email || payload.contact_email || payload.email),
+        phone: value("internal_contact.phone", payload.requester_phone || payload.contact_phone || payload.phone),
+        note: value("internal_contact.note", payload.message || payload.note || payload.request),
+        clinic_name: payload.clinic_name || candidate.clinic_name || candidate.name || reviewPrimarySubject(row),
+        source: "clinic_claim_request",
+        review_id: row && row.id,
+        received_at: row && row.created_at
+      });
+    }
+
+    function claimRequestEditableItems(row) {
+      var contact = claimRequestContactFromReview(row, {});
+      return [
+        { key: "internal_contact.name", label: "Nombre del interlocutor", value: contact.name || "" },
+        { key: "internal_contact.email", label: "Email interno", value: contact.email || "" },
+        { key: "internal_contact.phone", label: "Teléfono interno", value: contact.phone || "" },
+        { key: "internal_contact.note", label: "Nota interna", value: contact.note || "" }
+      ];
     }
 
     function reviewVisibleLabel(row) {
@@ -3241,15 +3384,10 @@
         ? '<div class="filter-chip-row"><strong>Campo</strong><span class="filter-chip-group">' + fieldChipItems.join("") + '</span></div>'
         : "";
       var activeGroup = activeClinicWorkgroup();
-      var recommendedGroup = firstClinicWorkgroup(reviewCache);
       var groupChips = reviewClinicGroupFilter
         ? '<div class="filter-chip-row"><strong>Grupo</strong><span class="filter-chip-group">' +
           filterChip(clinicWorkgroupSubject(activeGroup), activeGroup ? activeGroup.count : 0, true, { "data-review-group-clear": "true" }) +
           '</span></div>'
-        : recommendedGroup
-          ? '<div class="filter-chip-row"><strong>Grupo recomendado</strong><span class="filter-chip-group">' +
-            filterChip(clinicWorkgroupSubject(recommendedGroup), recommendedGroup.count, false, { "data-review-group": recommendedGroup.clinicId }) +
-            '</span></div>'
         : "";
 
       container.innerHTML = '<div class="filter-chip-row"><strong>Tipo</strong><span class="filter-chip-group">' + typeChips + '</span></div>' +
@@ -3261,22 +3399,8 @@
     }
 
     function renderReviewCasePanel() {
-      var activeGroup = activeClinicWorkgroup();
-      var recommendedGroup = firstClinicWorkgroup(reviewCache);
-      var group = activeGroup || recommendedGroup;
       var panel = el("reviewCasePanel");
-      if (!group) {
-        show(panel, false);
-        return;
-      }
-      var isActive = Boolean(activeGroup);
-      el("reviewCaseEyebrow").textContent = isActive ? "Caso en curso" : "Caso recomendado";
-      el("reviewCaseTitle").textContent = clinicWorkgroupSubject(group);
-      el("reviewCaseDetail").textContent = reviewWorkgroupDetail(group, isActive);
-      el("reviewCaseMeta").innerHTML = reviewWorkgroupMetaHtml(group);
-      el("openCaseGroupBtn").textContent = isActive ? "Abrir primera tarjeta" : "Filtrar caso";
-      show(el("clearCaseGroupBtn"), isActive);
-      show(panel, true);
+      show(panel, false);
     }
 
     function renderSystemStatus(summary, recentJobs, recentEvents, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, openReviews, publicationReadiness) {
@@ -4029,6 +4153,11 @@
 
     function trimmed(id) {
       return el(id).value.trim();
+    }
+
+    function cleanHttpUrl(value) {
+      var clean = text(value).trim();
+      return /^https?:\/\//i.test(clean) ? clean : "";
     }
 
     function arrayLines(value) {
@@ -5315,6 +5444,72 @@
       });
     }
 
+    function reviewIssueSearchText(row) {
+      var payload = (row && row.payload) || {};
+      var issues = Array.isArray(payload.issues) ? payload.issues : [];
+      return issues.map(function (issue) {
+        if (issue && typeof issue === "object") return [issue.code, issue.label].join(" ");
+        return text(issue);
+      }).join(" ").toLowerCase();
+    }
+
+    function reviewMissingFieldTargets(row) {
+      var haystack = reviewIssueSearchText(row);
+      var targets = [];
+      function add(inputId, label, key) {
+        if (!targets.some(function (item) { return item.inputId === inputId; })) {
+          targets.push({ inputId: inputId, label: label, key: key });
+        }
+      }
+      if (haystack.indexOf("summary") >= 0 || haystack.indexOf("resumen") >= 0) {
+        add("clinicSummary", "Resumen", "summary");
+      }
+      if (haystack.indexOf("website") >= 0 || haystack.indexOf("web") >= 0) {
+        add("clinicWebsite", "Web oficial", "website");
+      }
+      if (haystack.indexOf("address") >= 0 || haystack.indexOf("direcci") >= 0) {
+        add("clinicAddress", "Dirección", "address");
+      }
+      if (haystack.indexOf("maps") >= 0 || haystack.indexOf("google") >= 0) {
+        add("clinicMapsUrl", "Google Maps", "maps_url");
+      }
+      if (haystack.indexOf("contact") >= 0 || haystack.indexOf("tel") >= 0 || haystack.indexOf("email") >= 0) {
+        add("clinicEmail", "Contacto público", "email");
+        add("clinicPhone", "Teléfono principal", "telefono");
+      }
+      if (haystack.indexOf("service") >= 0 || haystack.indexOf("servicio") >= 0) {
+        add("clinicServices", "Servicios", "services");
+      }
+      if (haystack.indexOf("specialt") >= 0 || haystack.indexOf("especialidad") >= 0) {
+        add("clinicSpecialties", "Especialidades", "specialties");
+      }
+      if (haystack.indexOf("unit") >= 0 || haystack.indexOf("unidad") >= 0) {
+        add("clinicUnits", "Unidades", "unidades");
+      }
+      if (haystack.indexOf("professional") >= 0 || haystack.indexOf("profesional") >= 0 || haystack.indexOf("specialist") >= 0 || haystack.indexOf("especialista") >= 0) {
+        add("clinicProfessionals", "Especialistas publicados", "profesionales");
+      }
+      if (haystack.indexOf("technology") >= 0 || haystack.indexOf("tecnolog") >= 0) {
+        add("clinicTech", "Tecnología", "tech");
+      }
+      return targets;
+    }
+
+    function firstReviewMissingFieldTargetId(row) {
+      var target = reviewMissingFieldTargets(row)[0];
+      return target ? target.inputId : "";
+    }
+
+    function reviewCanEditClinicFields(row) {
+      return Boolean(row && row.clinic_id &&
+        !isBlockingClaimReview(row) &&
+        (row.review_type === "clinic_quality_audit" || row.review_type === "source_change_detected"));
+    }
+
+    function reviewSourceJobEligible(row) {
+      return Boolean(row && row.clinic_id && row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row) && reviewMissingFieldTargets(row).length);
+    }
+
     function proposedFields(payload) {
       payload = payload || {};
       var fields = payload.proposed_fields || payload.proposed_current_data || payload.fields || {};
@@ -5792,6 +5987,7 @@
         care_mode: "Modalidad de atención",
         primary_location_kind: "Tipo de sede principal",
         primary_location_online: "Visibilidad sede principal",
+        internal_contact: "Contacto interno",
         status: "Estado",
         profile_confidence: "Confianza",
         verification_status: "Verificación"
@@ -5829,6 +6025,7 @@
 
     function displayFieldValue(value) {
       if (Array.isArray(value)) return value.length ? value.join("\n") : "—";
+      if (value && typeof value === "object") return JSON.stringify(value, null, 2);
       var clean = text(value).trim();
       return clean || "—";
     }
@@ -5836,6 +6033,15 @@
     function displayDiffValue(key, value) {
       if (key === "status") return clinicStatusLabel(value);
       if (key === "locations") return locationsToLines(value) || "—";
+      if (key === "internal_contact") {
+        var contact = cleanInternalClinicContact(value);
+        var lines = [];
+        if (contact.name) lines.push("Nombre: " + contact.name);
+        if (contact.email) lines.push("Email: " + contact.email);
+        if (contact.phone) lines.push("Teléfono: " + contact.phone);
+        if (contact.note) lines.push("Nota: " + contact.note);
+        return lines.join("\n") || "—";
+      }
       if (key === "profile_confidence") {
         var confidence = text(value).trim();
         return confidence ? confidence + "%" : "—";
@@ -5876,6 +6082,12 @@
         phone_mobile: trimmed("clinicPhoneMobile"),
         phone_whatsapp: trimmed("clinicPhoneWhatsapp"),
         instagram: trimmed("clinicInstagram"),
+        internal_contact: {
+          name: trimmed("clinicInternalContactName"),
+          email: trimmed("clinicInternalContactEmail"),
+          phone: trimmed("clinicInternalContactPhone"),
+          note: trimmed("clinicInternalContactNote")
+        },
         verification_status: trimmed("clinicVerification")
       };
     }
@@ -6109,6 +6321,18 @@
       return values;
     }
 
+    function reviewClinicProfileInternalContact(row) {
+      var clinic = reviewClinicForRow(row);
+      var data = (clinic && clinic.current_data) || {};
+      var contact = clinicInternalContactFromData(data);
+      var values = [];
+      if (contact.name) values.push("Nombre: " + contact.name);
+      if (contact.email) values.push("Email: " + contact.email);
+      if (contact.phone) values.push("Teléfono: " + contact.phone);
+      if (contact.note) values.push("Nota: " + contact.note);
+      return values;
+    }
+
     function reviewClinicProfileFacts(row) {
       var identity = reviewCandidateIdentity(row);
       var facts = [
@@ -6116,7 +6340,8 @@
         { label: "Ubicación", key: "city", value: identity.place },
         { label: "Web", key: "website", value: reviewClinicProfileValue(row, "website") },
         { label: "Modalidad", key: "care_mode", value: reviewClinicProfileValue(row, "care_mode") },
-        { label: "Contacto", key: "telefono", value: reviewClinicProfileContact(row) }
+        { label: "Contacto", key: "telefono", value: reviewClinicProfileContact(row) },
+        { label: "Contacto interno", key: "internal_contact", value: reviewClinicProfileInternalContact(row) }
       ];
       return facts.filter(function (item) {
         return reviewProfileHasValue(item.key, item.value);
@@ -6213,10 +6438,11 @@
     }
 
     function proposalFocusAction(row, key, value) {
-      if (isClinicClaimRequestReview(row)) return "Decisión humana; no cambia datos";
+      if (isClinicClaimRequestReview(row)) return "Registrar contacto interno";
       if (key === "maps_url") {
         return reviewedMapsProfileValue(proposalListValue(value)) ? "Perfil revisable" : "Confirmar perfil real";
       }
+      if (key === "google_reviews_url") return "Confirmar misma ficha";
       if (key === "locations") return "Cargar sedes y revisar";
       if (key === "profesionales") return "Revisar equipo";
       if (["public_pricing", "pricing_url", "team_credentialing_visible"].indexOf(key) >= 0) return "Revisión humana";
@@ -6282,9 +6508,36 @@
           payload.requester_email || payload.email,
           payload.message
         ].filter(function (item) { return text(item).trim(); }).join("\n");
-        pushProposalFocusItem(items, seen, row, "claim_request", claimText || row.title, "Solicitud de ficha", "Verificar identidad");
+        pushProposalFocusItem(items, seen, row, "claim_request", claimText || row.title, "Solicitud de ficha", "Registrar contacto interno");
       }
       return items;
+    }
+
+    function reviewProposalFocusHint(item) {
+      if (!item) return "";
+      if (item.key === "maps_url") {
+        var warning = googleMapsReviewMessage(proposalListValue(item.value));
+        return warning || "Abre el enlace y confirma que es el perfil real de la clínica antes de aprobar.";
+      }
+      if (item.key === "google_reviews_url") {
+        return "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica.";
+      }
+      if (item.key === "claim_request") {
+        return "Aprobar registra este interlocutor como contacto interno. No cambia la web ni concede acceso.";
+      }
+      if (item.key === "locations") {
+        var locations = normalizedLocations(item.value);
+        var mapWarning = locations.map(function (location) {
+          return googleMapsReviewMessage(locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]));
+        }).find(Boolean);
+        if (mapWarning) return "Alguna sede trae Google Maps dudoso: " + mapWarning;
+        if (locations.some(function (location) {
+          return Boolean(locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]));
+        })) {
+          return "Abre cada enlace de Google Maps y confirma que corresponde a esa sede de la clínica.";
+        }
+      }
+      return "";
     }
 
     function reviewProposalFocusTitle(row) {
@@ -6312,8 +6565,11 @@
       el("reviewProposalFocusCount").textContent = items.length + (items.length === 1 ? " dato" : " datos");
       list.innerHTML = items.length
         ? items.map(function (item) {
-          return '<article class="review-proposal-item"><h4>' + html(item.label) + '</h4><div class="review-proposal-value">' +
-            snapshotValueHtml(item.key, item.value) + '</div></article>';
+          var hint = reviewProposalFocusHint(item);
+          return '<article class="review-proposal-item"><div class="review-proposal-title"><h4>' + html(item.label) +
+            '</h4><span class="pill">' + html(item.action) + '</span></div><div class="review-proposal-value">' +
+            snapshotValueHtml(item.key, item.value) + '</div>' +
+            (hint ? '<p class="review-proposal-hint">' + html(hint) + '</p>' : '') + '</article>';
         }).join("")
         : '<p class="empty">Esta tarjeta no trae campos nuevos detectados; puedes aprobarla como revisada o rechazarla.</p>';
     }
@@ -6399,6 +6655,7 @@
     }
 
     function reviewEditableItems(row) {
+      if (isClinicClaimRequestReview(row)) return claimRequestEditableItems(row);
       return reviewProposalFocusItems(row).filter(function (item) {
         return !reviewFieldIsSynthetic(item.key) &&
           ["status", "profile_confidence", "verification_status"].indexOf(item.key) < 0;
@@ -6430,13 +6687,37 @@
       show(panel, true);
     }
 
+    function reviewModifyIdleLabel(row) {
+      if (reviewCanEditClinicFields(row) && !reviewEditableItems(row).length) return "Editar ficha";
+      if (isClinicClaimRequestReview(row)) return "Modificar contacto";
+      return "Modificar";
+    }
+
+    function renderReviewSourceJobPanel(row) {
+      var panel = el("reviewSourceJobPanel");
+      if (!panel) return;
+      if (!reviewSourceJobEligible(row)) {
+        show(panel, false);
+        setInput("reviewSourceJobUrl", "");
+        return;
+      }
+      var targets = reviewMissingFieldTargets(row);
+      el("reviewSourceJobMeta").textContent = "Pega una URL oficial donde mirar: " +
+        targets.map(function (item) { return item.label.toLowerCase(); }).join(", ") + ".";
+      el("reviewSourceJobHint").textContent = "El agente usará esa fuente para crear propuestas revisables; no publica ni guarda datos en la ficha.";
+      setInput("reviewSourceJobUrl", "");
+      show(panel, true);
+    }
+
     function setReviewModifyMode(enabled) {
       activeReviewModifyMode = Boolean(enabled);
       show(el("reviewModifyPanel"), activeReviewModifyMode);
-      el("reviewModifyBtn").textContent = activeReviewModifyMode ? "Guardar modificación" : "Modificar";
+      el("reviewModifyBtn").textContent = activeReviewModifyMode ? "Guardar modificación" : reviewModifyIdleLabel(activeReview);
       el("reviewModifyBtn").title = activeReviewModifyMode
         ? "Guardar la versión modificada de esta propuesta."
-        : "Corregir solo los campos incluidos en esta propuesta.";
+        : reviewCanEditClinicFields(activeReview) && !reviewEditableItems(activeReview).length
+          ? "Abrir la ficha en el campo que falta y guardar esa revisión."
+          : "Corregir solo los campos incluidos en esta propuesta.";
     }
 
     function renderReviewValidationView(row) {
@@ -6446,6 +6727,7 @@
         renderReviewClinicPanel(null);
         renderReviewEvidence(null);
         renderReviewWarnings(null, []);
+        renderReviewSourceJobPanel(null);
         setReviewModifyMode(false);
         return;
       }
@@ -6456,6 +6738,7 @@
       renderReviewProposalFocus(row);
       renderReviewEvidence(row);
       renderReviewWarnings(row, proposalItems);
+      renderReviewSourceJobPanel(row);
       el("reviewModifyFields").innerHTML = "";
       setReviewModifyMode(false);
     }
@@ -6676,6 +6959,58 @@
       el("reviewApproveBtn").disabled = loading || approveBlocked;
       el("reviewRejectBtn").disabled = loading;
       el("reviewModifyBtn").disabled = loading;
+      el("reviewSourceJobBtn").disabled = loading;
+    }
+
+    async function approveClinicClaimRequestReview(fields, modified) {
+      var clinic = reviewClinicForRow(activeReview);
+      if (!clinic) {
+        toast("Esta reclamación no tiene ficha enlazada para guardar el contacto.");
+        return false;
+      }
+      var contact = claimRequestContactFromReview(activeReview, fields);
+      if (!contact.name && !contact.email && !contact.phone && !contact.note) {
+        toast("Esta reclamación no trae contacto que registrar.");
+        return false;
+      }
+      var built = buildApprovedClinicDraft(clinic, {});
+      if (built.error) {
+        toast(built.error);
+        return false;
+      }
+      var draft = built.draft;
+      draft.currentData.internal_contact = mergeClinicInternalContact(
+        draft.currentData.internal_contact,
+        Object.assign({}, contact, { updated_at: new Date().toISOString() })
+      );
+      var note = trimmed("reviewResolutionNote") || (modified
+        ? "Contacto interno de reclamación corregido y registrado. No cambia datos públicos ni concede acceso."
+        : "Contacto interno registrado desde reclamación de ficha. No cambia datos públicos ni concede acceso.");
+      var updateResult = await client.rpc("admin_update_clinic", {
+        p_clinic_id: clinic.id,
+        p_display_name: draft.displayName,
+        p_website: draft.website || null,
+        p_country: draft.country,
+        p_city: draft.city,
+        p_region: draft.region || null,
+        p_address: draft.address || null,
+        p_status: draft.status,
+        p_summary: draft.summary || null,
+        p_current_data: draft.currentData,
+        p_profile_confidence: draft.confidence,
+        p_verification_status: draft.verification,
+        p_change_note: note
+      });
+      if (updateResult.error) {
+        toast("No se pudo guardar el contacto interno.");
+        return false;
+      }
+      var resolveResult = await resolveReviewItem(activeReview.id, "resolved", note);
+      if (resolveResult.error) {
+        toast("Contacto guardado, pero la reclamación no se cerró automáticamente.");
+        return false;
+      }
+      return true;
     }
 
     async function approveExistingClinicReview(fields, modified) {
@@ -6775,6 +7110,8 @@
       var ok = false;
       if (activeReview.review_type === "candidate_clinic") {
         ok = await approveCandidateReview(fields, modified);
+      } else if (isClinicClaimRequestReview(activeReview)) {
+        ok = await approveClinicClaimRequestReview(fields, modified);
       } else if (activeReview.clinic_id) {
         ok = await approveExistingClinicReview(fields, modified);
       } else {
@@ -6811,6 +7148,10 @@
     function modifyReview() {
       if (!activeReview) return;
       if (!activeReviewModifyMode) {
+        if (reviewCanEditClinicFields(activeReview) && !reviewEditableItems(activeReview).length) {
+          openClinicEditorForReview(activeReview);
+          return;
+        }
         renderReviewModifyPanel(activeReview);
         setReviewModifyMode(true);
         var firstField = el("reviewModifyFields").querySelector("textarea");
@@ -6865,6 +7206,7 @@
         "phone_mobile",
         "phone_whatsapp",
         "instagram",
+        "internal_contact",
         "verification_status"
       ];
     }
@@ -7011,6 +7353,15 @@
           if (item && typeof item === "object") return locationLine(item);
           return text(item).trim();
         }).filter(Boolean).join("\n").trim();
+      }
+      if (value && typeof value === "object") {
+        var contact = cleanInternalClinicContact(value);
+        if (Object.keys(contact).length) {
+          return [contact.name, contact.email, contact.phone, contact.note].map(function (item) {
+            return text(item).trim();
+          }).filter(Boolean).join("\n").trim();
+        }
+        return JSON.stringify(value);
       }
       return text(value).trim();
     }
@@ -7325,6 +7676,7 @@
 
     function clinicSearchText(row) {
       var data = (row && row.current_data) || {};
+      var internalContact = clinicInternalContactFromData(data);
       var phones = phoneValuesFromData(data);
       var parts = [
         row && row.display_name,
@@ -7348,7 +7700,11 @@
         arrayLines(data.services),
         arrayLines(data.specialties),
         arrayLines(data.unidades),
-        arrayLines(data.profesionales)
+        arrayLines(data.profesionales),
+        internalContact.name,
+        internalContact.email,
+        internalContact.phone,
+        internalContact.note
       ].concat(phones, phones.map(compactDigits));
       return parts.join(" ").toLowerCase();
     }
@@ -7399,12 +7755,8 @@
       var actionLead = reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget);
       renderReviewFilterChips();
       renderReviewCasePanel();
-      if (activeReview) {
-        show(el("reviewActionStrip"), false);
-        show(el("reviewCasePanel"), false);
-      } else {
-        show(el("reviewActionStrip"), Boolean(nextReview || clinicGroup || duplicateReview || sourceTarget || googleLinkReview || specialistTarget));
-      }
+      show(el("reviewActionStrip"), false);
+      if (activeReview) show(el("reviewCasePanel"), false);
       el("reviewActionTitle").textContent = actionLead.title;
       el("reviewActionDetail").textContent = actionLead.detail;
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
@@ -7495,6 +7847,11 @@
       setInput("clinicPhoneMobile", data.phone_mobile);
       setInput("clinicPhoneWhatsapp", data.phone_whatsapp);
       setInput("clinicInstagram", data.instagram);
+      var internalContact = clinicInternalContactFromData(data);
+      setInput("clinicInternalContactName", internalContact.name);
+      setInput("clinicInternalContactEmail", internalContact.email);
+      setInput("clinicInternalContactPhone", internalContact.phone);
+      setInput("clinicInternalContactNote", internalContact.note);
       setInput("clinicVerification", activeClinic.verification_status || "human_curated");
       setInput("clinicNote", "");
       activeClinicClaims = [];
@@ -7632,6 +7989,37 @@
       renderReviews();
     }
 
+    function openClinicEditorForReview(row) {
+      if (!row || !row.clinic_id) return false;
+      var clinic = reviewClinicForRow(row);
+      if (!clinic) {
+        toast("No encuentro la ficha enlazada para editarla.");
+        return false;
+      }
+      var reviewType = row.review_type;
+      var payload = row.payload || {};
+      var focusTarget = firstReviewMissingFieldTargetId(row);
+      activeClinicReview = row;
+      activeClinicReviewIds = [row.id];
+      closeReviewEditor();
+      activeClinicReview = row;
+      activeClinicReviewIds = [row.id];
+      openClinicEditor(row.clinic_id);
+      if (reviewType === "clinic_profile_enrichment") applyClinicProposal(payload);
+      if (!trimmed("clinicNote")) {
+        setInput("clinicNote", reviewType === "clinic_quality_audit"
+          ? "Ficha actualizada desde auditoría de calidad."
+          : "Ficha actualizada desde revisión manual.");
+      }
+      if (focusTarget) {
+        window.setTimeout(function () {
+          focusPublishField(focusTarget);
+        }, 0);
+      }
+      toast("Edita el campo pendiente y guarda la ficha para cerrar esta revisión.");
+      return true;
+    }
+
     async function saveClinic(event) {
       event.preventDefault();
       if (!activeClinic) return;
@@ -7692,6 +8080,12 @@
       setJsonText(currentData, "phone_mobile", trimmed("clinicPhoneMobile"));
       setJsonText(currentData, "phone_whatsapp", trimmed("clinicPhoneWhatsapp"));
       setJsonText(currentData, "instagram", trimmed("clinicInstagram"));
+      setClinicInternalContact(currentData, {
+        name: trimmed("clinicInternalContactName"),
+        email: trimmed("clinicInternalContactEmail"),
+        phone: trimmed("clinicInternalContactPhone"),
+        note: trimmed("clinicInternalContactNote")
+      });
       setJsonArray(currentData, "services", el("clinicServices").value);
       setJsonArray(currentData, "specialties", el("clinicSpecialties").value);
       setJsonArray(currentData, "unidades", el("clinicUnits").value);
@@ -7732,14 +8126,18 @@
       }
       el("clinicSaveBtn").disabled = false;
 
+      var resolvedFromClinicReview = false;
+      var reviewContinueId = "";
+      var resolveWarning = false;
       if (activeClinicReview && activeClinicReview.clinic_id === activeClinic.id) {
         var reviewIdsToResolve = activeClinicReviewIds.length ? activeClinicReviewIds.slice() : [activeClinicReview.id];
+        reviewContinueId = activeClinicReview.id;
+        resolvedFromClinicReview = true;
         var defaultNote = reviewIdsToResolve.length > 1
           ? "Ficha actualizada desde revisión manual."
           : activeClinicReview.review_type === "clinic_profile_enrichment"
           ? "Ficha actualizada desde propuesta de ampliación."
           : "Ficha actualizada desde revisión de calidad.";
-        var resolveWarning = false;
         for (var i = 0; i < reviewIdsToResolve.length; i += 1) {
           var resolveResult = await client.rpc("admin_resolve_review_item", {
             p_review_id: reviewIdsToResolve[i],
@@ -7752,6 +8150,22 @@
 
       closeClinicEditor();
       await loadDashboard();
+      if (resolvedFromClinicReview) {
+        var nextReview = nextReviewAfterCurrent(reviewContinueId);
+        if (nextReview) {
+          toast(resolveWarning
+            ? "Clínica guardada, pero alguna tarjeta no se cerró automáticamente."
+            : "Clínica guardada. Paso a la siguiente propuesta.");
+          openReviewEditor(nextReview.id);
+          return;
+        }
+        el("reviewSelectionMessage").textContent = "Cola terminada. No quedan propuestas pendientes.";
+        show(el("reviewSelectionPanel"), true);
+        toast(resolveWarning
+          ? "Clínica guardada, pero alguna tarjeta no se cerró automáticamente."
+          : "Clínica guardada. Cola terminada.");
+        return;
+      }
       if (lockWarning) {
         toast("Clínica guardada, pero no se actualizaron los campos protegidos.");
       } else if (resolveWarning) {
@@ -8011,6 +8425,65 @@
       toast(defaultDismissNote(reviewType));
     }
 
+    async function createReviewSourceJob() {
+      if (!reviewSourceJobEligible(activeReview)) return;
+      if (dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT) {
+        updateJobBacklogHint(dashboardOpenReviewCount);
+        toast("Freno de bandeja activo. Primero limpia revisiones.");
+        return;
+      }
+      if (SAFE_WRITE_REVIEW_BACKLOG_LIMIT - dashboardOpenReviewCount <= 5) {
+        updateJobBacklogHint(dashboardOpenReviewCount);
+        toast("Pausa preventiva: limpia revisiones antes de crear más trabajos.");
+        return;
+      }
+      var url = cleanHttpUrl(trimmed("reviewSourceJobUrl"));
+      if (!url) {
+        toast("Pega una URL oficial que empiece por http o https.");
+        el("reviewSourceJobUrl").focus();
+        return;
+      }
+      var clinic = reviewClinicForRow(activeReview);
+      if (!clinic) {
+        toast("No encuentro la ficha enlazada para crear el trabajo.");
+        return;
+      }
+      var targets = reviewMissingFieldTargets(activeReview);
+      el("reviewSourceJobBtn").disabled = true;
+      var payload = {
+        job_type: "EXTRACT_CLINIC_PROFILE",
+        status: "queued",
+        priority: 110,
+        entity_type: "clinic",
+        entity_id: clinic.id,
+        clinic_id: clinic.id,
+        input: {
+          mode: "shadow",
+          clinic_id: clinic.id,
+          clinic_slug: clinic.slug,
+          clinic_name: clinic.display_name,
+          source_url: url,
+          source_urls: [url],
+          requested_fields: targets.map(function (item) { return item.key; }),
+          missing_fields: targets.map(function (item) { return item.label; }),
+          from_review_id: activeReview.id,
+          instruction: "Extrae solo datos claros de esta fuente y crea propuestas revisables. No publiques ni guardes datos en la ficha sin aprobacion humana."
+        },
+        model_tier: "cheap",
+        requires_human: false
+      };
+      var result = await client.from("agent_jobs").insert(payload).select("id").single();
+      el("reviewSourceJobBtn").disabled = false;
+      if (result.error) {
+        toast("No se pudo crear el trabajo con esa fuente.");
+        return;
+      }
+      setInput("reviewSourceJobUrl", "");
+      toast("Trabajo creado. El agente mirará esa fuente y dejará propuestas revisables.");
+      await loadDashboard();
+      if (activeReview) renderReviewValidationView(activeReview);
+    }
+
     async function createJob(event) {
       event.preventDefault();
       if (dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT) {
@@ -8106,6 +8579,8 @@
     }
 
     async function init() {
+      setSidebarCollapsed(storedSidebarCollapsed());
+      el("sidebarToggleBtn").addEventListener("click", toggleSidebar);
       if (!config.supabaseUrl || !config.supabasePublishableKey || !window.supabase) {
         show(el("configPanel"), true);
         return;
@@ -8201,6 +8676,7 @@
       el("reviewApproveBtn").addEventListener("click", function () { approveReview(false); });
       el("reviewRejectBtn").addEventListener("click", rejectReview);
       el("reviewModifyBtn").addEventListener("click", modifyReview);
+      el("reviewSourceJobBtn").addEventListener("click", createReviewSourceJob);
       el("reviewBackToListBtn").addEventListener("click", closeReviewEditor);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);

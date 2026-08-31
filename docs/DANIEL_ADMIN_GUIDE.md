@@ -15,12 +15,16 @@ http://127.0.0.1:8765/admin/
 El acceso local sirve solo la web generada en `dist/`. No publica producción,
 no toca Netlify y no expone el archivo `.env`.
 
+El botón de menú de la cabecera permite reducir o mostrar la barra lateral
+izquierda. Sirve para ganar anchura cuando estés revisando fichas largas.
+
 ## Revisar clínicas nuevas
 
 1. Entra con tu usuario autorizado.
 2. Mira el bloque **Necesitan revisión**.
-3. Si aparece **Abrir prioridad**, úsalo para abrir la revisión más importante.
-4. También puedes pulsar **Revisar** en una propuesta concreta.
+3. Usa los filtros si quieres acotar por tipo, prioridad, Google Maps o
+   especialistas.
+4. Pulsa **Revisar** en una propuesta concreta.
 5. Comprueba nombre, web, ciudad, fuente, servicios y especialistas detectados.
 6. Si parece una clínica válida, pulsa **Aprobar**. En una clínica nueva, eso
    crea un borrador interno para editarlo con calma.
@@ -117,24 +121,19 @@ solo en este worktree, Codex puede usar el informe interno de preparación para
 publicación. Ese informe no publica nada: solo separa cambios locales, commits
 pendientes y comprobaciones de la web pública.
 
-En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta del
-grupo repetido más importante cuando hay varias mejoras abiertas para la misma
-clínica.
-
-El bloque **Caso recomendado** resume la clínica que conviene filtrar como un
-caso completo. Muestra cuántas tarjetas tiene abiertas, el orden sugerido y el
-botón **Filtrar caso**. Cuando ya estás dentro de ese grupo, el botón cambia a
-**Abrir primera tarjeta** y aparece **Ver toda la bandeja** para salir del
-filtro.
-
-El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
-que más conviene ordenar. Es útil cuando una misma clínica tiene claim,
-auditoría, cambio de fuente y mejoras abiertas a la vez.
+En **Necesitan revisión**, la bandeja se mantiene deliberadamente simple:
+filtros, tabla y botón **Revisar**. El sistema puede usar señales internas para
+ordenar trabajo o para futura ayuda con LLM, pero no mezcla esas prioridades
+con la decisión que tienes delante.
 
 El filtro **Reclamaciones** muestra solicitudes de clínicas sobre una ficha.
 Úsalo para revisar quién reclama la ficha y decidir si hace falta pedir prueba,
 conceder acceso o rechazar la solicitud. El sistema no concede acceso ni edita
 la ficha automáticamente.
+
+Si apruebas una reclamación de ficha, el panel registra el interlocutor en
+**Contacto interno** dentro de la ficha. Ese apartado no es visible en la web
+pública y no concede acceso por sí solo.
 
 En los filtros rápidos de **Necesitan revisión**, usa **Especialistas** para ver
 solo tarjetas que traen profesionales publicados o propuestas relacionadas con
@@ -158,6 +157,11 @@ enlace corresponde al perfil real de la clínica y solo entonces carga la
 propuesta en la ficha. Si el enlace abre una búsqueda genérica, una dirección
 suelta o un perfil dudoso, no lo guardes.
 
+Dentro de una propuesta, la etiqueta junto al dato te dice qué tipo de decisión
+espera ese campo. **Perfil revisable** no significa aprobado: significa que el
+enlace tiene forma de ficha de Google Maps y aun así debes abrirlo y comprobar
+que es la clínica correcta.
+
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
 perfil real de la clínica, el campo queda pendiente; no usamos enlaces genéricos
@@ -167,7 +171,7 @@ Si una tarjeta muestra un aviso bajo el enlace de Google Maps, trátalo como
 pendiente: abre el enlace y apruébalo solo si ves la ficha real de la clínica.
 
 Cuando una misma clínica tenga varias tarjetas abiertas, el panel puede usarlo
-para ordenar prioridades o filtrar la lista. Al abrir una tarjeta, aun así,
+como señal interna para ordenar prioridades o filtrar la lista. Al abrir una tarjeta, aun así,
 decides solo esa propuesta: aprobar, rechazar o modificar. No se mezclan varias
 decisiones dentro de la misma ficha.
 
@@ -178,18 +182,16 @@ contacto. Si el panel ya separa dos números claros en principal/fijo/móvil,
 revísalos igualmente antes de aprobar: la separación ayuda, pero no aprueba el
 dato.
 
-El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
-marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la
-bandeja por esa clínica.
-
-El botón **Abrir especialistas** abre la primera tarjeta relacionada con la
-ficha marcada en **Siguiente especialistas**. Si no hay tarjeta exacta, filtra
-la bandeja por esa clínica y por revisiones de especialistas.
-
 Al editar una clínica, si aparecen **Detectados en revisión interna**, puedes
 pulsar **Cargar al formulario** para pasar esos nombres al campo de
 especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
 revises antes de guardar.
+
+Si una auditoría dice que faltan datos pero la fuente está clara, pulsa
+**Editar ficha** para abrir la ficha en el campo pendiente. Si conoces una URL
+oficial donde el agente debe mirar, pégala en **Fuente para completar esta
+ficha** y pulsa **Crear trabajo con esta fuente**. Eso crea trabajo interno para
+propuestas revisables; no guarda ni publica datos.
 
 En el editor de clínica, **Modalidad de atención** describe si la clínica es
 presencial, online o mixta. No decide la publicación. La publicación se decide
@@ -225,6 +227,8 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 5. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
 6. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
    confirma con **Guardar modificación**.
+   En auditorías sin datos concretos, el botón cambia a **Editar ficha** y te
+   lleva al campo que falta.
 7. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
    pendiente. Si no queda ninguna, vuelve a la lista.
 
@@ -308,7 +312,9 @@ público.
 4. Mira la columna **Falta para publicar**: el primer campo en negrita es lo
    primero que conviene completar.
 5. Pulsa **Editar**.
-6. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, sedes, Google Maps, valoraciones Google y transparencia pública.
+6. Cambia los datos que quieras: resumen, servicios, especialidades, unidades
+   clínicas, especialistas, contacto público, contacto interno no visible en
+   web, sedes, Google Maps, valoraciones Google y transparencia pública.
 7. Mira el bloque **Validación final**.
 8. El botón de guardar cambia según el estado elegido: **Guardar borrador**,
    **Guardar en revisión**, **Guardar como preliminar** o **Guardar como publicada**.

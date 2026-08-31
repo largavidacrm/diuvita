@@ -17,6 +17,7 @@ def main() -> None:
 
     for marker in [
         'class="control-layout"',
+        'id="sidebarToggleBtn"',
         'class="control-sidebar"',
         'class="control-nav"',
         'data-control-jump="allControlSections"',
@@ -47,6 +48,12 @@ def main() -> None:
         "ALL_CONTROL_SECTIONS",
         "activeControlSection",
         "CONTROL_SECTION_IDS",
+        "SIDEBAR_STORAGE_KEY",
+        "function setSidebarCollapsed",
+        "function toggleSidebar",
+        'document.body.classList.toggle("sidebar-collapsed"',
+        'window.localStorage.setItem(SIDEBAR_STORAGE_KEY',
+        'el("sidebarToggleBtn").addEventListener("click", toggleSidebar)',
         "setControlSectionVisible(activeControlSection)",
         'document.querySelectorAll("[data-control-jump]")',
         'updateControlNav(',
@@ -56,12 +63,17 @@ def main() -> None:
 
     for marker in [
         ".control-layout",
+        ".sidebar-toggle",
+        "body.sidebar-collapsed .admin-main",
+        "body.sidebar-collapsed .control-layout",
+        "body.sidebar-collapsed .control-sidebar",
         ".control-sidebar",
         ".control-nav",
         ".control-nav-item",
         ".control-nav-item.active",
         ".control-section-hidden",
         "grid-template-columns: 260px minmax(0, 1fr)",
+        "width: min(1680px, 96vw)",
         ".job-side-panel",
         "grid-auto-flow: column",
         "overflow-x: auto",

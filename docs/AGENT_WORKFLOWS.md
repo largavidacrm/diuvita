@@ -196,6 +196,9 @@ Required behavior:
 - Do not grant account access automatically.
 - Do not edit clinic data automatically.
 - Do not publish any profile change from the claim request alone.
+- If Daniel approves the review card, store requester details only as
+  `clinics.current_data.internal_contact` with internal visibility. This is an
+  operational contact, not a public profile change and not an access grant.
 - Keep the card open until Daniel decides whether to request proof, accept the
   claim operationally or close it.
 

@@ -23,6 +23,9 @@ SOURCE_MARKERS = [
     ("admin approve action", "admin/index.html", 'id="reviewApproveBtn"'),
     ("admin reject action", "admin/index.html", 'id="reviewRejectBtn"'),
     ("admin modify action", "admin/index.html", 'id="reviewModifyBtn"'),
+    ("admin collapsible sidebar", "admin/index.html", 'id="sidebarToggleBtn"'),
+    ("admin review source handoff", "admin/index.html", 'id="reviewSourceJobPanel"'),
+    ("admin internal clinic contact", "admin/index.html", 'id="clinicInternalContactName"'),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
     ("logo download guard", "scripts/fetch_logos.py", "def looks_like_image"),
 ]

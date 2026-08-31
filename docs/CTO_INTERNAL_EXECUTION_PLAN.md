@@ -352,7 +352,7 @@ Next 10 technical steps:
 47. Reduce noisy source-shadow proposals. Done locally in `scripts/submit_shadow_extraction_review.py` and `scripts/submit_source_shadow_reviews.py`: transparency claims now map into editable fields, and source-based review cards only propose fields tied to current clinic gaps.
 48. Verify transparency signals before review. Done locally in `scripts/verify_clinic_profile_shadow.py`: years/counts must be supported in source text, while credentialing and pricing need explicit registration-number or price signals before they are proposed.
 49. Skip source-shadow work for already complete profiles. Done locally in `scripts/submit_source_shadow_reviews.py`: source batches now ignore clinics with no measured gaps before creating any review proposal.
-50. Surface the recommended review group in quick filters. Done locally in `/admin/`: the review inbox now shows a `Grupo recomendado` chip so Daniel can jump into the highest-friction clinic group from the filter row.
+50. Keep clinic workgroup signals available without crowding the review inbox. Done locally in `/admin/`: grouped review pressure still informs internal prioritization and future LLM assistance, but the visible inbox stays focused on filters, rows and one `Revisar` button per proposal.
 51. Treat explicit locations as their own source-shadow gap. Done locally in `scripts/submit_source_shadow_reviews.py`: location proposals can still surface for multi-sede clinics even when a legacy top-level address already exists.
 52. Suppress uppercase navigation text in professional extraction. Done locally in `scripts/extract_clinic_profile_shadow.py`: a live Neolife read-only check no longer proposes treatment-menu text as a professional.
 53. Clean navigation boilerplate before source extraction. Done locally in `scripts/capture_source_snapshot.py`: repeated menu/header text is suppressed while useful contact links are preserved, so source excerpts reach clinic content earlier.
@@ -784,6 +784,14 @@ Next 10 technical steps:
      change is only local or also visible in production using read-only local
      markers, git state and optional public health checks. The report never
      pushes, deploys, edits Supabase or triggers Netlify.
+151. Simplify review decisions and preserve LLM handoff signals. Done locally
+     in `/admin/`: the review queue no longer shows oversized recommendation
+     panels by default, the left control menu can be collapsed, clinic claim
+     requests can register a private internal contact in the clinic record,
+     quality audits can open the clinic editor at the missing field, and Daniel
+     can attach an official URL as a queued `EXTRACT_CLINIC_PROFILE` job for
+     later agent extraction. None of this publishes data or grants clinic
+     access automatically.
 
 ## Daniel decision checkpoints
 

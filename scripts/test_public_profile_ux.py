@@ -15,6 +15,8 @@ def main() -> None:
     source = (ROOT / "build.py").read_text(encoding="utf-8")
 
     for marker in [
+        "def normalize_clinic(",
+        'clinic.pop("internal_contact", None)',
         "def profile_nav(",
         "def profile_nav_item(",
         "def clinic_locations(",

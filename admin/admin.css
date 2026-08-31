@@ -66,6 +66,25 @@ button:disabled {
   min-width: 0;
 }
 
+.sidebar-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  color: var(--green-deep);
+  font-weight: 900;
+}
+
+.sidebar-toggle:hover,
+body.sidebar-collapsed .sidebar-toggle {
+  border-color: rgba(14, 79, 74, 0.24);
+  background: var(--wash);
+}
+
 .brand a {
   display: inline-flex;
   align-items: center;
@@ -273,6 +292,18 @@ button:disabled {
   gap: 1rem;
   align-items: start;
   min-width: 0;
+}
+
+body.sidebar-collapsed .admin-main {
+  width: min(1680px, 96vw);
+}
+
+body.sidebar-collapsed .control-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.sidebar-collapsed .control-sidebar {
+  display: none;
 }
 
 .control-sidebar {
@@ -1477,7 +1508,8 @@ td small {
 .review-current-relevant,
 .review-evidence-panel,
 .review-warning-panel,
-.review-modify-panel {
+.review-modify-panel,
+.review-source-job-panel {
   display: grid;
   gap: 0.7rem;
   padding: 0.82rem;
@@ -1491,7 +1523,8 @@ td small {
 
 .review-current-relevant,
 .review-evidence-panel,
-.review-modify-panel {
+.review-modify-panel,
+.review-source-job-panel {
   background: rgba(247, 244, 238, 0.72);
 }
 
@@ -1536,10 +1569,41 @@ td small {
   background: var(--wash);
 }
 
+.review-proposal-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.review-proposal-title .pill {
+  flex: 0 0 auto;
+  max-width: 48%;
+}
+
 .review-proposal-value {
   margin-top: 0.28rem;
   overflow-wrap: anywhere;
   line-height: 1.35;
+}
+
+.review-proposal-hint {
+  margin: 0.42rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.32;
+}
+
+.review-source-job-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.review-source-job-form .btn {
+  min-height: 2.7rem;
+  white-space: nowrap;
 }
 
 .review-current-item {
@@ -2561,6 +2625,10 @@ td small {
   .review-case-actions .btn,
   .review-case-actions .link-btn {
     width: 100%;
+  }
+
+  .review-source-job-form {
+    grid-template-columns: 1fr;
   }
 
   .publication-banner {

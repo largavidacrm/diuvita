@@ -102,6 +102,7 @@ def load_clinics():
 
 def normalize_clinic(clinic):
     clinic = dict(clinic)
+    clinic.pop("internal_contact", None)
     for key in ("slug", "name", "city", "country", "address", "web", "summary", "status"):
         clinic[key] = clinic.get(key) or ""
     for key in (

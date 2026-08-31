@@ -53,16 +53,31 @@ def main() -> None:
         'id="reviewWarningList"',
         'id="reviewModifyPanel"',
         'id="reviewModifyFields"',
+        'id="reviewSourceJobPanel"',
+        'id="reviewSourceJobUrl"',
+        'id="reviewSourceJobBtn"',
         'id="reviewResolutionNote"',
         'id="reviewApproveBtn"',
         'id="reviewRejectBtn"',
         'id="reviewModifyBtn"',
+        'id="clinicInternalContactName"',
+        'id="clinicInternalContactEmail"',
+        'id="clinicInternalContactPhone"',
+        'id="clinicInternalContactNote"',
         ">Aprobar</button>",
         ">Rechazar</button>",
         ">Modificar</button>",
-        'activeReviewModifyMode ? "Guardar modificación" : "Modificar"',
+        "function reviewModifyIdleLabel",
+        "Editar ficha",
+        "Modificar contacto",
         "Ficha de la clínica",
         "Datos visibles en la ficha",
+        "Contacto interno",
+        "Fuente para completar esta ficha",
+        "Crear trabajo con esta fuente",
+        "Confirmar misma ficha",
+        "review-proposal-title",
+        "review-proposal-hint",
         "Clínica afectada",
         "Tipo de propuesta",
         "Datos actuales relevantes",
@@ -94,7 +109,6 @@ def main() -> None:
     editor_end = index.index('<section class="panel" id="jobsPanel"', editor_start)
     review_editor = index[editor_start:editor_end]
     for forbidden in [
-        "Crear trabajo",
         "Camino de publicación",
         "Recomendaciones generales",
         "Resumen de cola",
@@ -136,6 +150,16 @@ def main() -> None:
         and "Cerrar reclamación" in index
         and "Reclamación cerrada sin cambios en la ficha." in index,
         "clinic claim requests should be a human-only review flow",
+    )
+    check(
+        "function claimRequestContactFromReview" in index
+        and "function approveClinicClaimRequestReview" in index
+        and "Contacto interno registrado desde reclamación de ficha" in index
+        and "No cambia datos públicos ni concede acceso" in index
+        and 'draft.currentData.internal_contact' in index
+        and "function cleanInternalClinicContact" in index
+        and 'clean.visibility = "internal"' in index,
+        "clinic claim requests should register a private clinic contact without web publication",
     )
     check(
         'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
@@ -191,6 +215,14 @@ def main() -> None:
         and "function modifyReview" in index
         and "function finishReviewDecision" in index
         and "function renderReviewClinicPanel" in index
+        and "function reviewProposalFocusHint" in index
+        and "function reviewMissingFieldTargets" in index
+        and "function openClinicEditorForReview" in index
+        and "function createReviewSourceJob" in index
+        and '"EXTRACT_CLINIC_PROFILE"' in index
+        and "from_review_id" in index
+        and "requested_fields" in index
+        and "missing_fields" in index
         and "function reviewClinicProfileFacts" in index
         and "function reviewClinicProfileDataItems" in index
         and "function reviewClinicProfileValue" in index
@@ -212,6 +244,18 @@ def main() -> None:
         and 'show(el("reviewActionStrip"), false)' in index
         and 'show(el("reviewCasePanel"), false)' in index,
         "opening a review should hide the queue and show the clinic ficha beside the decision",
+    )
+    check(
+        'show(el("reviewActionStrip"), false);' in index
+        and '"Caso recomendado"' not in index
+        and '"Acción recomendada"' not in index,
+        "review queue should not show oversized recommendation panels by default",
+    )
+    check(
+        "Abre el enlace y confirma que es el perfil real de la clínica antes de aprobar." in index
+        and "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica." in index
+        and "Alguna sede trae Google Maps dudoso" in index,
+        "Google Maps proposals should show actionable in-card review hints",
     )
     check(
         'show(el("reviewClinicPanel"), false)' in index
@@ -243,9 +287,10 @@ def main() -> None:
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
+    check(".review-proposal-title" in css and ".review-proposal-hint" in css, "proposal action hints should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")
-    check(".review-modify-panel" in css and ".review-decision-actions" in css, "modify and action panels should be styled")
+    check(".review-modify-panel" in css and ".review-source-job-panel" in css and ".review-decision-actions" in css, "modify, source job and action panels should be styled")
     check("grid-template-columns: repeat(3, minmax(0, 1fr))" in css, "three review actions should share one row")
     check("quick-primary" in index and "quick-action" in index, "quick review actions should be classified")
     check("review-action-lead" in index and "review-action-buttons" in index, "quick review actions should have lead copy and grouped buttons")

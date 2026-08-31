@@ -17,6 +17,9 @@ def check(condition, message):
 def main():
     local_checks = release.run_local_artifact_checks(ROOT)
     check(any(item["name"] == "admin clinic-centered review" for item in local_checks), "admin review marker missing")
+    check(any(item["name"] == "admin collapsible sidebar" for item in local_checks), "admin sidebar marker missing")
+    check(any(item["name"] == "admin review source handoff" for item in local_checks), "admin source handoff marker missing")
+    check(any(item["name"] == "admin internal clinic contact" for item in local_checks), "admin internal contact marker missing")
     check(any(item["name"] == "logo asset guard in build" for item in local_checks), "build logo guard marker missing")
     check(any(item["name"] == "Tiara logo status" and item["ok"] is True for item in local_checks), "Tiara logo status should be guarded")
     check(all(item["ok"] is not False for item in local_checks), "local artifact checks should pass")
