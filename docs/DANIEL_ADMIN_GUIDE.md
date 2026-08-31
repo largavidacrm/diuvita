@@ -170,7 +170,10 @@ En las revisiones manuales de calidad, al pulsar **Revisar** se abre la ficha
 directamente en el dato pendiente. Al guardar la ficha, esa revisión queda
 cerrada y el panel pasa a la siguiente propuesta pendiente. Al entrar en la
 ficha desde esa acción, arriba verás una banda de **Revisión manual** con el
-campo afectado y el motivo exacto de la tarjeta.
+campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en
+una página oficial de la clínica, puedes pegar esa URL en **Pasar URL al
+agente**; el agente/LLM la usará solo para crear nuevas propuestas revisables,
+sin publicar ni guardar datos automáticamente.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el

@@ -1438,6 +1438,19 @@ td small {
   background: var(--wash);
 }
 
+.clinic-manual-review-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.clinic-manual-review-actions {
+  display: grid;
+  flex: 0 0 min(360px, 42%);
+  gap: 0.56rem;
+  justify-items: end;
+  min-width: min(260px, 100%);
+}
+
 .clinic-manual-review-context span,
 .clinic-manual-review-context small {
   display: block;
@@ -1468,6 +1481,27 @@ td small {
 .clinic-manual-review-context .btn {
   flex: 0 0 auto;
   white-space: nowrap;
+}
+
+.clinic-manual-source {
+  width: 100%;
+}
+
+.clinic-manual-source summary {
+  cursor: pointer;
+  color: var(--green-deep);
+  font-weight: 800;
+  text-align: right;
+}
+
+.clinic-manual-source .review-source-job-form {
+  grid-template-columns: 1fr;
+  margin-top: 0.5rem;
+}
+
+.clinic-manual-source .field-note {
+  margin-bottom: 0;
+  text-align: right;
 }
 
 .review-selection-panel p {
@@ -2872,6 +2906,22 @@ td small {
   .clinic-public-sync {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .clinic-manual-review-context {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .clinic-manual-review-actions {
+    flex-basis: auto;
+    justify-items: stretch;
+    min-width: 0;
+  }
+
+  .clinic-manual-source summary,
+  .clinic-manual-source .field-note {
+    text-align: left;
   }
 
   .filter-chip-row {

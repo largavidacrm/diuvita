@@ -70,6 +70,9 @@ def main() -> None:
         'id="clinicManualReviewIssue"',
         'id="clinicManualReviewMeta"',
         'id="clinicManualReviewFocusBtn"',
+        'id="clinicManualReviewSourceWrap"',
+        'id="clinicManualReviewSourceUrl"',
+        'id="clinicManualReviewSourceBtn"',
         ">Aprobar</button>",
         ">Rechazar</button>",
         ">Modificar</button>",
@@ -234,6 +237,8 @@ def main() -> None:
         and "function reviewManualFieldTarget" in index
         and "function openClinicEditorForReview" in index
         and "function openReviewManualField" in index
+        and "function createReviewSourceJobFor" in index
+        and "function createClinicManualReviewSourceJob" in index
         and "function createReviewSourceJob" in index
         and '"EXTRACT_CLINIC_PROFILE"' in index
         and "from_review_id" in index
@@ -278,6 +283,8 @@ def main() -> None:
     check(
         "function renderClinicManualReviewContext" in index
         and "function reviewManualIssueForTarget" in index
+        and "reviewSourceJobContext(activeClinicReview)" in index
+        and "createClinicManualReviewSourceJob" in index
         and "activeClinicReviewFocusTarget" in index
         and "focusPublishField(activeClinicReviewFocusTarget.inputId)" in index
         and "renderClinicManualReviewContext();" in index
@@ -338,7 +345,7 @@ def main() -> None:
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
-    check(".clinic-manual-review-context" in css, "manual review context should be styled")
+    check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css, "manual review context and source handoff should be styled")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")

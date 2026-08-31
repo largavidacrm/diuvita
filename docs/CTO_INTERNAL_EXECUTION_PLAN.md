@@ -871,6 +871,11 @@ Next 10 technical steps:
      longer expands into a one-column, full-width mode when no proposal is
      selected, so Daniel always sees the pending list as part of the review
      workspace instead of feeling the ficha columns disappeared.
+166. Add LLM source handoff inside manual reviews. Done locally in `/admin/`:
+     when a manual review opens the clinic editor at a missing field, Daniel can
+     also paste an official clinic URL in the same review banner so the agent
+     creates a new internal proposal for those fields without publishing or
+     saving data automatically.
 
 ## Daniel decision checkpoints
 

@@ -210,13 +210,26 @@
           <div class="proposal-diff" id="clinicProposalChanges"></div>
         </section>
         <section class="clinic-manual-review-context hidden" id="clinicManualReviewContext">
-          <div>
+          <div class="clinic-manual-review-copy">
             <span>Revisión manual</span>
             <strong id="clinicManualReviewField">Campo pendiente</strong>
             <p id="clinicManualReviewIssue">Guarda la ficha para cerrar esta revisión y pasar a la siguiente.</p>
             <small id="clinicManualReviewMeta">Una ficha, una decisión.</small>
           </div>
-          <button class="btn secondary" id="clinicManualReviewFocusBtn" type="button">Ir al campo</button>
+          <div class="clinic-manual-review-actions">
+            <button class="btn secondary" id="clinicManualReviewFocusBtn" type="button">Ir al campo</button>
+            <details class="clinic-manual-source hidden" id="clinicManualReviewSourceWrap">
+              <summary>Pasar URL al agente</summary>
+              <div class="review-source-job-form">
+                <div class="field">
+                  <label for="clinicManualReviewSourceUrl">URL oficial</label>
+                  <input id="clinicManualReviewSourceUrl" type="url" placeholder="https://">
+                </div>
+                <button class="btn secondary" id="clinicManualReviewSourceBtn" type="button">Enviar URL al agente</button>
+              </div>
+              <p class="field-note" id="clinicManualReviewSourceHint">El agente creará una propuesta revisable; no publica ni guarda datos en la ficha.</p>
+            </details>
+          </div>
         </section>
         <section class="version-history" id="clinicVersionHistory">
           <div class="version-history-head">
@@ -5637,6 +5650,17 @@
       el("clinicManualReviewMeta").textContent =
         reviewDisplayTitle(activeClinicReview) + " · una ficha, una decisión.";
       el("clinicManualReviewFocusBtn").disabled = !target || !target.inputId;
+      var sourceJob = reviewSourceJobContext(activeClinicReview);
+      show(el("clinicManualReviewSourceWrap"), Boolean(sourceJob));
+      if (sourceJob) {
+        el("clinicManualReviewSourceUrl").placeholder = sourceJob.example.placeholder;
+        el("clinicManualReviewSourceHint").textContent = sourceJob.paused
+          ? "Pausa preventiva activa: primero limpia revisiones antes de enviar más fuentes al agente."
+          : "El agente/LLM mirará solo " + sourceJob.labels + " y dejará otra propuesta revisable.";
+        el("clinicManualReviewSourceBtn").disabled = sourceJob.paused;
+      } else {
+        setInput("clinicManualReviewSourceUrl", "");
+      }
       show(panel, true);
     }
 
@@ -5648,6 +5672,20 @@
 
     function reviewSourceJobEligible(row) {
       return Boolean(row && row.clinic_id && row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row) && reviewMissingFieldTargets(row).length);
+    }
+
+    function reviewSourceJobContext(row) {
+      if (!reviewSourceJobEligible(row)) return null;
+      var targets = reviewMissingFieldTargets(row);
+      var example = reviewSourceJobExampleForTargets(targets);
+      var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
+      var paused = !full && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
+      return {
+        targets: targets,
+        example: example,
+        labels: targets.map(function (item) { return item.label.toLowerCase(); }).join(", "),
+        paused: full || paused
+      };
     }
 
     function reviewSourceJobExampleForTargets(targets) {
@@ -6890,23 +6928,19 @@
     function renderReviewSourceJobPanel(row) {
       var panel = el("reviewSourceJobPanel");
       if (!panel) return;
-      if (!reviewSourceJobEligible(row)) {
+      var sourceJob = reviewSourceJobContext(row);
+      if (!sourceJob) {
         show(panel, false);
         setInput("reviewSourceJobUrl", "");
         return;
       }
-      var targets = reviewMissingFieldTargets(row);
-      var example = reviewSourceJobExampleForTargets(targets);
-      var labels = targets.map(function (item) { return item.label.toLowerCase(); }).join(", ");
-      var full = dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT;
-      var paused = !full && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
-      el("reviewSourceJobMeta").textContent = "Pega " + example.source + " para revisar: " + labels + ".";
-      el("reviewSourceJobUrl").placeholder = example.placeholder;
-      el("reviewSourceJobHint").textContent = full || paused
+      el("reviewSourceJobMeta").textContent = "Pega " + sourceJob.example.source + " para revisar: " + sourceJob.labels + ".";
+      el("reviewSourceJobUrl").placeholder = sourceJob.example.placeholder;
+      el("reviewSourceJobHint").textContent = sourceJob.paused
         ? "Pausa preventiva activa: primero limpia revisiones antes de enviar más fuentes al agente."
         : "El agente/LLM mirará solo esos campos y dejará otra propuesta revisable. " +
           safeWriteSlotLabel(dashboardOpenReviewCount) + ". No publica ni guarda datos en la ficha.";
-      el("reviewSourceJobBtn").disabled = full || paused;
+      el("reviewSourceJobBtn").disabled = sourceJob.paused;
       setInput("reviewSourceJobUrl", "");
       show(panel, true);
     }
@@ -8645,8 +8679,8 @@
       toast(defaultDismissNote(reviewType));
     }
 
-    async function createReviewSourceJob() {
-      if (!reviewSourceJobEligible(activeReview)) return;
+    async function createReviewSourceJobFor(row, urlInputId, buttonId) {
+      if (!reviewSourceJobEligible(row)) return;
       if (dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT) {
         updateJobBacklogHint(dashboardOpenReviewCount);
         toast("Freno de bandeja activo. Primero limpia revisiones.");
@@ -8657,19 +8691,19 @@
         toast("Pausa preventiva: limpia revisiones antes de crear más trabajos.");
         return;
       }
-      var url = cleanHttpUrl(trimmed("reviewSourceJobUrl"));
+      var url = cleanHttpUrl(trimmed(urlInputId));
       if (!url) {
         toast("Pega una URL oficial que empiece por http o https.");
-        el("reviewSourceJobUrl").focus();
+        el(urlInputId).focus();
         return;
       }
-      var clinic = reviewClinicForRow(activeReview);
+      var clinic = reviewClinicForRow(row);
       if (!clinic) {
         toast("No encuentro la ficha enlazada para crear el trabajo.");
         return;
       }
-      var targets = reviewMissingFieldTargets(activeReview);
-      el("reviewSourceJobBtn").disabled = true;
+      var targets = reviewMissingFieldTargets(row);
+      el(buttonId).disabled = true;
       var payload = {
         job_type: "EXTRACT_CLINIC_PROFILE",
         status: "queued",
@@ -8687,7 +8721,7 @@
           requested_fields: targets.map(function (item) { return item.key; }),
           missing_fields: targets.map(function (item) { return item.label; }),
           requested_field_labels: targets.map(function (item) { return item.label; }),
-          from_review_id: activeReview.id,
+          from_review_id: row.id,
           human_supplied_source: true,
           source_job_version: "2026-08-31.manual-review-source",
           operator_intent: "Daniel indica que esta URL oficial contiene informacion para completar los campos pendientes de esta revision.",
@@ -8698,15 +8732,24 @@
         requires_human: false
       };
       var result = await client.from("agent_jobs").insert(payload).select("id").single();
-      el("reviewSourceJobBtn").disabled = isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
+      el(buttonId).disabled = isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
       if (result.error) {
         toast("No se pudo crear el trabajo con esa fuente.");
         return;
       }
-      setInput("reviewSourceJobUrl", "");
+      setInput(urlInputId, "");
       toast("Trabajo creado. El agente mirará esa fuente y dejará propuestas revisables.");
       await loadDashboard();
       if (activeReview) renderReviewValidationView(activeReview);
+      if (activeClinicReview) renderClinicManualReviewContext();
+    }
+
+    async function createReviewSourceJob() {
+      await createReviewSourceJobFor(activeReview, "reviewSourceJobUrl", "reviewSourceJobBtn");
+    }
+
+    async function createClinicManualReviewSourceJob() {
+      await createReviewSourceJobFor(activeClinicReview, "clinicManualReviewSourceUrl", "clinicManualReviewSourceBtn");
     }
 
     async function createJob(event) {
@@ -8850,6 +8893,7 @@
           focusPublishField(activeClinicReviewFocusTarget.inputId);
         }
       });
+      el("clinicManualReviewSourceBtn").addEventListener("click", createClinicManualReviewSourceJob);
       el("clinicAddLocationBtn").addEventListener("click", function () {
         addClinicLocation({});
         renderPendingLocationsForClinic();

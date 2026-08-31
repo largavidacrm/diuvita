@@ -51,6 +51,8 @@ CHECKS = [
             "sidebarToggleBtn",
             "reviewSourceJobPanel",
             "clinicInternalContactName",
+            "clinicManualReviewSourceBtn",
+            "createReviewSourceJobFor",
             "firstReviewMissingFieldTargetId",
             "Prioridad: todas",
             "finishReviewDecision",
