@@ -154,6 +154,24 @@ def manual_decision_items(maps: list[str], reviews: list[str]) -> list[dict[str,
     return items
 
 
+def manual_decision_sequence(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    sequence: list[dict[str, Any]] = []
+    for index, item in enumerate(items, start=1):
+        field = str(item.get("field") or "").strip()
+        step = {
+            "step": index,
+            "field": field,
+            "label": item.get("label"),
+            "manual_decision": item.get("manual_decision"),
+            "safe_to_auto_publish": False,
+        }
+        if field == "google_reviews_url":
+            step["depends_on"] = "maps_url"
+            step["dependency_reason"] = "las valoraciones deben pertenecer a la misma ficha principal de Google Maps"
+        sequence.append(step)
+    return sequence
+
+
 def decision_field_labels(items: list[dict[str, Any]]) -> list[str]:
     labels: list[str] = []
     for item in items:
@@ -198,6 +216,7 @@ def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
     }
     result["manual_decision_items"] = manual_decision_items(maps, reviews)
     result["manual_decision_count"] = len(result["manual_decision_items"])
+    result["manual_decision_sequence"] = manual_decision_sequence(result["manual_decision_items"])
     result["fields_to_review"] = decision_field_labels(result["manual_decision_items"])
     result.pop("payload", None)
     result["next_step"] = google_link_next_step(result)
@@ -328,6 +347,16 @@ def format_reconciliation(report: dict[str, Any]) -> str:
             f"- Decisiones manuales: {', '.join(row.get('fields_to_review') or ['sin campo directo'])}",
             f"- Siguiente paso: {row.get('next_step')}",
         ])
+        sequence = row.get("manual_decision_sequence") or []
+        if sequence:
+            sequence_labels = []
+            for item in sequence:
+                label = str(item.get("label") or item.get("field") or "").strip()
+                if label:
+                    suffix = " tras Google Maps" if item.get("depends_on") == "maps_url" else ""
+                    sequence_labels.append(f"{item.get('step')}. {label}{suffix}")
+            if sequence_labels:
+                lines.append("- Orden sugerido: " + " -> ".join(sequence_labels))
         maps = row.get("maps_urls") or []
         if maps:
             lines.append("- Maps propuesto: " + ", ".join(compact_url(url) for url in maps[:2]))

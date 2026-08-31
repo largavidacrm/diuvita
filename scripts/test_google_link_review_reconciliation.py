@@ -100,6 +100,10 @@ def main() -> None:
     check(direct["direct_map_count"] == 1, "direct Maps count missing")
     check(direct["unsafe_map_count"] == 0, "direct Maps should not be unsafe")
     check(direct["manual_decision_count"] == 2, "direct card should expose Maps and reviews decisions")
+    check(
+        direct["manual_decision_sequence"][1]["depends_on"] == "maps_url",
+        "Google reviews decision should depend on the main Maps profile",
+    )
     check(direct["fields_to_review"] == ["Google Maps", "Valoraciones Google"], "decision fields missing")
     check(direct["manual_decision_items"][0]["manual_decision"] == "confirm_real_clinic_profile", "direct Maps decision missing")
     check(direct["manual_decision_items"][0]["safe_to_auto_publish"] is False, "direct Maps should still require human review")
@@ -118,6 +122,7 @@ def main() -> None:
     check("Estado Maps: parece perfil directo de clínica: 1" in output, "direct output status missing")
     check("Estado Maps: parece dirección suelta; no guardar: 1" in output, "unsafe output status missing")
     check("Decisiones manuales: Google Maps, Valoraciones Google" in output, "decision fields should be printed")
+    check("Orden sugerido: 1. Google Maps -> 2. Valoraciones Google tras Google Maps" in output, "decision sequence should be printed")
     check("Con perfil directo: 1" in compact_output, "compact direct count missing")
     check("Con Maps dudoso: 1" in compact_output, "compact unsafe count missing")
     check("Con valoraciones: 3" in compact_output, "compact review count missing")

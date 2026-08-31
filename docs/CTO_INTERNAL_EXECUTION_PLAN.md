@@ -981,6 +981,11 @@ Next 10 technical steps:
      now carry a read-only `google_reviews_review` block, separate from Google
      Maps profile validation, so future LLM help knows reviews must match the
      main clinic Google Business/Profile before Daniel saves them.
+188. Add decision ordering to Google-link review diagnostics. Done locally in
+     `scripts/google_link_review_reconciliation.py`: Google link reports now
+     carry `manual_decision_sequence`, reviewing the clinic Google Maps profile
+     before Google reviews while keeping every item `safe_to_auto_publish:
+     false`.
 
 ## Daniel decision checkpoints
 
