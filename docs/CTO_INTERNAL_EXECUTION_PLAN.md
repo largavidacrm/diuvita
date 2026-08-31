@@ -671,6 +671,10 @@ Next 10 technical steps:
      field, the system separates them into reviewable phone fields such as
      principal/fixed/mobile instead of leaving a mixed value. The result still
      requires Daniel's manual review and save.
+130. Add a safe local dashboard server helper. Done locally in
+     `scripts/serve_local_dashboard.py`: the local review URL can be served from
+     `dist/` only, defaults to `127.0.0.1:8765`, blocks network-exposed hosts
+     and avoids serving the worktree root or `.env`.
 
 ## Daniel decision checkpoints
 

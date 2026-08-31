@@ -6,6 +6,15 @@ URL del panel:
 https://www.vitalarga.com/admin/
 ```
 
+URL local de trabajo, cuando Codex deja un servidor abierto:
+
+```text
+http://127.0.0.1:8765/admin/
+```
+
+El acceso local sirve solo la web generada en `dist/`. No publica producción,
+no toca Netlify y no expone el archivo `.env`.
+
 ## Revisar clínicas nuevas
 
 1. Entra con tu usuario autorizado.
