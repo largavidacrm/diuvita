@@ -752,6 +752,10 @@ Next 10 technical steps:
      reserved for local assisted preparation. Each packet carries a schema
      version, allowed actions and editable fields, and never resolves cards,
      edits clinics or publishes pages.
+145. Make Daniel's review brief safer for automation. Done locally in
+     `scripts/daniel_review_brief.py`: JSON output now omits operator/account
+     fields by default for LLM or automation plumbing, with an explicit local
+     debugging flag when those fields are genuinely needed.
 
 ## Daniel decision checkpoints
 

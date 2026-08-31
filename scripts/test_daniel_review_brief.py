@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """Checks for Daniel's plain-Spanish review brief."""
 
-from daniel_review_brief import format_brief, first_step, next_clicks, production_health_status, review_counts
+from daniel_review_brief import (
+    format_brief,
+    first_step,
+    next_clicks,
+    production_health_status,
+    review_counts,
+    safe_json_digest,
+)
 
 
 def check(condition, message):
@@ -201,6 +208,12 @@ def main():
     digest = sample_digest()
     output = format_brief(digest)
     counts = review_counts(digest)
+    account_digest = dict(digest, admin_email="daniel@example.com")
+    safe_digest = safe_json_digest(account_digest)
+    raw_digest = safe_json_digest(account_digest, include_account_fields=True)
+    check("admin_email" not in safe_digest, "safe JSON should omit admin email by default")
+    check(raw_digest["admin_email"] == "daniel@example.com", "debug JSON should keep admin email explicitly")
+    check(account_digest["admin_email"] == "daniel@example.com", "safe JSON should not mutate the original digest")
 
     check(counts["blocking_claim_review"] == 1, "blocking-claim count missing")
     claim_digest = sample_digest()

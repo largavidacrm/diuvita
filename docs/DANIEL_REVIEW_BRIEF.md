@@ -49,6 +49,13 @@ JSON output is also available for automation plumbing:
 python3 scripts/daniel_review_brief.py --json
 ```
 
+This JSON omits operator/account fields by default. For local debugging only,
+they can be kept explicitly:
+
+```bash
+python3 scripts/daniel_review_brief.py --json --include-account-fields
+```
+
 To include a read-only public website check:
 
 ```bash

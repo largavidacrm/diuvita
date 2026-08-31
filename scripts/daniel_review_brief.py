@@ -39,6 +39,7 @@ TYPE_LABELS = {
     "source_change_detected": ("cambio de fuente", "cambios de fuente"),
     "clinic_quality_audit": ("auditoría de calidad", "auditorías de calidad"),
 }
+ACCOUNT_FIELD_KEYS = {"admin_email"}
 
 
 def review_counts(digest: dict[str, Any]) -> dict[str, int]:
@@ -48,6 +49,19 @@ def review_counts(digest: dict[str, Any]) -> dict[str, int]:
         if review_type:
             counts[review_type] = as_int(item.get("open_count"))
     return counts
+
+
+def safe_json_digest(value: Any, include_account_fields: bool = False) -> Any:
+    if isinstance(value, list):
+        return [safe_json_digest(item, include_account_fields=include_account_fields) for item in value]
+    if not isinstance(value, dict):
+        return value
+    clean: dict[str, Any] = {}
+    for key, item in value.items():
+        if not include_account_fields and str(key) in ACCOUNT_FIELD_KEYS:
+            continue
+        clean[key] = safe_json_digest(item, include_account_fields=include_account_fields)
+    return clean
 
 
 def review_label(review_type: str, count: int) -> str:
@@ -377,7 +391,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--admin-email", help="Admin email used to read the protected dashboard summary.")
     parser.add_argument("--limit", type=int, default=30, help="Maximum open reviews and failed jobs to inspect.")
-    parser.add_argument("--json", action="store_true", help="Print raw digest JSON instead of the Daniel brief.")
+    parser.add_argument("--json", action="store_true", help="Print safe digest JSON instead of the Daniel brief.")
+    parser.add_argument("--include-account-fields", action="store_true", help="Keep operator/account fields in JSON output for local debugging.")
     parser.add_argument("--production-health", action="store_true", help="Include a read-only public-site health line.")
     parser.add_argument("--production-base-url", default="https://www.vitalarga.com")
     parser.add_argument("--production-timeout", type=int, default=12)
@@ -395,6 +410,7 @@ def main() -> int:
     digest = load_digest(admin_email, args.limit, local_env)
     production_health = run_checks(args.production_base_url, args.production_timeout) if args.production_health else None
     if args.json:
+        digest = safe_json_digest(digest, include_account_fields=args.include_account_fields)
         if production_health is not None:
             digest = dict(digest)
             digest["production_health"] = production_health
