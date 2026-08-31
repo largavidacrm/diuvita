@@ -544,6 +544,23 @@ def google_maps_review_context(key: str, value: Any) -> dict[str, Any]:
     }
 
 
+def google_reviews_review_context(key: str, value: Any) -> dict[str, Any]:
+    if canonical_field(key) != "google_reviews_url":
+        return {}
+    urls = [str(item).strip() for item in field_values(value) if str(item or "").strip()]
+    if not urls:
+        return {}
+    return {
+        "kind": "google_reviews_link",
+        "overall_status": "reviews_link_needs_main_profile_confirmation",
+        "url_count": len(urls),
+        "human_label": "Confirmar misma ficha",
+        "required_human_check": "confirm_reviews_match_main_google_business_profile",
+        "next_step": "confirm_main_google_maps_profile_before_approval",
+        "safe_to_auto_publish": False,
+    }
+
+
 def phone_warning(key: str, value: Any) -> str:
     if canonical_field(key) not in PHONE_FIELDS:
         return ""
@@ -643,6 +660,9 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
         maps_context = google_maps_review_context(key, item["value"])
         if maps_context:
             field_packet["google_maps_review"] = maps_context
+        reviews_context = google_reviews_review_context(key, item["value"])
+        if reviews_context:
+            field_packet["google_reviews_review"] = reviews_context
         targets = manual_review_targets(row, item)
         if targets:
             field_packet["manual_review_targets"] = targets

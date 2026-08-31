@@ -976,6 +976,11 @@ Next 10 technical steps:
      official team page URL, creating only a bounded specialist review job with
      `ui_route: "review_card_specialist_source_handoff"` and no permission to
      publish or update unrelated fields.
+187. Add Google Reviews decision context for LLM assistance. Done locally in
+     `scripts/review_proposal_decision_packets.py`: proposed Google review links
+     now carry a read-only `google_reviews_review` block, separate from Google
+     Maps profile validation, so future LLM help knows reviews must match the
+     main clinic Google Business/Profile before Daniel saves them.
 
 ## Daniel decision checkpoints
 

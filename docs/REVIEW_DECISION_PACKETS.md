@@ -78,6 +78,9 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - estado estructurado de Google Maps cuando la propuesta trae ese campo,
   recordando que incluso un enlace con pinta de perfil directo requiere
   comprobación humana antes de aprobar.
+- estado estructurado de Valoraciones Google cuando la propuesta trae ese
+  enlace, recordando que debe pertenecer a la misma ficha principal de Google
+  Maps antes de guardarse.
 
 El LLM no debe:
 
