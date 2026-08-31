@@ -461,6 +461,10 @@ Next 10 technical steps:
     priority action and secondary shortcuts are laid out in a stable grid and
     collapse cleanly on mobile, reducing the scattered-button effect in the
     control center.
+85. Make stale public fichas easier to understand. Done locally in `/admin/`:
+    when a clinic was edited after the last public-site rebuild, the editor now
+    says plainly that the data is saved and the missing public change is a web
+    regeneration issue, not a failed save.
 
 ## Daniel decision checkpoints
 

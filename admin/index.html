@@ -1836,7 +1836,7 @@
         var updated = activeClinic.updated_at ? date(activeClinic.updated_at) : "edición reciente";
         var rebuild = control.lastPublicSiteRebuildRequestedAt ? date(control.lastPublicSiteRebuildRequestedAt) : "sin actualización registrada";
         el("clinicPublicSyncTitle").textContent = "Guardada, pendiente de verse online.";
-        el("clinicPublicSyncDetail").textContent = "Esta ficha está guardada en Supabase; se verá en Vitalarga después de actualizar la web. Última edición de esta ficha: " + updated + " · última web pública: " + rebuild + ".";
+        el("clinicPublicSyncDetail").textContent = "No es un problema de guardado: la última web pública es anterior a esta edición. Se verá en Vitalarga después de actualizar la web. Última edición de esta ficha: " + updated + " · última web pública: " + rebuild + ".";
         show(button, control.canRequestPublicSiteRebuildNow);
         return;
       }

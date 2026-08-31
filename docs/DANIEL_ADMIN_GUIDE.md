@@ -79,6 +79,9 @@ En **Estado del sistema**, mira especialmente:
   Supabase.
 - En el editor de cada clínica, **Web pública** indica si esa ficha concreta
   tiene cambios guardados que todavía no se ven online.
+- Si acabas de validar una ficha y no ves el cambio en vitalarga.com, mira
+  **Web pública** en el editor: si dice que está pendiente, el dato está
+  guardado y lo que falta es regenerar la web pública.
 
 En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta del
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
