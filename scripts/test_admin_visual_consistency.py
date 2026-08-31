@@ -33,10 +33,16 @@ def main() -> None:
     check(".work-grid.review-work-queue" in css, "review queue layout mode missing")
     check(".work-grid.review-work-decision" in css, "review decision layout mode missing")
     check(
+        ".work-grid.review-work-queue .review-list-panel" in css
+        and ".work-grid.review-work-queue .review-selection-panel" in css,
+        "review queue should keep explicit list and side-selection columns",
+    )
+    check(
         "minmax(0, 1fr) minmax(260px, 320px)" in css
         and "minmax(0, 0.95fr) minmax(400px, 1.05fr)" in css,
         "review workspace should keep stable desktop columns",
     )
+    check(".manual-review-section" in css, "manual review should visibly mark the active editor section")
 
     review_queue = css[css.index(".review-subject-cell {"):css.index(".empty {")]
     for marker in [

@@ -18,7 +18,7 @@ def main() -> None:
     for marker in [
         'id="reviewFilterChips"',
         'id="reviewClearFilters"',
-        'class="panel review-panel"',
+        'class="panel review-panel review-list-panel"',
         'class="review-toolbar"',
         'id="reviewActionStrip"',
         'class="filter-chip-group"',

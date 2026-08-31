@@ -182,7 +182,9 @@ dirección suelta o enlace insuficiente.
 
 Si la propuesta trae **Valoraciones Google**, confirma primero el perfil real
 de Google Maps de la clínica. Después valida que el enlace de reseñas pertenece
-a esa misma ficha, no a otra sede, búsqueda o página genérica.
+a esa misma ficha, no a otra sede, búsqueda o página genérica. El panel bloquea
+la aprobación directa de valoraciones si la ficha no tiene todavía un Google
+Maps real confirmado.
 
 En las revisiones manuales de calidad, al pulsar **Revisar** se abre primero la
 vista de decisión en columnas: ficha de la clínica a la izquierda y un solo
@@ -196,6 +198,8 @@ campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en
 una página oficial de la clínica, puedes pegar esa URL en **Pasar URL al
 agente**; el agente/LLM la usará para el campo que estás revisando. Siempre crea
 propuestas revisables, sin publicar ni guardar datos automáticamente.
+El editor abre el bloque correspondiente y marca visualmente el campo activo
+para que no tengas que buscarlo por toda la ficha.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el

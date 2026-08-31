@@ -583,7 +583,7 @@
       </section>
 
       <section class="work-grid review-work-queue" id="reviewWorkArea">
-        <section class="panel review-panel" id="reviewListPanel">
+        <section class="panel review-panel review-list-panel" id="reviewListPanel">
           <div class="panel-head review-panel-head">
             <div class="review-title-block">
               <h2>Necesitan revisión</h2>
@@ -1096,6 +1096,36 @@
           target.classList.remove("field-attention");
         }, 1600);
       });
+    }
+
+    function clearManualReviewFieldMarkers() {
+      Array.prototype.slice.call(document.querySelectorAll(".manual-review-section")).forEach(function (section) {
+        section.classList.remove("manual-review-section");
+      });
+      Array.prototype.slice.call(document.querySelectorAll("[data-manual-review-active]")).forEach(function (target) {
+        target.removeAttribute("data-manual-review-active");
+        if (target.getAttribute("aria-describedby") === "clinicManualReviewIssue") {
+          target.removeAttribute("aria-describedby");
+        }
+      });
+    }
+
+    function markManualReviewFieldTarget(inputId) {
+      clearManualReviewFieldMarkers();
+      var target = inputId ? el(inputId) : null;
+      if (!target) return false;
+      var section = target.closest ? target.closest(".form-section") : null;
+      if (section) section.classList.add("manual-review-section");
+      target.setAttribute("data-manual-review-active", "true");
+      target.setAttribute("aria-describedby", "clinicManualReviewIssue");
+      return true;
+    }
+
+    function focusManualReviewFieldTarget(target) {
+      if (!target || !target.inputId) return false;
+      markManualReviewFieldTarget(target.inputId);
+      focusPublishField(target.inputId);
+      return true;
     }
 
     function publishMissingTargetId(label) {
@@ -5694,6 +5724,21 @@
       });
     }
 
+    function fieldsHaveReviewedMapsContext(fields, row) {
+      fields = fields || {};
+      var directMaps = ["maps_url", "google_maps_url", "map_url"].some(function (key) {
+        return hasOwn(fields, key) && reviewedMapsProfileValue(proposalListValue(fields[key]));
+      });
+      if (directMaps) return true;
+      if (normalizedLocations(fields.locations).some(function (location) {
+        return reviewedMapsProfileValue(locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]));
+      })) {
+        return true;
+      }
+      var clinic = reviewClinicForRow(row || activeReview);
+      return Boolean(clinic && currentDataHasReviewedMaps(clinic.current_data || {}));
+    }
+
     function currentDataHasPublicContact(data) {
       return hasVisibleText(data.email) || clinicPhoneFields().some(function (field) {
         return hasVisibleText(data[field.key]);
@@ -5761,6 +5806,7 @@
       if (!panel) return;
       if (!activeClinic || !activeClinicReview || activeClinicReview.clinic_id !== activeClinic.id) {
         activeClinicReviewFocusTarget = null;
+        clearManualReviewFieldMarkers();
         show(panel, false);
         return;
       }
@@ -5777,6 +5823,7 @@
       el("clinicManualReviewMeta").textContent =
         reviewDisplayTitle(activeClinicReview) + " · una ficha, una decisión.";
       el("clinicManualReviewFocusBtn").disabled = !target || !target.inputId;
+      if (target && target.inputId) markManualReviewFieldTarget(target.inputId);
       var sourceJob = reviewSourceJobContext(activeClinicReview, activeClinicReviewFocusTarget);
       show(el("clinicManualReviewSourceWrap"), Boolean(sourceJob));
       if (sourceJob) {
@@ -7275,11 +7322,21 @@
             add("Google Maps debe ser el perfil real de la clínica, no una búsqueda, ruta o dirección.");
           }
         }
+        if (key === "google_reviews_url") {
+          var reviewsUrl = proposalListValue(value);
+          if (reviewsUrl && !fieldsHaveReviewedMapsContext(fields, activeReview)) {
+            add("Antes de guardar Valoraciones Google, confirma y guarda el perfil real de Google Maps de la clínica.");
+          }
+        }
         if (key === "locations") {
           normalizedLocations(value).forEach(function (location) {
             var mapsUrl = locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]);
             var message = googleMapsReviewMessage(mapsUrl);
             if (message) add("Sede propuesta: " + message);
+            var reviewsUrl = locationFieldValue(location, ["google_reviews_url", "reviews_url", "valoraciones_url"]);
+            if (reviewsUrl && !reviewedMapsProfileValue(mapsUrl) && !fieldsHaveReviewedMapsContext(fields, activeReview)) {
+              add("Antes de guardar Valoraciones Google de una sede, confirma y guarda el perfil real de Google Maps de esa clínica.");
+            }
           });
         }
         var phoneWarning = proposalPhoneWarning(key, value);
@@ -8377,7 +8434,7 @@
       loadClinicSources(activeClinic.id);
       show(el("clinicEditor"), true);
       if (activeClinicReviewFocusTarget && activeClinicReviewFocusTarget.inputId) {
-        focusPublishField(activeClinicReviewFocusTarget.inputId);
+        focusManualReviewFieldTarget(activeClinicReviewFocusTarget);
       } else {
         el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
         el("clinicName").focus();
@@ -8460,6 +8517,7 @@
       activeClinicClaimCount = 0;
       activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
+      clearManualReviewFieldMarkers();
       setLockInputsDisabled(false);
       show(el("clinicEditor"), false);
       if (wasReviewEdit) {
@@ -8551,8 +8609,11 @@
           : "Ficha actualizada desde revisión manual.");
       }
       if (manualTarget && manualTarget.inputId) {
+        window.requestAnimationFrame(function () {
+          focusManualReviewFieldTarget(manualTarget);
+        });
         window.setTimeout(function () {
-          focusPublishField(manualTarget.inputId);
+          focusManualReviewFieldTarget(manualTarget);
         }, 80);
       }
       toast("Edita el campo pendiente y guarda la ficha para cerrar esta revisión.");
@@ -9234,9 +9295,7 @@
         if (button) focusPublishField(button.getAttribute("data-publish-field"));
       });
       el("clinicManualReviewFocusBtn").addEventListener("click", function () {
-        if (activeClinicReviewFocusTarget && activeClinicReviewFocusTarget.inputId) {
-          focusPublishField(activeClinicReviewFocusTarget.inputId);
-        }
+        focusManualReviewFieldTarget(activeClinicReviewFocusTarget);
       });
       el("clinicManualReviewSourceBtn").addEventListener("click", createClinicManualReviewSourceJob);
       el("clinicAddLocationBtn").addEventListener("click", function () {

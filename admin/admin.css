@@ -828,6 +828,11 @@ body.sidebar-collapsed .control-sidebar {
   grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
 }
 
+.work-grid.review-work-queue .review-list-panel,
+.work-grid.review-work-queue .review-selection-panel {
+  min-width: 0;
+}
+
 .work-grid.review-work-decision {
   grid-template-columns: minmax(0, 0.95fr) minmax(400px, 1.05fr);
 }
@@ -2718,6 +2723,15 @@ td small {
 
 .form-section[open] summary {
   border-bottom: 1px solid var(--line);
+}
+
+.form-section.manual-review-section {
+  border-color: rgba(166, 129, 62, 0.36);
+  box-shadow: 0 0 0 3px rgba(166, 129, 62, 0.12);
+}
+
+.form-section.manual-review-section > summary {
+  background: #fbf2df;
 }
 
 .form-section[open] summary::after {

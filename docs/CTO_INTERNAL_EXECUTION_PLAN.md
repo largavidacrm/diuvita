@@ -1011,6 +1011,11 @@ Next 10 technical steps:
      appear as **Contexto de grupo**, while unrelated incomplete-profile queues
      are summarized as **Fichas pendientes** after the current priority instead
      of being presented as Daniel's next action.
+194. Tighten manual review focus and Google reviews approval. Done locally in
+     `/admin/`: manual review now marks and focuses the exact clinic editor
+     field after opening the ficha, queue mode keeps explicit list/side-panel
+     columns, and Google review URLs cannot be approved unless a real clinic
+     Google Maps profile is already confirmed or included in the same proposal.
 
 ## Daniel decision checkpoints
 

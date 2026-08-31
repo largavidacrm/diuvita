@@ -20,6 +20,7 @@ def main() -> None:
         'id="reviewTypeFilter"',
         'id="reviewPriorityFilter"',
         'id="reviewListPanel"',
+        'class="panel review-panel review-list-panel"',
         'id="reviewsBody"',
         'class="review-table"',
         'data-review-id',
@@ -239,8 +240,11 @@ def main() -> None:
         and "function reviewHasManualFieldRoute" in index
         and "function reviewManualFieldTarget" in index
         and "function reviewActiveManualTarget" in index
+        and "function focusManualReviewFieldTarget" in index
+        and "function markManualReviewFieldTarget" in index
         and "function openClinicEditorForReview" in index
         and "function openReviewManualField" in index
+        and "function fieldsHaveReviewedMapsContext" in index
         and "function reviewSourceJobTargets" in index
         and "function reviewSourceJobTargetScope" in index
         and "function reviewSourceJobContext" in index
@@ -278,7 +282,7 @@ def main() -> None:
     check(
         "if (reviewHasManualFieldRoute(activeReview))" not in index
         and "visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1)" in index
-        and "focusPublishField(manualTarget.inputId);" in index
+        and "focusManualReviewFieldTarget(manualTarget);" in index
         and "activeClinicReviewFocusTarget = manualTarget;" in index,
         "manual review cards should first open the two-column decision view and expose one field at a time",
     )
@@ -297,7 +301,7 @@ def main() -> None:
         and "reviewSourceJobContext(activeClinicReview, activeClinicReviewFocusTarget)" in index
         and "createClinicManualReviewSourceJob" in index
         and "activeClinicReviewFocusTarget" in index
-        and "focusPublishField(activeClinicReviewFocusTarget.inputId)" in index
+        and "focusManualReviewFieldTarget(activeClinicReviewFocusTarget)" in index
         and "renderClinicManualReviewContext();" in index
         and "activeClinicReviewFocusTarget = manualTarget;" in index
         and "var manualTarget = reviewManualTargetForInput(row, focusTarget)" in index,
@@ -370,6 +374,7 @@ def main() -> None:
         "Abre el enlace y confirma que es el perfil real de la clínica antes de aprobar." in index
         and "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica." in index
         and "Valoraciones Google: confirma primero el perfil real de Google Maps" in index
+        and "Antes de guardar Valoraciones Google, confirma y guarda el perfil real de Google Maps de la clínica." in index
         and "Alguna sede trae Google Maps dudoso" in index,
         "Google Maps proposals should show actionable in-card review hints",
     )
@@ -415,6 +420,7 @@ def main() -> None:
         "review-selection-empty" in index
         and 'id="reviewSelectionOpenBtn"' in index
         and "function renderReviewQueueSelection" in index
+        and "review-list-panel" in index
         and "Pulsa Revisar y verás aquí la ficha afectada y el cambio concreto para decidir." in index,
         "review queue should keep a visible right-side selection panel with a next-review action",
     )
@@ -436,13 +442,14 @@ def main() -> None:
     )
     check(
         "window.requestAnimationFrame(function ()" in index
-        and "focusPublishField(manualTarget.inputId)" in index,
+        and "focusManualReviewFieldTarget(manualTarget)" in index,
         "manual review should open and focus the exact clinic field directly",
     )
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
-    check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css, "manual review context and source handoff should be styled")
+    check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css and ".manual-review-section" in css, "manual review context and source handoff should be styled")
+    check(".work-grid.review-work-queue .review-list-panel" in css, "review queue side panel should stay explicit in CSS")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
     check(".review-link-status" in css and ".review-link-status-warning" in css, "proposal link status should be styled")
     check(".review-source-origin" in css, "Daniel-supplied source origin should be styled")
