@@ -26,6 +26,9 @@ SOURCE_MARKERS = [
     ("admin collapsible sidebar", "admin/index.html", 'id="sidebarToggleBtn"'),
     ("admin review source handoff", "admin/index.html", 'id="reviewSourceJobPanel"'),
     ("admin internal clinic contact", "admin/index.html", 'id="clinicInternalContactName"'),
+    ("admin manual review context", "admin/index.html", 'id="clinicManualReviewContext"'),
+    ("admin manual review wording", "admin/index.html", "Revisión manual de fichas"),
+    ("LLM manual review context", "scripts/review_proposal_decision_packets.py", "manual_review_context"),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
     ("logo download guard", "scripts/fetch_logos.py", "def looks_like_image"),
 ]
@@ -33,6 +36,7 @@ SOURCE_MARKERS = [
 DIST_MARKERS = [
     ("built admin clinic-centered review", "dist/admin/index.html", "reviewClinicPanel"),
     ("built admin decision actions", "dist/admin/index.html", "reviewApproveBtn"),
+    ("built admin manual review context", "dist/admin/index.html", "clinicManualReviewContext"),
     ("built Tiara profile remains", "dist/clinica/tiara-health/index.html", "Tiara Health"),
 ]
 

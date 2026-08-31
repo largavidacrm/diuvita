@@ -848,6 +848,10 @@ Next 10 technical steps:
      short margin, preventive pause and hard stop, including how many proposals
      remain before pause. This matches the admin source/job controls and writes
      no Supabase data.
+161. Extend release-readiness checks for manual-review changes. Done locally in
+     `scripts/release_readiness_report.py`: local-vs-production reporting now
+     checks the admin manual-review banner, manual-review wording and LLM
+     `manual_review_context`, plus the built admin marker after `build.py`.
 
 ## Daniel decision checkpoints
 
