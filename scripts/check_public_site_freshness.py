@@ -19,6 +19,21 @@ DEFAULT_BASE_URL = "https://www.vitalarga.com"
 DEFAULT_SUPABASE_URL = "https://twxhcmvzbpnrneywdece.supabase.co"
 DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_IHIMbYQacziyL1GcU6Mdtw_7AQdaCWg"
 MAX_RESPONSE_BYTES = 2_000_000
+FIELD_LABELS = {
+    "email": "email",
+    "instagram": "Instagram",
+    "telefono": "teléfono",
+    "services": "servicios",
+    "specialties": "especialidades",
+    "unidades": "unidades",
+    "profesionales": "especialistas",
+    "locations": "sedes",
+    "tech": "tecnología",
+    "years_in_practice": "años en ejercicio",
+    "specialists_count": "número de especialistas",
+    "team_credentialing_visible": "colegiación visible",
+    "public_pricing": "precio público",
+}
 
 
 def load_env_file() -> dict[str, str]:
@@ -167,6 +182,20 @@ def marker_present(page_html: str, item: dict[str, str]) -> bool:
     return any(needle and needle in page_html for needle in text_needles(item.get("value", "")))
 
 
+def field_group_labels(items: list[dict[str, Any]]) -> list[str]:
+    labels: list[str] = []
+    seen: set[str] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        field = str(item.get("field") or "").split(".", 1)[0]
+        label = FIELD_LABELS.get(field, field or "campo")
+        if label not in seen:
+            labels.append(label)
+            seen.add(label)
+    return labels
+
+
 def check_clinic(clinic: dict[str, Any], page_html: str, missing_limit: int) -> dict[str, Any]:
     markers = clinic_markers(clinic)
     missing = [item for item in markers if not marker_present(page_html, item)]
@@ -176,9 +205,17 @@ def check_clinic(clinic: dict[str, Any], page_html: str, missing_limit: int) -> 
         "status": clinic.get("status"),
         "expected_markers": len(markers),
         "missing_markers": len(missing),
+        "missing_groups": field_group_labels(missing),
         "missing_examples": missing[:missing_limit],
         "fresh": not missing,
     }
+
+
+def missing_field_groups(check: dict[str, Any]) -> list[str]:
+    groups = check.get("missing_groups")
+    if isinstance(groups, list):
+        return [str(item).strip() for item in groups if str(item).strip()]
+    return field_group_labels([item for item in check.get("missing_examples") or [] if isinstance(item, dict)])
 
 
 def clinic_matches_query(clinic: dict[str, Any], query: str) -> bool:
@@ -279,6 +316,10 @@ def format_report(report: dict[str, Any]) -> str:
         detail = f"{item.get('missing_markers', 0)} campos no aparecen"
         if item.get("error"):
             detail = "error: " + str(item["error"])[:160]
+        else:
+            groups = missing_field_groups(item)
+            if groups:
+                detail += " · grupos: " + ", ".join(groups)
         lines.append(f"- {item.get('name')}: {detail} · {item.get('url')}")
         if item.get("missing_markers") and not item.get("error"):
             lines.append("  - Motivo probable: Supabase tiene datos que la web publicada todavía no ha incorporado; falta regenerar la web pública.")

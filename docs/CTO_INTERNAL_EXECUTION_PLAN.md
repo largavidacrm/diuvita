@@ -592,6 +592,10 @@ Next 10 technical steps:
      line clarifying that names are internal proposals and are not published
      automatically, while Google Maps rows remind Daniel to accept only the real
      clinic profile.
+115. Make public freshness reports easier to scan. Done locally in
+     `scripts/check_public_site_freshness.py`: stale public-page checks now
+     summarize affected field groups, such as contact, specialists or
+     technology, before showing individual examples.
 
 ## Daniel decision checkpoints
 
