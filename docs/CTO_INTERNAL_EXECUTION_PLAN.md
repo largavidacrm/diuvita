@@ -605,6 +605,10 @@ Next 10 technical steps:
      `scripts/measure_location_coverage.py`: sede reports now show open review
      pressure and defer turning internal location detections into new review
      cards when the bandeja is close to the safe-write limit.
+118. Add clinic-focused review backlog reports. Done locally in
+     `scripts/review_backlog_brief.py`: the read-only backlog brief now accepts
+     `--clinic` and, when focused, shows the concrete cards in that clinic case
+     so Daniel can work Sensabell-style groups together.
 
 ## Daniel decision checkpoints
 

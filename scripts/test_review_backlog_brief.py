@@ -3,9 +3,12 @@
 
 from review_backlog_brief import (
     backlog_guard,
+    compact_lookup_key,
     first_backlog_action,
     format_backlog,
     format_clinic_workgroup,
+    format_workgroup_card,
+    review_type_label,
     safe_limit,
     workgroup_order,
     workgroup_recommendation,
@@ -47,6 +50,20 @@ def main():
                 "candidate_reviews": 0,
                 "max_priority": 85,
                 "oldest_created_at": "2026-08-30T08:30:00+00:00",
+                "cards": [
+                    {
+                        "title": "Revisar Sensabell",
+                        "review_type": "clinic_quality_audit",
+                        "priority": 85,
+                        "created_at": "2026-08-30T08:30:00+00:00",
+                    },
+                    {
+                        "title": "Ampliar ficha: Sensabell",
+                        "review_type": "clinic_profile_enrichment",
+                        "priority": 80,
+                        "created_at": "2026-08-30T09:00:00+00:00",
+                    },
+                ],
             },
             {
                 "clinic_name": "Kairos Longevity Clinic",
@@ -85,9 +102,17 @@ def main():
         ],
     }
     output = format_backlog(report)
+    clinic_output = format_backlog(dict(report, clinic_query="Sensabell", clinic_workgroups=[report["clinic_workgroups"][0]]))
 
     check(safe_limit(0) == 1, "limit should have a lower bound")
     check(safe_limit(100) == 50, "limit should have an upper bound")
+    check(compact_lookup_key("Clínica Sensabell") == "clinicasensabell", "compact query should remove accents and spaces")
+    check(review_type_label("clinic_profile_enrichment") == "mejora", "review type label missing")
+    check(
+        format_workgroup_card(report["clinic_workgroups"][0]["cards"][0])
+        == "  - Revisar Sensabell: auditoría · P85 · creada 2026-08-30 08:30",
+        "workgroup card formatting missing",
+    )
     check(backlog_guard(report["summary"]) == "cerca del freno: 48/50 abiertas", "guard label missing")
     check(
         first_backlog_action(report) == "Revisar Sensabell: 5 tarjetas, empezando por claims bloqueantes",
@@ -121,6 +146,10 @@ def main():
     check("2 claims bloqueantes / 2 mejoras" in output, "workgroup type counts missing")
     check("orden: claims bloqueantes -> mejoras" in output, "workgroup order line missing")
     check("Sensabell · Valencia · publicada · 3 tarjetas · P80" in output, "duplicate group missing")
+    check("Consulta: Sensabell" in clinic_output, "clinic query should be shown")
+    check("## Tarjetas del caso" in clinic_output, "clinic-specific card section missing")
+    check("Revisar Sensabell: auditoría · P85" in clinic_output, "first case card missing")
+    check("Ampliar ficha: Sensabell: mejora · P80" in clinic_output, "second case card missing")
     check("No hay grupos duplicados" not in output, "should not show empty duplicate state")
     check("no descarta ni resuelve tarjetas" in output, "safety note missing")
 
