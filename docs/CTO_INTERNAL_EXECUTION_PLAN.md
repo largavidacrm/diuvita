@@ -552,6 +552,10 @@ Next 10 technical steps:
      `/admin/`: when specialist cards already exist, Codex work is described as
      consolidating proposals rather than finding more team pages, keeping the
      center of control closer to Daniel's real next action.
+106. Wire specialist reconciliation into CTO cycle. Done locally in
+     `scripts/run_cto_shadow_cycle.py`: optional cycle runs can now include a
+     compact specialist reconciliation for one clinic or a small visible-clinic
+     batch without exposing long professional lists in the automatic log.
 
 ## Daniel decision checkpoints
 

@@ -20,13 +20,15 @@ for Daniel instead of implementing, softening or silently discarding the change.
 11. measure visible source coverage without writing evidence;
 12. measure visible-profile completeness without editing clinics;
 13. measure review-inbox bottlenecks without resolving cards;
-14. print the admin digest;
-15. evaluate stored claims against publication rules.
-16. optionally run strict editorial limit checks;
-17. optionally check public production URLs without logging in or writing data.
-18. optionally explain one clinic's public visibility state without publishing
+14. optionally reconcile published/proposed/internal specialists without
+    exposing long professional lists in the cycle output;
+15. print the admin digest;
+16. evaluate stored claims against publication rules.
+17. optionally run strict editorial limit checks;
+18. optionally check public production URLs without logging in or writing data.
+19. optionally explain one clinic's public visibility state without publishing
     or exposing long team/professional payloads.
-19. optionally compare saved public data with deployed clinic pages to detect
+20. optionally compare saved public data with deployed clinic pages to detect
     stale pages.
 
 Default mode is dry-run:
@@ -114,6 +116,13 @@ Review-backlog measurement is read-only and helps identify duplicate
 profile-enrichment pressure before adding more cards.
 Source-coverage measurement is read-only and highlights visible clinics whose
 source trail is weak before expanding automation.
+Specialist reconciliation is optional and read-only. It is useful when the
+global plan says the next specialist work is consolidation:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --specialist-reconciliation --specialist-reconciliation-clinic "Kairos"
+```
+
 The JSON output also includes a `daniel_brief` block with the simple status,
 next action, review backlog, top missing clinic field, next incomplete profile
 to review, source-support coverage, next source-support target and publication

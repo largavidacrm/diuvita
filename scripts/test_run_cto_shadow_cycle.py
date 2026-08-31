@@ -12,6 +12,7 @@ from run_cto_shadow_cycle import (
     format_cycle_brief,
     open_review_count_from_digest,
     skipped_step,
+    specialist_reconciliation_status,
     try_parse_json,
 )
 
@@ -291,6 +292,34 @@ def main():
     check("missing_examples" not in compact_visibility["freshness"]["sample_checks"][0], "visibility freshness examples should be omitted")
     visibility_step = {"name": "clinic_public_visibility_report", "ok": True, "summary": compact_visibility}
     check(clinic_visibility_status(visibility_step) == "1 ficha con desfase", "visibility step status should show stale public page")
+    compact_specialists = compact_summary("specialist_review_reconciliation", {
+        "query": "Kairos",
+        "clinics": [
+            {
+                "clinic_name": "Kairos Longevity Clinic",
+                "slug": "kairos-longevity-clinic",
+                "city": "Madrid",
+                "status": "published",
+                "published_count": 0,
+                "review_card_count": 2,
+                "review_professional_count": 6,
+                "claim_professional_count": 6,
+                "pending_professional_count": 6,
+                "pending_professionals": ["Dra. Example"],
+                "review_cards": [{"payload": "large"}],
+                "next_step": "abrir tarjetas",
+            }
+        ],
+    })
+    check(compact_specialists["clinics_count"] == 1, "specialist reconciliation clinic count should be kept")
+    check("clinics" not in compact_specialists, "full specialist reconciliation clinics should be removed")
+    check("pending_professionals" not in compact_specialists["sample_clinics"][0], "specialist names should stay out of cycle output")
+    check("review_cards" not in compact_specialists["sample_clinics"][0], "specialist card details should stay out of cycle output")
+    specialist_step = {"name": "specialist_review_reconciliation", "ok": True, "summary": compact_specialists}
+    check(
+        specialist_reconciliation_status(specialist_step) == "Kairos Longevity Clinic: 6 pendientes en 2 tarjetas",
+        "specialist reconciliation status should be readable",
+    )
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {
@@ -375,6 +404,7 @@ def main():
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
     check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
+    check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",
@@ -413,6 +443,22 @@ def main():
     })
     check(visibility_cycle_brief["clinic_visibility"] == "1 ficha con desfase", "clinic visibility should enter cycle brief")
     check("Visibilidad clinica: 1 ficha con desfase" in format_cycle_brief(visibility_cycle_brief), "plain brief should show clinic visibility result")
+    specialist_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {"name": "specialist_review_reconciliation", "ok": True, "summary": compact_specialists},
+        ],
+    })
+    check(
+        specialist_cycle_brief["specialist_reconciliation"] == "Kairos Longevity Clinic: 6 pendientes en 2 tarjetas",
+        "specialist reconciliation should enter cycle brief",
+    )
+    check(
+        "Conciliacion especialistas: Kairos Longevity Clinic: 6 pendientes en 2 tarjetas"
+        in format_cycle_brief(specialist_cycle_brief),
+        "plain brief should show specialist reconciliation result",
+    )
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -439,6 +485,9 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        specialist_reconciliation=False,
+        specialist_reconciliation_clinic="",
+        specialist_reconciliation_limit=5,
         fetch_timeout=7,
         strict_editorial=False,
         plain_brief=False,
@@ -463,6 +512,7 @@ def main():
     check("check_production_health" not in names, "production health should be off by default")
     check("check_public_site_freshness" not in names, "public freshness should be off by default")
     check("clinic_public_visibility_report" not in names, "clinic visibility should be off by default")
+    check("specialist_review_reconciliation" not in names, "specialist reconciliation should be off by default")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
@@ -510,6 +560,9 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        specialist_reconciliation=False,
+        specialist_reconciliation_clinic="",
+        specialist_reconciliation_limit=5,
         fetch_timeout=7,
         strict_editorial=False,
         plain_brief=False,
@@ -563,6 +616,9 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        specialist_reconciliation=True,
+        specialist_reconciliation_clinic="Kairos",
+        specialist_reconciliation_limit=3,
         fetch_timeout=7,
         strict_editorial=True,
         plain_brief=True,
@@ -580,6 +636,7 @@ def main():
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
     team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
+    specialist_reconciliation_step = [step for step in optional_steps if step[0] == "specialist_review_reconciliation"][0]
     check("--apply" in seed_apply_step[1], "source seeding should follow safe apply mode")
     check("--apply" in team_source_step[1], "team source discovery should follow safe apply mode")
     check("--clinic-slug" in team_source_step[1] and "arvila-magna" in team_source_step[1], "team source clinic slug should pass through")
@@ -589,6 +646,10 @@ def main():
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")
+    check("--json" in specialist_reconciliation_step[1], "specialist reconciliation should be machine readable")
+    check("Kairos" in specialist_reconciliation_step[1], "specialist reconciliation clinic should pass through")
+    check("3" in specialist_reconciliation_step[1], "specialist reconciliation limit should pass through")
+    check(optional_steps.index(specialist_reconciliation_step) < optional_steps.index([step for step in optional_steps if step[0] == "admin_digest"][0]), "specialist reconciliation should run before admin digest")
     strict_step = [step for step in optional_steps if step[0] == "check_operational_limits_strict"][0]
     check("--strict-editorial" in strict_step[1], "strict editorial flag should pass through")
     health_step = [step for step in optional_steps if step[0] == "check_production_health"][0]

@@ -134,6 +134,18 @@ STEP_ITEM_KEYS = {
     "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
     "check_public_site_freshness": ("slug", "name", "url", "fresh", "missing_markers", "error"),
     "clinic_public_visibility_report": ("slug", "clinic_name", "status", "updated_at"),
+    "specialist_review_reconciliation": (
+        "clinic_name",
+        "slug",
+        "city",
+        "status",
+        "published_count",
+        "review_card_count",
+        "review_professional_count",
+        "claim_professional_count",
+        "pending_professional_count",
+        "next_step",
+    ),
 }
 
 
@@ -157,6 +169,7 @@ STEP_LABELS = {
     "check_production_health": "salud de la web publica",
     "check_public_site_freshness": "frescura de la web publica",
     "clinic_public_visibility_report": "visibilidad publica por clinica",
+    "specialist_review_reconciliation": "conciliacion de especialistas",
 }
 
 REVIEW_CARD_CREATING_STEPS = {
@@ -285,6 +298,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in checks[:5]
         ]
         compact.pop("checks", None)
+    clinics = compact.get("clinics")
+    if isinstance(clinics, list):
+        compact["clinics_count"] = len(clinics)
+        compact["sample_clinics"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in clinics[:3]
+        ]
+        compact.pop("clinics", None)
     return compact
 
 
@@ -407,6 +428,25 @@ def clinic_visibility_status(step: dict[str, Any] | None) -> str:
     return "medida"
 
 
+def specialist_reconciliation_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    count = as_int(summary.get("clinics_count"))
+    if not count:
+        return "sin fichas medidas"
+    sample = summary.get("sample_clinics") if isinstance(summary.get("sample_clinics"), list) else []
+    first = sample[0] if sample and isinstance(sample[0], dict) else {}
+    name = first.get("clinic_name") or first.get("slug") or "primera ficha"
+    pending = as_int(first.get("pending_professional_count"))
+    cards = as_int(first.get("review_card_count"))
+    if pending:
+        return f"{name}: {pending} pendientes en {cards} tarjetas"
+    return f"{name}: sin pendientes detectados"
+
+
 def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     steps = [step for step in output.get("steps") or [] if isinstance(step, dict)]
     failed_step = first_failed_step(steps)
@@ -470,6 +510,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         public_freshness = f"{stale_count} con desfase" if stale_count else "revisar"
     visibility_step = find_step(steps, "clinic_public_visibility_report")
     clinic_visibility = clinic_visibility_status(visibility_step)
+    specialist_step = find_step(steps, "specialist_review_reconciliation")
+    specialist_reconciliation = specialist_reconciliation_status(specialist_step)
 
     if admin_digest:
         next_action = next_action_label(admin_digest)
@@ -520,6 +562,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "production_health": production_health,
         "public_freshness": public_freshness,
         "clinic_visibility": clinic_visibility,
+        "specialist_reconciliation": specialist_reconciliation,
         "attention": attention,
     }
 
@@ -542,6 +585,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Web publica: {brief.get('production_health')}.",
         f"- Frescura web: {brief.get('public_freshness')}.",
         f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
+        f"- Conciliacion especialistas: {brief.get('specialist_reconciliation')}.",
     ]
     if as_int(brief.get("skipped_steps")):
         lines.append(f"- Pasos omitidos: {brief.get('skipped_steps')}")
@@ -700,6 +744,18 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ["review_backlog_brief.py", "--limit", str(args.backlog_brief_limit), "--json"],
             45,
         ),
+    ])
+    if args.specialist_reconciliation or args.specialist_reconciliation_clinic:
+        specialist_reconciliation_args = [
+            "specialist_review_reconciliation.py",
+            "--limit",
+            str(args.specialist_reconciliation_limit),
+            "--json",
+        ]
+        if args.specialist_reconciliation_clinic:
+            specialist_reconciliation_args.extend(["--clinic", args.specialist_reconciliation_clinic])
+        steps.append(("specialist_review_reconciliation", specialist_reconciliation_args, 45))
+    steps.extend([
         (
             "admin_digest",
             ["admin_digest.py", "--limit", str(args.digest_limit), "--json"],
@@ -813,6 +869,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-coverage-limit", type=int, default=12)
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
     parser.add_argument("--backlog-brief-limit", type=int, default=8)
+    parser.add_argument(
+        "--specialist-reconciliation",
+        action="store_true",
+        help="Optionally reconcile published/proposed/internal specialists; read-only.",
+    )
+    parser.add_argument("--specialist-reconciliation-clinic", default="", help="Clinic name or slug for specialist reconciliation.")
+    parser.add_argument("--specialist-reconciliation-limit", type=int, default=5)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     parser.add_argument(
         "--production-health",
@@ -874,6 +937,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.specialist_reconciliation_limit,
         args.public_freshness_missing_limit,
         args.clinic_visibility_missing_limit,
         args.max_open_reviews_for_safe_writes,
@@ -895,6 +959,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.specialist_reconciliation_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:
