@@ -9,6 +9,7 @@ from consolidate_profile_enrichment_reviews import (
     format_report,
     merge_fields,
     source_urls,
+    split_spanish_phones,
     value_key,
 )
 
@@ -116,6 +117,34 @@ def main():
     check(
         clean_report["groups"][0]["next_step"] == "abrir el caso y usar Cargar mejoras juntas",
         "clean groups should point to grouped loading",
+    )
+    multi_phone_group = {
+        "clinic_id": "clinic-2",
+        "clinic_slug": "phone-case",
+        "clinic_name": "Phone Case",
+        "city": "Madrid",
+        "clinic_status": "review",
+        "current_data": {},
+        "cards": [
+            {
+                "id": "review-phone",
+                "title": "Ampliar ficha: Phone Case",
+                "payload": {
+                    "proposed_fields": {
+                        "telefono": "960 05 61 65 / 695 567 297",
+                    },
+                },
+            }
+        ],
+    }
+    multi_phone = consolidated_group(multi_phone_group)
+    check(split_spanish_phones("960 05 61 65 / 695 567 297") == ["960056165", "695567297"], "multi-phone split missing")
+    check(multi_phone["merged_fields"]["telefono"] == "960056165", "primary split phone missing")
+    check(multi_phone["merged_fields"]["phone_mobile"] == "695567297", "mobile split phone missing")
+    check(multi_phone["weak_phone_count"] == 0, "clear split phones should not be weak")
+    check(
+        multi_phone["next_step"] == "abrir el caso y usar Cargar mejoras juntas",
+        "clear split phones should be actionable",
     )
 
     empty_report = build_report([])

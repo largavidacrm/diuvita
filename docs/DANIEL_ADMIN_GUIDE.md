@@ -150,6 +150,8 @@ Si ese bloque muestra **Contacto dudoso**, no cargues y guardes de corrido:
 significa que alguna propuesta trae un teléfono con forma rara o mezclada.
 Puedes cargar las mejoras, pero antes de guardar corrige el teléfono, sepáralo
 en fijo/móvil/WhatsApp si procede o bórralo si no es claramente un contacto.
+Si el panel ya separa dos números claros en principal/fijo/móvil, revísalos
+igualmente antes de guardar: la separación ayuda, pero no aprueba el dato.
 
 El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
 marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la

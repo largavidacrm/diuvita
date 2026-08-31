@@ -3799,6 +3799,7 @@
         var fields = proposedFields((row && row.payload) || {});
         Object.keys(fields).forEach(function (rawKey) {
           var key = canonicalProposalField(rawKey);
+          if (expandedPhoneProposalFields(key, fields[rawKey]).length) return;
           var warning = proposalPhoneWarning(key, fields[rawKey]);
           if (!warning || seen[warning]) return;
           seen[warning] = true;
@@ -6156,6 +6157,64 @@
       return proposalLabel(field.key) + ": no parece un teléfono español válido.";
     }
 
+    function splitSpanishPhones(value) {
+      var raw = text(value).trim();
+      if (!raw) return [];
+      var phones = [];
+      var seen = {};
+      function add(candidate) {
+        var digits = spanishPhoneDigits(candidate);
+        if (!isPlausibleSpanishPhone(digits) || seen[digits]) return;
+        seen[digits] = true;
+        phones.push(digits);
+      }
+      (raw.match(/(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}/g) || []).forEach(add);
+      if (!phones.length) {
+        var compact = compactDigits(raw);
+        if (compact.length > 9 && compact.length % 9 === 0) {
+          for (var index = 0; index < compact.length; index += 9) add(compact.slice(index, index + 9));
+        }
+      }
+      return phones;
+    }
+
+    function phoneTargetKey(phone, fallbackKey) {
+      var digits = spanishPhoneDigits(phone);
+      if (/^[89]/.test(digits) && fallbackKey !== "phone_fixed") return "phone_fixed";
+      if (/^[67]/.test(digits) && fallbackKey !== "phone_mobile") return "phone_mobile";
+      return "";
+    }
+
+    function expandedPhoneProposalFields(key, value) {
+      if (!clinicPhoneFieldByKey(key)) return [];
+      var phones = splitSpanishPhones(value);
+      if (phones.length < 2) return [];
+      var fields = [{ key: key, value: phones[0] }];
+      var usedKeys = {};
+      var usedPhones = {};
+      usedKeys[key] = true;
+      usedPhones[phones[0]] = true;
+      phones.slice(1).forEach(function (phone) {
+        var target = phoneTargetKey(phone, key);
+        if (!target || usedKeys[target] || usedPhones[phone]) return;
+        usedKeys[target] = true;
+        usedPhones[phone] = true;
+        fields.push({ key: target, value: phone });
+      });
+      return fields.length > 1 ? fields : [];
+    }
+
+    function mergeScalarProposalField(merged, warnedFields, key, value) {
+      if (!hasOwn(merged.proposed_fields, key) || !proposalListValue(merged.proposed_fields[key])) {
+        merged.proposed_fields[key] = value;
+        return;
+      }
+      if (mergeValueKey(merged.proposed_fields[key]) !== mergeValueKey(value) && !warnedFields[key]) {
+        warnedFields[key] = true;
+        merged.warnings.push("Conflicto en " + proposalLabel(key) + ": hay varias propuestas; he cargado la primera.");
+      }
+    }
+
     function mergeReviewPayloads(rows) {
       var merged = {
         proposed_fields: {},
@@ -6194,6 +6253,17 @@
           var key = canonicalProposalField(rawKey);
           var value = proposedFields(payload)[rawKey];
           if (!proposalListValue(value)) return;
+          var splitPhones = expandedPhoneProposalFields(key, value);
+          if (splitPhones.length) {
+            if (!warnedFields.splitPhones) {
+              warnedFields.splitPhones = true;
+              merged.warnings.push("Telefonos separados: revisa principal, fijo y movil antes de guardar.");
+            }
+            splitPhones.forEach(function (item) {
+              mergeScalarProposalField(merged, warnedFields, item.key, item.value);
+            });
+            return;
+          }
           var phoneWarning = proposalPhoneWarning(key, value);
           if (phoneWarning && !warnedFields["phone:" + key]) {
             warnedFields["phone:" + key] = true;
@@ -6203,14 +6273,7 @@
             merged.proposed_fields[key] = mergeListField(merged.proposed_fields[key] || [], value, key === "locations");
             return;
           }
-          if (!hasOwn(merged.proposed_fields, key) || !proposalListValue(merged.proposed_fields[key])) {
-            merged.proposed_fields[key] = value;
-            return;
-          }
-          if (mergeValueKey(merged.proposed_fields[key]) !== mergeValueKey(value) && !warnedFields[key]) {
-            warnedFields[key] = true;
-            merged.warnings.push("Conflicto en " + proposalLabel(key) + ": hay varias propuestas; he cargado la primera.");
-          }
+          mergeScalarProposalField(merged, warnedFields, key, value);
         });
       });
       merged.warnings = mergeListField([], merged.warnings, false);

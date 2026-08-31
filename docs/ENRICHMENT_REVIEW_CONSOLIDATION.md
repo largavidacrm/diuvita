@@ -42,6 +42,8 @@ python3 scripts/consolidate_profile_enrichment_reviews.py --clinic Sensabell
   distintos.
 - Que telefonos no parecen numeros espanoles plausibles, para evitar que una
   colegiacion o un identificador con guiones se guarde como contacto.
+- Que propuestas traen varios telefonos espanoles claros en un solo campo; en
+  ese caso los separa como telefono principal/fijo/movil para revision humana.
 
 ## Resultado esperado
 
@@ -49,3 +51,7 @@ Si no hay conflictos, el siguiente paso humano normal es abrir el caso en
 `/admin/` y usar **Cargar mejoras juntas**.
 
 Si hay conflictos, Daniel debe comparar las fuentes antes de guardar la ficha.
+
+Si el informe separa telefonos, Daniel debe revisar que cada numero corresponde
+a la clinica antes de guardar. La separacion no publica ni aprueba el dato por
+si sola.

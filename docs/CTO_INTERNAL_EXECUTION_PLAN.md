@@ -665,6 +665,12 @@ Next 10 technical steps:
      inside the recommended-order block when grouped enrichment cards contain
      phone-like values that do not look like plausible Spanish contact numbers,
      so Daniel sees the issue before using "Cargar mejoras juntas".
+129. Split clear multi-phone enrichment proposals. Done locally in `/admin/`
+     and `scripts/consolidate_profile_enrichment_reviews.py`: when a grouped
+     proposal contains multiple clear Spanish phone numbers in one contact
+     field, the system separates them into reviewable phone fields such as
+     principal/fixed/mobile instead of leaving a mixed value. The result still
+     requires Daniel's manual review and save.
 
 ## Daniel decision checkpoints
 

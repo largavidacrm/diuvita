@@ -112,6 +112,10 @@ def main() -> None:
         and 'telephone: "telefono"' in index
         and 'professionals: "profesionales"' in index
         and "var key = canonicalProposalField(rawKey);" in index
+        and "function splitSpanishPhones" in index
+        and "function expandedPhoneProposalFields" in index
+        and "function mergeScalarProposalField" in index
+        and "Telefonos separados: revisa principal, fijo y movil antes de guardar." in index
         and "function proposalPhoneWarning" in index
         and "phone: \"clinicPhone\"" in index
         and "telephone: \"clinicPhone\"" in index

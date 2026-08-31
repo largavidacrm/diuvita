@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import unicodedata
 from typing import Any
 
@@ -58,6 +59,7 @@ FIELD_LABELS = {
 
 LIST_FIELDS = {"services", "specialties", "unidades", "profesionales", "locations", "tech"}
 PHONE_FIELDS = {"telefono", "phone_fixed", "phone_mobile", "phone_whatsapp"}
+PHONE_CANDIDATE_RE = re.compile(r"(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}")
 PROFILE_ALIASES = {
     "display_name": ("display_name", "name", "canonical_name"),
     "website": ("website", "web"),
@@ -124,6 +126,57 @@ def phone_digits(value: Any) -> str:
 def plausible_phone(value: Any) -> bool:
     digits = phone_digits(value)
     return len(digits) == 9 and digits[0] in {"6", "7", "8", "9"}
+
+
+def split_spanish_phones(value: Any) -> list[str]:
+    raw = str(value or "")
+    phones: list[str] = []
+    seen: set[str] = set()
+
+    def add(candidate: Any) -> None:
+        digits = phone_digits(candidate)
+        if not plausible_phone(digits) or digits in seen:
+            return
+        seen.add(digits)
+        phones.append(digits)
+
+    for match in PHONE_CANDIDATE_RE.finditer(raw):
+        add(match.group(0))
+
+    compact = "".join(char for char in raw if char.isdigit())
+    if not phones and len(compact) > 9 and len(compact) % 9 == 0:
+        for index in range(0, len(compact), 9):
+            add(compact[index : index + 9])
+
+    return phones
+
+
+def phone_target_field(phone: Any, fallback_field: str) -> str:
+    digits = phone_digits(phone)
+    if digits.startswith(("8", "9")) and fallback_field != "phone_fixed":
+        return "phone_fixed"
+    if digits.startswith(("6", "7")) and fallback_field != "phone_mobile":
+        return "phone_mobile"
+    return ""
+
+
+def expanded_phone_fields(field: str, value: Any) -> list[tuple[str, str]]:
+    if field not in PHONE_FIELDS:
+        return []
+    phones = split_spanish_phones(value)
+    if len(phones) < 2:
+        return []
+    fields = [(field, phones[0])]
+    used_fields = {field}
+    used_phones = {phones[0]}
+    for phone in phones[1:]:
+        target = phone_target_field(phone, field)
+        if not target or target in used_fields or phone in used_phones:
+            continue
+        used_fields.add(target)
+        used_phones.add(phone)
+        fields.append((target, phone))
+    return fields if len(fields) > 1 else []
 
 
 def location_key(value: Any) -> str:
@@ -205,12 +258,34 @@ def merge_fields(cards: list[dict[str, Any]]) -> tuple[dict[str, Any], list[dict
         if clean_review_id not in field_sources[field]:
             field_sources[field].append(clean_review_id)
 
+    def add_scalar_variant(field: str, value: Any, review_id: Any) -> None:
+        add_field_source(field, review_id)
+        key = value_key(value)
+        scalar_variants.setdefault(field, [])
+        if not any(item["key"] == key for item in scalar_variants[field]):
+            scalar_variants[field].append({
+                "key": key,
+                "value": value,
+                "review_ids": [str(review_id)] if review_id else [],
+            })
+        else:
+            for item in scalar_variants[field]:
+                if item["key"] == key and review_id:
+                    item["review_ids"].append(str(review_id))
+        if field not in merged:
+            merged[field] = value
+
     for card in cards:
         payload = card.get("payload") if isinstance(card.get("payload"), dict) else {}
         review_id = card.get("id")
         for raw_key, raw_value in proposed_fields(payload).items():
             field = canonical_field(raw_key)
             if is_empty(raw_value):
+                continue
+            split_phone_fields = expanded_phone_fields(field, raw_value)
+            if split_phone_fields:
+                for phone_field, phone_value in split_phone_fields:
+                    add_scalar_variant(phone_field, phone_value, review_id)
                 continue
             add_field_source(field, review_id)
             if field in LIST_FIELDS:
@@ -224,20 +299,7 @@ def merge_fields(cards: list[dict[str, Any]]) -> tuple[dict[str, Any], list[dict
                     merged[field].append(item)
                 continue
 
-            key = value_key(raw_value)
-            scalar_variants.setdefault(field, [])
-            if not any(item["key"] == key for item in scalar_variants[field]):
-                scalar_variants[field].append({
-                    "key": key,
-                    "value": raw_value,
-                    "review_ids": [str(review_id)] if review_id else [],
-                })
-            else:
-                for item in scalar_variants[field]:
-                    if item["key"] == key and review_id:
-                        item["review_ids"].append(str(review_id))
-            if field not in merged:
-                merged[field] = raw_value
+            add_scalar_variant(field, raw_value, review_id)
 
     conflicts = [
         {
