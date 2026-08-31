@@ -17,16 +17,20 @@ from typing import Any
 from admin_digest import (
     SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
     as_int,
+    google_link_review_status,
     next_action_label,
     next_profile_action,
     next_source_action,
+    review_backlog_guard_status,
     source_coverage_status,
+    specialist_review_status,
     top_pending_profile_field,
 )
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
+DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP = max(1, SAFE_WRITE_REVIEW_BACKLOG_LIMIT - 5)
 
 
 def try_parse_json(output: str) -> Any:
@@ -53,6 +57,25 @@ STEP_ITEM_KEYS = {
         "website",
         "source_url",
         "source_type",
+    ),
+    "discover_clinic_team_sources": (
+        "clinic_slug",
+        "clinic_name",
+        "city",
+        "status",
+        "url",
+        "label",
+        "score",
+        "already_stored",
+        "source_type",
+    ),
+    "discover_clinic_google_links": (
+        "clinic_slug",
+        "clinic_name",
+        "website",
+        "status",
+        "proposed_fields",
+        "created_review",
     ),
     "hydrate_source_records": ("source_url", "status"),
     "monitor_source_changes": ("source_url", "clinic_name", "status", "hash"),
@@ -97,7 +120,7 @@ STEP_ITEM_KEYS = {
         "max_priority",
         "oldest_created_at",
     ),
-    "admin_digest": ("title", "review_type", "priority", "clinic_name", "clinic_slug"),
+    "admin_digest": ("title", "review_type", "priority", "clinic_name", "clinic_slug", "professionals_count"),
     "submit_source_shadow_reviews": (
         "clinic_slug",
         "clinic_name",
@@ -109,12 +132,39 @@ STEP_ITEM_KEYS = {
         "created_review",
     ),
     "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
+    "check_public_site_freshness": ("slug", "name", "url", "fresh", "missing_markers", "error"),
+    "clinic_public_visibility_report": ("slug", "clinic_name", "status", "updated_at"),
+    "google_link_review_reconciliation": (
+        "clinic_name",
+        "clinic_slug",
+        "title",
+        "priority",
+        "direct_map_count",
+        "unsafe_map_count",
+        "review_link_count",
+        "map_status_counts",
+        "next_step",
+    ),
+    "specialist_review_reconciliation": (
+        "clinic_name",
+        "slug",
+        "city",
+        "status",
+        "published_count",
+        "review_card_count",
+        "review_professional_count",
+        "claim_professional_count",
+        "pending_professional_count",
+        "next_step",
+    ),
 }
 
 
 STEP_LABELS = {
     "capture_enrichment_review_claims": "captura de claims desde propuestas",
     "seed_visible_clinic_sources": "siembra de webs oficiales como fuentes",
+    "discover_clinic_team_sources": "descubrimiento de paginas de equipo",
+    "discover_clinic_google_links": "descubrimiento de Google Maps y valoraciones",
     "hydrate_source_records": "hidratacion de fuentes",
     "monitor_source_changes": "vigilancia de cambios de fuentes",
     "process_source_change_reviews": "conversion de cambios en propuestas",
@@ -128,11 +178,16 @@ STEP_LABELS = {
     "evaluate_claim_rules": "reglas de publicacion",
     "check_operational_limits_strict": "limites operativos",
     "check_production_health": "salud de la web publica",
+    "check_public_site_freshness": "frescura de la web publica",
+    "clinic_public_visibility_report": "visibilidad publica por clinica",
+    "google_link_review_reconciliation": "conciliacion de enlaces Google",
+    "specialist_review_reconciliation": "conciliacion de especialistas",
 }
 
 REVIEW_CARD_CREATING_STEPS = {
     "monitor_source_changes",
     "process_source_change_reviews",
+    "discover_clinic_google_links",
     "submit_source_shadow_reviews",
     "submit_blocking_claim_reviews",
 }
@@ -149,6 +204,30 @@ def compact_summary(name: str, summary: Any) -> Any:
         return summary
     compact = dict(summary)
     compact.pop("admin_email", None)
+    if name == "clinic_public_visibility_report":
+        readiness = compact.get("readiness")
+        if isinstance(readiness, dict):
+            matches = [item for item in readiness.get("matches") or [] if isinstance(item, dict)]
+            compact["readiness"] = {
+                "query": readiness.get("query"),
+                "matches_count": len(matches),
+                "sample_matches": [
+                    compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+                    for item in matches[:3]
+                ],
+            }
+        freshness = compact.get("freshness")
+        if isinstance(freshness, dict):
+            checks = [item for item in freshness.get("checks") or [] if isinstance(item, dict)]
+            compact["freshness"] = {
+                "ok": freshness.get("ok"),
+                "clinic_count": freshness.get("clinic_count"),
+                "stale_count": freshness.get("stale_count"),
+                "sample_checks": [
+                    compact_item(item, STEP_ITEM_KEYS.get("check_public_site_freshness", ()))
+                    for item in checks[:3]
+                ],
+            }
     items = compact.get("items")
     if isinstance(items, list):
         compact["items_count"] = len(items)
@@ -223,6 +302,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in review_examples[:5]
         ]
         compact.pop("review_examples_by_type", None)
+    review_cards = compact.get("review_cards")
+    if isinstance(review_cards, list):
+        compact["review_cards_count"] = len(review_cards)
+        compact["sample_review_cards"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in review_cards[:3]
+        ]
+        compact.pop("review_cards", None)
     checks = compact.get("checks")
     if isinstance(checks, list):
         compact["checks_count"] = len(checks)
@@ -231,6 +318,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in checks[:5]
         ]
         compact.pop("checks", None)
+    clinics = compact.get("clinics")
+    if isinstance(clinics, list):
+        compact["clinics_count"] = len(clinics)
+        compact["sample_clinics"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in clinics[:3]
+        ]
+        compact.pop("clinics", None)
     return compact
 
 
@@ -279,6 +374,34 @@ def open_review_count_from_digest(digest: dict[str, Any]) -> int:
     return as_int(reviews.get("open"))
 
 
+def clinic_workgroup_click_from_digest(digest: dict[str, Any]) -> str:
+    group = digest.get("review_first_clinic_workgroup") or {}
+    name = str(group.get("clinic_name") or group.get("clinic_slug") or "").strip()
+    count = as_int(group.get("open_count"))
+    if not name or not count:
+        return ""
+    return f"Filtrar grupo: {name}, {count} tarjetas juntas."
+
+
+def cycle_next_clicks(digest: dict[str, Any]) -> list[str]:
+    if not digest:
+        return ["Abrir el panel y usar Abrir prioridad."]
+    clicks: list[str] = []
+    guard = review_backlog_guard_status(digest)
+    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+        clicks.append(f"No crear trabajos nuevos: {guard}.")
+    workgroup = clinic_workgroup_click_from_digest(digest)
+    if workgroup:
+        clicks.append(workgroup)
+    specialists = specialist_review_status(digest)
+    if not specialists.startswith("sin tarjetas"):
+        clicks.append(f"Abrir Especialistas: {specialists}.")
+    google_links = google_link_review_status(digest)
+    if not google_links.startswith("sin tarjetas"):
+        clicks.append(f"Abrir Google Maps: {google_links}.")
+    return clicks[:4] or ["Abrir el panel y usar Abrir prioridad."]
+
+
 def step_label(name: str) -> str:
     return STEP_LABELS.get(name, name.replace("_", " "))
 
@@ -302,6 +425,72 @@ def safe_step_summary(step: dict[str, Any] | None) -> dict[str, Any]:
         return {}
     summary = step.get("summary")
     return summary if isinstance(summary, dict) else {}
+
+
+def clinic_visibility_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    summary = safe_step_summary(step)
+    if not step.get("ok"):
+        return "revisar"
+    readiness = summary.get("readiness") if isinstance(summary.get("readiness"), dict) else {}
+    matches = as_int(readiness.get("matches_count"))
+    if not matches:
+        return "clínica no encontrada"
+    freshness = summary.get("freshness") if isinstance(summary.get("freshness"), dict) else {}
+    stale = as_int(freshness.get("stale_count"))
+    if stale:
+        return f"{stale} ficha con desfase"
+    if freshness.get("ok") is True:
+        return "sin desfase medido"
+    if summary.get("freshness_error"):
+        return "no se pudo comparar web"
+    return "medida"
+
+
+def specialist_reconciliation_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    count = as_int(counts.get("clinics") or summary.get("clinics_count"))
+    if not count:
+        return "sin fichas medidas"
+    pending_total = as_int(counts.get("pending_professionals"))
+    cards_total = as_int(counts.get("review_cards"))
+    pending_clinics = as_int(counts.get("clinics_with_pending_professionals"))
+    if pending_total:
+        return f"{pending_total} pendientes en {cards_total} tarjetas ({pending_clinics}/{count} fichas)"
+    sample = summary.get("sample_clinics") if isinstance(summary.get("sample_clinics"), list) else []
+    first = sample[0] if sample and isinstance(sample[0], dict) else {}
+    name = first.get("clinic_name") or first.get("slug") or "primera ficha"
+    pending = as_int(first.get("pending_professional_count"))
+    cards = as_int(first.get("review_card_count"))
+    if pending:
+        return f"{name}: {pending} pendientes en {cards} tarjetas"
+    return f"{name}: sin pendientes detectados"
+
+
+def google_link_reconciliation_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    cards = as_int(counts.get("review_cards") or summary.get("review_cards_count"))
+    if not cards:
+        return "sin tarjetas Google medidas"
+    direct = as_int(counts.get("cards_with_direct_maps"))
+    unsafe = as_int(counts.get("cards_with_unsafe_maps"))
+    reviews = as_int(counts.get("cards_with_review_links"))
+    if unsafe:
+        return f"{unsafe}/{cards} con Maps que no se debe guardar sin corregir"
+    if direct:
+        return f"{direct}/{cards} con perfil Maps directo; {reviews} con valoraciones"
+    return f"{cards} tarjetas sin perfil Maps directo"
 
 
 def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
@@ -328,6 +517,9 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         elif failed_name == "check_production_health":
             status = "attention"
             attention = "La web publica no paso una comprobacion de salud; conviene revisarla antes de aceptar cambios nuevos."
+        elif failed_name == "check_public_site_freshness":
+            status = "attention"
+            attention = "Hay datos guardados que no parecen estar todavia en la web publica; conviene actualizar la web al final del lote."
         else:
             status = "attention"
             attention = "Hay un fallo tecnico en el ciclo; revisar el paso detenido antes de aceptar nuevas fichas."
@@ -353,24 +545,43 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     else:
         production_health = "revisar"
 
+    freshness_step = find_step(steps, "check_public_site_freshness")
+    freshness_summary = safe_step_summary(freshness_step)
+    if not freshness_step:
+        public_freshness = "no comprobada en este ciclo"
+    elif freshness_step.get("ok") and freshness_summary.get("ok"):
+        public_freshness = "OK"
+    else:
+        stale_count = as_int(freshness_summary.get("stale_count"))
+        public_freshness = f"{stale_count} con desfase" if stale_count else "revisar"
+    visibility_step = find_step(steps, "clinic_public_visibility_report")
+    clinic_visibility = clinic_visibility_status(visibility_step)
+    google_link_step = find_step(steps, "google_link_review_reconciliation")
+    google_link_reconciliation = google_link_reconciliation_status(google_link_step)
+    specialist_step = find_step(steps, "specialist_review_reconciliation")
+    specialist_reconciliation = specialist_reconciliation_status(specialist_step)
+
     if admin_digest:
         next_action = next_action_label(admin_digest)
         profile_gap = top_pending_profile_field(admin_digest)
         profile_next = next_profile_action(admin_digest)
         source_gap = source_coverage_status(admin_digest)
         source_next = next_source_action(admin_digest)
+        next_clicks = cycle_next_clicks(admin_digest)
     elif failed_step:
         next_action = "Revisar el paso detenido"
         profile_gap = "no medido"
         profile_next = "no medida"
         source_gap = "no medida"
         source_next = "no medida"
+        next_clicks = ["Revisar el paso detenido antes de aceptar nuevas fichas."]
     else:
         next_action = "Sin accion urgente"
         profile_gap = "no medido"
         profile_next = "no medida"
         source_gap = "no medida"
         source_next = "no medida"
+        next_clicks = ["Abrir el panel y usar Abrir prioridad."]
 
     auto_publish = bool(automation.get("auto_publish_enabled"))
     shadow_mode = bool(automation.get("shadow_mode_active"))
@@ -393,9 +604,14 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "profile_next": profile_next,
         "source_gap": source_gap,
         "source_next": source_next,
+        "next_clicks": next_clicks,
         "publication_guard": publication_guard,
         "shadow_mode": "activo" if shadow_mode else "inactivo",
         "production_health": production_health,
+        "public_freshness": public_freshness,
+        "clinic_visibility": clinic_visibility,
+        "google_link_reconciliation": google_link_reconciliation,
+        "specialist_reconciliation": specialist_reconciliation,
         "attention": attention,
     }
 
@@ -407,6 +623,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Estado: {brief.get('headline')}",
         f"- Pasos: {brief.get('steps')}",
         f"- Que mirar primero: {brief.get('next_action')}.",
+        "- Proximos clics: " + " / ".join(str(item) for item in (brief.get("next_clicks") or []) if item),
         f"- Revisiones abiertas: {brief.get('open_reviews')}",
         f"- Campo mas pendiente: {brief.get('profile_gap')}.",
         f"- Siguiente ficha: {brief.get('profile_next')}.",
@@ -415,6 +632,10 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Publicacion: {brief.get('publication_guard')}",
         f"- Modo sombra: {brief.get('shadow_mode')}.",
         f"- Web publica: {brief.get('production_health')}.",
+        f"- Frescura web: {brief.get('public_freshness')}.",
+        f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
+        f"- Conciliacion Google: {brief.get('google_link_reconciliation')}.",
+        f"- Conciliacion especialistas: {brief.get('specialist_reconciliation')}.",
     ]
     if as_int(brief.get("skipped_steps")):
         lines.append(f"- Pasos omitidos: {brief.get('skipped_steps')}")
@@ -437,6 +658,50 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ["seed_visible_clinic_sources.py", "--limit", str(args.seed_source_limit), "--json", *apply_flag],
             45,
         ),
+    ]
+    if args.team_source_limit:
+        team_source_args = [
+            "discover_clinic_team_sources.py",
+            "--limit",
+            str(args.team_source_limit),
+            "--timeout",
+            str(args.fetch_timeout),
+            "--max-links-per-clinic",
+            str(args.team_source_max_links),
+            *apply_flag,
+        ]
+        if args.team_source_clinic_slug:
+            team_source_args.extend(["--clinic-slug", args.team_source_clinic_slug])
+        steps.append(
+            (
+                "discover_clinic_team_sources",
+                team_source_args,
+                max(90, args.team_source_limit * args.fetch_timeout + 30),
+            )
+        )
+    if args.google_link_limit:
+        google_link_args = [
+            "discover_clinic_google_links.py",
+            "--limit",
+            str(args.google_link_limit),
+            "--timeout",
+            str(args.fetch_timeout),
+            *apply_flag,
+        ]
+        if args.google_link_clinic_slug:
+            google_link_args.extend(["--clinic-slug", args.google_link_clinic_slug])
+        if args.google_link_replace_existing:
+            google_link_args.append("--replace-existing")
+        if args.google_link_allow_multiple_open_clinic_reviews:
+            google_link_args.append("--allow-multiple-open-clinic-reviews")
+        steps.append(
+            (
+                "discover_clinic_google_links",
+                google_link_args,
+                max(90, args.google_link_limit * args.fetch_timeout + 30),
+            )
+        )
+    steps.extend([
         (
             "hydrate_source_records",
             [
@@ -473,7 +738,7 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ],
             max(90, args.source_change_limit * args.fetch_timeout + 30),
         ),
-    ]
+    ])
     if args.source_shadow_limit:
         source_shadow_args = [
             "submit_source_shadow_reviews.py",
@@ -529,6 +794,28 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             ["review_backlog_brief.py", "--limit", str(args.backlog_brief_limit), "--json"],
             45,
         ),
+    ])
+    if args.google_link_reconciliation or args.google_link_reconciliation_clinic:
+        google_link_reconciliation_args = [
+            "google_link_review_reconciliation.py",
+            "--limit",
+            str(args.google_link_reconciliation_limit),
+            "--json",
+        ]
+        if args.google_link_reconciliation_clinic:
+            google_link_reconciliation_args.extend(["--clinic", args.google_link_reconciliation_clinic])
+        steps.append(("google_link_review_reconciliation", google_link_reconciliation_args, 45))
+    if args.specialist_reconciliation or args.specialist_reconciliation_clinic:
+        specialist_reconciliation_args = [
+            "specialist_review_reconciliation.py",
+            "--limit",
+            str(args.specialist_reconciliation_limit),
+            "--json",
+        ]
+        if args.specialist_reconciliation_clinic:
+            specialist_reconciliation_args.extend(["--clinic", args.specialist_reconciliation_clinic])
+        steps.append(("specialist_review_reconciliation", specialist_reconciliation_args, 45))
+    steps.extend([
         (
             "admin_digest",
             ["admin_digest.py", "--limit", str(args.digest_limit), "--json"],
@@ -563,6 +850,51 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
                 max(45, args.production_timeout * 6),
             )
         )
+    clinic_visibility_query = args.clinic_visibility_clinic.strip()
+    if args.clinic_visibility or clinic_visibility_query:
+        if not clinic_visibility_query:
+            clinic_visibility_query = (args.public_freshness_clinic or args.public_freshness_slug or "").strip()
+        if clinic_visibility_query:
+            steps.append(
+                (
+                    "clinic_public_visibility_report",
+                    [
+                        "clinic_public_visibility_report.py",
+                        "--clinic",
+                        clinic_visibility_query,
+                        "--base-url",
+                        args.production_base_url,
+                        "--timeout",
+                        str(args.production_timeout),
+                        "--missing-limit",
+                        str(args.clinic_visibility_missing_limit),
+                        "--json",
+                    ],
+                    max(45, args.production_timeout * 10),
+                )
+            )
+    if args.public_freshness:
+        command = [
+            "check_public_site_freshness.py",
+            "--base-url",
+            args.production_base_url,
+            "--timeout",
+            str(args.production_timeout),
+            "--missing-limit",
+            str(args.public_freshness_missing_limit),
+            "--json",
+        ]
+        if args.public_freshness_slug:
+            command += ["--slug", args.public_freshness_slug]
+        if args.public_freshness_clinic:
+            command += ["--clinic", args.public_freshness_clinic]
+        steps.append(
+            (
+                "check_public_site_freshness",
+                command,
+                max(45, args.production_timeout * 8),
+            )
+        )
     return steps
 
 
@@ -571,6 +903,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--apply-safe", action="store_true", help="Run safe internal writes; never publish or edit clinics.")
     parser.add_argument("--review-limit", type=int, default=100)
     parser.add_argument("--seed-source-limit", type=int, default=20)
+    parser.add_argument("--team-source-limit", type=int, default=0, help="Optional discovery of official team/about source pages.")
+    parser.add_argument("--team-source-clinic-slug", help="Limit optional team-source discovery to one clinic.")
+    parser.add_argument("--team-source-max-links", type=int, default=3)
+    parser.add_argument("--google-link-limit", type=int, default=0, help="Optional discovery of official Google Maps/review links.")
+    parser.add_argument("--google-link-clinic-slug", help="Limit optional Google-link discovery to one clinic.")
+    parser.add_argument("--google-link-replace-existing", action="store_true", help="Refresh matching open review cards.")
+    parser.add_argument(
+        "--google-link-allow-multiple-open-clinic-reviews",
+        action="store_true",
+        help="Allow Google-link proposals even when another enrichment card is open for the same clinic.",
+    )
     parser.add_argument("--source-limit", type=int, default=40)
     parser.add_argument("--monitor-limit", type=int, default=40)
     parser.add_argument("--source-change-limit", type=int, default=10)
@@ -586,12 +929,41 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-coverage-limit", type=int, default=12)
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
     parser.add_argument("--backlog-brief-limit", type=int, default=8)
+    parser.add_argument(
+        "--google-link-reconciliation",
+        action="store_true",
+        help="Optionally reconcile open Google Maps/review proposals; read-only.",
+    )
+    parser.add_argument("--google-link-reconciliation-clinic", default="", help="Clinic name, slug or review-title fragment for Google link reconciliation.")
+    parser.add_argument("--google-link-reconciliation-limit", type=int, default=8)
+    parser.add_argument(
+        "--specialist-reconciliation",
+        action="store_true",
+        help="Optionally reconcile published/proposed/internal specialists; read-only.",
+    )
+    parser.add_argument("--specialist-reconciliation-clinic", default="", help="Clinic name or slug for specialist reconciliation.")
+    parser.add_argument("--specialist-reconciliation-limit", type=int, default=5)
     parser.add_argument("--fetch-timeout", type=int, default=12)
     parser.add_argument(
         "--production-health",
         action="store_true",
         help="Optionally check public production URLs; read-only and network-dependent.",
     )
+    parser.add_argument(
+        "--public-freshness",
+        action="store_true",
+        help="Optionally compare Supabase public feed with deployed clinic pages; read-only and network-dependent.",
+    )
+    parser.add_argument("--public-freshness-slug", default="", help="Limit public freshness to one clinic slug.")
+    parser.add_argument("--public-freshness-clinic", default="", help="Limit public freshness to clinics matching a normal name, city or slug.")
+    parser.add_argument("--public-freshness-missing-limit", type=int, default=8)
+    parser.add_argument(
+        "--clinic-visibility",
+        action="store_true",
+        help="Optionally explain one clinic's public visibility state; read-only and network-dependent.",
+    )
+    parser.add_argument("--clinic-visibility-clinic", default="", help="Clinic name or slug for the visibility diagnostic.")
+    parser.add_argument("--clinic-visibility-missing-limit", type=int, default=30)
     parser.add_argument(
         "--strict-editorial",
         action="store_true",
@@ -605,8 +977,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-open-reviews-for-safe-writes",
         type=int,
-        default=SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
-        help="In apply-safe mode, skip review-card writing steps once open reviews reach this count. Use 0 to disable.",
+        default=DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP,
+        help="In apply-safe mode, skip review-card writing steps once open reviews enter the near-full zone. Use 0 to disable.",
     )
     parser.add_argument("--production-base-url", default="https://www.vitalarga.com")
     parser.add_argument("--production-timeout", type=int, default=12)
@@ -618,6 +990,8 @@ def main() -> int:
     if min(
         args.review_limit,
         args.seed_source_limit,
+        args.team_source_limit,
+        args.google_link_limit,
         args.source_limit,
         args.monitor_limit,
         args.source_change_limit,
@@ -628,10 +1002,17 @@ def main() -> int:
         args.snapshot_retention_days,
         args.snapshot_keep_latest,
         args.snapshot_retention_limit,
+        args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.google_link_reconciliation_limit,
+        args.specialist_reconciliation_limit,
+        args.public_freshness_missing_limit,
+        args.clinic_visibility_missing_limit,
         args.max_open_reviews_for_safe_writes,
     ) < 0:
         raise SystemExit("limits must be zero or greater.")
+    if args.team_source_max_links < 1:
+        raise SystemExit("--team-source-max-links must be at least 1.")
     if min(
         args.review_limit,
         args.seed_source_limit,
@@ -644,13 +1025,22 @@ def main() -> int:
         args.snapshot_retention_days,
         args.snapshot_keep_latest,
         args.snapshot_retention_limit,
+        args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.google_link_reconciliation_limit,
+        args.specialist_reconciliation_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")
     if args.fetch_timeout < 3 or args.fetch_timeout > 60:
         raise SystemExit("--fetch-timeout must be between 3 and 60 seconds.")
     if args.production_timeout < 3 or args.production_timeout > 60:
         raise SystemExit("--production-timeout must be between 3 and 60 seconds.")
+    if args.public_freshness_missing_limit < 1 or args.public_freshness_missing_limit > 30:
+        raise SystemExit("--public-freshness-missing-limit must be between 1 and 30.")
+    if args.clinic_visibility_missing_limit < 1 or args.clinic_visibility_missing_limit > 30:
+        raise SystemExit("--clinic-visibility-missing-limit must be between 1 and 30.")
+    if args.clinic_visibility and not (args.clinic_visibility_clinic or args.public_freshness_clinic or args.public_freshness_slug):
+        raise SystemExit("--clinic-visibility needs --clinic-visibility-clinic or a public freshness clinic/slug.")
 
     steps = []
     review_card_writes_allowed = True

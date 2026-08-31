@@ -12,6 +12,11 @@ import sys
 from datetime import datetime
 from typing import Any
 
+from google_maps_url_rules import (
+    coalesced_jsonb_text_sql,
+    google_maps_profile_link_predicate,
+    google_maps_profile_url_sql,
+)
 from submit_discovery_candidates import (
     get_default_admin_email,
     load_env_file,
@@ -45,6 +50,11 @@ def parse_timestamp(value: Any) -> str:
 
 
 def load_digest(admin_email: str, limit: int, local_env: dict[str, str]) -> dict[str, Any]:
+    has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
+    proposed_google_maps_check = google_maps_profile_url_sql("proposed.value")
+    location_maps_check = google_maps_profile_url_sql(
+        coalesced_jsonb_text_sql("location.value", ("maps_url", "google_maps_url", "map_url"))
+    )
     sql = f"""
 with claims as (
   select set_config(
@@ -64,6 +74,14 @@ publication_control as (
 typed_reviews as (
   select
     case
+      when review_type = 'clinic_claim_request'
+        then 'clinic_claim_request'
+      when review_type = 'candidate_clinic'
+        and coalesce(payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+        then 'portal_recommended_clinic'
+      when review_type = 'clinic_profile_enrichment'
+        and coalesce(payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+        then 'portal_profile_change'
       when review_type = 'clinic_quality_audit'
         and payload ->> 'quality_context' = 'blocking_claims'
         then 'blocking_claim_review'
@@ -86,6 +104,32 @@ reviews_by_type as (
     group by review_type
   ) grouped
 ),
+portal_reviews as (
+  select jsonb_build_object(
+    'claim_access_open', count(*) filter (where rq.review_type = 'clinic_claim_request'),
+    'recommended_clinic_open', count(*) filter (
+      where rq.review_type = 'candidate_clinic'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+    ),
+    'profile_change_open', count(*) filter (
+      where rq.review_type = 'clinic_profile_enrichment'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+    ),
+    'open_total', count(*) filter (
+      where rq.review_type = 'clinic_claim_request'
+        or (
+          rq.review_type = 'candidate_clinic'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+        )
+        or (
+          rq.review_type = 'clinic_profile_enrichment'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+        )
+    )
+  ) as data
+  from public.review_queue rq
+  where rq.status = 'open'
+),
 open_reviews as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.priority desc, items.created_at asc), '[]'::jsonb) as data
   from (
@@ -93,6 +137,14 @@ open_reviews as (
       rq.id,
       rq.review_type as raw_review_type,
       case
+        when rq.review_type = 'clinic_claim_request'
+          then 'clinic_claim_request'
+        when rq.review_type = 'candidate_clinic'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+          then 'portal_recommended_clinic'
+        when rq.review_type = 'clinic_profile_enrichment'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+          then 'portal_profile_change'
         when rq.review_type = 'clinic_quality_audit'
           and rq.payload ->> 'quality_context' = 'blocking_claims'
           then 'blocking_claim_review'
@@ -103,7 +155,28 @@ open_reviews as (
       rq.created_at,
       rq.updated_at,
       c.slug as clinic_slug,
-      c.display_name as clinic_name
+      c.display_name as clinic_name,
+      case
+        when rq.review_type = 'candidate_clinic' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{candidate,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{candidate,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,professionals}}') end,
+          case when jsonb_typeof(rq.payload -> 'profesionales') = 'array'
+            then jsonb_array_length(rq.payload -> 'profesionales') end,
+          0
+        )
+        when rq.review_type = 'clinic_profile_enrichment' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{proposed_fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_fields,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{proposed_current_data,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_current_data,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{fields,profesionales}}') end,
+          0
+        )
+        else 0
+      end as professionals_count
     from public.review_queue rq
     left join public.clinics c on c.id = rq.clinic_id
     where rq.status = 'open'
@@ -125,6 +198,7 @@ enrichment_review_groups as (
   left join public.clinics c on c.id = rq.clinic_id
   where rq.status = 'open'
     and rq.review_type = 'clinic_profile_enrichment'
+    and not (coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id')
     and rq.clinic_id is not null
   group by rq.clinic_id, c.slug, c.display_name, c.city, c.status
 ),
@@ -166,6 +240,9 @@ review_clinic_workgroups as (
     c.status as clinic_status,
     count(*) as open_count,
     count(*) filter (
+      where rq.review_type = 'clinic_claim_request'
+    ) as portal_claim_reviews,
+    count(*) filter (
       where rq.review_type = 'clinic_quality_audit'
         and rq.payload ->> 'quality_context' = 'blocking_claims'
     ) as blocking_claim_reviews,
@@ -173,9 +250,23 @@ review_clinic_workgroups as (
       where rq.review_type = 'clinic_quality_audit'
         and coalesce(rq.payload ->> 'quality_context', '') <> 'blocking_claims'
     ) as quality_reviews,
-    count(*) filter (where rq.review_type = 'clinic_profile_enrichment') as enrichment_reviews,
+    count(*) filter (
+      where rq.review_type = 'clinic_profile_enrichment'
+        and not (coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id')
+    ) as enrichment_reviews,
+    count(*) filter (
+      where rq.review_type = 'clinic_profile_enrichment'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+    ) as portal_change_reviews,
     count(*) filter (where rq.review_type = 'source_change_detected') as source_change_reviews,
-    count(*) filter (where rq.review_type = 'candidate_clinic') as candidate_reviews,
+    count(*) filter (
+      where rq.review_type = 'candidate_clinic'
+        and not (coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id')
+    ) as candidate_reviews,
+    count(*) filter (
+      where rq.review_type = 'candidate_clinic'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+    ) as portal_recommendation_reviews,
     max(rq.priority) as max_priority,
     min(rq.created_at) as oldest_created_at
   from public.review_queue rq
@@ -195,16 +286,21 @@ review_first_clinic_workgroup as (
           city,
           clinic_status,
           open_count,
+          portal_claim_reviews,
           blocking_claim_reviews,
           quality_reviews,
           enrichment_reviews,
+          portal_change_reviews,
           source_change_reviews,
           candidate_reviews,
+          portal_recommendation_reviews,
           max_priority,
           oldest_created_at
         from review_clinic_workgroups
         order by
+          portal_claim_reviews desc,
           blocking_claim_reviews desc,
+          portal_change_reviews desc,
           open_count desc,
           max_priority desc,
           oldest_created_at asc,
@@ -214,6 +310,162 @@ review_first_clinic_workgroup as (
     ),
     '{{}}'::jsonb
   ) as data
+),
+google_link_review_rows as (
+  select
+    rq.id,
+    rq.review_type as raw_review_type,
+    case
+      when rq.review_type = 'clinic_quality_audit'
+        and rq.payload ->> 'quality_context' = 'blocking_claims'
+        then 'blocking_claim_review'
+      else rq.review_type
+    end as review_type,
+    rq.title,
+    rq.priority,
+    rq.created_at,
+    rq.updated_at,
+    c.slug as clinic_slug,
+    c.display_name as clinic_name
+  from public.review_queue rq
+  left join public.clinics c on c.id = rq.clinic_id
+  where rq.status = 'open'
+    and (
+      exists (
+        select 1
+        from jsonb_each_text(
+          (case when jsonb_typeof(rq.payload -> 'proposed_fields') = 'object' then rq.payload -> 'proposed_fields' else '{{}}'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
+        ) proposed(key, value)
+        where (
+          proposed.key in ('maps_url', 'google_maps_url')
+          and {proposed_google_maps_check}
+        ) or (
+          proposed.key in ('google_reviews_url', 'reviews_url')
+          and btrim(proposed.value) ~* '^https?://'
+        )
+      )
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          (case when jsonb_typeof(rq.payload #> '{{proposed_fields,locations}}') = 'array' then rq.payload #> '{{proposed_fields,locations}}' else '[]'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload #> '{{proposed_current_data,locations}}') = 'array' then rq.payload #> '{{proposed_current_data,locations}}' else '[]'::jsonb end) ||
+          (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
+        ) location(value)
+        where {location_maps_check}
+          or coalesce(
+            nullif(btrim(location.value ->> 'google_reviews_url'), ''),
+            nullif(btrim(location.value ->> 'reviews_url'), ''),
+            nullif(btrim(location.value ->> 'valoraciones_url'), '')
+          ) ~* '^https?://'
+      )
+    )
+),
+google_link_reviews as (
+  select jsonb_build_object(
+    'open_count', count(*),
+    'first_review', coalesce(
+      (
+        select to_jsonb(items)
+        from (
+          select
+            id,
+            raw_review_type,
+            review_type,
+            title,
+            priority,
+            created_at,
+            updated_at,
+            clinic_slug,
+            clinic_name
+          from google_link_review_rows
+          order by priority desc, created_at asc
+          limit 1
+        ) items
+      ),
+      '{{}}'::jsonb
+    )
+  ) as data
+  from google_link_review_rows
+),
+specialist_review_rows as (
+  select *
+  from (
+    select
+      rq.id,
+      rq.review_type as raw_review_type,
+      case
+        when rq.review_type = 'clinic_quality_audit'
+          and rq.payload ->> 'quality_context' = 'blocking_claims'
+          then 'blocking_claim_review'
+        else rq.review_type
+      end as review_type,
+      rq.title,
+      rq.priority,
+      rq.created_at,
+      rq.updated_at,
+      c.slug as clinic_slug,
+      c.display_name as clinic_name,
+      case
+        when rq.review_type = 'candidate_clinic' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{candidate,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{candidate,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{candidate,professionals}}') end,
+          case when jsonb_typeof(rq.payload -> 'profesionales') = 'array'
+            then jsonb_array_length(rq.payload -> 'profesionales') end,
+          0
+        )
+        when rq.review_type = 'clinic_profile_enrichment' then coalesce(
+          case when jsonb_typeof(rq.payload #> '{{proposed_fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_fields,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{proposed_current_data,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_current_data,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{fields,profesionales}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{fields,profesionales}}') end,
+          case when jsonb_typeof(rq.payload #> '{{proposed_fields,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{proposed_fields,professionals}}') end,
+          case when jsonb_typeof(rq.payload #> '{{fields,professionals}}') = 'array'
+            then jsonb_array_length(rq.payload #> '{{fields,professionals}}') end,
+          0
+        )
+        else 0
+      end as professionals_count
+    from public.review_queue rq
+    left join public.clinics c on c.id = rq.clinic_id
+    where rq.status = 'open'
+  ) rows
+  where professionals_count > 0
+),
+specialist_reviews as (
+  select jsonb_build_object(
+    'open_count', count(*),
+    'professionals_count', coalesce(sum(professionals_count), 0),
+    'first_review', coalesce(
+      (
+        select to_jsonb(items)
+        from (
+          select
+            id,
+            raw_review_type,
+            review_type,
+            title,
+            priority,
+            created_at,
+            updated_at,
+            clinic_slug,
+            clinic_name,
+            professionals_count
+          from specialist_review_rows
+          order by professionals_count desc, priority desc, created_at asc
+          limit 1
+        ) items
+      ),
+      '{{}}'::jsonb
+    )
+  ) as data
+  from specialist_review_rows
 ),
 review_examples_by_type as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
@@ -227,12 +479,21 @@ review_examples_by_type as (
       created_at,
       updated_at,
       clinic_slug,
-      clinic_name
+      clinic_name,
+      professionals_count
     from (
       select
         rq.id,
         rq.review_type as raw_review_type,
         case
+          when rq.review_type = 'clinic_claim_request'
+            then 'clinic_claim_request'
+          when rq.review_type = 'candidate_clinic'
+            and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+            then 'portal_recommended_clinic'
+          when rq.review_type = 'clinic_profile_enrichment'
+            and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+            then 'portal_profile_change'
           when rq.review_type = 'clinic_quality_audit'
             and rq.payload ->> 'quality_context' = 'blocking_claims'
             then 'blocking_claim_review'
@@ -244,8 +505,37 @@ review_examples_by_type as (
         rq.updated_at,
         c.slug as clinic_slug,
         c.display_name as clinic_name,
+        case
+          when rq.review_type = 'candidate_clinic' then coalesce(
+            case when jsonb_typeof(rq.payload #> '{{candidate,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{candidate,profesionales}}') end,
+            case when jsonb_typeof(rq.payload #> '{{candidate,professionals}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{candidate,professionals}}') end,
+            case when jsonb_typeof(rq.payload -> 'profesionales') = 'array'
+              then jsonb_array_length(rq.payload -> 'profesionales') end,
+            0
+          )
+          when rq.review_type = 'clinic_profile_enrichment' then coalesce(
+            case when jsonb_typeof(rq.payload #> '{{proposed_fields,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{proposed_fields,profesionales}}') end,
+            case when jsonb_typeof(rq.payload #> '{{proposed_current_data,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{proposed_current_data,profesionales}}') end,
+            case when jsonb_typeof(rq.payload #> '{{fields,profesionales}}') = 'array'
+              then jsonb_array_length(rq.payload #> '{{fields,profesionales}}') end,
+            0
+          )
+          else 0
+        end as professionals_count,
         row_number() over (
           partition by case
+            when rq.review_type = 'clinic_claim_request'
+              then 'clinic_claim_request'
+            when rq.review_type = 'candidate_clinic'
+              and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+              then 'portal_recommended_clinic'
+            when rq.review_type = 'clinic_profile_enrichment'
+              and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+              then 'portal_profile_change'
             when rq.review_type = 'clinic_quality_audit'
               and rq.payload ->> 'quality_context' = 'blocking_claims'
               then 'blocking_claim_review'
@@ -558,8 +848,57 @@ visible_profile_base as (
         )), '') is not null
       )
     ) as has_address,
+    {has_google_maps} as has_google_maps,
+    (
+      nullif(btrim(coalesce(c.current_data ->> 'google_reviews_url', c.current_data ->> 'reviews_url', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'google_reviews_url',
+          location.value ->> 'reviews_url',
+          location.value ->> 'valoraciones_url',
+          ''
+        )), '') is not null
+      )
+    ) as has_google_reviews,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null
       or nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_contact,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'years_in_practice',
+      c.current_data ->> 'years_active',
+      c.current_data ->> 'founded_year',
+      c.current_data #>> '{{transparency,years_in_practice}}',
+      c.current_data #>> '{{transparency,years_active}}',
+      ''
+    )), '') is not null as has_years_in_practice,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'specialists_count',
+      c.current_data ->> 'num_specialists',
+      c.current_data ->> 'specialists_public_count',
+      c.current_data #>> '{{transparency,specialists_count}}',
+      ''
+    )), '') is not null as has_specialists_count,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'team_credentialing_visible',
+      c.current_data ->> 'medical_license_visible',
+      c.current_data ->> 'colegiacion_visible',
+      c.current_data #>> '{{team,credentialing_visible}}',
+      ''
+    )), '') is not null as has_team_credentialing_visible,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'public_pricing',
+      c.current_data ->> 'prices_public',
+      c.current_data ->> 'price_public',
+      c.current_data #>> '{{prices,public_status}}',
+      ''
+    )), '') is not null as has_public_pricing,
     case
       when jsonb_typeof(c.current_data -> 'services') = 'array'
         then jsonb_array_length(c.current_data -> 'services')
@@ -613,12 +952,18 @@ visible_profile_checks as (
       case when not has_summary then 'Resumen corto o vacío' end,
       case when not has_website then 'Web oficial' end,
       case when not has_address then 'Dirección' end,
+      case when not has_google_maps then 'Google Maps de clínica' end,
+      case when not has_google_reviews then 'Valoraciones Google' end,
       case when not has_contact then 'Email o teléfono' end,
       case when not has_services then 'Servicios' end,
       case when not has_specialties then 'Especialidades' end,
       case when not has_units then 'Unidades clínicas' end,
       case when not has_specialists then 'Especialistas publicados' end,
-      case when not has_technology then 'Tecnología destacada' end
+      case when not has_technology then 'Tecnología destacada' end,
+      case when not has_years_in_practice then 'Años en ejercicio' end,
+      case when not has_specialists_count then 'Número de especialistas' end,
+      case when not has_team_credentialing_visible then 'Colegiación visible' end,
+      case when not has_public_pricing then 'Precio público' end
     ], null) as pending_fields
   from visible_profile_base
 ),
@@ -626,38 +971,26 @@ profile_completeness as (
   select jsonb_build_object(
     'visible_clinics', count(*),
     'without_pending_fields', count(*) filter (
-      where has_summary
-        and has_website
-        and has_address
-        and has_contact
-        and has_services
-        and has_specialties
-        and has_units
-        and has_specialists
-        and has_technology
+      where coalesce(array_length(pending_fields, 1), 0) = 0
     ),
     'with_pending_fields', count(*) filter (
-      where not (
-        has_summary
-        and has_website
-        and has_address
-        and has_contact
-        and has_services
-        and has_specialties
-        and has_units
-        and has_specialists
-        and has_technology
-      )
+      where coalesce(array_length(pending_fields, 1), 0) > 0
     ),
     'pending_summary', count(*) filter (where not has_summary),
     'pending_website', count(*) filter (where not has_website),
     'pending_address', count(*) filter (where not has_address),
+    'pending_google_maps', count(*) filter (where not has_google_maps),
+    'pending_google_reviews', count(*) filter (where not has_google_reviews),
     'pending_contact', count(*) filter (where not has_contact),
     'pending_services', count(*) filter (where not has_services),
     'pending_specialties', count(*) filter (where not has_specialties),
     'pending_units', count(*) filter (where not has_units),
     'pending_specialists', count(*) filter (where not has_specialists),
-    'pending_technology', count(*) filter (where not has_technology)
+    'pending_technology', count(*) filter (where not has_technology),
+    'pending_years_in_practice', count(*) filter (where not has_years_in_practice),
+    'pending_specialists_count', count(*) filter (where not has_specialists_count),
+    'pending_team_credentialing_visible', count(*) filter (where not has_team_credentialing_visible),
+    'pending_public_pricing', count(*) filter (where not has_public_pricing)
   ) as data
   from visible_profile_checks
 ),
@@ -689,16 +1022,117 @@ profile_next_target as (
     ),
     '{{}}'::jsonb
   ) as data
+),
+visible_location_rows as (
+  select
+    c.id,
+    location.ordinality as location_index,
+    nullif(btrim(coalesce(
+      location.value ->> 'address',
+      location.value ->> 'direccion',
+      location.value ->> 'dirección',
+      case
+        when jsonb_typeof(location.value) = 'string'
+          then location.value #>> '{{}}'
+        else ''
+      end
+    )), '') is not null as has_address,
+    {location_maps_check} as has_google_maps_profile,
+    nullif(btrim(coalesce(
+      location.value ->> 'google_reviews_url',
+      location.value ->> 'reviews_url',
+      location.value ->> 'valoraciones_url',
+      ''
+    )), '') is not null as has_google_reviews
+  from public.clinics c
+  cross join lateral jsonb_array_elements(
+    case
+      when jsonb_typeof(c.current_data -> 'locations') = 'array'
+        then c.current_data -> 'locations'
+      else '[]'::jsonb
+    end
+  ) with ordinality as location(value, ordinality)
+  where c.status in ('published', 'preliminary')
+),
+visible_location_checks as (
+  select
+    *,
+    count(*) over (partition by id) as clinic_location_count
+  from visible_location_rows
+),
+visible_location_review_proposals as (
+  select
+    rq.clinic_id,
+    count(*) as open_review_count,
+    coalesce(sum(jsonb_array_length(proposed.locations)), 0) as proposed_location_count
+  from public.review_queue rq
+  join public.clinics c on c.id = rq.clinic_id
+    and c.status in ('published', 'preliminary')
+  cross join lateral (
+    select case
+      when jsonb_typeof(coalesce(
+        rq.payload #> '{{proposed_fields,locations}}',
+        rq.payload #> '{{proposed_current_data,locations}}',
+        rq.payload #> '{{fields,locations}}'
+      )) = 'array'
+        then coalesce(
+          rq.payload #> '{{proposed_fields,locations}}',
+          rq.payload #> '{{proposed_current_data,locations}}',
+          rq.payload #> '{{fields,locations}}'
+        )
+      else '[]'::jsonb
+    end as locations
+  ) proposed
+  where rq.status = 'open'
+    and rq.review_type = 'clinic_profile_enrichment'
+    and jsonb_array_length(proposed.locations) > 0
+  group by rq.clinic_id
+),
+visible_location_claims as (
+  select
+    fc.clinic_id,
+    count(*) as claim_count,
+    coalesce(sum(
+      case
+        when jsonb_typeof(fc.value) = 'array' then jsonb_array_length(fc.value)
+        when fc.value is not null then 1
+        else 0
+      end
+    ), 0) as location_claim_count
+  from public.field_claims fc
+  join public.clinics c on c.id = fc.clinic_id
+    and c.status in ('published', 'preliminary')
+  where fc.field_path = 'location.locations'
+    and coalesce(fc.verification_status, '') not in ('rejected', 'stale')
+  group by fc.clinic_id
+),
+location_coverage as (
+  select jsonb_build_object(
+    'clinics_with_locations', count(distinct id),
+    'multi_location_clinics', count(distinct id) filter (where clinic_location_count > 1),
+    'total_locations', count(*),
+    'locations_missing_address', count(*) filter (where not has_address),
+    'locations_missing_google_maps_profile', count(*) filter (where not has_google_maps_profile),
+    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews),
+    'clinics_with_location_proposals', coalesce((select count(*) from visible_location_review_proposals), 0),
+    'proposed_location_rows', coalesce((select sum(proposed_location_count) from visible_location_review_proposals), 0),
+    'clinics_with_location_claims', coalesce((select count(*) from visible_location_claims), 0),
+    'internal_location_rows', coalesce((select sum(location_claim_count) from visible_location_claims), 0)
+  ) as data
+  from visible_location_checks
 )
 select jsonb_build_object(
   'admin_email', {sql_literal(admin_email)},
   'summary', (select data from summary),
   'publication_control', (select data from publication_control),
   'reviews_by_type', (select data from reviews_by_type),
+  'portal_reviews', (select data from portal_reviews),
   'open_reviews', (select data from open_reviews),
   'review_backlog_quality', (select data from review_backlog_quality),
   'review_backlog_first_duplicate_target', (select data from review_backlog_first_duplicate_target),
   'review_first_clinic_workgroup', (select data from review_first_clinic_workgroup),
+  'google_link_reviews', (select data from google_link_reviews),
+  'specialist_reviews', (select data from specialist_reviews),
   'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
@@ -711,6 +1145,7 @@ select jsonb_build_object(
   'specialist_next_target', (select data from specialist_next_target),
   'profile_completeness', (select data from profile_completeness),
   'profile_next_target', (select data from profile_next_target),
+  'location_coverage', (select data from location_coverage),
   'generated_at', now()
 );
 """
@@ -724,12 +1159,23 @@ def line(label: str, value: Any) -> str:
 def format_review_type(review_type: str) -> str:
     labels = {
         "candidate_clinic": "clinicas candidatas",
+        "clinic_claim_request": "solicitudes de acceso",
         "clinic_profile_enrichment": "mejoras de ficha",
         "clinic_quality_audit": "auditorias de calidad",
         "blocking_claim_review": "claims bloqueantes",
+        "portal_profile_change": "cambios pedidos por clinicas",
+        "portal_recommended_clinic": "clinicas sugeridas por usuarios",
         "source_change_detected": "cambios de fuente",
     }
     return labels.get(review_type, review_type.replace("_", " "))
+
+
+def review_professionals_note(item: dict[str, Any]) -> str:
+    count = as_int(item.get("professionals_count"))
+    if not count:
+        return ""
+    word = "especialista" if count == 1 else "especialistas"
+    return f" · {count} {word}"
 
 
 def maturity_blockers(digest: dict[str, Any]) -> list[str]:
@@ -761,35 +1207,143 @@ def publication_control_status(digest: dict[str, Any]) -> str:
     control = digest.get("publication_control") or {}
     if not control.get("rebuild_hook_configured"):
         return "no configurada"
+    if control.get("pending_public_site_rebuild"):
+        return "con cambios pendientes de verse online"
     minutes = as_int(control.get("rebuild_batch_minutes"))
     if minutes > 1:
         return f"agrupada cada {minutes} min"
     return "directa"
 
 
+def portal_summary(digest: dict[str, Any]) -> dict[str, Any]:
+    summary = digest.get("summary") or {}
+    portal = summary.get("portal") or {}
+    return portal if isinstance(portal, dict) else {}
+
+
+def portal_review_counts(digest: dict[str, Any]) -> dict[str, int]:
+    portal_reviews = digest.get("portal_reviews") or {}
+    if not isinstance(portal_reviews, dict):
+        return {
+            "claim_access_open": 0,
+            "recommended_clinic_open": 0,
+            "profile_change_open": 0,
+            "open_total": 0,
+        }
+    return {
+        "claim_access_open": as_int(portal_reviews.get("claim_access_open")),
+        "recommended_clinic_open": as_int(portal_reviews.get("recommended_clinic_open")),
+        "profile_change_open": as_int(portal_reviews.get("profile_change_open")),
+        "open_total": as_int(portal_reviews.get("open_total")),
+    }
+
+
+def portal_pending_total(digest: dict[str, Any]) -> int:
+    portal = portal_summary(digest)
+    review_counts = portal_review_counts(digest)
+    review_type_total = 0
+    for item in digest.get("reviews_by_type") or []:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("review_type") or "") in (
+            "clinic_claim_request",
+            "portal_profile_change",
+            "portal_recommended_clinic",
+        ):
+            review_type_total += as_int(item.get("open_count"))
+    summary_total = as_int(portal.get("claim_requests_pending")) + as_int(portal.get("change_requests_pending"))
+    return max(summary_total, review_counts["open_total"], review_type_total)
+
+
+def portal_status(digest: dict[str, Any]) -> str:
+    portal = portal_summary(digest)
+    review_counts = portal_review_counts(digest)
+    pending_requests = as_int(portal.get("claim_requests_pending"))
+    pending_changes = as_int(portal.get("change_requests_pending"))
+    access_open = review_counts["claim_access_open"]
+    recommended_open = review_counts["recommended_clinic_open"]
+    profile_open = review_counts["profile_change_open"]
+    active_memberships = as_int(portal.get("active_memberships"))
+    identity_confirmed = as_int(portal.get("identity_confirmed"))
+
+    if portal_pending_total(digest):
+        details = []
+        if access_open:
+            details.append(f"{access_open} {plural(access_open, 'acceso', 'accesos')}")
+        if recommended_open:
+            details.append(f"{recommended_open} {plural(recommended_open, 'sugerencia', 'sugerencias')}")
+        if profile_open:
+            details.append(f"{profile_open} {plural(profile_open, 'cambio', 'cambios')}")
+        if not details:
+            if pending_requests:
+                details.append(
+                    f"{pending_requests} {plural(pending_requests, 'solicitud/recomendación', 'solicitudes/recomendaciones')}"
+                )
+            if pending_changes:
+                details.append(f"{pending_changes} {plural(pending_changes, 'cambio', 'cambios')}")
+        if not details:
+            details.append(f"{portal_pending_total(digest)} {plural(portal_pending_total(digest), 'tarjeta', 'tarjetas')}")
+        return (
+            f"{portal_pending_total(digest)} pendientes: {', '.join(details)}; "
+            f"{identity_confirmed} {plural(identity_confirmed, 'ficha', 'fichas')} con datos confirmados por el centro"
+        )
+
+    return (
+        f"sin solicitudes pendientes; {active_memberships} {plural(active_memberships, 'cuenta activa', 'cuentas activas')}; "
+        f"{identity_confirmed} {plural(identity_confirmed, 'ficha', 'fichas')} con datos confirmados por el centro"
+    )
+
+
+def next_portal_action(digest: dict[str, Any]) -> str:
+    review_counts = portal_review_counts(digest)
+    portal = portal_summary(digest)
+    access_open = review_counts["claim_access_open"]
+    recommended_open = review_counts["recommended_clinic_open"]
+    profile_open = review_counts["profile_change_open"]
+    if access_open:
+        return f"Revisar {access_open} {plural(access_open, 'solicitud de acceso', 'solicitudes de acceso')}"
+    if profile_open:
+        return f"Revisar {profile_open} {plural(profile_open, 'cambio pedido por clínica', 'cambios pedidos por clínicas')}"
+    if recommended_open:
+        return f"Valorar {recommended_open} {plural(recommended_open, 'clínica sugerida por usuario', 'clínicas sugeridas por usuarios')}"
+    pending_requests = as_int(portal.get("claim_requests_pending"))
+    pending_changes = as_int(portal.get("change_requests_pending"))
+    if pending_requests:
+        return f"Abrir el portal en el panel y revisar {pending_requests} {plural(pending_requests, 'solicitud/recomendación', 'solicitudes/recomendaciones')}"
+    if pending_changes:
+        return f"Abrir el portal en el panel y revisar {pending_changes} {plural(pending_changes, 'cambio pendiente', 'cambios pendientes')}"
+    return "sin solicitudes pendientes"
+
+
 PROFILE_COMPLETENESS_FIELDS = [
     ("pending_summary", "Resumen"),
     ("pending_website", "Web oficial"),
     ("pending_address", "Dirección"),
+    ("pending_google_maps", "Google Maps"),
+    ("pending_google_reviews", "Valoraciones Google"),
     ("pending_contact", "Contacto"),
     ("pending_services", "Servicios"),
     ("pending_specialties", "Especialidades"),
     ("pending_units", "Unidades"),
     ("pending_specialists", "Especialistas"),
     ("pending_technology", "Tecnología"),
+    ("pending_years_in_practice", "Años en ejercicio"),
+    ("pending_specialists_count", "Número de especialistas"),
+    ("pending_team_credentialing_visible", "Colegiación visible"),
+    ("pending_public_pricing", "Precio público"),
 ]
 
 
 def top_pending_profile_field(digest: dict[str, Any]) -> str:
     completeness = digest.get("profile_completeness") or {}
     rows = [
-        (label, as_int(completeness.get(key)))
-        for key, label in PROFILE_COMPLETENESS_FIELDS
+        (index, label, as_int(completeness.get(key)))
+        for index, (key, label) in enumerate(PROFILE_COMPLETENESS_FIELDS)
         if as_int(completeness.get(key))
     ]
     if not rows:
         return "sin campo pendiente"
-    label, count = sorted(rows, key=lambda item: (-item[1], item[0]))[0]
+    _, label, count = sorted(rows, key=lambda item: (-item[2], item[0]))[0]
     return f"{label} · {count} fichas"
 
 
@@ -805,9 +1359,12 @@ def first_clinic_workgroup(digest: dict[str, Any]) -> str:
     open_count = as_int(target.get("open_count"))
     parts = []
     for key, singular, plural_text in [
+        ("portal_claim_reviews", "solicitud de acceso", "solicitudes de acceso"),
         ("blocking_claim_reviews", "claim bloqueante", "claims bloqueantes"),
+        ("portal_change_reviews", "cambio portal", "cambios portal"),
         ("enrichment_reviews", "mejora", "mejoras"),
         ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
+        ("portal_recommendation_reviews", "sugerencia", "sugerencias"),
         ("quality_reviews", "auditoría", "auditorías"),
         ("candidate_reviews", "candidata", "candidatas"),
     ]:
@@ -830,7 +1387,7 @@ def next_specialist_action(digest: dict[str, Any]) -> str:
     if reviews:
         return f"Revisar {name}: ya tiene {reviews} {plural(reviews, 'revision abierta', 'revisiones abiertas')}"
     if claims:
-        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'claim interno', 'claims internos')}"
+        return f"Revisar {name}: ya tiene {claims} {plural(claims, 'nombre detectado', 'nombres detectados')}"
     return f"Buscar especialistas publicados para {name} solo en fuentes oficiales"
 
 
@@ -893,6 +1450,33 @@ def source_coverage_status(digest: dict[str, Any]) -> str:
     )
 
 
+def location_coverage_status(digest: dict[str, Any]) -> str:
+    coverage = digest.get("location_coverage") or {}
+    total = as_int(coverage.get("total_locations"))
+    proposals = as_int(coverage.get("proposed_location_rows"))
+    internal = as_int(coverage.get("internal_location_rows"))
+    parts = [
+        f"{total} sedes explícitas",
+    ]
+    if not total:
+        parts.append(f"{proposals} {plural(proposals, 'propuesta en bandeja', 'propuestas en bandeja')}")
+        parts.append(f"{internal} {plural(internal, 'interna detectada', 'internas detectadas')}")
+        return "; ".join(parts)
+    multi = as_int(coverage.get("multi_location_clinics"))
+    missing_maps = as_int(coverage.get("locations_missing_google_maps_profile"))
+    missing_reviews = as_int(coverage.get("locations_missing_google_reviews"))
+    missing_address = as_int(coverage.get("locations_missing_address"))
+    parts.extend([
+        f"{multi} {plural(multi, 'clínica multisede', 'clínicas multisede')}",
+        f"{proposals} {plural(proposals, 'propuesta en bandeja', 'propuestas en bandeja')}",
+        f"{internal} {plural(internal, 'interna detectada', 'internas detectadas')}",
+        f"{missing_maps} sin Maps de clínica",
+        f"{missing_reviews} sin valoraciones",
+        f"{missing_address} sin dirección",
+    ])
+    return "; ".join(parts)
+
+
 def next_action_label(digest: dict[str, Any]) -> str:
     failed = digest.get("recent_failed_jobs") or []
     open_reviews = digest.get("open_reviews") or []
@@ -903,8 +1487,14 @@ def next_action_label(digest: dict[str, Any]) -> str:
     }
     if failed:
         return "Revisar fallos recientes"
+    if reviews_by_type.get("clinic_claim_request"):
+        return "Revisar accesos del portal"
     if reviews_by_type.get("blocking_claim_review"):
         return "Revisar claim bloqueante"
+    if reviews_by_type.get("portal_profile_change"):
+        return "Revisar cambios pedidos por clínicas"
+    if reviews_by_type.get("portal_recommended_clinic"):
+        return "Valorar clínicas sugeridas por usuarios"
     if any(item.get("review_type") == "candidate_clinic" and as_int(item.get("priority")) >= 90 for item in open_reviews):
         return "Validar candidatas"
     if reviews_by_type.get("candidate_clinic"):
@@ -943,6 +1533,47 @@ def first_backlog_bottleneck(digest: dict[str, Any]) -> str:
     return f"Ordenar {name}"
 
 
+def google_link_review_status(digest: dict[str, Any]) -> str:
+    status = digest.get("google_link_reviews") or {}
+    if not isinstance(status, dict):
+        return "sin tarjetas con Google Maps"
+    count = as_int(status.get("open_count"))
+    if not count:
+        return "sin tarjetas con Google Maps"
+    first = status.get("first_review") or {}
+    name = str((first or {}).get("clinic_name") or (first or {}).get("clinic_slug") or "").strip()
+    title = str((first or {}).get("title") or "").strip()
+    if name and title and name.lower() not in title.lower():
+        first_label = f"{name}: {title}"
+    else:
+        first_label = title or name or "primera tarjeta"
+    return f"{count} {plural(count, 'tarjeta', 'tarjetas')}; primera: {first_label}"
+
+
+def specialist_review_status(digest: dict[str, Any]) -> str:
+    status = digest.get("specialist_reviews") or {}
+    if not isinstance(status, dict):
+        return "sin tarjetas con especialistas"
+    count = as_int(status.get("open_count"))
+    if not count:
+        return "sin tarjetas con especialistas"
+    professionals = as_int(status.get("professionals_count"))
+    first = status.get("first_review") or {}
+    name = str((first or {}).get("clinic_name") or (first or {}).get("clinic_slug") or "").strip()
+    title = str((first or {}).get("title") or "").strip()
+    first_count = as_int((first or {}).get("professionals_count"))
+    if name and title and name.lower() not in title.lower():
+        first_label = f"{name}: {title}"
+    else:
+        first_label = title or name or "primera tarjeta"
+    detail = f"{professionals} {plural(professionals, 'especialista propuesto', 'especialistas propuestos')}"
+    if first_count:
+        detail += f"; primera: {first_label} · {first_count} {plural(first_count, 'especialista', 'especialistas')}"
+    else:
+        detail += f"; primera: {first_label}"
+    return f"{count} {plural(count, 'tarjeta', 'tarjetas')}; {detail}"
+
+
 def format_digest(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
@@ -950,11 +1581,13 @@ def format_digest(digest: dict[str, Any]) -> str:
     jobs = summary.get("jobs") or {}
     evidence = summary.get("evidence") or {}
     automation = summary.get("automation") or {}
+    portal = portal_summary(digest)
     costs = digest.get("costs") or {}
     source_monitoring = digest.get("source_monitoring") or {}
     source_coverage = digest.get("source_coverage") or {}
     specialist_coverage = digest.get("specialist_coverage") or {}
     profile_completeness = digest.get("profile_completeness") or {}
+    location_coverage = digest.get("location_coverage") or {}
     backlog_quality = digest.get("review_backlog_quality") or {}
 
     output: list[str] = []
@@ -975,6 +1608,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     specialist_with = as_int(specialist_coverage.get("with_specialists"))
     if specialist_visible:
         output.append(line("Fichas con especialistas", f"{specialist_with}/{specialist_visible}"))
+        specialist_reviews = specialist_review_status(digest)
+        if specialist_reviews != "sin tarjetas con especialistas":
+            output.append(line("Tarjetas con especialistas", specialist_reviews))
         output.append(line("Siguiente especialistas", next_specialist_action(digest)))
     completeness_visible = as_int(profile_completeness.get("visible_clinics"))
     completeness_ready = as_int(profile_completeness.get("without_pending_fields"))
@@ -982,6 +1618,8 @@ def format_digest(digest: dict[str, Any]) -> str:
         output.append(line("Fichas sin campos pendientes medidos", f"{completeness_ready}/{completeness_visible}"))
         output.append(line("Campo mas pendiente", top_pending_profile_field(digest)))
         output.append(line("Siguiente ficha", next_profile_action(digest)))
+    if location_coverage:
+        output.append(line("Sedes", location_coverage_status(digest)))
     output.append("")
 
     output.append("## Automatizacion")
@@ -990,6 +1628,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Auto-publicacion", "activada" if auto_publish else "desactivada"))
     output.append(line("Modo sombra", "activo" if automation.get("shadow_mode_active") else "inactivo"))
     output.append(line("Publicacion web", publication_control_status(digest)))
+    last_change = parse_timestamp((digest.get("publication_control") or {}).get("last_public_site_change_at"))
+    if last_change != "-":
+        output.append(line("Ultimo cambio guardado", last_change))
     last_rebuild = parse_timestamp((digest.get("publication_control") or {}).get("last_public_site_rebuild_requested_at"))
     if last_rebuild != "-":
         output.append(line("Ultima peticion Netlify", last_rebuild))
@@ -1006,6 +1647,14 @@ def format_digest(digest: dict[str, Any]) -> str:
         output.append(line("Motivo principal", blockers[0]))
     output.append("")
 
+    output.append("## Portal clinicas")
+    output.append(line("Estado", portal_status(digest)))
+    output.append(line("Siguiente portal", next_portal_action(digest)))
+    if portal:
+        output.append(line("Cuentas activas", as_int(portal.get("active_memberships"))))
+        output.append(line("Datos confirmados por el centro", as_int(portal.get("identity_confirmed"))))
+    output.append("")
+
     output.append("## Trabajo abierto")
     output.append(line("Jobs en cola", as_int(jobs.get("queued"))))
     output.append(line("Jobs corriendo", as_int(jobs.get("running"))))
@@ -1015,6 +1664,12 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Coste registrado 7d", as_money(costs.get("last_7d_cents"))))
     output.append(line("Siguiente accion", next_action_label(digest)))
     output.append(line("Freno bandeja", review_backlog_guard_status(digest)))
+    google_links = google_link_review_status(digest)
+    if google_links != "sin tarjetas con Google Maps":
+        output.append(line("Google Maps pendientes", google_links))
+    specialist_reviews = specialist_review_status(digest)
+    if specialist_reviews != "sin tarjetas con especialistas":
+        output.append(line("Especialistas pendientes", specialist_reviews))
     clinic_group = first_clinic_workgroup(digest)
     if clinic_group != "sin grupo por clínica medido":
         output.append(line("Grupo por clinica", clinic_group))
@@ -1039,6 +1694,8 @@ def format_digest(digest: dict[str, Any]) -> str:
     if source_visible:
         output.append(line("Cobertura fuentes", source_coverage_status(digest)))
         output.append(line("Siguiente fuente", next_source_action(digest)))
+    if location_coverage:
+        output.append(line("Cobertura sedes", location_coverage_status(digest)))
     if due_sources:
         output.append(line("Mas antigua pendiente", parse_timestamp(source_monitoring.get("oldest_due_at"))))
     else:
@@ -1077,7 +1734,7 @@ def format_digest(digest: dict[str, Any]) -> str:
             clinic = item.get("clinic_name") or item.get("clinic_slug") or "sin clinica"
             output.append(
                 f"- P{as_int(item.get('priority'))} | {format_review_type(str(item.get('review_type') or ''))} | "
-                f"{clinic}: {item.get('title') or '-'}"
+                f"{clinic}: {item.get('title') or '-'}{review_professionals_note(item)}"
             )
     else:
         output.append("- No hay tarjetas abiertas.")

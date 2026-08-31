@@ -42,6 +42,15 @@ La migracion `supabase/migrations/0018_batch_public_site_rebuilds.sql` deja una
 primera version preparada: agrupa las reconstrucciones pedidas desde Supabase en
 ventanas de 30 minutos, configurable con `vitalarga_rebuild_batch_minutes`.
 
+La migracion `supabase/migrations/0023_public_site_rebuild_pending_control.sql`
+mejora ese control: registra por separado el ultimo cambio guardado y la ultima
+peticion enviada a Netlify. Asi el admin puede mostrar **cambios pendientes de
+verse online** y ofrecer el boton **Actualizar web ahora** para lanzar una sola
+publicacion manual al final de un lote de ediciones.
+
+Ese boton no cambia datos de clinicas. Solo pide a Netlify que reconstruya la
+web publica con los datos ya guardados y visibles segun su estado.
+
 ## Comprobacion local
 
 ```bash

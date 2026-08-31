@@ -13,6 +13,17 @@ from urllib.parse import urlparse
 from capture_source_snapshot import normalize_space
 from vitalarga_rules import decide_many
 
+TEAM_CREDENTIALING_SIGNAL_RE = re.compile(
+    r"\b(?:n[ºo]\s*colegiad[oa]|n[uú]mero\s+de\s+colegiad[oa]|"
+    r"colegiad[oa]\s*(?:n[ºo]|n[uú]mero)|col\.)\b",
+    re.I,
+)
+PUBLIC_PRICING_SIGNAL_RE = re.compile(
+    r"(?:precio|tarifa|consulta|programa|bono)[^.]{0,90}(?:€|eur|euros)|"
+    r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
+    re.I,
+)
+
 
 def normalized_text(value: Any) -> str:
     return normalize_space(str(value or "")).lower()
@@ -62,6 +73,27 @@ def value_supported(value: Any, haystack: str) -> tuple[bool, str]:
     return False, "value not found explicitly"
 
 
+def verify_locations(value: Any, haystack: str) -> tuple[str, float, str]:
+    if not isinstance(value, list):
+        return "review", 0.50, "location value is not a list"
+    addresses = []
+    for item in value:
+        if isinstance(item, dict):
+            address = normalized_text(item.get("address") or item.get("direccion") or item.get("dirección"))
+        else:
+            address = normalized_text(item)
+        if address:
+            addresses.append(address)
+    if not addresses:
+        return "review", 0.50, "empty location list"
+    supported = [address for address in addresses if address in haystack]
+    if len(supported) == len(addresses):
+        return "accepted", 0.90, "all location addresses found explicitly"
+    if supported:
+        return "review", 0.72, f"partial location support: {len(supported)} of {len(addresses)} addresses"
+    return "review", 0.60, "location addresses need manual review"
+
+
 def verify_contact_phone(value: Any, haystack: str) -> tuple[str, float, str]:
     claim_digits = digits(value)
     if len(claim_digits) < 7:
@@ -97,10 +129,26 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"
         confidence = 0.66 if supported else 0.45
+    elif field_path.startswith("location."):
+        verdict, confidence, reason = verify_locations(value, haystack)
     elif field_path.startswith(("services.", "specialties.", "units.", "diagnostics.", "programs.", "technologies.", "professionals.")):
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"
         confidence = 0.90 if supported else 0.62
+    elif field_path.startswith("transparency."):
+        supported, reason = value_supported(value, haystack)
+        verdict = "accepted" if supported else "review"
+        confidence = 0.90 if supported else 0.62
+    elif field_path == "team.credentialing_visible":
+        if TEAM_CREDENTIALING_SIGNAL_RE.search(haystack):
+            verdict, confidence, reason = "accepted", 0.88, "professional credentialing signal found explicitly"
+        else:
+            verdict, confidence, reason = "review", 0.58, "credentialing signal needs manual review"
+    elif field_path == "prices.public_status":
+        if PUBLIC_PRICING_SIGNAL_RE.search(haystack):
+            verdict, confidence, reason = "accepted", 0.88, "public pricing signal found explicitly"
+        else:
+            verdict, confidence, reason = "review", 0.58, "pricing signal needs manual review"
     elif field_path.startswith(("prices.", "treatments.", "medical_claims.", "outcomes.", "evidence.")):
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"

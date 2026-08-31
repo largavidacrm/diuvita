@@ -17,6 +17,7 @@ def main() -> None:
     for marker in [
         "function emptySpecialistCoverage",
         "function countPublishedSpecialists",
+        "function countSpecialistClaimNames",
         "function reviewMentionsSpecialists",
         "function specialistNextTargetLabel",
         "function specialistTargetSort",
@@ -25,17 +26,41 @@ def main() -> None:
         "function firstSpecialistTargetReview",
         "function openSpecialistTarget",
         "function loadSpecialistCoverage",
+        "function reviewProfessionalsCount",
+        "function reviewProfessionalsBadge",
+        "function reviewSpecialistSourceUrls",
+        "function reviewRowDetail",
+        "function reviewSubjectCell",
+        "reviewProfessionalsBadge(row)",
+        "Fuente visible para revisar.",
+        "Fuente pendiente: revisa la web oficial antes de cargar nombres.",
+        "No se publican solos.",
+        "Especialistas propuestos: ",
+        "especialistas",
         "clinicPendingSpecialistsPanel",
         "Detectados en revisión interna",
         "function normalizedPersonKey",
+        "function claimPersonValues",
+        "function claimCanSuggestSpecialist",
+        "function addClaimSpecialistSuggestions",
         "function pendingSpecialistsForClinic",
         "function renderPendingSpecialistsForClinic",
+        "function addPendingSpecialistsToForm",
+        "data-add-pending-specialists",
+        "Cargar al formulario",
+        "especialistas cargados. Revisa y guarda.",
+        "renderUnsavedChanges();",
         "Están recogidos como propuesta",
+        "Evidencia interna",
+        "addClaimSpecialistSuggestions(publishedKeys, pendingByKey);",
         "clinicPendingSpecialistsPanel\").addEventListener",
         '.select("id, slug, display_name, city, status, current_data")',
         '.in("status", ["published", "preliminary"])',
         '.from("field_claims")',
+        '.select("clinic_id, field_path, value, verification_status")',
         '.in("field_path", ["professionals.published", "team.public_professionals"])',
+        "targetById[claim.clinic_id].specialistClaims += countSpecialistClaimNames(claim);",
+        'target.specialistClaims === 1 ? " nombre detectado" : " nombres detectados"',
         "var specialistCoverage = await loadSpecialistCoverage(reviewCache);",
         "specialistCoverageCache = specialistCoverage;",
         "specialistCoverageCache && specialistCoverageCache.nextTarget",
@@ -53,6 +78,15 @@ def main() -> None:
         "nextTarget",
     ]:
         check(marker in index, f"missing admin specialist coverage marker: {marker}")
+
+    specialist_body = index[
+        index.index("function pendingSpecialistsForClinic"):
+        index.index("function renderPendingSpecialistsForClinic")
+    ]
+    check(
+        "addClaimLocationSuggestions" not in specialist_body,
+        "specialist pending loader should not call location suggestions",
+    )
 
     check(
         "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);"

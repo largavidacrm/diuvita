@@ -32,7 +32,8 @@ from vitalarga_rules import decide_many
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "data" / "extractions"
 EXTRACTION_EXCERPT_CHARS = 5000
-MAX_PROFESSIONALS = 12
+MAX_PROFESSIONALS = 32
+MAX_LOCATIONS = 8
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
@@ -41,6 +42,13 @@ INSTAGRAM_HANDLE_RE = re.compile(r"(?<![\w.+-])@([a-z0-9._]{2,30})(?![\w.-])", r
 YEARS_IN_PRACTICE_RE = re.compile(
     r"\b(?P<prefix>m[aá]s\s+de|over|more\s+than)?\s*(?P<years>\d{2,3})\s+"
     r"años\s+(?:de\s+)?(?P<context>experiencia|trayectoria|ejercicio|actividad|pr[aá]ctica)\b",
+    re.I,
+)
+DECADE_IN_PRACTICE_RE = re.compile(
+    r"\b(?:(?:experiencia|trayectoria|ejercicio|actividad|pr[aá]ctica)[^.]{0,50}?)?"
+    r"(?P<prefix>m[aá]s\s+de|over|more\s+than)?\s*"
+    r"(?P<decades>un|una|dos|tres|cuatro|cinco|\d{1,2})\s+d[eé]cada[s]?\b"
+    r"(?:[^.]{0,50}(?:experiencia|trayectoria|ejercicio|actividad|pr[aá]ctica))?",
     re.I,
 )
 SPECIALISTS_COUNT_RE = re.compile(
@@ -58,17 +66,58 @@ PUBLIC_PRICING_RE = re.compile(
     r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
     re.I,
 )
+LOCATION_ADDRESS_RE = re.compile(
+    r"\b(?P<address>(?:C/|Calle|Carrer|Paseo|Passeig|Avenida|Avda\.?|Plaza|Ronda|"
+    r"Carretera|Camino|Vía|Via|Gran Vía|Road|Street|Avenue)\s+"
+    r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9][^.;|]{4,120}?"
+    r"(?:\b\d{5}\b\s+[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,40}|"
+    r"Barcelona|Madrid|Valencia|Marbella|Málaga|Malaga|Sevilla|Bilbao|Alicante|"
+    r"Zaragoza|Murcia|Palma|Vigo|Granada|Girona|Tarragona))",
+    re.I,
+)
+ADDRESS_STOP_RE = re.compile(
+    r"\b(?:tel[eé]fono|email|correo|contacto|horario|ver mapa|google maps|"
+    r"c[oó]mo llegar|como llegar|reservar|pedir cita)\b",
+    re.I,
+)
+CITY_HINTS = (
+    "Barcelona",
+    "Madrid",
+    "Valencia",
+    "Marbella",
+    "Málaga",
+    "Malaga",
+    "Sevilla",
+    "Bilbao",
+    "Alicante",
+    "Zaragoza",
+    "Murcia",
+    "Palma",
+    "Vigo",
+    "Granada",
+    "Girona",
+    "Tarragona",
+)
 NAME_WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{2,}"
-TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora|Lic\.?|Licenciado|Licenciada)"
+TITLE_PREFIX = r"(?:Dr\.?|Dra\.?|Doctor|Doctora|Lic\.?|Licenciado|Licenciada|D\.O\.?)"
 PROFESSIONAL_RE = re.compile(
     rf"\b(?P<title>{TITLE_PREFIX})\s+(?P<name>{NAME_WORD}(?:\s+{NAME_WORD}){{0,5}})"
 )
 TITLE_SCAN_RE = re.compile(rf"\b(?P<title>{TITLE_PREFIX})\s+")
 TEAM_MARKERS = (
+    "equipo",
+    "equipo de",
     "nuestro equipo",
+    "nuestros profesionales",
     "equipo medico",
     "equipo médico",
     "equipo profesional",
+    "profesionales medicos",
+    "profesionales médicos",
+    "staff medico",
+    "staff médico",
+    "cuadro medico",
+    "cuadro médico",
 )
 TEAM_END_MARKERS = (
     "contáctanos",
@@ -78,35 +127,80 @@ TEAM_END_MARKERS = (
     "menu legal",
     "©",
 )
+NAV_END_MARKERS = (
+    "select page",
+    "saltar al contenido",
+    "skip to content",
+)
 ROLE_PHRASES = (
+    "Cardiología",
+    "Chequeos de Longevidad",
+    "Coordinación médica",
+    "Coordinacion medica",
+    "Dermatología",
+    "Dermatología Estética",
     "Dirección",
+    "Dirección médica",
+    "Direccion medica",
+    "Director",
+    "Directora",
+    "Endocrinología",
+    "Fisioterapia",
+    "Fisioterapeuta",
     "Gerente / Nutrición",
     "Gerente/Nutrición",
     "Gerente",
+    "Ginecología",
     "Nutrición",
     "Nutrición funcional",
     "Nutricionista y experta en Microbiota",
     "Nutricionista",
     "Subdirectora",
     "Subdirector",
+    "Medicina Antienvejecimiento",
+    "Medicina de Longevidad",
     "Medicina Estética y Longevidad",
+    "Medicina Funcional",
+    "Medicina General",
     "Medicina Integrativa",
     "Medicina Interna",
+    "Medicina Regenerativa",
+    "Odontología y Posturología",
+    "Odontología",
+    "Odontóloga",
+    "Odontologo",
+    "Odontólogo",
+    "Óptica Optometrista",
+    "Optica Optometrista",
+    "Optometrista",
+    "Podoposturóloga",
+    "Podoposturologa",
     "Ginecología regenerativa y Salud integral de la mujer",
     "Neurofisiólogo clínico",
+    "Oncología Integrativa",
+    "Osteópata",
+    "Osteopata",
     "Otorrinolaringología",
     "Otorrino",
     "Anestesia",
     "Flebología",
     "Cirugía Plástica",
+    "Psicología",
+    "Psicologia",
     "Atención al Paciente",
     "Atencion al paciente",
     "Técnico Auxiliar",
     "Responsable RRSS",
+    "Higienista",
+    "Auxiliar",
+    "Recepción",
+    "Recepcion",
 )
 ROLE_START_WORDS = {
     "Administración",
     "Anestesia",
+    "Analítica",
+    "Analitica",
     "Atención",
     "Atencion",
     "Cardiología",
@@ -130,6 +224,8 @@ ROLE_START_WORDS = {
     "Cosmetica",
     "Clínico",
     "Clinico",
+    "Director",
+    "Directora",
     "Dirección",
     "Dermatología",
     "Dermatologia",
@@ -153,50 +249,90 @@ ROLE_START_WORDS = {
     "Fisioterapeuta",
     "Flebología",
     "Flebologia",
+    "Frotis",
     "General",
     "Gerencia",
     "Gerente",
+    "Ginecológica",
+    "Ginecologica",
     "Ginecología",
     "Ginecologia",
     "Ginecóloga",
     "Ginecologa",
     "Ginecólogo",
     "Ginecologo",
+    "Higienista",
     "Interna",
     "Longevidad",
     "Microbiota",
     "Médica",
+    "Médicina",
     "Médico",
     "Medicina",
     "Medico",
+    "Integrativa",
     "Mujer",
     "Neurofisiólogo",
     "Neurofisiologo",
     "Nutrición",
     "Nutricion",
     "Nutricionista",
+    "Odontología",
+    "Odontologia",
+    "Odontóloga",
+    "Odontologa",
+    "Odontólogo",
+    "Odontologo",
     "Oncológica",
     "Oncologica",
     "Oncología",
     "Oncologia",
     "Ortomolecular",
+    "Osteópata",
+    "Osteopata",
     "Otorrino",
     "Otorrinolaringología",
     "Otorrinolaringologia",
+    "Optica",
+    "Óptica",
+    "Optometrista",
     "Paciente",
+    "Pediátrico",
+    "Pediatrico",
+    "Podoposturóloga",
+    "Podoposturologa",
+    "PNIE",
     "Psicología",
     "Psicologia",
+    "Recepción",
+    "Recepcion",
     "Responsable",
     "Salud",
+    "Sanguíneo",
+    "Sanguineo",
     "Sesion",
     "Sesión",
+    "Blog",
+    "Beneficios",
+    "Franquicias",
+    "Historia",
+    "Hombre",
+    "Método",
+    "Metodo",
+    "Mujer",
+    "Pilares",
+    "Suplementos",
+    "Testimonios",
+    "Tratamiento",
+    "Tratamientos",
+    "Auxiliar",
     "Subdirector",
     "Subdirectora",
     "Técnico",
     "Unidad",
     "Unidades",
 }
-TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora", "Lic", "Licenciado", "Licenciada"}
+TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora", "Lic", "Licenciado", "Licenciada", "D", "DO"}
 CLINIC_NAME_TERMS = {
     "age",
     "center",
@@ -227,6 +363,14 @@ TITLE_NOISE_TERMS = {
     "servicios",
     "somos",
 }
+DECADE_WORDS = {
+    "un": 1,
+    "una": 1,
+    "dos": 2,
+    "tres": 3,
+    "cuatro": 4,
+    "cinco": 5,
+}
 
 
 def role_pattern(phrase: str) -> str:
@@ -239,6 +383,9 @@ ROLE_RE_FRAGMENT = "|".join(role_pattern(phrase) for phrase in sorted(ROLE_PHRAS
 TEAM_ROLE_PAIR_RE = re.compile(
     rf"\b(?P<name>(?:{TITLE_PREFIX}\s+)?{NAME_WORD}(?:\s+{NAME_WORD}){{0,3}})\s+"
     rf"(?P<role>(?i:{ROLE_RE_FRAGMENT}))(?=\s|$)"
+)
+TEAM_CTA_RE = re.compile(
+    rf"(?i:\b(?:agenda\s+tu\s+cita\s+con|pide\s+cita\s+con|reserva\s+cita\s+con|cita\s+con))\s+{NAME_WORD}\b"
 )
 
 KEYWORD_CATALOG = {
@@ -305,13 +452,104 @@ def unique(items: list[str]) -> list[str]:
     return result
 
 
+def fold(value: str) -> str:
+    return unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii").lower()
+
+
+ROLE_START_KEYS = {fold(word.rstrip(".")) for word in ROLE_START_WORDS}
+TITLE_WORD_KEYS = {fold(word.rstrip(".")) for word in TITLE_WORDS}
+
+
+def canonical_city(value: str) -> str:
+    return "Málaga" if value == "Malaga" else value
+
+
+def city_from_address(address: str) -> str:
+    folded = fold(address)
+    for city in sorted(CITY_HINTS, key=len, reverse=True):
+        if fold(city) in folded:
+            return canonical_city(city)
+    match = re.search(
+        r"\b\d{5}\b\s+([A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ-]+(?:\s+[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ-]+){0,2})",
+        address,
+    )
+    return normalize_space(match.group(1)).strip(" ,.;:") if match else ""
+
+
+def clean_address(raw: str) -> str:
+    first_part = ADDRESS_STOP_RE.split(raw, 1)[0]
+    return normalize_space(first_part).strip(" ,.;:-")
+
+
+def compact_address_key(raw: str) -> str:
+    return normalize_space(re.sub(r"[^a-z0-9]+", " ", fold(raw)))
+
+
+def trim_repeated_trailing_city(address: str, city: str) -> str:
+    if not city:
+        return address
+    pattern = re.compile(rf"(\b{re.escape(city)}\b)(?:[,\s]+{re.escape(city)}\b)+$", re.I)
+    return normalize_space(pattern.sub(r"\1", address)).strip(" ,.;:-")
+
+
+def extract_locations(text: str) -> list[dict[str, str]]:
+    locations: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for match in LOCATION_ADDRESS_RE.finditer(text):
+        address = clean_address(match.group("address"))
+        if len(address) < 10:
+            continue
+        city = city_from_address(address)
+        address = trim_repeated_trailing_city(address, city)
+        key = compact_address_key(address)
+        if key in seen:
+            continue
+        if any(key.startswith(existing + " ") or existing.startswith(key + " ") for existing in seen):
+            continue
+        seen.add(key)
+        location: dict[str, str] = {"address": address}
+        if city:
+            location["city"] = city
+        locations.append(location)
+        if len(locations) >= MAX_LOCATIONS:
+            break
+    return locations
+
+
 def clean_phone(raw: str) -> str:
     return normalize_space(raw).strip(".,;:")
 
 
+def split_phone_candidate(raw: str) -> list[str]:
+    clean = clean_phone(raw)
+    digits = re.sub(r"\D", "", clean)
+    if not digits:
+        return []
+    if clean.startswith("+") and len(digits) <= 15:
+        return [clean]
+    if clean.startswith("+34") and len(digits) > 11 and (len(digits) - 2) % 9 == 0:
+        phones = ["+" + digits[:11]]
+        phones.extend(digits[index : index + 9] for index in range(11, len(digits), 9))
+        return phones
+    if len(digits) <= 15:
+        return [clean]
+    if len(digits) % 9 == 0:
+        return [digits[index : index + 9] for index in range(0, len(digits), 9)]
+    return [clean]
+
+
 def professional_team_window(text: str) -> str:
     lower = text.lower()
-    starts = [lower.find(marker) for marker in TEAM_MARKERS if lower.find(marker) >= 0]
+    floor = 0
+    for marker in NAV_END_MARKERS:
+        pos = lower.find(marker)
+        if pos >= 0:
+            floor = max(floor, pos + len(marker))
+    starts = [
+        lower.find(marker, floor)
+        for marker in TEAM_MARKERS
+        if lower.find(marker, floor) >= 0
+    ]
     if not starts:
         return ""
     start = min(starts)
@@ -331,6 +569,8 @@ def name_words(raw: str) -> list[str]:
 def normalize_professional_title(raw: str) -> str:
     title = normalize_space(raw).rstrip(".")
     lower = title.lower()
+    if lower in {"d.o", "do"}:
+        return "D.O."
     if lower.startswith(("dra", "doctora")):
         return "Dra."
     if lower.startswith(("dr", "doctor")):
@@ -355,7 +595,8 @@ def clean_titled_name(title_raw: str, name_raw: str) -> str:
     title = normalize_professional_title(title_raw)
     words = []
     for word in name_words(name_raw):
-        if word in ROLE_START_WORDS or word.rstrip(".") in TITLE_WORDS:
+        clean_key = fold(word.rstrip("."))
+        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS:
             break
         words.append(word)
         if len(words) >= 6:
@@ -369,6 +610,10 @@ def clean_titled_professional(match: re.Match[str]) -> str:
     return clean_titled_name(match.group("title"), match.group("name"))
 
 
+def strip_team_ctas(text: str) -> str:
+    return normalize_space(TEAM_CTA_RE.sub(" ", text))
+
+
 def clean_team_professional(raw: str) -> str:
     clean = normalize_space(raw).strip(".,;:")
     titled = re.match(rf"^(?P<title>{TITLE_PREFIX})\s+(?P<name>.+)$", clean)
@@ -376,7 +621,8 @@ def clean_team_professional(raw: str) -> str:
         return clean_titled_professional(titled)
     words = []
     for word in name_words(clean):
-        if word in ROLE_START_WORDS or word.rstrip(".") in TITLE_WORDS:
+        clean_key = fold(word.rstrip("."))
+        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS:
             break
         words.append(word)
     if len(words) < 2:
@@ -384,9 +630,39 @@ def clean_team_professional(raw: str) -> str:
     return " ".join(words[:4])
 
 
+def professional_key(value: str) -> str:
+    clean = re.sub(rf"^(?:{TITLE_PREFIX})\s+", "", normalize_space(value), flags=re.I)
+    return fold(clean)
+
+
+def has_professional_title(value: str) -> bool:
+    return bool(re.match(rf"^(?:{TITLE_PREFIX})\s+", normalize_space(value), flags=re.I))
+
+
+def dedupe_professionals(names: list[str]) -> list[str]:
+    positions: dict[str, int] = {}
+    result: list[str] = []
+    for name in names:
+        key = professional_key(name)
+        if not key:
+            continue
+        if key not in positions:
+            positions[key] = len(result)
+            result.append(name)
+            continue
+        index = positions[key]
+        if has_professional_title(name) and not has_professional_title(result[index]):
+            result[index] = name
+    return result
+
+
 def extract_contacts(text: str) -> dict[str, list[str]]:
     emails = unique(EMAIL_RE.findall(text))
-    phones = unique([clean_phone(match.group(0)) for match in PHONE_RE.finditer(text)])
+    phones = unique([
+        phone
+        for match in PHONE_RE.finditer(text)
+        for phone in split_phone_candidate(match.group(0))
+    ])
     instagram = unique(
         ["@" + match.group(1).strip("/").lower() for match in INSTAGRAM_URL_RE.finditer(text)]
         + ["@" + match.group(1).strip("/").lower() for match in INSTAGRAM_HANDLE_RE.finditer(text)]
@@ -400,29 +676,25 @@ def extract_contacts(text: str) -> dict[str, list[str]]:
 
 def extract_professionals(text: str) -> list[str]:
     professionals: list[tuple[int, str]] = []
-    for match in TITLE_SCAN_RE.finditer(text):
-        clean = clean_titled_name(match.group("title"), title_name_segment(text, match.end()))
+    clean_text = strip_team_ctas(text)
+    for match in TITLE_SCAN_RE.finditer(clean_text):
+        clean = clean_titled_name(match.group("title"), title_name_segment(clean_text, match.end()))
         if clean:
             professionals.append((match.start(), clean))
-    team_window = professional_team_window(text)
-    team_offset = text.find(team_window) if team_window else 0
+    team_window = strip_team_ctas(professional_team_window(text))
+    team_offset = clean_text.find(team_window) if team_window else 0
     for match in TEAM_ROLE_PAIR_RE.finditer(team_window):
         clean = clean_team_professional(match.group("name"))
         if clean:
             professionals.append((team_offset + match.start("name"), clean))
-    return unique([name for _, name in sorted(professionals, key=lambda item: item[0])])
+    return dedupe_professionals(unique([name for _, name in sorted(professionals, key=lambda item: item[0])]))
 
 
 def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:
     transparency: dict[str, Any] = {}
-    years_match = YEARS_IN_PRACTICE_RE.search(text)
-    if years_match:
-        years = int(years_match.group("years"))
-        prefix = normalize_space(years_match.group("prefix") or "").lower()
-        label = f"{years} años"
-        if prefix in {"más de", "mas de", "over", "more than"}:
-            label = f"más de {label}"
-        transparency["years_in_practice"] = label
+    years_label = extract_years_in_practice(text)
+    if years_label:
+        transparency["years_in_practice"] = years_label
 
     specialists_match = SPECIALISTS_COUNT_RE.search(text)
     if specialists_match:
@@ -437,6 +709,30 @@ def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:
         transparency["public_pricing"] = "si"
 
     return transparency
+
+
+def extract_years_in_practice(text: str) -> str | None:
+    years_match = YEARS_IN_PRACTICE_RE.search(text)
+    if years_match:
+        years = int(years_match.group("years"))
+        prefix = normalize_space(years_match.group("prefix") or "").lower()
+        label = f"{years} años"
+        if prefix in {"más de", "mas de", "over", "more than"}:
+            label = f"más de {label}"
+        return label
+
+    decade_match = DECADE_IN_PRACTICE_RE.search(text)
+    if not decade_match:
+        return None
+    raw_decades = fold(decade_match.group("decades"))
+    decades = int(raw_decades) if raw_decades.isdigit() else DECADE_WORDS.get(raw_decades, 0)
+    if decades < 1 or decades > 10:
+        return None
+    years = decades * 10
+    prefix = normalize_space(decade_match.group("prefix") or "").lower()
+    if prefix in {"más de", "mas de", "over", "more than"}:
+        return f"más de {years} años"
+    return f"{years} años"
 
 
 def detect_keywords(text: str) -> dict[str, list[str]]:
@@ -492,6 +788,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
     professionals = extract_professionals(text)
+    locations = extract_locations(text)
     transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
     claims: list[dict[str, Any]] = []
@@ -508,6 +805,8 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         claims.append(claim("contact.phone", contacts["phones"][0], 0.78, source_url))
     if contacts["instagram"]:
         claims.append(claim("contact.instagram", contacts["instagram"][0], 0.80, source_url))
+    if locations:
+        claims.append(claim("location.locations", locations[:MAX_LOCATIONS], 0.66, source_url))
     if professionals:
         claims.append(claim("professionals.published", professionals[:MAX_PROFESSIONALS], 0.64, source_url))
     if transparency.get("years_in_practice"):
@@ -528,6 +827,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     text = normalize_space(str(snapshot.get("text_excerpt") or ""))
     contacts = extract_contacts(text)
     professionals = extract_professionals(text)
+    locations = extract_locations(text)
     transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
     name = guess_name(snapshot)
@@ -537,6 +837,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
         "emails": contacts["emails"],
         "phones": contacts["phones"],
         "instagram": contacts["instagram"],
+        "locations": locations[:MAX_LOCATIONS],
         "services": keywords.get("services.list", []),
         "specialties": keywords.get("specialties.list", []),
         "units": keywords.get("units.list", []),

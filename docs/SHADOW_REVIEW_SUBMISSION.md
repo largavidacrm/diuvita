@@ -58,4 +58,17 @@ python3 scripts/submit_source_shadow_reviews.py --apply
 ```
 
 Existing open cards for the same source are skipped unless `--replace-existing`
-is passed.
+is passed. Existing open enrichment cards for the same clinic also block new
+cards by default, even if the source URL is different, so Daniel does not receive
+several competing proposals for the same Vitalarga profile.
+
+Allow multiple open cards for one clinic only when deliberately comparing
+several sources:
+
+```bash
+python3 scripts/submit_shadow_extraction_review.py \
+  --clinic-slug monarka-clinic \
+  --url https://monarkaclinic.com/clinica-longevidad-barcelona/ \
+  --allow-multiple-open-clinic-reviews \
+  --apply
+```

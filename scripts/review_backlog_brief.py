@@ -5,18 +5,40 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import unicodedata
 from typing import Any
 
 from admin_digest import SAFE_WRITE_REVIEW_BACKLOG_LIMIT, as_int, parse_timestamp, plural
-from submit_discovery_candidates import load_env_file, run_psql
+from submit_discovery_candidates import load_env_file, run_psql, sql_literal
 
 
 def safe_limit(value: int) -> int:
     return max(1, min(50, int(value)))
 
 
-def load_backlog(limit: int, local_env: dict[str, str]) -> dict[str, Any]:
+def compact_lookup_key(value: Any) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value or ""))
+    ascii_value = normalized.encode("ascii", "ignore").decode("ascii").lower()
+    return "".join(char for char in ascii_value if char.isalnum())
+
+
+def load_backlog(limit: int, local_env: dict[str, str], clinic_query: str = "") -> dict[str, Any]:
     capped_limit = safe_limit(limit)
+    clean_query = clinic_query.strip()
+    query_literal = sql_literal(clean_query)
+    like_literal = sql_literal(f"%{clean_query}%")
+    compact_literal = sql_literal(f"%{compact_lookup_key(clean_query)}%")
+    clinic_filter = "true"
+    if clean_query:
+        clinic_filter = f"""
+    (
+      rq.title ilike {like_literal}
+      or c.slug ilike {like_literal}
+      or c.display_name ilike {like_literal}
+      or regexp_replace(translate(lower(coalesce(c.slug, '')), 'áéíóúüñ', 'aeiouun'), '[^a-z0-9]+', '', 'g') like {compact_literal}
+      or regexp_replace(translate(lower(coalesce(c.display_name, '')), 'áéíóúüñ', 'aeiouun'), '[^a-z0-9]+', '', 'g') like {compact_literal}
+    )
+"""
     sql = f"""
 with open_reviews as (
   select
@@ -35,6 +57,7 @@ with open_reviews as (
   from public.review_queue rq
   left join public.clinics c on c.id = rq.clinic_id
   where rq.status = 'open'
+    and {clinic_filter}
 ),
 review_type_summary as (
   select coalesce(jsonb_agg(to_jsonb(grouped) order by grouped.open_count desc, grouped.review_type), '[]'::jsonb) as data
@@ -136,7 +159,29 @@ clinic_workgroups as (
       count(*) filter (where review_type = 'source_change_detected') as source_change_reviews,
       count(*) filter (where review_type = 'candidate_clinic') as candidate_reviews,
       max(priority) as max_priority,
-      min(created_at) as oldest_created_at
+      min(created_at) as oldest_created_at,
+      jsonb_agg(
+        jsonb_build_object(
+          'id', id,
+          'review_type', review_type,
+          'title', title,
+          'priority', priority,
+          'created_at', created_at,
+          'updated_at', updated_at
+        )
+        order by
+          case
+            when review_type = 'clinic_quality_audit'
+              and payload ->> 'quality_context' = 'blocking_claims' then 1
+            when review_type = 'source_change_detected' then 2
+            when review_type = 'clinic_profile_enrichment' then 3
+            when review_type = 'clinic_quality_audit' then 4
+            when review_type = 'candidate_clinic' then 5
+            else 9
+          end,
+          priority desc,
+          created_at asc
+      ) as cards
     from open_reviews
     where clinic_id is not null
     group by clinic_id, clinic_name, clinic_slug, city, clinic_status
@@ -159,6 +204,7 @@ summary as (
   from open_reviews
 )
 select jsonb_build_object(
+  'clinic_query', {query_literal},
   'summary', (select data from summary),
   'review_type_summary', (select data from review_type_summary),
   'clinic_workgroups', (select data from clinic_workgroups),
@@ -187,6 +233,16 @@ def status_label(status: Any) -> str:
         "review": "en revisión",
     }
     return labels.get(str(status or ""), str(status or "sin estado"))
+
+
+def review_type_label(review_type: Any) -> str:
+    labels = {
+        "clinic_quality_audit": "auditoría",
+        "clinic_profile_enrichment": "mejora",
+        "candidate_clinic": "clínica candidata",
+        "source_change_detected": "cambio de fuente",
+    }
+    return labels.get(str(review_type or ""), str(review_type or "revisión"))
 
 
 def format_duplicate_group(row: dict[str, Any]) -> str:
@@ -254,6 +310,14 @@ def format_clinic_workgroup(row: dict[str, Any]) -> str:
     )
 
 
+def format_workgroup_card(card: dict[str, Any]) -> str:
+    title = card.get("title") or "Revisión abierta"
+    review_type = review_type_label(card.get("review_type"))
+    priority = as_int(card.get("priority"))
+    created = parse_timestamp(card.get("created_at"))
+    return f"  - {title}: {review_type} · P{priority} · creada {created}"
+
+
 def first_backlog_action(report: dict[str, Any]) -> str:
     workgroups = report.get("clinic_workgroups") or []
     blocking_workgroups = [
@@ -284,10 +348,15 @@ def format_backlog(report: dict[str, Any]) -> str:
     summary = report.get("summary") or {}
     duplicates = report.get("duplicate_enrichment") or []
     workgroups = report.get("clinic_workgroups") or []
+    clinic_query = str(report.get("clinic_query") or "").strip()
     output = [
         "# Vitalarga: atascos de bandeja",
         "",
         f"Generado: {parse_timestamp(report.get('generated_at'))}",
+    ]
+    if clinic_query:
+        output.append(f"Consulta: {clinic_query}")
+    output.extend([
         "",
         "## Resumen",
         f"- Revisiones abiertas: {as_int(summary.get('open_reviews'))}",
@@ -301,11 +370,19 @@ def format_backlog(report: dict[str, Any]) -> str:
         f"- {first_backlog_action(report)}",
         "",
         "## Trabajar por clínica",
-    ]
+    ])
     if not workgroups:
         output.append("- No hay grupos de revisión por clínica.")
     for row in workgroups:
         output.append(format_clinic_workgroup(row))
+    if clinic_query and workgroups:
+        output.extend(["", "## Tarjetas del caso"])
+        for row in workgroups:
+            cards = [card for card in row.get("cards") or [] if isinstance(card, dict)]
+            if not cards:
+                continue
+            output.append(f"- {row.get('clinic_name') or row.get('clinic_slug') or 'sin clínica'}")
+            output.extend(format_workgroup_card(card) for card in cards)
 
     output.extend([
         "",
@@ -334,6 +411,7 @@ def format_backlog(report: dict[str, Any]) -> str:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument("--clinic", default="", help="Optional clinic name or slug to focus the backlog.")
     parser.add_argument("--json", action="store_true", help="Print raw JSON.")
     return parser.parse_args()
 
@@ -342,7 +420,7 @@ def main() -> int:
     args = parse_args()
     if args.limit < 1:
         raise SystemExit("--limit must be at least 1.")
-    report = load_backlog(args.limit, load_env_file())
+    report = load_backlog(args.limit, load_env_file(), args.clinic)
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:

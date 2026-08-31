@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks for Daniel's plain-Spanish review brief."""
 
-from daniel_review_brief import format_brief, first_step, production_health_status, review_counts
+from daniel_review_brief import format_brief, first_step, next_clicks, production_health_status, review_counts
 
 
 def check(condition, message):
@@ -22,6 +22,13 @@ def sample_digest():
                 "candidate_reviews_completed": 2,
                 "shadow_review_target": 200,
             },
+        },
+        "publication_control": {
+            "rebuild_hook_configured": True,
+            "rebuild_batch_minutes": 30,
+            "last_public_site_rebuild_requested_at": "2026-08-31T06:24:00+00:00",
+            "last_public_site_change_at": "2026-08-31T06:47:00+00:00",
+            "pending_public_site_rebuild": True,
         },
         "reviews_by_type": [
             {"review_type": "clinic_profile_enrichment", "open_count": 12},
@@ -72,6 +79,26 @@ def sample_digest():
             "max_priority": 85,
             "oldest_created_at": "2026-08-30T08:30:00+00:00",
         },
+        "google_link_reviews": {
+            "open_count": 4,
+            "first_review": {
+                "review_type": "clinic_profile_enrichment",
+                "priority": 60,
+                "clinic_name": "Sensabell",
+                "title": "Completar enlaces Google: Sensabell",
+            },
+        },
+        "specialist_reviews": {
+            "open_count": 2,
+            "professionals_count": 17,
+            "first_review": {
+                "review_type": "candidate_clinic",
+                "priority": 90,
+                "clinic_name": "",
+                "title": "Regenera Clinic Medicina de la Longevidad",
+                "professionals_count": 11,
+            },
+        },
         "recent_failed_jobs": [],
         "source_monitoring": {
             "due_sources": 0,
@@ -119,11 +146,13 @@ def sample_digest():
         },
         "profile_completeness": {
             "visible_clinics": 19,
-            "without_pending_fields": 1,
-            "with_pending_fields": 18,
+            "without_pending_fields": 0,
+            "with_pending_fields": 19,
             "pending_summary": 0,
             "pending_website": 0,
             "pending_address": 0,
+            "pending_google_maps": 19,
+            "pending_google_reviews": 18,
             "pending_contact": 6,
             "pending_services": 0,
             "pending_specialties": 0,
@@ -136,9 +165,9 @@ def sample_digest():
             "clinic_name": "Kairos Longevity Clinic",
             "city": "Madrid",
             "status": "published",
-            "pending_fields": ["Especialistas publicados", "Tecnología destacada"],
-            "pending_count": 2,
-            "next_pending_field": "Especialistas publicados",
+            "pending_fields": ["Google Maps de clínica", "Especialistas publicados", "Tecnología destacada"],
+            "pending_count": 3,
+            "next_pending_field": "Google Maps de clínica",
             "open_quality_reviews": 1,
             "open_profile_reviews": 2,
             "open_source_change_reviews": 1,
@@ -153,22 +182,32 @@ def main():
     counts = review_counts(digest)
 
     check(counts["blocking_claim_review"] == 1, "blocking-claim count missing")
-    check(first_step(digest)[0] == "Primero revisa claims bloqueantes.", "blocking claims should be first")
+    check(first_step(digest)[0] == "Primero baja un grupo repetido.", "near-limit clinic groups should be first")
     check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")
-    check("Caso visible: Revisar claims bloqueantes: Sensabell." in output, "visible case missing")
-    check("Acción sugerida por el sistema: Revisar claim bloqueante." in output, "next action missing")
+    check("Próximos clics" in output, "next-clicks section missing")
+    check("No crees trabajos nuevos hasta bajar la bandeja; ahora está cerca del freno: 48/50 abiertas." in output, "near-limit click guard missing")
+    check("Pulsa Filtrar grupo y trabaja Sensabell: 5 tarjetas juntas." in output, "clinic-group click missing")
+    check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad. En total hay 17 especialistas propuestos en la bandeja." in output, "specialist click missing")
+    check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "Google Maps click missing")
+    check("Caso visible: Trabajar Sensabell: 5 tarjetas" in output, "visible clinic group missing")
+    check("Señal automática base: Revisar claim bloqueante." in output, "base next action missing")
     check("48 revisiones abiertas" in output, "open review count missing")
     check("1 claim bloqueante pendiente" in output, "blocking count missing")
     check("8 clínicas nuevas pendientes" in output, "candidate count missing")
     check("1 cambio de fuente pendiente" in output, "source-change singular missing")
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
+    check("Publicación web: con cambios pendientes de verse online" in output, "publication control state missing")
     check("Crear borrador no publica" in output, "draft safety reminder missing")
-    check("Completitud de fichas: 1/19 fichas sin campos pendientes medidos; 18 con pendientes" in output, "profile completeness missing")
-    check("Campo más pendiente: Especialistas · 17 fichas" in output, "top pending profile field missing")
+    check("Portal clínicas" in output, "portal section missing")
+    check("Siguiente portal: sin solicitudes pendientes" in output, "empty portal action missing")
+    check("Completitud de fichas: 0/19 fichas sin campos pendientes medidos; 19 con pendientes" in output, "profile completeness missing")
+    check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending profile field missing")
+    check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps review target missing")
     check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile action missing")
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
+    check("Tarjetas con especialistas: 2 tarjetas; 17 especialistas propuestos" in output, "specialist review status missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")
     check("Fuentes: todo reciente; próxima revisión 2026-09-29 09:58" in output, "source status missing")
     check("Cobertura fuentes: 11/19 fichas con fuente; 10/19 hidratadas; 8 sin fuente; 11 con trabajo pendiente" in output, "source coverage missing")
@@ -177,6 +216,7 @@ def main():
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
+    check(len(next_clicks(digest)) == 4, "next clicks should stay short")
 
     production_report = {
         "ok": True,
@@ -201,16 +241,80 @@ def main():
     hidden_sample_digest = sample_digest()
     hidden_sample_digest["open_reviews"] = []
     hidden_sample_digest["review_examples_by_type"] = []
+    hidden_sample_digest["review_first_clinic_workgroup"] = {}
+    hidden_sample_digest["summary"]["reviews"] = {"open": 12}
     check(
         first_step(hidden_sample_digest)[1] == "Caso visible: abre el filtro Claims bloqueantes en el panel.",
         "missing visible sample should route Daniel to the right filter",
     )
     example_digest = sample_digest()
     example_digest["open_reviews"] = []
+    example_digest["review_first_clinic_workgroup"] = {}
+    example_digest["summary"]["reviews"] = {"open": 12}
     check(
         first_step(example_digest)[1] == "Caso visible: Revisar claims bloqueantes: Sensabell.",
         "type-level review example should guide Daniel when priority list is limited",
     )
+    candidate_digest = sample_digest()
+    candidate_digest["summary"]["reviews"] = {"open": 1}
+    candidate_digest["reviews_by_type"] = [{"review_type": "candidate_clinic", "open_count": 1}]
+    candidate_digest["review_first_clinic_workgroup"] = {}
+    candidate_digest["open_reviews"] = [
+        {
+            "review_type": "candidate_clinic",
+            "priority": 90,
+            "clinic_name": "",
+            "title": "Regenera Clinic Medicina de la Longevidad",
+            "professionals_count": 11,
+        }
+    ]
+    candidate_digest["review_examples_by_type"] = []
+    check(
+        first_step(candidate_digest)[1]
+        == "Caso visible: Regenera Clinic Medicina de la Longevidad. Trae 11 especialistas recogidos.",
+        "candidate reviews should show collected professionals",
+    )
+
+    portal_digest = sample_digest()
+    portal_digest["summary"]["portal"] = {
+        "claim_requests_pending": 1,
+        "change_requests_pending": 1,
+        "active_memberships": 2,
+        "identity_confirmed": 1,
+    }
+    portal_digest["portal_reviews"] = {
+        "claim_access_open": 1,
+        "recommended_clinic_open": 0,
+        "profile_change_open": 1,
+        "open_total": 2,
+    }
+    portal_digest["reviews_by_type"] = [
+        {"review_type": "clinic_claim_request", "open_count": 1},
+        {"review_type": "portal_profile_change", "open_count": 1},
+        {"review_type": "blocking_claim_review", "open_count": 1},
+    ]
+    portal_digest["open_reviews"] = [
+        {
+            "review_type": "clinic_claim_request",
+            "priority": 94,
+            "clinic_name": "Monarka Clinic",
+            "title": "Solicitud de acceso: Monarka Clinic",
+        }
+    ]
+    portal_digest["review_examples_by_type"] = portal_digest["open_reviews"]
+    portal_output = format_brief(portal_digest)
+    check(
+        first_step(portal_digest)[0] == "Primero revisa solicitudes de acceso del portal.",
+        "portal access should be first when pending",
+    )
+    check("Caso visible: Solicitud de acceso: Monarka Clinic." in portal_output, "portal visible case missing")
+    check("1 solicitud de acceso pendiente" in portal_output, "portal access count missing")
+    check("1 cambio pedido por clínica pendiente" in portal_output, "portal change count missing")
+    check(
+        "Estado: 2 pendientes: 1 acceso, 1 cambio; 1 ficha con datos confirmados por el centro" in portal_output,
+        "portal status summary missing",
+    )
+    check("Siguiente portal: Revisar 1 solicitud de acceso" in portal_output, "portal next action missing")
     print("OK Daniel brief: review guidance is readable")
 
 

@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """Basic checks for the shadow clinic profile extractor."""
 from capture_source_snapshot import FetchResult
-from extract_clinic_profile_shadow import extract_from_fetch, extract_professionals
+from extract_clinic_profile_shadow import (
+    extract_contacts,
+    extract_from_fetch,
+    extract_locations,
+    extract_professionals,
+    extract_years_in_practice,
+)
 
 
 def check(condition, message):
@@ -23,6 +29,7 @@ def main():
   <p>Dra. Laura García Pérez, nº colegiada 12345.</p>
   <p>Precio consulta: 120 €.</p>
   <p>Pruebas disponibles: DEXA, VO2 max, biomarcadores y test epigenético.</p>
+  <p>Sedes: Calle Serrano 100, 28006 Madrid. Avenida Diagonal 450, 08006 Barcelona.</p>
   <p>{filler}</p>
   <p>Programa con hipoxia intermitente.</p>
   <p>Contacto: info@exampleclinic.test +34 930 111 222 @exampleclinic</p>
@@ -43,6 +50,17 @@ def main():
     check(profile["name"] == "Example Longevity Clinic", "name guess failed")
     check(profile["emails"] == ["info@exampleclinic.test"], "email extraction failed")
     check(profile["instagram"] == ["@exampleclinic"], "instagram extraction failed")
+    check(
+        extract_contacts("Contacto 919703393 646039428")["phones"] == ["919703393", "646039428"],
+        "adjacent Spanish phone numbers should be split",
+    )
+    check(
+        extract_contacts("Contacto +34965130120 965210687")["phones"] == ["+34965130120", "965210687"],
+        "adjacent +34 and Spanish phone numbers should be split",
+    )
+    check(len(profile["locations"]) == 2, "two locations should be extracted")
+    check(profile["locations"][0]["city"] == "Madrid", "Madrid location city missing")
+    check(profile["locations"][1]["city"] == "Barcelona", "Barcelona location city missing")
     check("VO2 max" in profile["technologies"], "technology detection failed")
     check("Hipoxia intermitente" in profile["technologies"], "later-page technology detection failed")
     check("Medicina preventiva" in profile["services"], "service detection failed")
@@ -52,7 +70,16 @@ def main():
     check(profile["specialists_count"] == 12, "specialist count detection failed")
     check(profile["team_credentialing_visible"] == "si", "credentialing visibility detection failed")
     check(profile["public_pricing"] == "si", "public pricing detection failed")
+    check(
+        extract_years_in_practice("Con experiencia de más de una década y miles de clientes") == "más de 10 años",
+        "textual decade experience should be normalized",
+    )
+    check(
+        extract_years_in_practice("Dos décadas de experiencia clínica") == "20 años",
+        "decades should be converted to years",
+    )
     check("contact.email" in fields, "email claim missing")
+    check("location.locations" in fields, "location claim missing")
     check("units.list" in fields, "unit claim missing")
     check("professionals.published" in fields, "professional claim missing")
     check("transparency.years_in_practice" in fields, "years claim missing")
@@ -60,6 +87,19 @@ def main():
     check("team.credentialing_visible" in fields, "credentialing claim missing")
     check("prices.public_status" in fields, "pricing claim missing")
     check(extraction["rule_decisions"], "rule decisions missing")
+    extracted_locations = extract_locations(
+        "Sedes Calle Serrano 100, 28006 Madrid. Avenida Diagonal 450, 08006 Barcelona. Contacto"
+    )
+    check(len(extracted_locations) == 2, "location extractor should capture clear address patterns")
+    check(
+        all("Sede 1" not in str(item) and "Sede 2" not in str(item) for item in extracted_locations),
+        "extracted locations should not create numbered labels",
+    )
+    duplicate_location = extract_locations(
+        "Dirección: Avda. Blasco Ibáñez 14 46010 Valencia. "
+        "Hospital Quirónsalud Valencia Avda. Blasco Ibáñez, 14 46010 Valencia Valencia."
+    )
+    check(len(duplicate_location) == 1, "near-duplicate location addresses should be collapsed")
 
     regenera_text = (
         "NUESTRO EQUIPO Te acompañamos desde la ciencia y la empatía "
@@ -94,6 +134,16 @@ def main():
     check(
         all("Cardiólogo" not in item and "Ginecóloga" not in item for item in sha_professionals),
         "medical role should not be part of extracted names",
+    )
+
+    neolife_menu_professionals = extract_professionals(
+        "NUESTRO EQUIPO FRANQUICIAS SUPLEMENTOS ANTIAGING BLOG "
+        "TRATAMIENTOS MÉTODO NEOLIFE CHEQUEOS PREVENTIVOS PROGRAMAS DE SEGUIMIENTO "
+        "TRATAMIENTOS PARA HOMBRE MICROBIOTA NUTRICIÓN BENEFICIOS PILARES NEOLIFE TESTIMONIOS"
+    )
+    check(
+        "TRATAMIENTOS PARA HOMBRE MICROBIOTA" not in neolife_menu_professionals,
+        "uppercase treatment menu should not become a professional",
     )
 
     imda_professionals = extract_professionals(
@@ -132,6 +182,52 @@ def main():
             for item in arvila_professionals
         ),
         "Arvila role/context text should not be part of extracted names",
+    )
+
+    untitled_team_professionals = extract_professionals(
+        "Equipo médico Jordi Ibañez Chequeos de Longevidad "
+        "Joan Josep Fuertes Medicina General "
+        "Pere Gascón Oncología Integrativa "
+        "Mariana Díaz Dermatología Estética Contacto"
+    )
+    check("Jordi Ibañez" in untitled_team_professionals, "untitled longevity-check doctor should be captured")
+    check("Joan Josep Fuertes" in untitled_team_professionals, "untitled general-medicine doctor should be captured")
+    check("Pere Gascón" in untitled_team_professionals, "untitled integrative oncology doctor should be captured")
+    check("Mariana Díaz" in untitled_team_professionals, "untitled dermatology doctor should be captured")
+    check(
+        all("Medicina" not in item and "Dermatología" not in item and "Chequeos" not in item for item in untitled_team_professionals),
+        "untitled team roles should not be part of extracted names",
+    )
+    arvila_menu_professionals = extract_professionals(
+        "Equipo Áreas Osteopatía Ginecología Integrativa Longevidad Dr. Jordi Ibañez "
+        "Chequeos de Longevidad Hipoxia Intermitente Select Page "
+        "Equipo de la Clínica de Medicina Integrativa en Barcelona Arvila Magna "
+        "D.O. Quim Vicent Director de la Clínica "
+        "Agenda tu Cita con Quim Equipo de Arvila Magna "
+        "Dr. Joan Josep Fuertes Medicina General COMB 08-29679-5 Agenda tu Cita con Joan "
+        "Dra. Mariana Díaz Dermatología Estética COMB 47856 Agenda tu Cita con Mariana "
+        "Marta Pradell Fisioterapeuta CFC 12370 Agenda tu Cita con Marta "
+        "Silvia Naranjo Óptica Optometrista CNOO 11618 Contacto"
+    )
+    check("D.O. Quim Vicent" in arvila_menu_professionals, "D.O. professional should be captured")
+    check("Marta Pradell" in arvila_menu_professionals, "CTA text should not merge adjacent professionals")
+    check("Silvia Naranjo" in arvila_menu_professionals, "attached optical role should be trimmed")
+    check(
+        all("Hipoxia" not in item and "PNIE" not in item and "Óptica" not in item for item in arvila_menu_professionals),
+        "menu or attached role text should not become professionals",
+    )
+    arvila_tail_professionals = extract_professionals(
+        "Equipo médico Gerardo Camors Auxiliar Jordi Gallifa Gerente Esther Pedrol Recepción "
+        "Osteopatía Osteopatía Deportiva Osteopatía Ginecológica Osteopatía Pediátrico "
+        "Médicina Medicina Integrativa Analítica de Frotis Sanguíneo "
+        "Nutrición Integrativa PNIE Fisioterapia Contacto"
+    )
+    check("Gerardo Camors" in arvila_tail_professionals, "assistant name should be captured before role")
+    check("Jordi Gallifa" in arvila_tail_professionals, "manager name should be captured before role")
+    check("Esther Pedrol" in arvila_tail_professionals, "reception name should be captured before role")
+    check(
+        all("Osteopatía" not in item and "PNIE" not in item and "Médicina" not in item for item in arvila_tail_professionals),
+        "service-list tail should not become professionals",
     )
 
     kairos_professionals = extract_professionals(

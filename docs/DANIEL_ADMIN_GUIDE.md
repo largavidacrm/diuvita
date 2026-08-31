@@ -22,17 +22,26 @@ Crear borrador no publica la clínica. Solo crea una ficha interna para editarla
 
 Arriba del panel verás **Plan global**. Léelo de arriba abajo:
 
-1. **Ahora estás aquí**: te dice en qué fase real estamos, sin obligarte a
+1. **Estamos aquí**: te dice en qué fase real estamos, sin obligarte a
    interpretar números.
-2. **Siguiente clic recomendado**: es el botón que conviene usar primero.
-3. **Ya funciona / Cuello de botella / No activar aún**: separa lo que está
-   resuelto, lo que bloquea avanzar y lo que todavía no conviene automatizar.
-4. **Ruta global**: muestra el camino completo por etapas.
+2. **Tu próximo clic**: es el botón que conviene usar primero.
+3. **Tú ahora / Freno de bandeja / Yo puedo seguir con / Datos pendientes /
+   No activar todavía**: separa tu revisión humana, el límite operativo, mi
+   trabajo técnico seguro y lo que todavía no conviene automatizar.
+4. **Mapa simple del plan**: muestra el camino completo sin numeritos
+   decorativos.
 
 Puedes pulsar **Filtrar grupo** o **Abrir siguiente** para ir directamente al
 grupo o tarjeta que el panel considera más importante. Si ves “control interno”,
 no significa que la web esté rota: significa que toca limpiar revisiones antes
 de subir la autonomía.
+
+Si **Tú ahora** dice **No crees trabajos nuevos**, usa primero **Filtrar grupo**,
+**Especialistas** o **Google Maps** para cerrar tarjetas abiertas.
+
+El menú lateral abre una zona de trabajo cada vez: **Plan**, **Sistema**,
+**Revisión**, **Clínicas**, **Trabajos** o **Actividad**. Pulsa **Todo** solo si
+quieres volver a la vista larga completa.
 
 ## Entender el estado del sistema
 
@@ -53,11 +62,14 @@ En **Estado del sistema**, mira especialmente:
 - **Siguiente fuente**: señala la ficha que conviene revisar primero para cerrar problemas de fuentes o claims bloqueantes.
 - **Especialistas**: muestra cuántas fichas visibles ya tienen especialistas publicados por la clínica.
 - **Pendientes especialistas**: indica cuántas fichas visibles siguen sin ese apartado.
-- **Siguiente especialistas**: señala la ficha más fácil de revisar para completar especialistas porque ya tiene tarjetas o claims internos.
+- **Siguiente especialistas**: señala la ficha más fácil de revisar para completar especialistas porque ya tiene tarjetas o nombres detectados.
 - **Fichas completas**: muestra cuántas fichas visibles no tienen campos importantes pendientes.
 - **Fichas con pendientes**: indica cuántas fichas visibles todavía necesitan completar algún campo público.
 - **Campo más pendiente**: resume qué tipo de dato falta en más fichas visibles.
 - **Siguiente ficha**: señala la ficha incompleta que conviene revisar primero.
+- **Sedes explícitas**: cuenta cuántas sedes están guardadas como sedes separadas y cuántas clínicas son multisede.
+- **Sedes sin Maps**: avisa si alguna sede guardada no tiene enlace a ficha de clínica en Google Maps.
+- **Sedes sin valoraciones**: avisa si alguna sede guardada no tiene enlace directo a valoraciones de Google.
 - **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas.
 - **Grupo por clínica**: señala qué clínica conviene revisar en bloque porque concentra varias tarjetas abiertas.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.
@@ -69,14 +81,55 @@ En **Estado del sistema**, mira especialmente:
   de pedir a Netlify una nueva publicación.
 - **Último rebuild**: muestra cuándo se pidió la última publicación web desde
   Supabase.
+- En el editor de cada clínica, **Web pública** indica si esa ficha concreta
+  tiene cambios guardados que todavía no se ven online.
+- Si acabas de validar una ficha y no ves el cambio en vitalarga.com, mira
+  **Web pública** en el editor: si dice que está pendiente, el dato está
+  guardado y lo que falta es regenerar la web pública.
 
 En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta del
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
 clínica.
 
+El bloque **Caso recomendado** resume la clínica que conviene trabajar como un
+caso completo. Muestra cuántas tarjetas tiene abiertas, el orden sugerido y el
+botón **Trabajar caso**. Cuando ya estás dentro de ese grupo, el botón cambia a
+**Abrir primera tarjeta** y aparece **Ver toda la bandeja** para salir del
+filtro.
+
 El botón **Filtrar grupo** muestra juntas las tarjetas abiertas de la clínica
 que más conviene revisar en bloque. Es útil cuando una misma clínica tiene claim,
 auditoría, cambio de fuente y mejoras abiertas a la vez.
+
+En los filtros rápidos de **Necesitan revisión**, usa **Especialistas** para ver
+solo tarjetas que traen profesionales publicados o propuestas relacionadas con
+equipo médico. Es la forma más rápida de completar ese apartado sin revisar toda
+la bandeja. Al activar ese filtro, arriba salen primero las tarjetas con más
+especialistas propuestos.
+
+En la tabla de revisiones, las tarjetas con especialistas muestran una línea
+explicando que esos nombres son **propuestas internas**. No aparecen en la web
+hasta que abras la tarjeta, revises la fuente pública, cargues la propuesta en
+el editor y guardes la ficha.
+
+Si una tarjeta de especialistas muestra **fuente pendiente**, úsala con más
+cuidado: primero abre la web oficial y confirma que esos profesionales aparecen
+publicados por la clínica. **Fuente visible** solo significa que el panel tiene
+un enlace para revisar, no que el dato esté aprobado.
+
+El filtro rápido **Google Maps** muestra las tarjetas que traen un enlace directo
+propuesto a Google Maps o a valoraciones de Google. Ábrelo, comprueba que el
+enlace corresponde al perfil real de la clínica y solo entonces carga la
+propuesta en la ficha. Si el enlace abre una búsqueda genérica, una dirección
+suelta o un perfil dudoso, no lo guardes.
+
+En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
+**Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
+perfil real de la clínica, el campo queda pendiente; no usamos enlaces genéricos
+a una dirección.
+
+Si una tarjeta muestra un aviso bajo el enlace de Google Maps, trátalo como
+pendiente: abre el enlace y guárdalo solo si ves la ficha real de la clínica.
 
 Dentro de una tarjeta con varias revisiones relacionadas verás **Orden
 recomendado**. Empieza por lo que marque ahí: normalmente claims bloqueantes o
@@ -90,12 +143,31 @@ El botón **Abrir especialistas** abre la primera tarjeta relacionada con la
 ficha marcada en **Siguiente especialistas**. Si no hay tarjeta exacta, filtra
 la bandeja por esa clínica y por revisiones de especialistas.
 
+Al editar una clínica, si aparecen **Detectados en revisión interna**, puedes
+pulsar **Cargar al formulario** para pasar esos nombres al campo de
+especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
+revises antes de guardar.
+
+En el editor de clínica, **Modalidad de atención** describe si la clínica es
+presencial, online o mixta. No decide la publicación. La publicación se decide
+con **Estado interno** o con el botón **Publicar**. Las sedes pueden ser
+**físicas** u **online**, y cada sede puede quedar visible en la ficha pública o
+solo interna.
+
+Si una ficha está en borrador, puedes usar **Descartar ficha**. No borra la
+clínica: la archiva, la deja fuera de la web y guarda el motivo en el historial.
+
+Para contacto, puedes guardar teléfono principal, fijo, móvil y WhatsApp. La
+búsqueda interna y la búsqueda pública también usan esos teléfonos.
+
 Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. Significa que ya se podría hablar de activar alguna categoría de bajo riesgo, siempre con tu aprobación.
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
 
 En **Crear trabajo**, el panel avisa cuando la bandeja está casi llena. Si el
-freno llega al límite, bloquea crear más trabajos hasta limpiar revisiones.
+freno está cerca del límite, pausa crear más trabajos hasta limpiar revisiones.
+Así evitamos llenar la bandeja con más tarjetas antes de cerrar las que ya
+existen.
 
 ## Revisar mejoras de una ficha existente
 
@@ -108,7 +180,21 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 5. El panel carga la propuesta dentro del formulario.
 6. Revisa el contenido, elige el estado de la ficha y guarda solo si te encaja.
 
-Hasta que no guardes, la web pública no cambia.
+Hasta que no guardes, la web pública no cambia. Después de guardar una ficha
+publicada o preliminar, puede quedar **pendiente de verse online** hasta que se
+ejecute la publicación agrupada.
+
+En las tarjetas de mejora puede aparecer **Enlaces propuestos**. Ahí se muestran
+clicables los enlaces que el sistema cree relevantes: Google Maps, valoraciones
+de Google, página de precios o web propuesta. Es una ayuda de revisión, no una
+aprobación automática.
+
+Al abrir una revisión verás un bloque de contexto arriba. Si dice
+**Candidata**, esa clínica todavía no está en la guía pública aunque tenga
+profesionales detectados; primero se crea un borrador y después se decide si se
+publica. Si dice **Mejora de ficha existente**, la información ya está asociada
+a una clínica conocida, pero sigue pendiente de cargarla en el editor y
+guardarla.
 
 Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
 
@@ -127,6 +213,28 @@ especialistas publicados o profesionales detectados.
 En la tarjeta de revisión verás **Camino de publicación**. Ese bloque recuerda el flujo:
 crear borrador interno, completar datos y publicar solo desde el editor de clínica.
 
+## Editar sedes de una clínica
+
+En el editor de clínica, la sede principal se edita en los campos normales de
+**Dirección**, **Google Maps** y **Valoraciones Google**. El apartado **Sedes
+adicionales** solo se usa cuando la clínica tiene más de una ubicación.
+
+El editor evita duplicar la sede principal debajo del formulario. También evita
+etiquetas tipo “Sede 1” o “Sede 2”: usa sede principal y sedes adicionales para
+que no parezca un ranking ni un contador.
+
+Cada sede puede tener:
+
+- Nombre de la sede.
+- Ciudad.
+- Dirección.
+- Enlace directo al perfil de Google Maps.
+- Enlace directo a valoraciones de Google.
+
+Usa **Añadir sede** para crear otra ubicación y **Quitar** para eliminar una
+sede que no quieras guardar. Si existe un enlace de Google Maps, debe ser el
+perfil real de la clínica, no solo una búsqueda por dirección.
+
 ## Duplicados
 
 Si el sistema detecta que una propuesta se parece mucho a una clínica existente, verás **Coincidencias en Vitalarga**.
@@ -143,21 +251,37 @@ tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
 
 1. Baja al bloque **Clínicas**.
 2. Busca la clínica por nombre o ciudad.
-3. Pulsa **Editar**.
-4. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, sedes, Google Maps, valoraciones Google y transparencia pública.
-5. Mira el bloque **Validación final**.
-6. El botón de guardar cambia según el estado elegido: **Guardar borrador**,
+3. Usa el filtro de preparación si quieres ver solo fichas sin faltantes,
+   fichas con faltantes, visibles con pendientes, pendientes de web pública o
+   no visibles.
+4. Mira la columna **Falta para publicar**: el primer campo en negrita es lo
+   primero que conviene completar.
+5. Pulsa **Editar**.
+6. Cambia los datos que quieras: resumen, servicios, especialidades, unidades clínicas, especialistas, contacto, sedes, Google Maps, valoraciones Google y transparencia pública.
+7. Mira el bloque **Validación final**.
+8. El botón de guardar cambia según el estado elegido: **Guardar borrador**,
    **Guardar en revisión**, **Guardar como preliminar** o **Guardar como publicada**.
-7. Guarda cuando esté correcto.
+9. Guarda cuando esté correcto.
 
 Si eliges **Preliminar** o **Publicada** y todavía hay claims bloqueantes,
 **Validación final** lo marcará como pendiente y el aviso de guardado te lo
 recordará antes de mandar la ficha a la web.
 
 Si una clínica tiene varias ubicaciones, usa **Sedes**. La **Dirección** sigue
-sirviendo como sede principal para fichas simples. En la web pública, la
-dirección se abre en Google Maps; si guardamos el perfil exacto de Google Maps
-o el enlace directo a valoraciones, se usa ese enlace directo.
+sirviendo como sede principal para fichas simples. En la web pública,
+**Google Maps** debe abrir la ficha de la clínica en Google Maps cuando tengamos
+ese enlace directo guardado. Si todavía falta, no mostramos botón de Google
+Maps: queda pendiente hasta encontrar la ficha real de la clínica. El enlace
+directo a valoraciones de Google se guarda aparte cuando exista.
+
+Si el sistema ha encontrado sedes en una propuesta o en una evidencia interna,
+el editor puede mostrar **Sedes detectadas en revisión interna**. Ese bloque no
+publica nada por sí solo: pulsa **Cargar sedes al formulario**, revisa ciudad,
+dirección y Google Maps, y después guarda la ficha solo si está correcto.
+
+En **Validación final**, Google Maps queda como pendiente si el enlace parece
+una búsqueda genérica, una ruta o una dirección suelta en vez de un perfil de
+clínica.
 
 Los campos de transparencia —años en ejercicio, número de especialistas,
 colegiación visible y precio público— solo deben rellenarse cuando salgan de una
@@ -165,6 +289,10 @@ fuente pública revisable. No son rankings ni recomendaciones.
 
 Si la clínica está como **Publicada** o **Preliminar**, el cambio se manda a la web automáticamente. Puede tardar unos minutos.
 Si está como **Borrador**, **Revisión**, **Descubierta**, **Extraída**, **Verificada** o **Archivada**, se guarda dentro del panel pero no aparece como ficha pública.
+
+Si una ficha aparece como **Pendiente de web**, no es que se haya perdido el
+cambio: está guardado en el admin y falta que la web pública se actualice en el
+lote correspondiente.
 
 En **Historial de cambios**, cada versión antigua indica qué campos cambiarían si la restauras. Restaurar pide confirmación, sobrescribe la ficha actual y queda registrado como una nueva versión.
 

@@ -32,11 +32,16 @@ FIELD_MAP = {
     "contact.email": "email",
     "contact.phone": "telefono",
     "contact.instagram": "instagram",
+    "location.locations": "locations",
     "services.list": "services",
     "specialties.list": "specialties",
     "units.list": "unidades",
     "professionals.published": "profesionales",
     "technologies.list": "tech",
+    "transparency.years_in_practice": "years_in_practice",
+    "transparency.specialists_count": "specialists_count",
+    "team.credentialing_visible": "team_credentialing_visible",
+    "prices.public_status": "public_pricing",
 }
 
 

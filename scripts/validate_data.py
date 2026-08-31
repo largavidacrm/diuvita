@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
+from google_maps_url_rules import is_direct_google_maps_profile_url, is_google_maps_like_url
+
 ROOT = Path(__file__).resolve().parents[1]
 CLINICS_FILE = ROOT / "data" / "clinics.json"
 LOGOS_FILE = ROOT / "data" / "logos.json"
@@ -15,7 +17,17 @@ ALLOWED_STATUS = {"publicada", "preliminar"}
 REQUIRED_STRINGS = ("slug", "name", "city", "country", "address", "web", "summary")
 REQUIRED_LISTS = ("services", "specialties")
 OPTIONAL_LISTS = ("cities_extra", "profesionales", "unidades")
-OPTIONAL_STRINGS = ("email", "instagram", "telefono", "tech")
+OPTIONAL_STRINGS = (
+    "email",
+    "instagram",
+    "telefono",
+    "tech",
+    "maps_url",
+    "google_maps_url",
+    "map_url",
+    "google_reviews_url",
+    "reviews_url",
+)
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -42,6 +54,40 @@ def load_json(path, errors):
     except Exception as exc:
         add_error(errors, str(path.relative_to(ROOT)), f"cannot read JSON ({exc})")
         return None
+
+
+def validate_google_maps_value(value, path, errors):
+    if not is_nonempty_string(value):
+        return
+    if not valid_url(value):
+        add_error(errors, path, "must be an http(s) URL")
+        return
+    if is_google_maps_like_url(value) and not is_direct_google_maps_profile_url(value):
+        add_error(errors, path, "must be the clinic's Google Maps profile link, not a search, route or street-address link")
+
+
+def validate_location_rows(clinic, path, errors):
+    locations = clinic.get("locations")
+    if not isinstance(locations, list):
+        return
+    for location_index, location in enumerate(locations):
+        location_path = f"{path}.locations[{location_index}]"
+        if isinstance(location, str):
+            parts = [part.strip() for part in location.split("|")]
+            if len(parts) >= 4:
+                validate_google_maps_value(parts[3], f"{location_path}.maps_url", errors)
+            if len(parts) >= 5 and parts[4]:
+                if not valid_url(parts[4]):
+                    add_error(errors, f"{location_path}.google_reviews_url", "must be an http(s) URL")
+            continue
+        if not isinstance(location, dict):
+            continue
+        for key in ("maps_url", "google_maps_url", "map_url"):
+            if key in location:
+                validate_google_maps_value(location.get(key), f"{location_path}.{key}", errors)
+        for key in ("google_reviews_url", "reviews_url", "valoraciones_url"):
+            if is_nonempty_string(location.get(key)) and not valid_url(location.get(key)):
+                add_error(errors, f"{location_path}.{key}", "must be an http(s) URL")
 
 
 def validate_clinics(errors, warnings):
@@ -111,6 +157,16 @@ def validate_clinics(errors, warnings):
         for key in OPTIONAL_STRINGS:
             if key in clinic and not isinstance(clinic[key], str):
                 add_error(errors, f"{path}.{key}", "must be a string when present")
+
+        for key in ("maps_url", "google_maps_url", "map_url"):
+            if key in clinic:
+                validate_google_maps_value(clinic.get(key), f"{path}.{key}", errors)
+
+        for key in ("google_reviews_url", "reviews_url"):
+            if is_nonempty_string(clinic.get(key)) and not valid_url(clinic.get(key)):
+                add_error(errors, f"{path}.{key}", "must be an http(s) URL")
+
+        validate_location_rows(clinic, path, errors)
 
         if is_nonempty_string(clinic.get("summary")) and len(clinic["summary"]) < 80:
             warnings.append(f"{path}.summary: short summary")

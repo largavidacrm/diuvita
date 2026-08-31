@@ -13,6 +13,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -42,6 +43,31 @@ BROWSER_COMPAT_HEADERS = {
     "Accept-Language": DEFAULT_HEADERS["Accept-Language"],
     "Upgrade-Insecure-Requests": "1",
 }
+BOILERPLATE_ATTR_RE = re.compile(
+    r"(?:^|[-_\s])(?:"
+    r"breadcrumb|breadcrumbs|cookie|cookies|gdpr|legal|main-menu|masthead|"
+    r"mega-menu|menu|modal|navbar|navigation|popup|primary-menu|site-header|"
+    r"skip-link|social|top-bar|topbar"
+    r")(?:$|[-_\s])",
+    re.I,
+)
+BOILERPLATE_TAGS = {"nav"}
+VOID_TAGS = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+}
 
 
 class ReadableTextParser(HTMLParser):
@@ -49,25 +75,40 @@ class ReadableTextParser(HTMLParser):
         super().__init__()
         self.title_parts: list[str] = []
         self.text_parts: list[str] = []
+        self.contact_parts: list[str] = []
         self._skip_depth = 0
+        self._boilerplate_depth = 0
+        self._boilerplate_stack: list[bool] = []
         self._in_title = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag = tag.lower()
+        entered_boilerplate = False
         if tag in {"script", "style", "noscript", "svg"}:
             self._skip_depth += 1
+        if not self._skip_depth and is_boilerplate_tag(tag, attrs):
+            self._boilerplate_depth += 1
+            entered_boilerplate = True
+        if tag not in VOID_TAGS:
+            self._boilerplate_stack.append(entered_boilerplate)
         if tag == "title":
             self._in_title = True
         if tag == "a" and not self._skip_depth:
             href = dict(attrs).get("href") or ""
             visible = visible_link_value(href)
             if visible:
-                self.text_parts.append(visible)
+                self.contact_parts.append(visible)
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
         if tag in {"script", "style", "noscript", "svg"} and self._skip_depth:
             self._skip_depth -= 1
+        if self._boilerplate_stack:
+            exited_boilerplate = self._boilerplate_stack.pop()
+        else:
+            exited_boilerplate = tag in BOILERPLATE_TAGS
+        if exited_boilerplate and self._boilerplate_depth:
+            self._boilerplate_depth -= 1
         if tag == "title":
             self._in_title = False
 
@@ -77,7 +118,7 @@ class ReadableTextParser(HTMLParser):
             return
         if self._in_title:
             self.title_parts.append(clean)
-        elif not self._skip_depth:
+        elif not self._skip_depth and not self._boilerplate_depth:
             self.text_parts.append(clean)
 
     @property
@@ -86,7 +127,8 @@ class ReadableTextParser(HTMLParser):
 
     @property
     def readable_text(self) -> str:
-        return normalize_space(" ".join(self.text_parts))
+        parts = compact_readable_parts([*self.contact_parts, *self.text_parts])
+        return normalize_space(" ".join(parts))
 
 
 @dataclass(frozen=True)
@@ -101,6 +143,37 @@ class FetchResult:
 
 def normalize_space(value: str) -> str:
     return re.sub(r"\s+", " ", value or "").strip()
+
+
+def comparable_text(value: str) -> str:
+    folded = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii")
+    return normalize_space(folded).lower()
+
+
+def is_boilerplate_tag(tag: str, attrs: list[tuple[str, str | None]]) -> bool:
+    if tag in BOILERPLATE_TAGS:
+        return True
+    attr_values = " ".join(value or "" for name, value in attrs if name.lower() in {"class", "id", "role"})
+    return bool(attr_values and BOILERPLATE_ATTR_RE.search(attr_values))
+
+
+def compact_readable_parts(parts: list[str]) -> list[str]:
+    seen: set[str] = set()
+    compacted: list[str] = []
+    previous_key = ""
+    for part in parts:
+        clean = normalize_space(part)
+        if not clean:
+            continue
+        key = comparable_text(clean)
+        if key == previous_key:
+            continue
+        if key in seen and len(clean) <= 180:
+            continue
+        seen.add(key)
+        previous_key = key
+        compacted.append(clean)
+    return compacted
 
 
 def visible_link_value(href: str) -> str:

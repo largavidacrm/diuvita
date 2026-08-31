@@ -6,12 +6,18 @@ Daniel.
 It is designed for future morning or weekly automations. It answers:
 
 - what Daniel should review first;
+- which next clicks Daniel should use in the panel;
 - which visible review card is the best starting point;
 - a fallback example by review type when the first priority list is limited;
+- whether the clinic portal has access requests, user suggestions or clinic-requested changes pending;
 - how many open cards exist by type;
 - whether auto-publication is still off;
+- whether public-site publication has saved changes pending to appear online;
 - how many visible profiles still have measured public fields pending;
 - which measured public field is missing from the most visible profiles;
+- whether there are open Google Maps/review-link proposals and which one to
+  start with;
+- whether there are open cards with specialist names already proposed;
 - which incomplete visible profile should be reviewed next;
 - how many visible profiles include published specialists;
 - which missing-specialist profile is the best first review target;
@@ -25,8 +31,8 @@ It is designed for future morning or weekly automations. It answers:
 - whether there are open technical failures;
 - optionally, whether the live public website responds correctly.
 
-It does not publish clinics, edit data, resolve reviews, send emails or expose
-review payloads.
+It does not publish clinics, edit data, resolve reviews, approve clinic portal
+access, send emails or expose review payloads.
 
 ## Run
 

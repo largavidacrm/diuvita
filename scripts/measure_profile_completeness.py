@@ -8,6 +8,7 @@ import sys
 from typing import Any
 
 from admin_digest import as_int, parse_timestamp
+from google_maps_url_rules import google_maps_profile_link_predicate
 from submit_discovery_candidates import load_env_file, run_psql
 
 
@@ -20,6 +21,7 @@ def safe_limit(value: int) -> int:
 
 def load_completeness(limit: int, local_env: dict[str, str]) -> dict[str, Any]:
     capped_limit = safe_limit(limit)
+    has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
     sql = f"""
 with clinic_rows as (
   select
@@ -53,8 +55,57 @@ with clinic_rows as (
         )), '') is not null
       )
     ) as has_address,
+    {has_google_maps} as has_google_maps,
+    (
+      nullif(btrim(coalesce(c.current_data ->> 'google_reviews_url', c.current_data ->> 'reviews_url', '')), '') is not null
+      or exists (
+        select 1
+        from jsonb_array_elements(
+          case
+            when jsonb_typeof(c.current_data -> 'locations') = 'array'
+              then c.current_data -> 'locations'
+            else '[]'::jsonb
+          end
+        ) as location(value)
+        where nullif(btrim(coalesce(
+          location.value ->> 'google_reviews_url',
+          location.value ->> 'reviews_url',
+          location.value ->> 'valoraciones_url',
+          ''
+        )), '') is not null
+      )
+    ) as has_google_reviews,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null as has_email,
     nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_phone,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'years_in_practice',
+      c.current_data ->> 'years_active',
+      c.current_data ->> 'founded_year',
+      c.current_data #>> '{{transparency,years_in_practice}}',
+      c.current_data #>> '{{transparency,years_active}}',
+      ''
+    )), '') is not null as has_years_in_practice,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'specialists_count',
+      c.current_data ->> 'num_specialists',
+      c.current_data ->> 'specialists_public_count',
+      c.current_data #>> '{{transparency,specialists_count}}',
+      ''
+    )), '') is not null as has_specialists_count,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'team_credentialing_visible',
+      c.current_data ->> 'medical_license_visible',
+      c.current_data ->> 'colegiacion_visible',
+      c.current_data #>> '{{team,credentialing_visible}}',
+      ''
+    )), '') is not null as has_team_credentialing_visible,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'public_pricing',
+      c.current_data ->> 'prices_public',
+      c.current_data ->> 'price_public',
+      c.current_data #>> '{{prices,public_status}}',
+      ''
+    )), '') is not null as has_public_pricing,
     case
       when jsonb_typeof(c.current_data -> 'services') = 'array'
         then jsonb_array_length(c.current_data -> 'services')
@@ -119,12 +170,18 @@ profile_checks as (
       case when not has_summary then 'Resumen corto o vacío' end,
       case when not has_website then 'Web oficial' end,
       case when not has_address then 'Dirección' end,
+      case when not has_google_maps then 'Google Maps de clínica' end,
+      case when not has_google_reviews then 'Valoraciones Google' end,
       case when not has_contact then 'Email o teléfono' end,
       case when not has_services then 'Servicios' end,
       case when not has_specialties then 'Especialidades' end,
       case when not has_units then 'Unidades clínicas' end,
       case when not has_specialists then 'Especialistas publicados' end,
-      case when not has_technology then 'Tecnología destacada' end
+      case when not has_technology then 'Tecnología destacada' end,
+      case when not has_years_in_practice then 'Años en ejercicio' end,
+      case when not has_specialists_count then 'Número de especialistas' end,
+      case when not has_team_credentialing_visible then 'Colegiación visible' end,
+      case when not has_public_pricing then 'Precio público' end
     ], null) as pending_fields
   from checks
 ),
@@ -146,12 +203,18 @@ field_summary as (
     jsonb_build_object('field', 'summary', 'label', 'Resumen suficiente', 'present', count(*) filter (where has_summary), 'pending', count(*) filter (where not has_summary)),
     jsonb_build_object('field', 'website', 'label', 'Web oficial', 'present', count(*) filter (where has_website), 'pending', count(*) filter (where not has_website)),
     jsonb_build_object('field', 'address', 'label', 'Dirección', 'present', count(*) filter (where has_address), 'pending', count(*) filter (where not has_address)),
+    jsonb_build_object('field', 'google_maps', 'label', 'Google Maps de clínica', 'present', count(*) filter (where has_google_maps), 'pending', count(*) filter (where not has_google_maps)),
+    jsonb_build_object('field', 'google_reviews', 'label', 'Valoraciones Google', 'present', count(*) filter (where has_google_reviews), 'pending', count(*) filter (where not has_google_reviews)),
     jsonb_build_object('field', 'contact', 'label', 'Email o teléfono', 'present', count(*) filter (where has_contact), 'pending', count(*) filter (where not has_contact)),
     jsonb_build_object('field', 'services', 'label', 'Servicios', 'present', count(*) filter (where has_services), 'pending', count(*) filter (where not has_services)),
     jsonb_build_object('field', 'specialties', 'label', 'Especialidades', 'present', count(*) filter (where has_specialties), 'pending', count(*) filter (where not has_specialties)),
     jsonb_build_object('field', 'units', 'label', 'Unidades clínicas', 'present', count(*) filter (where has_units), 'pending', count(*) filter (where not has_units)),
     jsonb_build_object('field', 'specialists', 'label', 'Especialistas publicados', 'present', count(*) filter (where has_specialists), 'pending', count(*) filter (where not has_specialists)),
-    jsonb_build_object('field', 'technology', 'label', 'Tecnología destacada', 'present', count(*) filter (where has_technology), 'pending', count(*) filter (where not has_technology))
+    jsonb_build_object('field', 'technology', 'label', 'Tecnología destacada', 'present', count(*) filter (where has_technology), 'pending', count(*) filter (where not has_technology)),
+    jsonb_build_object('field', 'years_in_practice', 'label', 'Años en ejercicio', 'present', count(*) filter (where has_years_in_practice), 'pending', count(*) filter (where not has_years_in_practice)),
+    jsonb_build_object('field', 'specialists_count', 'label', 'Número de especialistas', 'present', count(*) filter (where has_specialists_count), 'pending', count(*) filter (where not has_specialists_count)),
+    jsonb_build_object('field', 'team_credentialing_visible', 'label', 'Colegiación visible', 'present', count(*) filter (where has_team_credentialing_visible), 'pending', count(*) filter (where not has_team_credentialing_visible)),
+    jsonb_build_object('field', 'public_pricing', 'label', 'Precio público', 'present', count(*) filter (where has_public_pricing), 'pending', count(*) filter (where not has_public_pricing))
   ) as data
   from checks
 ),

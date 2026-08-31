@@ -17,11 +17,30 @@ def main() -> None:
 
     for marker in [
         'id="clinicPublicationHint"',
+        'id="clinicPublicSync"',
+        'id="clinicPublicSyncTitle"',
+        'id="clinicPublicSyncDetail"',
+        'id="clinicPublicRebuildBtn"',
+        'id="clinicPublishReadiness"',
+        'id="clinicPublishReadinessTitle"',
+        'id="clinicPublishReadinessMeta"',
+        'id="clinicPublishMissingList"',
+        'id="clinicPublishFilter"',
         'id="reviewActionNote"',
         'id="reviewFlowPanel"',
         'id="reviewFlowMeta"',
         'id="reviewFlowSteps"',
         "function publicVisibilityText",
+        "function isPublicClinicStatus",
+        "function clinicHasPendingPublicChange",
+        "function renderClinicPublicSync",
+        "function hasUnsavedClinicFormChanges",
+        "function renderPublishReadiness",
+        "function focusPublishField",
+        "function publicRequiredProfileFields",
+        "function clinicPublicationMissingLabels",
+        "function clinicPublishReadinessCell",
+        "function clinicMatchesPublishFilter",
         "function updateClinicSaveButtonLabel",
         "function isBlockingClinicClaim",
         "function reviewActionNote",
@@ -36,6 +55,31 @@ def main() -> None:
         "La publicación se decide después en el editor, en Validación final.",
         "Guardar como publicada",
         "Guardar borrador",
+        "Falta para publicar",
+        "Abre la ficha y completa ese campo.",
+        "Para publicar",
+        "Completa estos puntos o guarda la ficha como borrador/revisión interna.",
+        "Cambios todavía no guardados.",
+        "Guardada, pendiente de verse online.",
+        "No es un problema de guardado: la última web pública es anterior a esta edición.",
+        "Se verá en Vitalarga después de actualizar la web.",
+        "No está publicada en la web.",
+        "Última edición de esta ficha:",
+        "última web pública:",
+        "Dirección o sede",
+        "Google Maps de clínica",
+        "data-publish-field",
+        "Sin faltantes obligatorios",
+        "Con faltantes",
+        "Visibles con pendientes",
+        "Pendientes de web pública",
+        "Pendiente de web",
+        "Guardada en admin",
+        "Guardada; pendiente de actualizar web pública.",
+        "La web pública va por detrás; se verá tras la actualización agrupada.",
+        "No visibles",
+        'el("clinicPublishFilter").addEventListener("change", renderClinics)',
+        'if (filter === "web_pending") return clinicHasPendingPublicChange(row, publicationControlCache);',
         "no aparecerá en la web",
         "aparecerá en la web",
     ]:
@@ -44,6 +88,16 @@ def main() -> None:
     check("updateClinicSaveButtonLabel();" in index, "validation should refresh save button label")
     check(".publication-hint" in css, "publication hint style missing")
     check(".publication-hint.visible-target" in css, "public-target hint style missing")
+    check(".clinic-public-sync" in css, "clinic public sync style missing")
+    check(".clinic-public-sync.is-pending" in css, "clinic public sync pending style missing")
+    check(".clinic-public-sync.is-muted" in css, "clinic public sync muted style missing")
+    check(".publish-readiness" in css, "publish readiness style missing")
+    check(".publish-missing-chip" in css, "publish missing chip style missing")
+    check(".publish-cell" in css, "clinic publish cell style missing")
+    check(".publish-cell strong" in css, "clinic first missing field style missing")
+    check(".publish-cell.is-web-pending strong" in css, "clinic web-pending style missing")
+    check(".publish-web-note" in css, "clinic table web-pending note style missing")
+    check(".field-attention" in css, "field attention style missing")
     check(".review-action-note" in css, "review action note style missing")
     check(".review-flow" in css, "review flow style missing")
     check(".review-flow-steps" in css, "review flow steps style missing")

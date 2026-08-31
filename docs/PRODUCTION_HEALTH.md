@@ -21,6 +21,26 @@ It does not log in, publish clinics, edit Supabase, resolve review cards or
 inspect private data. It is intentionally separate from `scripts/run_local_checks.py`
 because it reads the live website over the network.
 
+## Freshness
+
+`scripts/check_public_site_freshness.py` compares the public Supabase clinic feed
+with the currently published clinic pages. It is useful when a field was saved
+in `/admin/` but Daniel cannot see it online yet.
+
+Example:
+
+```bash
+python3 scripts/check_public_site_freshness.py --clinic "Monarka"
+```
+
+The exact slug still works when needed, for example
+`--slug monarka-clinic`.
+
+It is read-only: it does not trigger Netlify, change Supabase, resolve review
+cards or publish clinics. If it reports a desfase, the likely next step is to
+use the admin's batched **Actualizar web ahora** action after the current edit
+batch is finished.
+
 ## Run
 
 ```bash
@@ -49,3 +69,13 @@ python3 scripts/run_cto_shadow_cycle.py --production-health
 ```
 
 It remains read-only in both dry-run and safe-apply mode.
+
+The cycle can also include the freshness check when the question is whether
+saved clinic data has reached the deployed static page:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --public-freshness --public-freshness-clinic "Monarka" --plain-brief
+```
+
+That freshness step is diagnostic only. A stale page should be resolved through
+the admin's batched public rebuild action once the edit batch is finished.

@@ -26,7 +26,22 @@ BATCH_VERSION = "2026-08-30"
 
 
 FetchFn = Callable[..., FetchResult]
-CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool], dict[str, Any]]
+CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool], dict[str, Any]]
+
+PENDING_FIELD_TARGETS = {
+    "address": {"locations"},
+    "locations": {"locations"},
+    "contact": {"email", "telefono", "instagram"},
+    "services": {"services"},
+    "specialties": {"specialties"},
+    "units": {"unidades"},
+    "specialists": {"profesionales"},
+    "technology": {"tech"},
+    "years_in_practice": {"years_in_practice"},
+    "specialists_count": {"specialists_count"},
+    "team_credentialing_visible": {"team_credentialing_visible"},
+    "public_pricing": {"public_pricing"},
+}
 
 
 def today_batch() -> str:
@@ -42,19 +57,61 @@ def load_clinic_sources(
     clinic_filter = f"and c.slug = {sql_literal(clinic_slug)}" if clinic_slug else ""
     source_filter = f"and sr.id = {sql_literal(source_id)}::uuid" if source_id else ""
     sql = f"""
-select coalesce(jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.retrieved_at desc), '[]'::jsonb)
+select coalesce(jsonb_agg(to_jsonb(items) order by items.pending_count desc, items.has_open_review asc, items.team_source_priority desc, items.retrieved_at desc), '[]'::jsonb)
 from (
   select
     sr.id as source_record_id,
+    sr.source_type,
     sr.source_url,
     sr.source_title,
     sr.retrieved_at,
     cardinality(candidate.pending_fields) as pending_count,
     candidate.pending_fields,
+    'specialists' = any(candidate.pending_fields) as specialists_pending,
+    case
+      when 'specialists' = any(candidate.pending_fields)
+        and (
+          sr.source_type = 'official_team_page'
+          or coalesce(sr.source_title, '') ~* '(^|[^[:alpha:]])(equipo|profesionales|especialistas|doctor|doctora|doctores|doctoras|doctors|team|staff|quienes)([^[:alpha:]]|$)'
+          or sr.source_url ~* '(^|[/_.-])(equipo|equipo-medico|equipo-medicos|cuadro-medico|cuadro-medicos|profesionales|especialistas|doctor|doctora|doctores|doctoras|doctors|team|staff|about|quienes-somos|quienes)([/_.?#-]|$)'
+        )
+        then 1
+      else 0
+    end as team_source_priority,
     c.id as clinic_id,
     c.slug as clinic_slug,
     c.display_name as clinic_name,
     c.status as clinic_status,
+    (
+      select jsonb_build_object(
+        'id', rq.id,
+        'title', rq.title,
+        'priority', rq.priority,
+        'created_at', rq.created_at
+      )
+      from public.review_queue rq
+      where rq.clinic_id = c.id
+        and rq.status = 'open'
+        and rq.review_type = 'clinic_profile_enrichment'
+        and rq.payload ->> 'source_url' = sr.source_url
+      order by rq.priority desc, rq.created_at asc
+      limit 1
+    ) as open_review,
+    (
+      select jsonb_build_object(
+        'id', rq.id,
+        'title', rq.title,
+        'priority', rq.priority,
+        'source_url', rq.payload ->> 'source_url',
+        'created_at', rq.created_at
+      )
+      from public.review_queue rq
+      where rq.clinic_id = c.id
+        and rq.status = 'open'
+        and rq.review_type = 'clinic_profile_enrichment'
+      order by rq.priority desc, rq.created_at asc
+      limit 1
+    ) as open_clinic_review,
     exists (
       select 1
       from public.review_queue rq
@@ -78,9 +135,54 @@ from (
       case when nullif(btrim(coalesce(c.website, c.current_data ->> 'web', '')), '') is null then 'website' end,
       case when nullif(btrim(coalesce(c.address, c.current_data ->> 'address', '')), '') is null then 'address' end,
       case
+        when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'locations') = 'array' then c.current_data -> 'locations' else '[]'::jsonb end), 0) = 0
+          then 'locations'
+      end,
+      case
         when nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is null
           and nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is null
           then 'contact'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'years_in_practice',
+          c.current_data ->> 'years_active',
+          c.current_data ->> 'founded_year',
+          c.current_data #>> '{{transparency,years_in_practice}}',
+          c.current_data #>> '{{transparency,years_active}}',
+          ''
+        )), '') is null
+          then 'years_in_practice'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'specialists_count',
+          c.current_data ->> 'num_specialists',
+          c.current_data ->> 'specialists_public_count',
+          c.current_data #>> '{{transparency,specialists_count}}',
+          ''
+        )), '') is null
+          then 'specialists_count'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'team_credentialing_visible',
+          c.current_data ->> 'medical_license_visible',
+          c.current_data ->> 'colegiacion_visible',
+          c.current_data #>> '{{team,credentialing_visible}}',
+          ''
+        )), '') is null
+          then 'team_credentialing_visible'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'public_pricing',
+          c.current_data ->> 'prices_public',
+          c.current_data ->> 'price_public',
+          c.current_data #>> '{{prices,public_status}}',
+          ''
+        )), '') is null
+          then 'public_pricing'
       end,
       case
         when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'services') = 'array' then c.current_data -> 'services' else '[]'::jsonb end), 0) = 0
@@ -111,9 +213,10 @@ from (
   where sr.entity_type = 'clinic'
     and sr.source_url ~* '^https?://'
     and c.status <> 'archived'
+    and cardinality(candidate.pending_fields) > 0
     {clinic_filter}
     {source_filter}
-  order by cardinality(candidate.pending_fields) desc, has_open_review asc, sr.retrieved_at desc, sr.created_at desc
+  order by cardinality(candidate.pending_fields) desc, has_open_review asc, team_source_priority desc, sr.retrieved_at desc, sr.created_at desc
   limit {max(1, min(100, int(limit)))}
 ) items;
 """
@@ -138,6 +241,70 @@ def payload_for_source(source: dict[str, Any], verification: dict[str, Any]) -> 
     return payload
 
 
+def proposed_field_counts(proposed_fields: dict[str, Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for key, value in proposed_fields.items():
+        if isinstance(value, list):
+            counts[key] = len(value)
+        elif value in (None, ""):
+            counts[key] = 0
+        else:
+            counts[key] = 1
+    return counts
+
+
+def filter_proposed_fields_for_pending(
+    proposed_fields: dict[str, Any],
+    pending_fields: list[str],
+) -> dict[str, Any]:
+    allowed = set()
+    for field in pending_fields:
+        allowed.update(PENDING_FIELD_TARGETS.get(str(field), set()))
+    if not allowed:
+        return {}
+    return {
+        key: value
+        for key, value in proposed_fields.items()
+        if key in allowed
+    }
+
+
+def source_shadow_next_step(item: dict[str, Any]) -> str:
+    status = str(item.get("status") or "")
+    reason = str(item.get("reason") or "")
+    pending_fields = item.get("pending_fields") or []
+
+    if status == "ready":
+        if item.get("created_review"):
+            return "abrir la revisión creada y validar los campos antes de guardar la ficha"
+        return "revisar la propuesta; cargar campos en la ficha solo tras validación humana"
+
+    if status == "empty":
+        if pending_fields:
+            return "buscar una fuente oficial más específica para los campos pendientes"
+        return "no crear propuesta; la ficha no tiene huecos medidos"
+
+    if status == "failed":
+        return "reintentar la fuente o buscar una fuente oficial alternativa"
+
+    if status == "skipped":
+        if "already queued" in reason:
+            return "trabajar primero la fuente ya seleccionada para esta clínica en este lote"
+        if "for this clinic" in reason:
+            return "abrir el grupo de la clínica y consolidar la tarjeta existente antes de crear otra"
+        if "already exists" in reason:
+            return "abrir la revisión existente de esta fuente y consolidarla antes de refrescar"
+        if "missing clinic slug or source URL" in reason:
+            return "revisar el registro interno de fuente antes de procesarlo"
+        return "mantener como pendiente interno hasta que baje la bandeja de revisión"
+
+    return "revisar manualmente el resultado antes de crear una propuesta"
+
+
+def with_next_step(item: dict[str, Any]) -> dict[str, Any]:
+    return {**item, "next_step": source_shadow_next_step(item)}
+
+
 def process_source(
     source: dict[str, Any],
     args: argparse.Namespace,
@@ -152,35 +319,45 @@ def process_source(
         "source_record_id": source.get("source_record_id"),
         "clinic_slug": clinic_slug,
         "clinic_name": source.get("clinic_name"),
+        "source_type": source.get("source_type"),
         "source_url": source_url,
         "pending_count": source.get("pending_count") or 0,
         "pending_fields": source.get("pending_fields") or [],
+        "specialists_pending": bool(source.get("specialists_pending")),
+        "team_source_priority": source.get("team_source_priority") or 0,
+        "open_review": source.get("open_review"),
+        "open_clinic_review": source.get("open_clinic_review"),
     }
 
     if not clinic_slug or not source_url:
-        return {**result, "status": "skipped", "reason": "missing clinic slug or source URL"}
+        return with_next_step({**result, "status": "skipped", "reason": "missing clinic slug or source URL"})
 
     if source.get("has_open_review") and not args.replace_existing:
-        return {**result, "status": "skipped", "reason": "open enrichment review already exists"}
+        return with_next_step({**result, "status": "skipped", "reason": "open enrichment review already exists"})
 
     if (
         source.get("has_open_clinic_review")
         and not source.get("has_open_review")
         and not args.allow_multiple_open_clinic_reviews
     ):
-        return {**result, "status": "skipped", "reason": "open enrichment review already exists for this clinic"}
+        return with_next_step({**result, "status": "skipped", "reason": "open enrichment review already exists for this clinic"})
 
     try:
         extraction = extract_from_fetch(fetcher(source_url, timeout=args.timeout))
         verification = verify_extraction(extraction)
     except (HTTPError, URLError, TimeoutError, ValueError, OSError) as error:
-        return {**result, "status": "failed", "error": str(error)}
+        return with_next_step({**result, "status": "failed", "error": str(error)})
 
     payload = payload_for_source(source, verification)
+    payload["proposed_fields"] = filter_proposed_fields_for_pending(
+        payload.get("proposed_fields") or {},
+        source.get("pending_fields") or [],
+    )
     proposed_fields = payload.get("proposed_fields") or {}
     result.update({
         "status": "ready" if proposed_fields else "empty",
         "proposed_fields": sorted(proposed_fields.keys()),
+        "proposed_field_counts": proposed_field_counts(proposed_fields),
         "verification_summary": payload.get("verification_summary") or {},
     })
 
@@ -191,21 +368,25 @@ def process_source(
             admin_email,
             local_env,
             args.replace_existing,
+            args.allow_multiple_open_clinic_reviews,
         )
-    return result
+    return with_next_step(result)
 
 
 def duplicate_clinic_result(source: dict[str, Any]) -> dict[str, Any]:
-    return {
+    return with_next_step({
         "source_record_id": source.get("source_record_id"),
         "clinic_slug": source.get("clinic_slug"),
         "clinic_name": source.get("clinic_name"),
+        "source_type": source.get("source_type"),
         "source_url": source.get("source_url"),
         "pending_count": source.get("pending_count") or 0,
         "pending_fields": source.get("pending_fields") or [],
+        "specialists_pending": bool(source.get("specialists_pending")),
+        "team_source_priority": source.get("team_source_priority") or 0,
         "status": "skipped",
         "reason": "another source for this clinic is already queued in this batch",
-    }
+    })
 
 
 def process_sources(
@@ -246,6 +427,42 @@ def summarize_results(results: list[dict[str, Any]]) -> dict[str, int]:
     }
 
 
+def compact_item(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "clinic_slug": item.get("clinic_slug"),
+        "clinic_name": item.get("clinic_name"),
+        "source_type": item.get("source_type"),
+        "source_url": item.get("source_url"),
+        "status": item.get("status"),
+        "reason": item.get("reason"),
+        "pending_count": item.get("pending_count"),
+        "pending_fields": item.get("pending_fields") or [],
+        "next_step": item.get("next_step") or source_shadow_next_step(item),
+        "proposed_fields": item.get("proposed_fields") or [],
+        "proposed_field_counts": item.get("proposed_field_counts") or {},
+        "has_open_review": bool(item.get("open_review")),
+        "has_open_clinic_review": bool(item.get("open_clinic_review")),
+    }
+
+
+def compact_output(output: dict[str, Any]) -> dict[str, Any]:
+    items = output.get("items") if isinstance(output.get("items"), list) else []
+    compact_items = [compact_item(item) for item in items if isinstance(item, dict)]
+    return {
+        "mode": output.get("mode"),
+        "writes_data": output.get("mode") == "apply",
+        "sources_seen": output.get("sources_seen"),
+        "ready": output.get("ready"),
+        "empty": output.get("empty"),
+        "skipped": output.get("skipped"),
+        "failed": output.get("failed"),
+        "created_or_updated": output.get("created_or_updated"),
+        "ready_items": [item for item in compact_items if item.get("status") == "ready"],
+        "skipped_items": [item for item in compact_items if item.get("status") == "skipped"],
+        "failed_items": [item for item in compact_items if item.get("status") == "failed"],
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=5)
@@ -264,6 +481,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Create internal clinic_profile_enrichment review cards. Never publishes or edits clinics.",
     )
+    parser.add_argument("--compact", action="store_true", help="Print a compact summary without full verification details.")
     return parser.parse_args()
 
 
@@ -283,6 +501,8 @@ def main() -> int:
         **summarize_results(results),
         "items": results,
     }
+    if args.compact:
+        output = compact_output(output)
     print(json.dumps(output, ensure_ascii=False, indent=2))
     return 0 if output["failed"] == 0 else 1
 

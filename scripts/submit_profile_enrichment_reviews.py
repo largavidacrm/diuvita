@@ -69,10 +69,11 @@ where slug = {sql_literal(slug)};
     return int(run_psql(sql, local_env) or "0") > 0
 
 
-def create_review(batch, proposal, admin_email, local_env):
+def create_review(batch, proposal, admin_email, local_env, allow_multiple_open_clinic_reviews=False):
     title = proposal.get("title") or "Ampliar ficha: " + proposal["slug"]
     priority = int(proposal.get("priority") or 55)
     payload = json.dumps(proposal, ensure_ascii=False)
+    allow_multiple = "true" if allow_multiple_open_clinic_reviews else "false"
     sql = f"""
 with target as (
   select id, slug, display_name, city, country, website
@@ -82,13 +83,27 @@ with target as (
 incoming as (
   select {sql_literal(payload)}::jsonb as proposal
 ),
-existing as (
-  select rq.id, rq.title
+open_clinic_reviews as (
+  select rq.id, rq.title, rq.payload ->> 'proposal_batch' as review_batch
   from public.review_queue rq
   join target t on t.id = rq.clinic_id
   where rq.review_type = 'clinic_profile_enrichment'
     and rq.status = 'open'
-    and rq.payload ->> 'proposal_batch' = {sql_literal(batch)}
+  order by
+    case when rq.payload ->> 'proposal_batch' = {sql_literal(batch)} then 0 else 1 end,
+    rq.priority desc,
+    rq.created_at asc
+),
+existing as (
+  select rq.id, rq.title
+  from open_clinic_reviews rq
+  where rq.review_batch = {sql_literal(batch)}
+  limit 1
+),
+existing_clinic as (
+  select rq.id, rq.title
+  from open_clinic_reviews rq
+  where not exists (select 1 from existing)
   limit 1
 ),
 inserted as (
@@ -126,6 +141,7 @@ inserted as (
   from target t
   cross join incoming i
   where not exists (select 1 from existing)
+    and ({allow_multiple} or not exists (select 1 from existing_clinic))
   returning id, title
 ),
 resolved as (
@@ -133,6 +149,10 @@ resolved as (
   union all
   select 'existing' as status, id, title from existing
   where not exists (select 1 from inserted)
+  union all
+  select 'existing_clinic' as status, id, title from existing_clinic
+  where not exists (select 1 from inserted)
+    and not exists (select 1 from existing)
 )
 select coalesce(jsonb_agg(to_jsonb(resolved.*)), '[]'::jsonb)
 from resolved;
@@ -177,6 +197,11 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", default=DEFAULT_PATH)
     parser.add_argument("--admin-email", help="Admin email used for assignment/audit.")
+    parser.add_argument(
+        "--allow-multiple-open-clinic-reviews",
+        action="store_true",
+        help="Allow more than one open enrichment card for the same clinic.",
+    )
     parser.add_argument("--apply", action="store_true", help="Create review cards in Supabase.")
     return parser.parse_args()
 
@@ -192,26 +217,36 @@ def main():
     admin_email = args.admin_email or get_default_admin_email(local_env)
     inserted = []
     existing = []
+    existing_clinic = []
     missing = []
 
     for proposal in proposals:
         if not clinic_exists(proposal["slug"], local_env):
             missing.append(proposal["slug"])
             continue
-        result = create_review(batch, proposal, admin_email, local_env)
+        result = create_review(
+            batch,
+            proposal,
+            admin_email,
+            local_env,
+            args.allow_multiple_open_clinic_reviews,
+        )
         status = result.get("status")
         if status == "inserted":
             inserted.append(proposal["slug"])
         elif status == "existing":
             existing.append(proposal["slug"])
+        elif status == "existing_clinic":
+            existing_clinic.append(proposal["slug"])
         else:
             missing.append(proposal["slug"])
 
-    record_event(batch, inserted, existing, missing, admin_email, local_env)
+    record_event(batch, inserted, existing + existing_clinic, missing, admin_email, local_env)
     print(json.dumps({
         "batch": batch,
         "inserted": inserted,
         "existing": existing,
+        "existing_clinic": existing_clinic,
         "missing": missing,
     }, ensure_ascii=False, indent=2))
 

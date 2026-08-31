@@ -11,14 +11,19 @@ from admin_digest import (
     as_int,
     first_backlog_bottleneck,
     first_clinic_workgroup,
+    google_link_review_status,
     load_digest,
     next_action_label,
     next_profile_action,
+    next_portal_action,
     next_source_action,
     next_specialist_action,
     parse_timestamp,
+    publication_control_status,
+    portal_status,
     review_backlog_guard_status,
     source_coverage_status,
+    specialist_review_status,
     top_pending_profile_field,
 )
 from check_production_health import run_checks
@@ -28,7 +33,10 @@ from submit_discovery_candidates import get_default_admin_email, load_env_file
 TYPE_LABELS = {
     "blocking_claim_review": ("claim bloqueante", "claims bloqueantes"),
     "candidate_clinic": ("clínica nueva", "clínicas nuevas"),
+    "clinic_claim_request": ("solicitud de acceso", "solicitudes de acceso"),
     "clinic_profile_enrichment": ("mejora de ficha", "mejoras de ficha"),
+    "portal_profile_change": ("cambio pedido por clínica", "cambios pedidos por clínicas"),
+    "portal_recommended_clinic": ("clínica sugerida por usuario", "clínicas sugeridas por usuarios"),
     "source_change_detected": ("cambio de fuente", "cambios de fuente"),
     "clinic_quality_audit": ("auditoría de calidad", "auditorías de calidad"),
 }
@@ -125,6 +133,65 @@ def review_backlog_status(digest: dict[str, Any]) -> str:
     return f"{duplicate_clinics} {clinic_label} con varias mejoras abiertas; {duplicate_reviews} tarjetas"
 
 
+def review_professionals_note(item: dict[str, Any] | None) -> str:
+    count = as_int((item or {}).get("professionals_count"))
+    if not count:
+        return ""
+    word = "especialista recogido" if count == 1 else "especialistas recogidos"
+    return f" Trae {count} {word}."
+
+
+def review_case_line(item: dict[str, Any] | None, fallback_filter: str) -> str:
+    return f"Caso visible: {review_name(item, fallback_filter)}." + review_professionals_note(item)
+
+
+def clinic_workgroup_click(digest: dict[str, Any]) -> str:
+    group = digest.get("review_first_clinic_workgroup") or {}
+    name = str(group.get("clinic_name") or group.get("clinic_slug") or "").strip()
+    count = as_int(group.get("open_count"))
+    if not name or not count:
+        return ""
+    return f"Pulsa Filtrar grupo y trabaja {name}: {count} tarjetas juntas."
+
+
+def google_maps_click(digest: dict[str, Any]) -> str:
+    status = digest.get("google_link_reviews") or {}
+    count = as_int(status.get("open_count"))
+    first = status.get("first_review") or {}
+    if not count:
+        return ""
+    first_label = review_name(first, "Google Maps")
+    return f"Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: {first_label}."
+
+
+def specialists_click(digest: dict[str, Any]) -> str:
+    status = digest.get("specialist_reviews") or {}
+    count = as_int(status.get("open_count"))
+    first = status.get("first_review") or {}
+    total = as_int(status.get("professionals_count"))
+    if not count:
+        return ""
+    suffix = f" En total hay {total} especialistas propuestos en la bandeja." if total else ""
+    return f"Pulsa Especialistas y abre primero la tarjeta con más nombres: {review_name(first, 'Especialistas')}.{suffix}"
+
+
+def next_clicks(digest: dict[str, Any]) -> list[str]:
+    clicks: list[str] = []
+    guard = review_backlog_guard_status(digest)
+    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+        clicks.append(f"No crees trabajos nuevos hasta bajar la bandeja; ahora está {guard}.")
+    for candidate in (
+        clinic_workgroup_click(digest),
+        specialists_click(digest),
+        google_maps_click(digest),
+    ):
+        if candidate and candidate not in clicks:
+            clicks.append(candidate)
+    if not clicks:
+        clicks.append("Abre el panel y usa Abrir prioridad.")
+    return clicks[:4]
+
+
 def production_health_status(report: dict[str, Any]) -> str:
     checks = report.get("checks") or []
     if report.get("ok"):
@@ -139,35 +206,57 @@ def production_health_status(report: dict[str, Any]) -> str:
 def first_step(digest: dict[str, Any]) -> list[str]:
     counts = review_counts(digest)
     failed = digest.get("recent_failed_jobs") or []
+    guard = review_backlog_guard_status(digest)
+    group = first_clinic_workgroup(digest)
     if failed:
         return [
             "Primero revisa fallos técnicos.",
             "Hay trabajos fallidos; conviene corregirlos antes de aceptar nuevas fichas.",
         ]
+    if counts.get("clinic_claim_request"):
+        return [
+            "Primero revisa solicitudes de acceso del portal.",
+            f"Caso visible: {review_name(first_review(digest, 'clinic_claim_request'), 'Reclamaciones')}.",
+        ]
+    if (guard.startswith("cerca del freno") or guard.startswith("freno activo")) and group != "sin grupo por clínica medido":
+        return [
+            "Primero baja un grupo repetido.",
+            f"Caso visible: {group}.",
+        ]
     if counts.get("blocking_claim_review"):
         return [
             "Primero revisa claims bloqueantes.",
-            f"Caso visible: {review_name(first_review(digest, 'blocking_claim_review'), 'Claims bloqueantes')}.",
+            review_case_line(first_review(digest, "blocking_claim_review"), "Claims bloqueantes"),
+        ]
+    if counts.get("portal_profile_change"):
+        return [
+            "Primero revisa cambios pedidos por clínicas.",
+            f"Caso visible: {review_name(first_review(digest, 'portal_profile_change'), 'Mejoras de ficha')}.",
+        ]
+    if counts.get("portal_recommended_clinic"):
+        return [
+            "Primero valora clínicas sugeridas por usuarios.",
+            f"Caso visible: {review_name(first_review(digest, 'portal_recommended_clinic'), 'Clínicas nuevas')}.",
         ]
     if counts.get("candidate_clinic"):
         return [
             "Primero valida clínicas nuevas.",
-            f"Caso visible: {review_name(first_review(digest, 'candidate_clinic'), 'Clínicas nuevas')}.",
+            review_case_line(first_review(digest, "candidate_clinic"), "Clínicas nuevas"),
         ]
     if counts.get("source_change_detected"):
         return [
             "Primero revisa cambios de fuente.",
-            f"Caso visible: {review_name(first_review(digest, 'source_change_detected'), 'Cambios de fuente')}.",
+            review_case_line(first_review(digest, "source_change_detected"), "Cambios de fuente"),
         ]
     if counts.get("clinic_profile_enrichment"):
         return [
             "Primero revisa mejoras de fichas existentes.",
-            f"Caso visible: {review_name(first_review(digest, 'clinic_profile_enrichment'), 'Mejoras de ficha')}.",
+            review_case_line(first_review(digest, "clinic_profile_enrichment"), "Mejoras de ficha"),
         ]
     if counts.get("clinic_quality_audit"):
         return [
             "Primero completa fichas incompletas.",
-            f"Caso visible: {review_name(first_review(digest, 'clinic_quality_audit'), 'Auditorías')}.",
+            review_case_line(first_review(digest, "clinic_quality_audit"), "Auditorías"),
         ]
     return ["No hay una acción urgente.", "Puedes revisar el panel o dejar que el sistema siga en modo sombra."]
 
@@ -191,7 +280,10 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         "## Qué mirar primero",
         f"- {first_lines[0]}",
         f"- {first_lines[1]}",
-        f"- Acción sugerida por el sistema: {next_action}.",
+        f"- Señal automática base: {next_action}.",
+        "",
+        "## Próximos clics",
+        *[f"- {item}" for item in next_clicks(digest)],
         "",
         "## Bandeja actual",
         f"- {as_int(reviews.get('open'))} revisiones abiertas.",
@@ -199,7 +291,10 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
 
     if counts:
         for review_type in [
+            "clinic_claim_request",
             "blocking_claim_review",
+            "portal_profile_change",
+            "portal_recommended_clinic",
             "candidate_clinic",
             "source_change_detected",
             "clinic_profile_enrichment",
@@ -218,15 +313,22 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         "## Seguridad antes de publicar",
         f"- Auto-publicación: {'activa' if automation.get('auto_publish_enabled') else 'apagada'}.",
         f"- Modo sombra: {'activo' if automation.get('shadow_mode_active') else 'inactivo'}.",
+        f"- Publicación web: {publication_control_status(digest)}.",
         f"- Madurez de auto-publicación: {maturity_status(digest)}.",
         "- Crear borrador no publica. Publicar se decide después en el editor, en Validación final.",
+        "",
+        "## Portal clínicas",
+        f"- Estado: {portal_status(digest)}.",
+        f"- Siguiente portal: {next_portal_action(digest)}.",
         "",
         "## Señales técnicas",
         f"- Clínicas visibles: {as_int(clinics.get('published'))} publicadas y {as_int(clinics.get('preliminary'))} preliminares.",
         f"- Completitud de fichas: {profile_completeness_status(digest)}.",
         f"- Campo más pendiente: {top_pending_profile_field(digest)}.",
+        f"- Google Maps pendientes: {google_link_review_status(digest)}.",
         f"- Siguiente ficha: {next_profile_action(digest)}.",
         f"- Especialistas publicados: {specialist_status(digest)}.",
+        f"- Tarjetas con especialistas: {specialist_review_status(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
         f"- Fuentes: {source_status(digest)}.",
         f"- Cobertura fuentes: {source_coverage_status(digest)}.",

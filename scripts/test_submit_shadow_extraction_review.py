@@ -20,7 +20,10 @@ def main():
 <head><title>Example Longevity Clinic</title></head>
 <body>
   <p>Medicina preventiva, longevidad and VO2 max.</p>
-  <p>Unidad de Longevidad con Dra. Laura García Pérez.</p>
+  <p>Unidad de Longevidad con Dra. Laura García Pérez, nº colegiada 12345.</p>
+  <p>Equipo de 12 especialistas con más de 20 años de experiencia.</p>
+  <p>Consulta inicial: 120 euros.</p>
+  <p>Sede principal: Calle Serrano 100, 28006 Madrid.</p>
   <p>Contact: info@exampleclinic.test @exampleclinic</p>
 </body>
 </html>
@@ -40,12 +43,43 @@ def main():
     check(payload["clinic_slug"] == "example-clinic", "clinic slug missing")
     check(fields["email"] == "info@exampleclinic.test", "email field missing")
     check(fields["instagram"] == "@exampleclinic", "instagram field missing")
+    check(fields["locations"][0]["address"].startswith("Calle Serrano"), "location field missing")
     check(fields["unidades"] == ["Unidad de Longevidad"], "units field missing")
     check(fields["profesionales"] == ["Dra. Laura García Pérez"], "professionals field missing")
+    check(fields["years_in_practice"] == "más de 20 años", "years-in-practice field missing")
+    check(fields["specialists_count"] == 12, "specialist-count field missing")
+    check(fields["team_credentialing_visible"] == "si", "credentialing field missing")
+    check(fields["public_pricing"] == "si", "public-pricing field missing")
     check("field_claims" in payload, "claims missing")
     check("rule_decisions" in payload, "rule decisions missing")
     signature = inspect.signature(create_review)
     check(signature.parameters["replace_existing"].default is False, "existing review replacement should be opt-in")
+    check(
+        signature.parameters["allow_multiple_open_clinic_reviews"].default is False,
+        "multiple clinic review cards should be opt-in",
+    )
+
+    captured = {}
+
+    def fake_run_psql(sql, local_env):
+        captured["sql"] = sql
+        return '[{"status": "existing_clinic", "id": "review-1", "title": "Open review"}]'
+
+    original_run_psql = create_review.__globals__["run_psql"]
+    try:
+        create_review.__globals__["run_psql"] = fake_run_psql
+        result = create_review("example-clinic", payload, "admin@example.test", {})
+    finally:
+        create_review.__globals__["run_psql"] = original_run_psql
+
+    check(result["status"] == "existing_clinic", "same-clinic open review should be reported")
+    sql = captured.get("sql", "")
+    check("open_clinic_reviews as" in sql, "same-clinic duplicate guard missing")
+    check("existing_clinic as" in sql, "same-clinic existing review CTE missing")
+    check(
+        "and (false or not exists (select 1 from existing_clinic))" in sql,
+        "new review should be blocked when another clinic review is open",
+    )
     print("OK review payload: shadow extraction")
 
 

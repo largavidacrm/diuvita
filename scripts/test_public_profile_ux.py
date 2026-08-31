@@ -17,30 +17,36 @@ def main() -> None:
     for marker in [
         "def profile_nav(",
         "def profile_nav_item(",
-        "def profile_snapshot(",
         "def clinic_locations(",
         "def locations_block(",
+        "def location_display_name(",
         "def transparency_block(",
         "def location_maps_url(",
         "def location_reviews_url(",
         "def location_detail(",
+        "def location_kind_value(",
+        "def location_is_online(",
+        "def care_mode_label(",
+        "def contact_phone_items(",
+        "def is_google_maps_profile_url(",
         "def transparency_items(",
+        'f\'<p>{h(detail or address or location_city(loc, c))}</p>\'',
         "def card_signal_html(",
         "def stat_items(",
         "def contact_count(",
         "def section_heading(",
+        'fallback_address = "" if explicit_clinic_locations(c) else c.get("address")',
+        'hero_address = location_address(primary_location(c)) or (c.get("address") if not explicit_clinic_locations(c) and len(locations) <= 1 else "")',
         'class="card-signals"',
         'aria-label="Datos visibles de la ficha"',
-        'class="profile-snapshot"',
-        'aria-label="Resumen rápido de la ficha"',
         'class="profile-jump"',
         'class="profile-jump-label"',
         'class="profile-nav"',
-        'aria-label="{h(label)}: {h(count)}"',
-        'class="profile-nav-count" aria-hidden="true"',
+        'aria-label="{h(label)}"',
         'id="sedes"',
         'class="location-list"',
         'class="location-actions"',
+        'location_display_name(loc, c, multiple)',
         'Valoraciones Google',
         'id="transparencia"',
         'class="transparency-grid"',
@@ -49,7 +55,6 @@ def main() -> None:
         'Colegiación visible',
         'Precio público',
         'class="profile-section-head"',
-        'class="section-count"',
         'class="profile-list"',
         'id="servicios"',
         'id="unidades"',
@@ -62,15 +67,17 @@ def main() -> None:
         ".mini-action{display:inline-flex;align-items:center;justify-content:center;min-height:1.9rem",
         ".transparency-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}",
         ".card-signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.85rem}",
-        ".profile-snapshot{max-width:760px;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:.55rem;margin-top:1rem}",
         ".clinic-side .visit{width:100%}",
         ".clinic-main{min-width:0}",
         ".ficha .loc{color:var(--coral);text-transform:uppercase;font-size:.86rem;font-weight:800;margin:.6rem 0 1rem;letter-spacing:0;overflow-wrap:anywhere}",
-        ".profile-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}",
         ".profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}",
         'c.get("web", "")',
         'c.get("email", "")',
         'c.get("telefono", "")',
+        'c.get("phone_fixed", "")',
+        'c.get("phone_mobile", "")',
+        'c.get("phone_whatsapp", "")',
+        'c.get("care_mode", "")',
         'c.get("instagram", "")',
         'c.get("years_in_practice", "")',
         'c.get("specialists_count", "")',
@@ -80,8 +87,27 @@ def main() -> None:
         '" ".join(c.get("unidades", []))',
         '" ".join(c.get("profesionales", []))',
         'c.get("tech", "")',
+        'placeholder="Busca por nombre, ciudad, especialidad o teléfono…"',
+        r'function digits(value){return (value||"").replace(/\\D/g,"");}',
     ]:
         check(marker in source, f"missing public profile UX marker: {marker}")
+
+    for removed_marker in [
+        "def profile_snapshot(",
+        "profile-snapshot",
+        "profile-nav-count",
+        "section-count",
+        "Sede {index + 1}",
+        "google_maps_search_url",
+    ]:
+        check(removed_marker not in source, f"public profile should not render decorative counters: {removed_marker}")
+
+    maps_body = source[source.index("def location_maps_url("):source.index("def location_reviews_url(")]
+    check("is_google_maps_profile_url" in maps_body, "Google Maps links should require direct clinic profile signal")
+    check("google_maps_search_url" not in source, "public profiles should not generate generic Google Maps searches")
+    check("location_address" not in maps_body, "Google Maps fallback should use clinic name, not street address")
+    check("location_search_name" not in maps_body, "Google Maps fallback should not use location labels")
+    check('return direct if is_google_maps_profile_url(direct) else ""' in maps_body, "public Google Maps buttons should disappear unless a direct profile link exists")
 
     print("OK public profile UX: navigation and richer search wired")
 

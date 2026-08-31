@@ -3,12 +3,17 @@
 from argparse import Namespace
 
 from run_cto_shadow_cycle import (
+    DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP,
     build_cycle_brief,
     build_steps,
+    clinic_visibility_status,
     compact_summary,
+    cycle_next_clicks,
     format_cycle_brief,
+    google_link_reconciliation_status,
     open_review_count_from_digest,
     skipped_step,
+    specialist_reconciliation_status,
     try_parse_json,
 )
 
@@ -66,6 +71,80 @@ def main():
     check(compact_seed_sources["items_count"] == 1, "seed source count should be kept")
     check("metadata" not in compact_seed_sources["sample_items"][0], "large seed metadata should be omitted")
     check("source_url" in compact_seed_sources["sample_items"][0], "seed source URL should be kept")
+    compact_team_sources = compact_summary("discover_clinic_team_sources", {
+        "mode": "dry_run",
+        "team_sources_found": 1,
+        "items": [
+            {
+                "clinic_slug": "arvila-magna",
+                "clinic_name": "Clínica Arvila Magna",
+                "city": "Barcelona",
+                "status": "published",
+                "url": "https://arvilamagna.example/equipo/",
+                "label": "Equipo",
+                "score": 30,
+                "already_stored": False,
+                "source_type": "official_team_page",
+                "metadata": {"large": True},
+            }
+        ],
+    })
+    check(compact_team_sources["items_count"] == 1, "team source count should be kept")
+    check("metadata" not in compact_team_sources["sample_items"][0], "large team source metadata should be omitted")
+    check("url" in compact_team_sources["sample_items"][0], "team source URL should be kept")
+    compact_google_links = compact_summary("discover_clinic_google_links", {
+        "mode": "dry_run",
+        "items": [
+            {
+                "clinic_slug": "clinic-a",
+                "clinic_name": "Clinic A",
+                "website": "https://clinic-a.example/",
+                "status": "ready",
+                "proposed_fields": {"maps_url": "https://www.google.com/maps/place/Clinic+A"},
+                "google_link_candidates": [{"large": True}],
+            }
+        ],
+    })
+    check(compact_google_links["items_count"] == 1, "Google-link discovery count should be kept")
+    check("google_link_candidates" not in compact_google_links["sample_items"][0], "large Google-link candidates should be omitted")
+    check("proposed_fields" in compact_google_links["sample_items"][0], "Google-link proposals should be kept")
+    compact_google_reconciliation = compact_summary("google_link_review_reconciliation", {
+        "summary": {
+            "review_cards": 2,
+            "cards_with_direct_maps": 1,
+            "cards_with_unsafe_maps": 1,
+            "cards_with_review_links": 1,
+        },
+        "review_cards": [
+            {
+                "clinic_name": "Clinic A",
+                "clinic_slug": "clinic-a",
+                "title": "Completar enlaces Google: Clinic A",
+                "priority": 60,
+                "direct_map_count": 1,
+                "unsafe_map_count": 0,
+                "review_link_count": 1,
+                "map_status_counts": {"direct_profile": 1},
+                "maps_urls": ["https://www.google.com/maps/place/Clinic+A/"],
+                "payload": {"large": True},
+                "next_step": "abrir enlace",
+            }
+        ],
+    })
+    check(compact_google_reconciliation["review_cards_count"] == 1, "Google reconciliation card count should be kept")
+    check("review_cards" not in compact_google_reconciliation, "full Google reconciliation cards should be removed")
+    check("maps_urls" not in compact_google_reconciliation["sample_review_cards"][0], "long Google URLs should stay out of cycle output")
+    check("payload" not in compact_google_reconciliation["sample_review_cards"][0], "Google payload should stay out of cycle output")
+    google_reconciliation_step = {
+        "name": "google_link_review_reconciliation",
+        "ok": True,
+        "summary": compact_google_reconciliation,
+    }
+    check(
+        google_link_reconciliation_status(google_reconciliation_step)
+        == "1/2 con Maps que no se debe guardar sin corregir",
+        "Google reconciliation status should flag unsafe Maps",
+    )
     compact_top_sources = compact_summary("measure_source_snapshot_retention", {
         "summary": {"total_snapshots": 2},
         "top_sources": [
@@ -158,11 +237,11 @@ def main():
         "admin_email": "admin@example.test",
         "summary": {"reviews": {"open": 2}},
         "open_reviews": [
-            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "payload": {"large": True}},
+            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "professionals_count": 11, "payload": {"large": True}},
             {"title": "B", "review_type": "clinic_quality_audit", "priority": 80, "payload": {"large": True}},
         ],
         "review_examples_by_type": [
-            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "payload": {"large": True}},
+            {"title": "A", "review_type": "candidate_clinic", "priority": 90, "professionals_count": 11, "payload": {"large": True}},
             {"title": "B", "review_type": "blocking_claim_review", "priority": 85, "payload": {"large": True}},
         ],
         "review_backlog_quality": {
@@ -174,6 +253,7 @@ def main():
     check("admin_email" not in compact_digest, "admin email should be removed from cycle output")
     check(compact_digest["open_reviews_count"] == 2, "open review count should be kept")
     check("payload" not in compact_digest["sample_open_reviews"][0], "review payload should be omitted")
+    check(compact_digest["sample_open_reviews"][0]["professionals_count"] == 11, "review professional count should be kept")
     check(compact_digest["review_backlog_quality"]["duplicate_enrichment_clinics"] == 1, "review backlog quality should be kept")
     check("raw" not in compact_digest["review_backlog_quality"], "large review backlog payloads should be omitted")
     check(compact_digest["review_examples_by_type_count"] == 2, "review example count should be kept")
@@ -195,6 +275,106 @@ def main():
     check(compact_health["checks_count"] == 1, "production health check count should be kept")
     check("checks" not in compact_health, "full production health checks should be removed")
     check("body" not in compact_health["sample_checks"][0], "production response bodies should be omitted")
+    compact_freshness = compact_summary("check_public_site_freshness", {
+        "base_url": "https://www.vitalarga.com",
+        "ok": False,
+        "stale_count": 1,
+        "checks": [
+            {
+                "slug": "monarka-clinic",
+                "name": "Monarka Clinic",
+                "url": "https://www.vitalarga.com/clinica/monarka-clinic/",
+                "fresh": False,
+                "missing_markers": 18,
+                "missing_examples": ["+34 930 490 300", "Dra. Estela Arnal"],
+                "page_excerpt": "large",
+            }
+        ],
+    })
+    check(compact_freshness["checks_count"] == 1, "public freshness check count should be kept")
+    check("checks" not in compact_freshness, "full public freshness checks should be removed")
+    check("missing_examples" not in compact_freshness["sample_checks"][0], "public freshness examples should stay out of cycle output")
+    check("page_excerpt" not in compact_freshness["sample_checks"][0], "public freshness page excerpts should be omitted")
+    compact_visibility = compact_summary("clinic_public_visibility_report", {
+        "query": "Monarka",
+        "readiness": {
+            "matches": [
+                {
+                    "slug": "monarka-clinic",
+                    "clinic_name": "Monarka Clinic",
+                    "status": "published",
+                    "updated_at": "2026-08-31T06:47:00+00:00",
+                    "current_data": {"large": True},
+                }
+            ]
+        },
+        "freshness": {
+            "ok": False,
+            "clinic_count": 1,
+            "stale_count": 1,
+            "checks": [
+                {
+                    "slug": "monarka-clinic",
+                    "name": "Monarka Clinic",
+                    "url": "https://www.vitalarga.com/clinica/monarka-clinic/",
+                    "fresh": False,
+                    "missing_markers": 18,
+                    "missing_examples": ["Dra. Example"],
+                }
+            ],
+        },
+    })
+    check(compact_visibility["readiness"]["matches_count"] == 1, "visibility readiness count should be kept")
+    check("current_data" not in compact_visibility["readiness"]["sample_matches"][0], "visibility clinic data should be omitted")
+    check(compact_visibility["freshness"]["stale_count"] == 1, "visibility freshness stale count should be kept")
+    check("missing_examples" not in compact_visibility["freshness"]["sample_checks"][0], "visibility freshness examples should be omitted")
+    visibility_step = {"name": "clinic_public_visibility_report", "ok": True, "summary": compact_visibility}
+    check(clinic_visibility_status(visibility_step) == "1 ficha con desfase", "visibility step status should show stale public page")
+    compact_specialists = compact_summary("specialist_review_reconciliation", {
+        "query": "Kairos",
+        "clinics": [
+            {
+                "clinic_name": "Kairos Longevity Clinic",
+                "slug": "kairos-longevity-clinic",
+                "city": "Madrid",
+                "status": "published",
+                "published_count": 0,
+                "review_card_count": 2,
+                "review_professional_count": 6,
+                "claim_professional_count": 6,
+                "pending_professional_count": 6,
+                "pending_professionals": ["Dra. Example"],
+                "review_cards": [{"payload": "large"}],
+                "next_step": "abrir tarjetas",
+            }
+        ],
+    })
+    check(compact_specialists["clinics_count"] == 1, "specialist reconciliation clinic count should be kept")
+    check("clinics" not in compact_specialists, "full specialist reconciliation clinics should be removed")
+    check("pending_professionals" not in compact_specialists["sample_clinics"][0], "specialist names should stay out of cycle output")
+    check("review_cards" not in compact_specialists["sample_clinics"][0], "specialist card details should stay out of cycle output")
+    specialist_step = {"name": "specialist_review_reconciliation", "ok": True, "summary": compact_specialists}
+    check(
+        specialist_reconciliation_status(specialist_step) == "Kairos Longevity Clinic: 6 pendientes en 2 tarjetas",
+        "specialist reconciliation status should be readable",
+    )
+    aggregate_specialist_step = {
+        "name": "specialist_review_reconciliation",
+        "ok": True,
+        "summary": {
+            "summary": {
+                "clinics": 5,
+                "clinics_with_pending_professionals": 4,
+                "review_cards": 7,
+                "pending_professionals": 22,
+            },
+            "clinics_count": 5,
+        },
+    }
+    check(
+        specialist_reconciliation_status(aggregate_specialist_step) == "22 pendientes en 7 tarjetas (4/5 fichas)",
+        "specialist reconciliation aggregate status should be readable",
+    )
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {
@@ -209,6 +389,7 @@ def main():
     })
     check(compact_source_shadow["items_count"] == 1, "source shadow count should be kept")
     check("verification_summary" not in compact_source_shadow["sample_items"][0], "large source shadow details should be omitted")
+    check(DEFAULT_SAFE_WRITE_REVIEW_BACKLOG_STOP == 45, "safe CTO writes should stop in the near-full review zone")
     cycle_digest = {
         "summary": {
             "reviews": {"open": 45},
@@ -240,6 +421,19 @@ def main():
             "claims_without_source": 0,
             "blocking_claims": 2,
         },
+        "review_first_clinic_workgroup": {
+            "clinic_name": "Sensabell",
+            "open_count": 5,
+        },
+        "google_link_reviews": {
+            "open_count": 4,
+            "first_review": {"title": "Completar enlaces Google: Sensabell"},
+        },
+        "specialist_reviews": {
+            "open_count": 2,
+            "professionals_count": 17,
+            "first_review": {"title": "Regenera Clinic Medicina de la Longevidad", "professionals_count": 11},
+        },
     }
     cycle_brief = build_cycle_brief({
         "mode": "dry_run",
@@ -253,12 +447,20 @@ def main():
     check("11/19 fichas con fuente" in cycle_brief["source_gap"], "Daniel brief should keep source coverage")
     check("Kairos Longevity Clinic" in cycle_brief["source_next"], "Daniel brief should keep next source target")
     check("crear borrador no publica" in cycle_brief["publication_guard"].lower(), "publication guard should be explicit")
+    next_click_text = " ".join(cycle_next_clicks(cycle_digest))
+    check("No crear trabajos nuevos" in next_click_text, "cycle brief should show the backlog guard next click")
+    check("Abrir Especialistas" in next_click_text, "cycle brief should show specialist next click")
+    check("Abrir Google Maps" in next_click_text, "cycle brief should show Google Maps next click")
     brief_text = format_cycle_brief(cycle_brief)
     check("# Vitalarga: resumen CTO automatico" in brief_text, "plain brief title missing")
     check("Que mirar primero: Revisar claim bloqueante." in brief_text, "plain brief next action missing")
+    check("Proximos clics: No crear trabajos nuevos" in brief_text, "plain brief next clicks missing")
     check("Siguiente ficha: Revisar Sensabell" in brief_text, "plain brief next profile missing")
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
+    check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
+    check("Conciliacion Google: no comprobada en este ciclo" in brief_text, "plain brief Google reconciliation line missing")
+    check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",
@@ -279,10 +481,71 @@ def main():
     })
     check(failed_cycle_brief["status"] == "needs_daniel", "strict limit failures should ask Daniel")
     check("limites operativos" in failed_cycle_brief["attention"], "strict limit attention should be clear")
+    stale_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": False,
+        "steps": [{"name": "check_public_site_freshness", "ok": False, "summary": {"ok": False, "stale_count": 1}}],
+    })
+    check(stale_cycle_brief["status"] == "attention", "public freshness gaps should be attention items")
+    check(stale_cycle_brief["public_freshness"] == "1 con desfase", "public freshness stale count should be readable")
+    check("frescura de la web publica" in stale_cycle_brief["headline"], "freshness failure should name the stopped step")
+    check("datos guardados" in stale_cycle_brief["attention"], "freshness attention should explain the cause")
+    visibility_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {"name": "clinic_public_visibility_report", "ok": True, "summary": compact_visibility},
+        ],
+    })
+    check(visibility_cycle_brief["clinic_visibility"] == "1 ficha con desfase", "clinic visibility should enter cycle brief")
+    check("Visibilidad clinica: 1 ficha con desfase" in format_cycle_brief(visibility_cycle_brief), "plain brief should show clinic visibility result")
+    specialist_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {"name": "specialist_review_reconciliation", "ok": True, "summary": compact_specialists},
+        ],
+    })
+    check(
+        specialist_cycle_brief["specialist_reconciliation"] == "Kairos Longevity Clinic: 6 pendientes en 2 tarjetas",
+        "specialist reconciliation should enter cycle brief",
+    )
+    check(
+        "Conciliacion especialistas: Kairos Longevity Clinic: 6 pendientes en 2 tarjetas"
+        in format_cycle_brief(specialist_cycle_brief),
+        "plain brief should show specialist reconciliation result",
+    )
+    google_link_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {
+                "name": "google_link_review_reconciliation",
+                "ok": True,
+                "summary": compact_google_reconciliation,
+            },
+        ],
+    })
+    check(
+        google_link_cycle_brief["google_link_reconciliation"] == "1/2 con Maps que no se debe guardar sin corregir",
+        "Google reconciliation should enter cycle brief",
+    )
+    check(
+        "Conciliacion Google: 1/2 con Maps que no se debe guardar sin corregir"
+        in format_cycle_brief(google_link_cycle_brief),
+        "plain brief should show Google reconciliation result",
+    )
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
         seed_source_limit=12,
+        team_source_limit=0,
+        team_source_clinic_slug=None,
+        team_source_max_links=3,
+        google_link_limit=0,
+        google_link_clinic_slug=None,
+        google_link_replace_existing=False,
+        google_link_allow_multiple_open_clinic_reviews=False,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,
@@ -298,19 +561,38 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        google_link_reconciliation=False,
+        google_link_reconciliation_clinic="",
+        google_link_reconciliation_limit=8,
+        specialist_reconciliation=False,
+        specialist_reconciliation_clinic="",
+        specialist_reconciliation_limit=5,
         fetch_timeout=7,
         strict_editorial=False,
         plain_brief=False,
         production_health=False,
         production_base_url="https://www.vitalarga.com",
         production_timeout=7,
+        public_freshness=False,
+        public_freshness_slug="",
+        public_freshness_clinic="",
+        public_freshness_missing_limit=8,
+        clinic_visibility=False,
+        clinic_visibility_clinic="",
+        clinic_visibility_missing_limit=30,
     ))
     names = [step[0] for step in steps]
     check("seed_visible_clinic_sources" in names, "official source seeding step missing")
+    check("discover_clinic_team_sources" not in names, "team source discovery should be off by default")
+    check("discover_clinic_google_links" not in names, "Google-link discovery should be off by default")
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
     check("check_production_health" not in names, "production health should be off by default")
+    check("check_public_site_freshness" not in names, "public freshness should be off by default")
+    check("clinic_public_visibility_report" not in names, "clinic visibility should be off by default")
+    check("google_link_review_reconciliation" not in names, "Google reconciliation should be off by default")
+    check("specialist_review_reconciliation" not in names, "specialist reconciliation should be off by default")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
@@ -332,6 +614,57 @@ def main():
     profile_step = [step for step in steps if step[0] == "measure_profile_completeness"][0]
     check("--json" in profile_step[1], "profile completeness should be machine readable")
     check("11" in profile_step[1], "profile completeness limit should pass through")
+    google_steps = build_steps(Namespace(
+        apply_safe=True,
+        review_limit=2,
+        seed_source_limit=12,
+        team_source_limit=0,
+        team_source_clinic_slug=None,
+        team_source_max_links=3,
+        google_link_limit=2,
+        google_link_clinic_slug="clinic-a",
+        google_link_replace_existing=True,
+        google_link_allow_multiple_open_clinic_reviews=True,
+        source_limit=3,
+        monitor_limit=4,
+        source_change_limit=8,
+        source_shadow_limit=0,
+        source_shadow_clinic_slug=None,
+        source_shadow_replace_existing=False,
+        digest_limit=5,
+        claim_limit=6,
+        blocking_claim_limit=9,
+        snapshot_retention_days=180,
+        snapshot_keep_latest=3,
+        snapshot_retention_limit=7,
+        source_coverage_limit=10,
+        profile_completeness_limit=11,
+        backlog_brief_limit=4,
+        google_link_reconciliation=False,
+        google_link_reconciliation_clinic="",
+        google_link_reconciliation_limit=8,
+        specialist_reconciliation=False,
+        specialist_reconciliation_clinic="",
+        specialist_reconciliation_limit=5,
+        fetch_timeout=7,
+        strict_editorial=False,
+        plain_brief=False,
+        production_health=False,
+        production_base_url="https://www.vitalarga.com",
+        production_timeout=7,
+        public_freshness=False,
+        public_freshness_slug="",
+        public_freshness_clinic="",
+        public_freshness_missing_limit=8,
+        clinic_visibility=False,
+        clinic_visibility_clinic="",
+        clinic_visibility_missing_limit=30,
+    ))
+    google_step = [step for step in google_steps if step[0] == "discover_clinic_google_links"][0]
+    check("--apply" in google_step[1], "Google-link discovery should honor safe apply")
+    check("--clinic-slug" in google_step[1] and "clinic-a" in google_step[1], "Google-link clinic slug should pass through")
+    check("--replace-existing" in google_step[1], "Google-link replace flag should pass through")
+    check("--allow-multiple-open-clinic-reviews" in google_step[1], "Google-link multiple-review flag should pass through")
     backlog_step = [step for step in steps if step[0] == "review_backlog_brief"][0]
     check("--json" in backlog_step[1], "review backlog brief should be machine readable")
     check("4" in backlog_step[1], "review backlog brief limit should pass through")
@@ -344,6 +677,13 @@ def main():
         apply_safe=True,
         review_limit=2,
         seed_source_limit=12,
+        team_source_limit=2,
+        team_source_clinic_slug="arvila-magna",
+        team_source_max_links=5,
+        google_link_limit=0,
+        google_link_clinic_slug=None,
+        google_link_replace_existing=False,
+        google_link_allow_multiple_open_clinic_reviews=False,
         source_limit=3,
         monitor_limit=4,
         source_change_limit=8,
@@ -359,19 +699,48 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        google_link_reconciliation=True,
+        google_link_reconciliation_clinic="Arvila",
+        google_link_reconciliation_limit=4,
+        specialist_reconciliation=True,
+        specialist_reconciliation_clinic="Kairos",
+        specialist_reconciliation_limit=3,
         fetch_timeout=7,
         strict_editorial=True,
         plain_brief=True,
         production_health=True,
         production_base_url="https://www.vitalarga.com",
         production_timeout=7,
+        public_freshness=True,
+        public_freshness_slug="monarka-clinic",
+        public_freshness_clinic="Monarka",
+        public_freshness_missing_limit=5,
+        clinic_visibility=True,
+        clinic_visibility_clinic="",
+        clinic_visibility_missing_limit=30,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
+    team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
+    google_reconciliation_step = [step for step in optional_steps if step[0] == "google_link_review_reconciliation"][0]
+    specialist_reconciliation_step = [step for step in optional_steps if step[0] == "specialist_review_reconciliation"][0]
     check("--apply" in seed_apply_step[1], "source seeding should follow safe apply mode")
+    check("--apply" in team_source_step[1], "team source discovery should follow safe apply mode")
+    check("--clinic-slug" in team_source_step[1] and "arvila-magna" in team_source_step[1], "team source clinic slug should pass through")
+    check("--max-links-per-clinic" in team_source_step[1] and "5" in team_source_step[1], "team source max links should pass through")
+    check(optional_steps.index(seed_apply_step) < optional_steps.index(team_source_step), "team source discovery should run after source seeding")
+    check(optional_steps.index(team_source_step) < optional_steps.index(source_shadow_step), "team source discovery should run before source shadow reviews")
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")
+    check("--json" in google_reconciliation_step[1], "Google reconciliation should be machine readable")
+    check("Arvila" in google_reconciliation_step[1], "Google reconciliation clinic should pass through")
+    check("4" in google_reconciliation_step[1], "Google reconciliation limit should pass through")
+    check(optional_steps.index(google_reconciliation_step) < optional_steps.index([step for step in optional_steps if step[0] == "admin_digest"][0]), "Google reconciliation should run before admin digest")
+    check("--json" in specialist_reconciliation_step[1], "specialist reconciliation should be machine readable")
+    check("Kairos" in specialist_reconciliation_step[1], "specialist reconciliation clinic should pass through")
+    check("3" in specialist_reconciliation_step[1], "specialist reconciliation limit should pass through")
+    check(optional_steps.index(specialist_reconciliation_step) < optional_steps.index([step for step in optional_steps if step[0] == "admin_digest"][0]), "specialist reconciliation should run before admin digest")
     strict_step = [step for step in optional_steps if step[0] == "check_operational_limits_strict"][0]
     check("--strict-editorial" in strict_step[1], "strict editorial flag should pass through")
     health_step = [step for step in optional_steps if step[0] == "check_production_health"][0]
@@ -379,6 +748,18 @@ def main():
     check("--json" in health_step[1], "production health should be machine readable")
     check("https://www.vitalarga.com" in health_step[1], "production health base URL should pass through")
     check("7" in health_step[1], "production health timeout should pass through")
+    freshness_step = [step for step in optional_steps if step[0] == "check_public_site_freshness"][0]
+    check(optional_steps.index(health_step) < optional_steps.index(freshness_step), "public freshness should run after production health")
+    check("--json" in freshness_step[1], "public freshness should be machine readable")
+    check("monarka-clinic" in freshness_step[1], "public freshness clinic slug should pass through")
+    check("Monarka" in freshness_step[1], "public freshness clinic name should pass through")
+    check("5" in freshness_step[1], "public freshness missing limit should pass through")
+    visibility_step = [step for step in optional_steps if step[0] == "clinic_public_visibility_report"][0]
+    check(optional_steps.index(health_step) < optional_steps.index(visibility_step), "clinic visibility should run after production health")
+    check(optional_steps.index(visibility_step) < optional_steps.index(freshness_step), "clinic visibility should run before public freshness can stop the cycle")
+    check("--json" in visibility_step[1], "clinic visibility should be machine readable")
+    check("Monarka" in visibility_step[1], "clinic visibility should reuse the normal clinic name")
+    check("30" in visibility_step[1], "clinic visibility missing limit should pass through")
     print("OK cycle: CTO shadow orchestration")
 
 

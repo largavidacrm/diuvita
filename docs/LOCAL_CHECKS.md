@@ -16,16 +16,19 @@ The full pass currently covers:
    status, source monitoring status, source-coverage status,
    snapshot-retention status and specialist
    coverage/profile-completeness/public-health/review-backlog status.
-8. Public clinic profile UX and basic site asset checks.
-9. Admin digest, Daniel review brief, blocking-claim brief, review-backlog brief,
-   review-maturity, specialist-coverage, profile-completeness and source-coverage checks.
+8. Public clinic profile UX, built clinic-page UX and basic site asset checks.
+9. Admin digest, per-clinic publication readiness, Daniel review brief,
+   clinic-portal activation readiness,
+   blocking-claim brief, review-backlog brief, review-maturity,
+   specialist-coverage, profile-completeness and source-coverage checks.
 10. Enrichment, candidate promotion, source hydration and source monitoring.
 11. Changed-source processing, blocking-claim review routing and the safe CTO
     shadow cycle.
 12. Clinic data validation.
 13. Static site build.
-14. Admin JavaScript syntax.
-15. Whitespace and conflict-marker check.
+14. Built-site public profile UX guard.
+15. Admin JavaScript syntax.
+16. Whitespace and conflict-marker check.
 
 Run:
 
