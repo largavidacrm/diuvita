@@ -302,6 +302,27 @@ def location_name(row: dict[str, Any]) -> str:
     return "Sede principal" if as_int(row.get("location_index")) <= 1 else "Sede adicional"
 
 
+def location_next_step(row: dict[str, Any]) -> str:
+    clinic = str(row.get("clinic_name") or row.get("slug") or "esta clínica")
+    location = location_name(row)
+    pending = [str(item).strip() for item in row.get("pending_fields") or [] if str(item).strip()]
+    if "Dirección" in pending:
+        return f"completar la dirección exacta de {location} en {clinic}"
+    if "Google Maps de clínica" in pending:
+        return (
+            f"añadir el perfil real de Google Business de {clinic} para {location}; "
+            "no usar búsqueda, ruta ni enlace de dirección"
+        )
+    if "Valoraciones Google" in pending:
+        return (
+            f"añadir el enlace directo a valoraciones Google de {clinic} para {location}, "
+            "solo si sale del perfil real de la clínica"
+        )
+    if pending:
+        return f"revisar {location} de {clinic}: pendiente {', '.join(pending)}"
+    return f"revisar {location} de {clinic}"
+
+
 def next_location_action(report: dict[str, Any]) -> str:
     target = report.get("next_location_target") or {}
     if isinstance(target, dict) and target:
@@ -309,7 +330,7 @@ def next_location_action(report: dict[str, Any]) -> str:
         location = location_name(target)
         pending = [str(item) for item in target.get("pending_fields") or [] if str(item).strip()]
         if pending:
-            return f"Revisar {location} de {clinic}: pendiente {', '.join(pending)}"
+            return f"Revisar {location} de {clinic}: {location_next_step(target)}"
         return f"Revisar sedes de {clinic}"
     proposal = first_location_proposal(report)
     if proposal:
@@ -332,7 +353,10 @@ def format_location_row(row: dict[str, Any]) -> str:
     location_count = as_int(row.get("clinic_location_count"))
     pending = ", ".join(str(item) for item in row.get("pending_fields") or [])
     location_note = f"{location_count} {plural(location_count, 'sede', 'sedes')}" if location_count else "sede"
-    return f"- {clinic} · {city} · {status} · {location} · {location_note} · pendiente: {pending}"
+    return (
+        f"- {clinic} · {city} · {status} · {location} · {location_note} · "
+        f"pendiente: {pending} · siguiente: {location_next_step(row)}"
+    )
 
 
 def first_location_proposal(report: dict[str, Any]) -> dict[str, Any] | None:
@@ -354,7 +378,8 @@ def format_location_proposal_row(row: dict[str, Any]) -> str:
     return (
         f"- {clinic} · {city} · {status} · "
         f"{proposed} {plural(proposed, 'sede detectada', 'sedes detectadas')} · "
-        f"{reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')}"
+        f"{reviews} {plural(reviews, 'revisión abierta', 'revisiones abiertas')} · "
+        "siguiente: cargar sedes detectadas en el editor y guardar solo tras revisión humana"
     )
 
 
@@ -367,7 +392,8 @@ def format_location_claim_row(row: dict[str, Any]) -> str:
     return (
         f"- {clinic} · {city} · {status} · "
         f"{detected} {plural(detected, 'sede detectada interna', 'sedes detectadas internas')} · "
-        f"{claims} {plural(claims, 'evidencia', 'evidencias')}"
+        f"{claims} {plural(claims, 'evidencia', 'evidencias')} · "
+        "siguiente: convertir en propuesta revisable cuando haya espacio en la bandeja"
     )
 
 

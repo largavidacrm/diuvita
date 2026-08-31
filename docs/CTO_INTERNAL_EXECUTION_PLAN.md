@@ -505,6 +505,11 @@ Next 10 technical steps:
     `scripts/global_plan_status.py`: when specialist review cards already exist,
     the global plan now points Codex toward improving their review/consolidation
     flow instead of looking for more team pages.
+96. Add per-sede next steps to location coverage. Done locally in
+    `scripts/measure_location_coverage.py`: location reports now say the next
+    safe action for each pending sede, including the direct Google Business
+    profile requirement and keeping generic Maps searches or address links
+    pending.
 
 ## Daniel decision checkpoints
 

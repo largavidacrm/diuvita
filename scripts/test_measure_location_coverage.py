@@ -9,6 +9,7 @@ from measure_location_coverage import (
     format_location_proposal_row,
     format_location_row,
     location_name,
+    location_next_step,
     next_location_action,
     pct,
     safe_limit,
@@ -102,8 +103,14 @@ def main():
     check(pct(1, 4) == "25%", "percentage formatting missing")
     check(location_name(report["pending_locations"][1]) == "Sede adicional", "fallback label should avoid numbering")
     check(
-        next_location_action(report) == "Revisar Sede principal de Clinic A: pendiente Google Maps de clínica, Valoraciones Google",
+        next_location_action(report)
+        == "Revisar Sede principal de Clinic A: añadir el perfil real de Google Business de Clinic A para Sede principal; no usar búsqueda, ruta ni enlace de dirección",
         "next location action missing",
+    )
+    check(
+        location_next_step(report["pending_locations"][0])
+        == "añadir el perfil real de Google Business de Clinic A para Sede principal; no usar búsqueda, ruta ni enlace de dirección",
+        "direct Google Business next step missing",
     )
     check("# Vitalarga location coverage" in output, "title missing")
     check("Clínicas visibles: 4" in output, "visible clinic count missing")
@@ -118,10 +125,13 @@ def main():
     check("Writes data: no" in output, "read-only signal missing")
     check("Siguiente acción" in output, "next action section missing")
     check("Clinic A · Madrid · publicada · Sede adicional · 2 sedes" in output, "pending location row missing")
+    check("siguiente: añadir el enlace directo a valoraciones Google de Clinic A para Sede adicional" in output, "row next step missing")
     check("Sedes propuestas en bandeja" in output, "location proposals section missing")
     check("Clinic C · Barcelona · publicada · 2 sedes detectadas · 2 revisiones abiertas" in output, "location proposal row missing")
+    check("cargar sedes detectadas en el editor" in output, "location proposal next step missing")
     check("Sedes detectadas internas" in output, "internal location claims section missing")
     check("Clinic D · Valencia · publicada · 2 sedes detectadas internas · 1 evidencia" in output, "internal location claim row missing")
+    check("convertir en propuesta revisable" in output, "internal location claim next step missing")
     check(first_location_proposal(report)["clinic_name"] == "Clinic C", "first location proposal missing")
     check(first_location_claim(report)["clinic_name"] == "Clinic D", "first location claim missing")
     check(format_location_proposal_row(report["pending_location_proposals"][0]).startswith("- Clinic C"), "proposal formatter missing")
@@ -139,6 +149,11 @@ def main():
         "next action should fall back to internal location claims",
     )
     check("Sede 1" not in output and "Sede 2" not in output, "location output should avoid numbered labels")
+    address_row = dict(report["pending_locations"][0], pending_fields=["Dirección", "Google Maps de clínica"])
+    check(
+        location_next_step(address_row) == "completar la dirección exacta de Sede principal en Clinic A",
+        "address should be the first location next step",
+    )
     check("no ordena clínicas por calidad" in output, "no-ranking note missing")
     check(format_location_row(report["pending_locations"][0]).startswith("- Clinic A"), "row formatter missing")
     print("OK location coverage: explicit sede gaps are readable")

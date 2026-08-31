@@ -13,6 +13,10 @@ It measures:
 - open review cards that already propose explicit locations;
 - internal location evidence that has not yet become a review card.
 
+For every pending location row, the report also prints the next safe action in
+plain language. Google Maps gaps are worded as direct clinic Google Business
+profile work; generic searches, routes and street-address links remain pending.
+
 It does not publish clinics, edit clinic data, resolve review cards or rank
 clinics by quality. The output is an internal operational checklist only.
 
