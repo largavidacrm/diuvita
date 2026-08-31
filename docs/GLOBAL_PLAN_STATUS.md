@@ -11,15 +11,17 @@ It combines the protected admin digest with the roadmap lanes:
 - what should not be activated yet;
 - control center;
 - source traceability;
+- publication readiness and the main required blocker before making fichas
+  visible;
 - shadow automation loop;
 - source monitoring;
 - specialist/knowledge-graph coverage;
 - growth workflows still waiting for stronger accuracy and lower review load.
 
-The "Siguiente trabajo recomendado" section also includes the first clinic
-workgroup, the first Google Maps/review-link proposal and open specialist
-proposal coverage, so Daniel can clear several related review cards in one
-session.
+The "Siguiente trabajo recomendado" section also includes the next publication
+target, the first clinic workgroup, the first Google Maps/review-link proposal
+and open specialist proposal coverage, so Daniel can clear related review cards
+without confusing required publication blockers with broader completeness gaps.
 
 The same executive view is surfaced in `/admin/` as **Plan global**, above the
 detailed system status.

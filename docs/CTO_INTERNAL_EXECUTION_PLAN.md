@@ -722,6 +722,11 @@ Next 10 technical steps:
      profile-completeness gaps, showing ready fichas, the main blocker and the
      next ficha to work without creating review cards or exposing proposal
      payloads.
+140. Add publication-readiness guidance to the global plan snapshot. Done
+     locally in `scripts/global_plan_status.py`: the roadmap snapshot now shows
+     ready-to-publish counts, the main required blocker and the next
+     publication target, and routes Codex toward Google Maps review work when
+     that is the leading publication blocker.
 
 ## Daniel decision checkpoints
 

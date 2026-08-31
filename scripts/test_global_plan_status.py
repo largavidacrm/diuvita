@@ -116,6 +116,24 @@ def sample_digest():
             "next_pending_field": "Email o teléfono",
             "open_relevant_reviews": 5,
         },
+        "publication_readiness": {
+            "clinics_measured": 24,
+            "visible_clinics": 19,
+            "ready_clinics": 3,
+            "clinics_with_missing_fields": 21,
+            "clinics_with_blocking_reviews": 1,
+            "top_missing_fields": [
+                {"field": "Google Maps de clínica", "count": 20},
+            ],
+        },
+        "publication_next_target": {
+            "clinic_name": "Longevity Marbella",
+            "slug": "longevity-marbella",
+            "status": "draft",
+            "missing_fields": ["Google Maps de clínica", "Dirección o sede"],
+            "missing_count": 2,
+            "next_missing_field": "Google Maps de clínica",
+        },
         "specialist_coverage": {
             "visible_clinics": 19,
             "with_specialists": 2,
@@ -160,10 +178,13 @@ def main():
     check("Sedes y ubicaciones: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Ciclo autónomo: activo en sombra; señal automática base" in output, "shadow cycle line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
+    check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
+    check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "top publication blocker missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Señal automática base: Revisar claim bloqueante" in output, "base review signal missing")
     check("Google Maps propuestos: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps proposed line missing")
     check("Especialistas propuestos: 2 tarjetas; 17 especialistas propuestos" in output, "specialist proposed line missing")
+    check("Siguiente publicación: Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total" in output, "next publication line missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Siguiente ficha: Revisar Sensabell" in output, "next profile missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending field missing")
@@ -177,8 +198,16 @@ def main():
     specialist_queue["summary"]["reviews"] = {"open": 20}
     specialist_queue["source_coverage"]["clinics_needing_source_work"] = 0
     check(
-        codex_can_continue_status(specialist_queue) == "mejorar revisión de especialistas propuestos sin publicarlos",
-        "Codex should improve specialist-review tooling before looking for more team pages",
+        codex_can_continue_status(specialist_queue) == "mejorar revisión de Google Maps de clínica sin publicar",
+        "Codex should improve publication blockers before specialist-review tooling",
+    )
+    specialist_only = sample_digest()
+    specialist_only["summary"]["reviews"] = {"open": 20}
+    specialist_only["source_coverage"]["clinics_needing_source_work"] = 0
+    specialist_only["publication_readiness"] = {"clinics_measured": 24, "clinics_with_missing_fields": 0}
+    check(
+        codex_can_continue_status(specialist_only) == "mejorar revisión de especialistas propuestos sin publicarlos",
+        "Codex should still improve specialist-review tooling when publication blockers are clear",
     )
     print("OK global plan status: roadmap snapshot is readable")
 

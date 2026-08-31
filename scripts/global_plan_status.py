@@ -16,14 +16,17 @@ from admin_digest import (
     load_digest,
     maturity_blockers,
     next_action_label,
+    next_publication_action,
     next_profile_action,
     next_source_action,
     next_specialist_action,
     parse_timestamp,
     publication_control_status,
+    publication_readiness_status,
     review_backlog_guard_status,
     source_coverage_status,
     specialist_review_status,
+    top_publication_missing_field,
     top_pending_profile_field,
 )
 from daniel_review_brief import next_clicks
@@ -129,6 +132,7 @@ def codex_can_continue_status(digest: dict[str, Any]) -> str:
     source_coverage = digest.get("source_coverage") or {}
     specialist_coverage = digest.get("specialist_coverage") or {}
     specialist_reviews = digest.get("specialist_reviews") or {}
+    publication_readiness = digest.get("publication_readiness") or {}
     profile_completeness = digest.get("profile_completeness") or {}
 
     if failed_jobs:
@@ -137,6 +141,8 @@ def codex_can_continue_status(digest: dict[str, Any]) -> str:
         return "mejorar panel, extractores y checks sin crear tarjetas nuevas"
     if as_int(source_coverage.get("clinics_needing_source_work")):
         return "mejorar trazabilidad de fuentes y propuestas internas"
+    if as_int(publication_readiness.get("clinics_with_missing_fields")) and "Google Maps" in top_publication_missing_field(digest):
+        return "mejorar revisión de Google Maps de clínica sin publicar"
     if as_int(specialist_reviews.get("open_count")):
         return "mejorar revisión de especialistas propuestos sin publicarlos"
     if as_int(specialist_coverage.get("without_specialists")):
@@ -184,6 +190,8 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Ciclo autónomo: activo en sombra; señal automática base: {next_action_label(digest)}.",
         f"- Monitorización: {source_monitoring_status(digest)}.",
         f"- Coste Netlify: publicación {publication_control_status(digest)}.",
+        f"- Preparación para publicación: {publication_readiness_status(digest)}.",
+        f"- Principal faltante para publicar: {top_publication_missing_field(digest)}.",
         f"- Knowledge graph clínico: {specialist_status(digest)}.",
         "- Growth/SEO/outreach: pendiente hasta que la precisión y la bandeja estén más maduras.",
         "",
@@ -192,6 +200,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Grupo por clínica: {first_clinic_workgroup(digest)}.",
         f"- Google Maps propuestos: {google_link_review_status(digest)}.",
         f"- Especialistas propuestos: {specialist_review_status(digest)}.",
+        f"- Siguiente publicación: {next_publication_action(digest)}.",
         f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Siguiente ficha: {next_profile_action(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
