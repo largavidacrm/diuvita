@@ -288,6 +288,8 @@ def main() -> None:
     check(
         "function renderClinicManualReviewContext" in index
         and "function reviewManualIssueForTarget" in index
+        and "function finishManualQualityReviewAfterSave" in index
+        and "function manualReviewTargetSatisfied" in index
         and "reviewSourceJobContext(activeClinicReview, activeClinicReviewFocusTarget)" in index
         and "createClinicManualReviewSourceJob" in index
         and "activeClinicReviewFocusTarget" in index
@@ -295,6 +297,14 @@ def main() -> None:
         and "renderClinicManualReviewContext();" in index
         and "activeClinicReviewFocusTarget = reviewManualTargetForInput(row, focusTarget)" in index,
         "manual review clinic editor should show the exact field and refocus it",
+    )
+    check(
+        "manual_review_progress" in index
+        and ".from(\"review_queue\")" in index
+        and ".update({ payload: nextPayload })" in index
+        and "Campo guardado. Paso al siguiente campo pendiente." in index
+        and "Ficha guardada, pero ese campo sigue pendiente. Lo mantengo abierto." in index,
+        "manual review saves should resolve only the active missing field",
     )
     check(
         "return focusedTargets.length ? focusedTargets : fallbackTargets;" in index

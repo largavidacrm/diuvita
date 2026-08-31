@@ -927,6 +927,11 @@ Next 10 technical steps:
      **Parece perfil directo** or **No guardar tal cual**, and packets carry a
      non-auto-publishable `google_maps_review` context so future assistance
      preserves the human Google Business/Profile check.
+177. Resolve manual review cards field by field. Done locally in `/admin/`:
+     when a quality/manual review contains several missing fields, saving the
+     active field removes only that issue from the open card and then reopens
+     the next pending field. If the active field is still incomplete, the card
+     stays open instead of being silently resolved.
 
 ## Daniel decision checkpoints
 

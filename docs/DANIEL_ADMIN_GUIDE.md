@@ -174,13 +174,15 @@ dirección suelta o enlace insuficiente.
 
 En las revisiones manuales de calidad, al pulsar **Revisar** se abre la ficha
 directamente en el dato pendiente. Al guardar la ficha, esa revisión queda
-cerrada y el panel pasa a la siguiente propuesta pendiente. Al entrar en la
-ficha desde esa acción, arriba verás una banda de **Revisión manual** con el
-campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en
-una página oficial de la clínica, puedes pegar esa URL en **Pasar URL al
-agente**; el agente/LLM la usará para el campo que estás revisando, o para los
-campos pendientes de esa tarjeta si no hay un campo único claro. Siempre crea
-propuestas revisables, sin publicar ni guardar datos automáticamente.
+cerrada solo para ese campo. Si la misma tarjeta tenía más faltantes, el panel
+vuelve a abrir el siguiente campo pendiente; no los da por resueltos en bloque.
+Al entrar en la ficha desde esa acción, arriba verás una banda de **Revisión
+manual** con el campo afectado y el motivo exacto de la tarjeta. Si sabes que el
+dato está en una página oficial de la clínica, puedes pegar esa URL en **Pasar
+URL al agente**; el agente/LLM la usará para el campo que estás revisando, o
+para los campos pendientes de esa tarjeta si no hay un campo único claro.
+Siempre crea propuestas revisables, sin publicar ni guardar datos
+automáticamente.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el

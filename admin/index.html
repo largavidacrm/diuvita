@@ -5634,6 +5634,103 @@
       return matchingItem ? proposalListValue(matchingItem.value) : "";
     }
 
+    function reviewManualIssueText(issue) {
+      if (!issue || typeof issue !== "object") return text(issue);
+      return [issue.code, issue.label, issue.detail, issue.reason].filter(function (part) {
+        return text(part).trim();
+      }).join(" ");
+    }
+
+    function reviewManualIssueLabel(issue) {
+      if (!issue || typeof issue !== "object") return text(issue).trim() || "Campo pendiente";
+      return text(issue.label || issue.detail || issue.reason || issue.code).trim() || "Campo pendiente";
+    }
+
+    function reviewManualIssueMatchesTarget(issue, target) {
+      if (!target || !target.inputId) return false;
+      return reviewMissingFieldTargetsForText(reviewManualIssueText(issue)).some(function (item) {
+        return item.inputId === target.inputId || (target.key && item.key === target.key);
+      });
+    }
+
+    function activeManualIssueIndex(row, target) {
+      var issues = row && row.payload && Array.isArray(row.payload.issues) ? row.payload.issues : [];
+      if (!issues.length) return -1;
+      var index = issues.findIndex(function (issue) {
+        return reviewManualIssueMatchesTarget(issue, target);
+      });
+      return index >= 0 ? index : 0;
+    }
+
+    function currentDataHasReviewedMaps(data) {
+      if (hasReviewedGoogleMapsUrl(data.maps_url, data.google_maps_url, data.map_url)) return true;
+      return normalizedLocations(data.locations).some(function (location) {
+        return isReviewedGoogleMapsProfileUrl(locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]));
+      });
+    }
+
+    function currentDataHasPublicContact(data) {
+      return hasVisibleText(data.email) || clinicPhoneFields().some(function (field) {
+        return hasVisibleText(data[field.key]);
+      });
+    }
+
+    function manualReviewTargetSatisfied(target, currentData) {
+      if (!target || !target.key) return true;
+      var key = target.key;
+      if (key === "summary") return text(currentData.summary).trim().length >= 120;
+      if (key === "website") return Boolean(cleanHttpUrl(currentData.web || currentData.website));
+      if (key === "address") return hasVisibleText(currentData.address) || locationsHavePublicAccess(normalizedLocations(currentData.locations));
+      if (key === "maps_url") return currentDataHasReviewedMaps(currentData);
+      if (key === "google_reviews_url") return Boolean(cleanHttpUrl(currentData.google_reviews_url || currentData.reviews_url));
+      if (key === "email" || key === "telefono") return currentDataHasPublicContact(currentData);
+      if (["services", "specialties", "unidades", "profesionales"].indexOf(key) >= 0) {
+        return countVisibleArray(currentData[key]) > 0;
+      }
+      if (key === "tech") return hasTechnologyValue(currentData.tech);
+      if (key === "years_in_practice") return hasVisibleText(currentData.years_in_practice);
+      if (key === "specialists_count") return Number(currentData.specialists_count || 0) > 0;
+      if (key === "team_credentialing_visible") return hasVisibleText(currentData.team_credentialing_visible);
+      if (key === "public_pricing") return hasVisibleText(currentData.public_pricing);
+      if (key === "pricing_url") return Boolean(cleanHttpUrl(currentData.pricing_url));
+      return true;
+    }
+
+    async function finishManualQualityReviewAfterSave(row, target, currentData, note) {
+      if (!row || row.review_type !== "clinic_quality_audit") {
+        return { handled: false };
+      }
+      if (target && !manualReviewTargetSatisfied(target, currentData)) {
+        return { handled: true, incomplete: true, target: target };
+      }
+      var issues = row.payload && Array.isArray(row.payload.issues) ? row.payload.issues : [];
+      if (issues.length <= 1) {
+        var finalResult = await resolveReviewItem(row.id, "resolved", note || "Revisión manual cerrada tras guardar la ficha.");
+        return { handled: true, resolved: !finalResult.error, error: Boolean(finalResult.error), remainingCount: 0 };
+      }
+      var index = activeManualIssueIndex(row, target);
+      var remainingIssues = issues.filter(function (_issue, issueIndex) {
+        return issueIndex !== index;
+      });
+      var nextPayload = Object.assign({}, row.payload || {}, {
+        issues: remainingIssues,
+        manual_review_progress: Object.assign({}, (row.payload || {}).manual_review_progress || {}, {
+          last_completed_issue: reviewManualIssueLabel(issues[index]),
+          last_completed_target: target ? target.key : "",
+          updated_at: new Date().toISOString()
+        })
+      });
+      var updateResult = await client
+        .from("review_queue")
+        .update({ payload: nextPayload })
+        .eq("id", row.id);
+      if (updateResult.error) {
+        return { handled: true, error: true, remainingCount: issues.length };
+      }
+      row.payload = nextPayload;
+      return { handled: true, partial: true, remainingCount: remainingIssues.length };
+    }
+
     function renderClinicManualReviewContext() {
       var panel = el("clinicManualReviewContext");
       if (!panel) return;
@@ -8473,6 +8570,8 @@
       var resolvedFromClinicReview = false;
       var reviewContinueId = "";
       var resolveWarning = false;
+      var continueSameManualReview = false;
+      var manualReviewIncomplete = null;
       if (activeClinicReview && activeClinicReview.clinic_id === activeClinic.id) {
         var reviewIdsToResolve = activeClinicReviewIds.length ? activeClinicReviewIds.slice() : [activeClinicReview.id];
         reviewContinueId = activeClinicReview.id;
@@ -8482,19 +8581,66 @@
           : activeClinicReview.review_type === "clinic_profile_enrichment"
           ? "Ficha actualizada desde propuesta de ampliación."
           : "Ficha actualizada desde revisión de calidad.";
-        for (var i = 0; i < reviewIdsToResolve.length; i += 1) {
-          var resolveResult = await client.rpc("admin_resolve_review_item", {
-            p_review_id: reviewIdsToResolve[i],
-            p_status: "resolved",
-            p_note: trimmed("clinicNote") || defaultNote
-          });
-          if (resolveResult.error) resolveWarning = true;
+        if (activeClinicReview.review_type === "clinic_quality_audit" && reviewIdsToResolve.length === 1) {
+          var manualResult = await finishManualQualityReviewAfterSave(
+            activeClinicReview,
+            activeClinicReviewFocusTarget,
+            currentData,
+            trimmed("clinicNote") || defaultNote
+          );
+          if (manualResult.incomplete) {
+            manualReviewIncomplete = manualResult.target || activeClinicReviewFocusTarget;
+            resolvedFromClinicReview = false;
+          } else {
+            resolveWarning = Boolean(manualResult.error);
+            continueSameManualReview = Boolean(manualResult.partial && manualResult.remainingCount > 0);
+          }
+        } else {
+          for (var i = 0; i < reviewIdsToResolve.length; i += 1) {
+            var resolveResult = await client.rpc("admin_resolve_review_item", {
+              p_review_id: reviewIdsToResolve[i],
+              p_status: "resolved",
+              p_note: trimmed("clinicNote") || defaultNote
+            });
+            if (resolveResult.error) resolveWarning = true;
+          }
         }
+      }
+
+      if (manualReviewIncomplete) {
+        activeClinic.current_data = currentData;
+        activeClinic.display_name = name;
+        activeClinic.website = trimmed("clinicWebsite") || null;
+        activeClinic.country = country;
+        activeClinic.city = city;
+        activeClinic.region = trimmed("clinicRegion") || null;
+        activeClinic.address = trimmed("clinicAddress") || null;
+        activeClinic.status = selectedStatus;
+        activeClinic.summary = trimmed("clinicSummary") || null;
+        activeClinic.profile_confidence = confidence;
+        activeClinic.verification_status = trimmed("clinicVerification") || "human_curated";
+        renderClinicManualReviewContext();
+        updateFinalValidation();
+        focusPublishField(manualReviewIncomplete.inputId);
+        toast("Ficha guardada, pero ese campo sigue pendiente. Lo mantengo abierto.");
+        return;
       }
 
       closeClinicEditor();
       await loadDashboard();
       if (resolvedFromClinicReview) {
+        if (continueSameManualReview) {
+          var sameReview = reviewCache.find(function (row) {
+            return row.id === reviewContinueId && row.status === "open";
+          });
+          if (sameReview) {
+            toast(resolveWarning
+              ? "Ficha guardada, pero no pude actualizar toda la revisión."
+              : "Campo guardado. Paso al siguiente campo pendiente.");
+            openReviewEditor(sameReview.id);
+            return;
+          }
+        }
         var nextReview = nextReviewAfterCurrent(reviewContinueId);
         if (nextReview) {
           toast(resolveWarning
