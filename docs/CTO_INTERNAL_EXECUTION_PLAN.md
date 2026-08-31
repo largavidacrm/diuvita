@@ -950,6 +950,11 @@ Next 10 technical steps:
      clinic editor, shows only the next pending field, and keeps source handoff
      scoped to that visible field for future LLM assistance. The review table
      also clamps long titles to keep row heights consistent.
+182. Add a field-level order to duplicate-enrichment diagnosis. Done locally in
+     `scripts/consolidate_profile_enrichment_reviews.py`: duplicate improvement
+     groups now include a read-only `review_sequence` that prioritizes conflicts,
+     weak phones, Google links and then other fields, so future LLM or operator
+     flows can prepare the case without merging multiple admin decisions.
 
 ## Daniel decision checkpoints
 

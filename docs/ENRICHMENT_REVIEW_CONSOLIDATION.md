@@ -45,6 +45,8 @@ python3 scripts/consolidate_profile_enrichment_reviews.py --clinic "Nombre de la
   colegiacion o un identificador con guiones se guarde como contacto.
 - Que propuestas traen varios telefonos espanoles claros en un solo campo; en
   ese caso los separa como telefono principal/fijo/movil para revision humana.
+- En que orden conviene revisar los campos del grupo, priorizando conflictos,
+  telefonos dudosos, Maps/valoraciones y despues el resto de datos.
 
 ## Resultado esperado
 
@@ -57,3 +59,7 @@ propuesta afectada.
 Si el informe separa telefonos, Daniel debe revisar que cada numero corresponde
 a la clinica antes de aprobar. La separacion no publica ni aprueba el dato por
 si sola.
+
+La linea **orden sugerido** no agrupa decisiones en el admin: solo ayuda a
+preparar el trabajo. La validacion real sigue siendo abrir una tarjeta, revisar
+un cambio y aprobar, rechazar o modificar.

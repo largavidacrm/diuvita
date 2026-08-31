@@ -99,6 +99,13 @@ def main():
     check(consolidated["conflict_count"] == 1, "conflict count missing")
     check(consolidated["weak_phone_fields"] == ["phone_fixed"], "weak phone field should be flagged")
     check(consolidated["source_count"] == 2, "source dedupe count missing")
+    check(consolidated["review_sequence"][0]["field"] == "telefono", "sequence should start with high-impact contact fields")
+    check(consolidated["review_sequence"][0]["state"] == "conflict", "sequence should flag scalar conflicts")
+    check(consolidated["review_sequence"][0]["source_review_count"] == 2, "sequence should carry source review counts")
+    check(
+        any(item["field"] == "profesionales" and item["action"] == "revision humana antes de publicar" for item in consolidated["review_sequence"]),
+        "sequence should preserve human review actions for specialists",
+    )
     check(consolidated["next_step"] == "resolver conflictos antes de validar propuestas", "conflict next step missing")
     check(report["summary"]["groups"] == 1, "group summary missing")
     check(report["summary"]["cards"] == 2, "card summary missing")
@@ -106,6 +113,7 @@ def main():
     check("Writes data: no" in output, "read-only safety line missing")
     check("Sensabell: 2 tarjetas ->" in output, "group row missing")
     check("conflictos: Telefono principal" in output, "conflict labels missing")
+    check("orden sugerido: 1. Telefono principal (conflicto, 2 tarjetas)" in output, "review sequence line missing")
     check("telefonos dudosos: Telefono fijo" in output, "weak phone label missing")
     check("ya en ficha: Telefono principal" in output, "already-present labels missing")
 

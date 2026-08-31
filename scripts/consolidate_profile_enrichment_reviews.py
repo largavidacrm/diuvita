@@ -60,6 +60,35 @@ FIELD_LABELS = {
 LIST_FIELDS = {"services", "specialties", "unidades", "profesionales", "locations", "tech"}
 PHONE_FIELDS = {"telefono", "phone_fixed", "phone_mobile", "phone_whatsapp"}
 PHONE_CANDIDATE_RE = re.compile(r"(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}")
+FIELD_REVIEW_ORDER = [
+    "maps_url",
+    "google_reviews_url",
+    "locations",
+    "address",
+    "telefono",
+    "phone_fixed",
+    "phone_mobile",
+    "phone_whatsapp",
+    "email",
+    "website",
+    "summary",
+    "services",
+    "specialties",
+    "unidades",
+    "profesionales",
+    "tech",
+    "years_in_practice",
+    "specialists_count",
+    "team_credentialing_visible",
+    "public_pricing",
+    "pricing_url",
+]
+REVIEW_SEQUENCE_STATE_LABELS = {
+    "review": "revisar",
+    "conflict": "conflicto",
+    "weak_phone": "telefono dudoso",
+    "already_present": "ya en ficha",
+}
 PROFILE_ALIASES = {
     "display_name": ("display_name", "name", "canonical_name"),
     "website": ("website", "web"),
@@ -353,6 +382,77 @@ def field_count(value: Any, field: str) -> int:
     return 0 if is_empty(value) else 1
 
 
+def field_review_sort_key(field: str) -> tuple[int, str]:
+    try:
+        return FIELD_REVIEW_ORDER.index(field), field
+    except ValueError:
+        return len(FIELD_REVIEW_ORDER), field
+
+
+def review_state_sort_key(state: str) -> int:
+    return {
+        "conflict": 0,
+        "weak_phone": 1,
+        "review": 2,
+        "already_present": 3,
+    }.get(state, 4)
+
+
+def field_review_action(field: str, state: str) -> str:
+    if state == "conflict":
+        return "comparar variantes antes de aprobar"
+    if state == "weak_phone":
+        return "corregir telefono antes de guardar"
+    if state == "already_present":
+        return "cerrar sobrante si no aporta nada nuevo"
+    if field in {"maps_url", "google_reviews_url"}:
+        return "confirmar perfil real de Google antes de guardar"
+    if field in {"profesionales", "team_credentialing_visible", "public_pricing", "pricing_url"}:
+        return "revision humana antes de publicar"
+    return "abrir una propuesta y decidir solo este campo"
+
+
+def build_review_sequence(
+    merged_fields: dict[str, Any],
+    conflicts: list[dict[str, Any]],
+    already_present: list[str],
+    weak_phone_fields: list[str],
+    field_sources: dict[str, list[str]],
+) -> list[dict[str, Any]]:
+    conflict_fields = {str(item.get("field") or "") for item in conflicts}
+    already_present_fields = set(already_present)
+    weak_phone_field_set = set(weak_phone_fields)
+    sequence: list[dict[str, Any]] = []
+    for field in merged_fields:
+        if field in conflict_fields:
+            state = "conflict"
+        elif field in weak_phone_field_set:
+            state = "weak_phone"
+        elif field in already_present_fields:
+            state = "already_present"
+        else:
+            state = "review"
+        review_ids = field_sources.get(field) or []
+        sequence.append(
+            {
+                "field": field,
+                "label": field_label(field),
+                "state": state,
+                "action": field_review_action(field, state),
+                "value_count": field_count(merged_fields.get(field), field),
+                "source_review_count": len(review_ids),
+                "review_ids": review_ids,
+            }
+        )
+    return sorted(
+        sequence,
+        key=lambda item: (
+            review_state_sort_key(str(item.get("state") or "")),
+            field_review_sort_key(str(item.get("field") or "")),
+        ),
+    )
+
+
 def consolidated_group(group: dict[str, Any]) -> dict[str, Any]:
     cards = [card for card in group.get("cards") or [] if isinstance(card, dict)]
     merged_fields, conflicts, field_sources = merge_fields(cards)
@@ -378,6 +478,13 @@ def consolidated_group(group: dict[str, Any]) -> dict[str, Any]:
         field
         for field, value in merged_fields.items()
         if field in PHONE_FIELDS and not plausible_phone(value)
+    )
+    review_sequence = build_review_sequence(
+        merged_fields,
+        conflicts,
+        already_present,
+        weak_phone_fields,
+        field_sources,
     )
     if conflicts:
         next_step = "resolver conflictos antes de validar propuestas"
@@ -409,6 +516,7 @@ def consolidated_group(group: dict[str, Any]) -> dict[str, Any]:
         "weak_phone_count": len(weak_phone_fields),
         "weak_phone_fields": weak_phone_fields,
         "field_review_ids": field_sources,
+        "review_sequence": review_sequence,
         "next_step": next_step,
     }
 
@@ -522,6 +630,23 @@ def format_field_list(fields: list[str]) -> str:
     return ", ".join(field_label(field) for field in fields)
 
 
+def format_review_sequence(sequence: list[dict[str, Any]], limit: int = 5) -> str:
+    if not sequence:
+        return "ningun campo"
+    parts: list[str] = []
+    for index, item in enumerate(sequence[:limit], start=1):
+        label = str(item.get("label") or item.get("field") or "Campo")
+        state = str(item.get("state") or "review")
+        state_label = REVIEW_SEQUENCE_STATE_LABELS.get(state, state)
+        source_count = as_int(item.get("source_review_count"))
+        source_label = f", {source_count} {plural(source_count, 'tarjeta', 'tarjetas')}" if source_count else ""
+        parts.append(f"{index}. {label} ({state_label}{source_label})")
+    remaining = len(sequence) - limit
+    if remaining > 0:
+        parts.append(f"+{remaining} mas")
+    return "; ".join(parts)
+
+
 def format_group(group: dict[str, Any]) -> str:
     name = group.get("clinic_name") or group.get("clinic_slug") or "sin clinica"
     cards = as_int(group.get("card_count"))
@@ -538,6 +663,7 @@ def format_group(group: dict[str, Any]) -> str:
             f"{conflicts} {plural(conflicts, 'conflicto', 'conflictos')}"
         ),
         f"  siguiente: {group.get('next_step')}",
+        f"  orden sugerido: {format_review_sequence(group.get('review_sequence') or [])}",
         f"  revisar: {format_field_list(review_fields)}",
     ]
     if already_present:
