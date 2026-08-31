@@ -380,6 +380,10 @@ Next 10 technical steps:
     first view now focuses on where we are and the next click, while the
     detailed roadmap stays available under a collapsed "Ver desglose del plan"
     section.
+66. Add a built-site guard for public clinic UX. Done locally in
+    `scripts/check_built_public_profile_ux.py`: after build, every clinic page
+    is checked for no decorative location number badges and for clinic-profile
+    Google Maps links only.
 
 ## Daniel decision checkpoints
 

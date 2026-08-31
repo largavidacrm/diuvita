@@ -135,6 +135,7 @@ def build_steps(skip_build: bool) -> list[CheckStep]:
     steps.append(CheckStep("clinic data validation", [sys.executable, "scripts/validate_data.py"], 60))
     if not skip_build:
         steps.append(CheckStep("static site build", [sys.executable, "build.py"], 120))
+        steps.append(CheckStep("built-site public profile UX", [sys.executable, "scripts/check_built_public_profile_ux.py"], 60))
         steps.append(CheckStep("built-site operational limits scan", [sys.executable, "scripts/check_operational_limits.py", "--built-site"], 60))
     steps.append(CheckStep("admin JavaScript syntax", ["node", "-e", ADMIN_JS_CHECK], 60))
     steps.append(CheckStep("whitespace check", ["git", "diff", "--check"], 60))
