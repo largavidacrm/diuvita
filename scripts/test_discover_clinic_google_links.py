@@ -11,6 +11,7 @@ from discover_clinic_google_links import (
     dedupe_google_candidates,
     discover_google_links,
     discover_secondary_pages,
+    google_link_rejection_reason,
     has_direct_place_identifier,
     process_clinic,
     review_payload,
@@ -48,6 +49,14 @@ def main():
         "slug": "example-clinic",
         "city": "Madrid",
     }), "address-only Maps links should not be proposed as clinic profiles")
+    check(
+        google_link_rejection_reason(address_only, {
+            "display_name": "Example Longevity Clinic",
+            "slug": "example-clinic",
+            "city": "Madrid",
+        }) == "el candidato parece una dirección, no un perfil de clínica",
+        "address-only rejection reason missing",
+    )
 
     named_place = discover_google_links(
         "https://exampleclinic.test/",
@@ -205,6 +214,7 @@ def main():
 
     ambiguous = process_clinic(clinic, args, "admin@example.test", {}, fake_ambiguous_fetcher, fake_review_creator)
     check(ambiguous["status"] == "empty", "ambiguous equal Google links should not be auto-proposed")
+    check("varios candidatos de Maps" in ambiguous["rejection_reason"], "ambiguous Google links should explain rejection")
 
     payload = review_payload(clinic, clinic["website"], dry_run["proposed_fields"], candidates, dry_run["scanned_urls"])
     check(payload["mode"] == "shadow", "payload should stay in shadow mode")
@@ -242,6 +252,7 @@ def main():
     })
     check(compact["ready_items"][0]["clinic_slug"] == "example-clinic", "compact ready item missing")
     check(compact["empty_with_candidates"][0]["clinic_slug"] == "address-only", "compact empty candidate item missing")
+    check("rejection_reason" in compact["empty_with_candidates"][0], "compact output should keep rejection reason")
     check("google_link_candidates" not in compact["ready_items"][0], "compact output should omit full candidates")
 
     already_complete = dict(clinic, has_google_maps=True, has_google_reviews=True)

@@ -524,6 +524,11 @@ Next 10 technical steps:
     `--clinic-visibility --clinic-visibility-clinic "Monarka"` to explain one
     clinic's public visibility state without publishing, editing data or
     exposing long professional/team payloads.
+100. Explain rejected Google Maps candidates. Done locally in
+     `scripts/discover_clinic_google_links.py`: dry runs now keep a compact
+     rejection reason when a Maps candidate is found but not safe enough to
+     propose, for example because it looks like a street address, a short link
+     without clinic context or competing ambiguous candidates.
 
 ## Daniel decision checkpoints
 

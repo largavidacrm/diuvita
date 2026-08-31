@@ -380,6 +380,45 @@ def best_links(candidates: list[GoogleLinkCandidate], clinic: dict[str, Any] | N
     return result
 
 
+def google_link_rejection_reason(
+    candidates: list[GoogleLinkCandidate],
+    clinic: dict[str, Any] | None,
+    proposed_fields: dict[str, str] | None = None,
+) -> str:
+    if proposed_fields:
+        return ""
+    if not candidates:
+        return ""
+    if clinic and clinic.get("has_google_maps") and clinic.get("has_google_reviews"):
+        return "la clínica ya tiene Google Maps y valoraciones guardados"
+    maps_candidates = [candidate for candidate in candidates if candidate.kind == "maps_url"]
+    if maps_candidates:
+        ranked = sorted(
+            maps_candidates,
+            key=lambda item: (-(item.score + context_score(item, clinic) * 12), item.url),
+        )
+        top = ranked[0]
+        if len(ranked) > 1:
+            second = ranked[1]
+            top_score = top.score + context_score(top, clinic) * 12
+            second_score = second.score + context_score(second, clinic) * 12
+            if clinic and top_score == second_score and not context_score(top, clinic):
+                return "hay varios candidatos de Maps sin contexto suficiente de clínica"
+        if clinic and not clinic_name_score(top, clinic):
+            if is_ambiguous_short_maps_link(top):
+                return "el enlace corto de Maps no muestra nombre de clínica alrededor"
+            if looks_like_address_label(top.label):
+                return "el candidato parece una dirección, no un perfil de clínica"
+            if not has_direct_place_identifier(top):
+                return "el candidato no tiene identificador claro de perfil de clínica"
+            return "el candidato no contiene señal clara del nombre de la clínica"
+        return "el candidato de Maps no supera la regla de perfil directo"
+    review_candidates = [candidate for candidate in candidates if candidate.kind == "google_reviews_url"]
+    if review_candidates:
+        return "solo se han detectado enlaces de valoraciones, falta el perfil principal de la clínica"
+    return "los enlaces detectados no son perfiles Google Maps válidos"
+
+
 def direct_link_predicate(*keys: str) -> str:
     root_values = ", ".join(f"c.current_data ->> '{key}'" for key in keys)
     location_values = ",\n          ".join(f"location.value ->> '{key}'" for key in keys)
@@ -526,6 +565,9 @@ def process_clinic(
         "scanned_urls": scanned_urls,
         "fetch_errors": fetch_errors,
     })
+    rejection_reason = google_link_rejection_reason(candidates, clinic, proposed_fields)
+    if rejection_reason:
+        result["rejection_reason"] = rejection_reason
     if args.apply and proposed_fields:
         payload = review_payload(clinic, source_url, proposed_fields, candidates, scanned_urls)
         result["created_review"] = review_creator(
@@ -566,6 +608,7 @@ def compact_summary(summary: dict[str, Any]) -> dict[str, Any]:
             "scanned_urls_count": len(item.get("scanned_urls") or []),
             "candidate_count": len(item.get("google_link_candidates") or []),
             "fetch_error_count": len(item.get("fetch_errors") or []),
+            "rejection_reason": item.get("rejection_reason") or "",
         })
     return {
         "mode": summary.get("mode"),
