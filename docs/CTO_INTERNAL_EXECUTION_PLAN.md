@@ -685,6 +685,11 @@ Next 10 technical steps:
      proposed locations, phone numbers and specialists are about to be loaded
      when Daniel uses **Cargar mejoras juntas**, keeping high-volume cases like
      IMDA reviewable without auto-saving or publishing data.
+133. Make focused backlog case cards distinguishable without exposing payloads.
+     Done locally in `scripts/review_backlog_brief.py`: clinic-focused reports
+     now show safe proposed-field labels and counts of sedes, phones and
+     specialists per card, while stripping the raw review payload from text and
+     JSON output.
 
 ## Daniel decision checkpoints
 

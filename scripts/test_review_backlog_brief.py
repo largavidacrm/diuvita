@@ -5,9 +5,11 @@ from review_backlog_brief import (
     backlog_guard,
     compact_lookup_key,
     first_backlog_action,
+    format_card_proposal_summary,
     format_backlog,
     format_clinic_workgroup,
     format_workgroup_card,
+    proposal_card_summary,
     review_type_label,
     safe_limit,
     workgroup_order,
@@ -125,6 +127,36 @@ def main():
         )
         == "  - Reclamar ficha: Monarka Clinic: reclamación de ficha · P96 · creada 2026-08-31 13:58",
         "claim-request card formatting missing",
+    )
+    summarized_card = proposal_card_summary(
+        {
+            "title": "Revisar extracción shadow: Unidad de Longevidad IMDA",
+            "review_type": "clinic_profile_enrichment",
+            "priority": 60,
+            "created_at": "2026-08-31T12:47:00+00:00",
+            "payload": {
+                "proposed_fields": {
+                    "locations": [{"address": "C/ Goya 5-7", "city": "Madrid"}],
+                    "telefono": "676 629 862",
+                    "phone_fixed": "91 632 56 59",
+                    "profesionales": ["María Ortega", "Laura Ramos"],
+                    "services": ["Longevidad"],
+                    "email": "info@example.com",
+                }
+            },
+        }
+    )
+    check("payload" not in summarized_card, "raw payload should not leave the report")
+    check(summarized_card["proposed_phone_count"] == 2, "phone proposal count missing")
+    check(
+        format_card_proposal_summary(summarized_card)
+        == "campos: Sedes, Teléfono principal, Teléfono fijo, Especialistas, Servicios +1 · revisar: 1 sede, 2 teléfonos, 2 especialistas",
+        "proposal summary should show field names and safe counts",
+    )
+    check(
+        format_workgroup_card(summarized_card)
+        == "  - Revisar extracción shadow: Unidad de Longevidad IMDA: mejora · P60 · creada 2026-08-31 12:47 · campos: Sedes, Teléfono principal, Teléfono fijo, Especialistas, Servicios +1 · revisar: 1 sede, 2 teléfonos, 2 especialistas",
+        "workgroup card proposal summary missing",
     )
     check(backlog_guard(report["summary"]) == "cerca del freno: 48/50 abiertas", "guard label missing")
     check(

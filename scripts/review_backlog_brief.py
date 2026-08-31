@@ -4,12 +4,54 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import unicodedata
 from typing import Any
 
 from admin_digest import SAFE_WRITE_REVIEW_BACKLOG_LIMIT, as_int, parse_timestamp, plural
 from submit_discovery_candidates import load_env_file, run_psql, sql_literal
+
+
+PHONE_RE = re.compile(r"(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}")
+
+FIELD_LABELS = {
+    "display_name": "Nombre",
+    "name": "Nombre",
+    "web": "Web",
+    "website": "Web",
+    "country": "País",
+    "city": "Ciudad",
+    "region": "Región",
+    "address": "Dirección",
+    "locations": "Sedes",
+    "maps_url": "Google Maps",
+    "google_maps_url": "Google Maps",
+    "google_reviews_url": "Valoraciones Google",
+    "reviews_url": "Valoraciones Google",
+    "summary": "Resumen",
+    "services": "Servicios",
+    "specialties": "Especialidades",
+    "unidades": "Unidades",
+    "profesionales": "Especialistas",
+    "professionals": "Especialistas",
+    "years_in_practice": "Años en ejercicio",
+    "specialists_count": "Número de especialistas",
+    "team_credentialing_visible": "Colegiación visible",
+    "public_pricing": "Precio público",
+    "pricing_url": "Página de precios",
+    "tech": "Tecnología",
+    "email": "Email",
+    "telefono": "Teléfono principal",
+    "phone": "Teléfono principal",
+    "telephone": "Teléfono principal",
+    "phone_fixed": "Teléfono fijo",
+    "phone_mobile": "Móvil",
+    "phone_whatsapp": "WhatsApp",
+    "instagram": "Instagram",
+}
+
+PHONE_FIELD_KEYS = {"telefono", "phone", "telephone", "phone_fixed", "phone_mobile", "phone_whatsapp"}
 
 
 def safe_limit(value: int) -> int:
@@ -20,6 +62,119 @@ def compact_lookup_key(value: Any) -> str:
     normalized = unicodedata.normalize("NFKD", str(value or ""))
     ascii_value = normalized.encode("ascii", "ignore").decode("ascii").lower()
     return "".join(char for char in ascii_value if char.isalnum())
+
+
+def has_visible_value(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, list):
+        return any(has_visible_value(item) for item in value)
+    if isinstance(value, dict):
+        return any(has_visible_value(item) for item in value.values())
+    return True
+
+
+def proposed_fields(payload: dict[str, Any]) -> dict[str, Any]:
+    for key in ("proposed_fields", "proposed_current_data", "fields"):
+        value = payload.get(key)
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def field_label(key: str) -> str:
+    return FIELD_LABELS.get(str(key), str(key).replace("_", " "))
+
+
+def proposal_field_labels(payload: dict[str, Any]) -> list[str]:
+    labels: list[str] = []
+    seen: set[str] = set()
+    for key, value in proposed_fields(payload).items():
+        if not has_visible_value(value):
+            continue
+        label = field_label(str(key))
+        if label not in seen:
+            seen.add(label)
+            labels.append(label)
+    return labels
+
+
+def count_visible_items(value: Any) -> int:
+    if isinstance(value, list):
+        return sum(1 for item in value if has_visible_value(item))
+    if isinstance(value, str):
+        return len([line for line in value.replace(",", "\n").splitlines() if line.strip()])
+    return 1 if has_visible_value(value) else 0
+
+
+def nested_text_values(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        values: list[str] = []
+        for item in value:
+            values.extend(nested_text_values(item))
+        return values
+    if isinstance(value, dict):
+        values = []
+        for item in value.values():
+            values.extend(nested_text_values(item))
+        return values
+    if value is None:
+        return []
+    return [str(value)]
+
+
+def normalized_phone_digits(value: str) -> str:
+    digits = re.sub(r"\D+", "", value)
+    if digits.startswith("0034") and len(digits) == 13:
+        return digits[4:]
+    if digits.startswith("34") and len(digits) == 11:
+        return digits[2:]
+    return digits
+
+
+def proposal_phone_count(payload: dict[str, Any]) -> int:
+    phones: set[str] = set()
+    fields = proposed_fields(payload)
+    for key in PHONE_FIELD_KEYS:
+        if key not in fields:
+            continue
+        for value in nested_text_values(fields[key]):
+            for candidate in PHONE_RE.findall(value):
+                digits = normalized_phone_digits(candidate)
+                if len(digits) == 9:
+                    phones.add(digits)
+            digits = normalized_phone_digits(value)
+            if len(digits) == 9 and digits[:1] in {"6", "7", "8", "9"}:
+                phones.add(digits)
+    return len(phones)
+
+
+def proposal_card_summary(card: dict[str, Any]) -> dict[str, Any]:
+    payload = card.pop("payload", None)
+    if not isinstance(payload, dict):
+        return card
+    fields = proposed_fields(payload)
+    card["proposed_field_labels"] = proposal_field_labels(payload)
+    card["proposed_locations_count"] = count_visible_items(fields.get("locations"))
+    card["proposed_professionals_count"] = (
+        count_visible_items(fields.get("profesionales"))
+        or count_visible_items(fields.get("professionals"))
+    )
+    card["proposed_phone_count"] = proposal_phone_count(payload)
+    return card
+
+
+def summarize_backlog_report(report: dict[str, Any]) -> dict[str, Any]:
+    for section in ("clinic_workgroups", "duplicate_enrichment"):
+        for row in report.get(section) or []:
+            cards = row.get("cards")
+            if isinstance(cards, list):
+                row["cards"] = [proposal_card_summary(card) for card in cards if isinstance(card, dict)]
+    return report
 
 
 def load_backlog(limit: int, local_env: dict[str, str], clinic_query: str = "") -> dict[str, Any]:
@@ -169,6 +324,7 @@ clinic_workgroups as (
           'review_type', review_type,
           'title', title,
           'priority', priority,
+          'payload', payload,
           'created_at', created_at,
           'updated_at', updated_at
         )
@@ -217,7 +373,7 @@ select jsonb_build_object(
   'generated_at', now()
 );
 """
-    return json.loads(run_psql(sql, local_env))
+    return summarize_backlog_report(json.loads(run_psql(sql, local_env)))
 
 
 def backlog_guard(summary: dict[str, Any]) -> str:
@@ -321,12 +477,36 @@ def format_clinic_workgroup(row: dict[str, Any]) -> str:
     )
 
 
+def format_card_proposal_summary(card: dict[str, Any]) -> str:
+    labels = [str(item) for item in card.get("proposed_field_labels") or [] if str(item).strip()]
+    parts = []
+    if labels:
+        shown = labels[:5]
+        suffix = f" +{len(labels) - 5}" if len(labels) > 5 else ""
+        parts.append("campos: " + ", ".join(shown) + suffix)
+    counts = []
+    location_count = as_int(card.get("proposed_locations_count"))
+    phone_count = as_int(card.get("proposed_phone_count"))
+    professional_count = as_int(card.get("proposed_professionals_count"))
+    if location_count:
+        counts.append(f"{location_count} {plural(location_count, 'sede', 'sedes')}")
+    if phone_count:
+        counts.append(f"{phone_count} {plural(phone_count, 'teléfono', 'teléfonos')}")
+    if professional_count:
+        counts.append(f"{professional_count} {plural(professional_count, 'especialista', 'especialistas')}")
+    if counts:
+        parts.append("revisar: " + ", ".join(counts))
+    return " · ".join(parts)
+
+
 def format_workgroup_card(card: dict[str, Any]) -> str:
     title = card.get("title") or "Revisión abierta"
     review_type = review_type_label(card.get("review_type"))
     priority = as_int(card.get("priority"))
     created = parse_timestamp(card.get("created_at"))
-    return f"  - {title}: {review_type} · P{priority} · creada {created}"
+    proposal_summary = format_card_proposal_summary(card)
+    proposal_detail = f" · {proposal_summary}" if proposal_summary else ""
+    return f"  - {title}: {review_type} · P{priority} · creada {created}{proposal_detail}"
 
 
 def first_backlog_action(report: dict[str, Any]) -> str:

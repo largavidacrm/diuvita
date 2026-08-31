@@ -11,6 +11,9 @@ It answers:
 - which clinics concentrate several open review cards across review types;
 - the recommended order inside each clinic group, including human-only clinic
   claim requests before ordinary source or profile work;
+- safe per-card proposal summaries, such as field names and counts of proposed
+  locations, phones or specialists, without printing the full enrichment
+  payload;
 - which clinics have several profile-enrichment cards open at the same time;
 - which duplicate group is the best first manual review target.
 
