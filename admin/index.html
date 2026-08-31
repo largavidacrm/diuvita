@@ -513,6 +513,7 @@
           <strong id="reviewContextTitle">Contexto de revisión</strong>
           <p id="reviewContextDetail">Esta tarjeta no publica nada por sí sola.</p>
         </section>
+        <section class="review-profile-panel hidden" id="reviewProfilePanel"></section>
         <div class="review-detail">
           <dl class="detail-grid">
             <div>
@@ -547,11 +548,11 @@
               <dt>Coincidencias en Vitalarga</dt>
               <dd id="reviewCandidateDuplicates">—</dd>
             </div>
-            <div>
+            <div id="reviewCandidateServicesBlock">
               <dt>Servicios / campos</dt>
               <dd id="reviewCandidateServices">—</dd>
             </div>
-            <div>
+            <div id="reviewCandidateProfessionalsBlock">
               <dt>Especialistas publicados</dt>
               <dd id="reviewCandidateProfessionals">—</dd>
             </div>
@@ -3456,6 +3457,18 @@
           detail: "Sus datos no aparecerán online hasta crear un borrador, revisar la ficha y guardarla como preliminar o publicada." + specialistText
         };
       }
+      if (isClinicClaimReview(row)) {
+        return {
+          title: "Solicitud de acceso a una ficha existente.",
+          detail: "Primero comprueba quién lo pide y compara con la ficha actual. Aprobar solo da acceso privado; no cambia el contenido público."
+        };
+      }
+      if (isPortalChangeReview(row)) {
+        return {
+          title: "Cambio pedido por una clínica.",
+          detail: "Compara la ficha actual con cada campo propuesto. Nada llega a la web hasta cargarlo en el editor, revisarlo y guardar."
+        };
+      }
       if (row.review_type === "clinic_profile_enrichment") {
         return {
           title: "Mejora de ficha existente.",
@@ -5186,7 +5199,7 @@
 
     function portalRiskItems(payload) {
       var flags = payload && Array.isArray(payload.risk_flags) ? payload.risk_flags : [];
-      if (!flags.length) return ["Sin alertas automáticas del portal."];
+      if (!flags.length) return [];
       return flags.map(function (flag) {
         if (!flag || typeof flag !== "object") return text(flag);
         return text(flag.label || flag.code || "Alerta").trim();
@@ -5892,6 +5905,165 @@
       return text(value).trim();
     }
 
+    function reviewClinicForRow(row, payload) {
+      payload = payload || {};
+      var clinicId = (row && row.clinic_id) || payload.clinic_id || "";
+      var clinic = clinicCache.find(function (item) {
+        return item.id === clinicId;
+      });
+      if (clinic) return clinic;
+      return {
+        id: clinicId,
+        display_name: payload.clinic_name || "",
+        website: payload.website || "",
+        country: payload.clinic_country || "",
+        city: payload.clinic_city || "",
+        region: payload.clinic_region || "",
+        address: payload.clinic_address || "",
+        status: payload.clinic_status || "",
+        summary: payload.clinic_summary || "",
+        current_data: {}
+      };
+    }
+
+    function currentKeyForProposal(key) {
+      if (key === "google_maps_url") return "maps_url";
+      if (key === "professionals") return "profesionales";
+      if (key === "units") return "unidades";
+      return key;
+    }
+
+    function reviewValueHtml(key, value) {
+      var display = displayDiffValue(key, value);
+      if (display === "—") return '<span class="muted">—</span>';
+      if (/^https?:\/\/\S+$/i.test(display)) {
+        return '<a href="' + html(display) + '" target="_blank" rel="noopener">' + html(display) + '</a>';
+      }
+      return '<span>' + html(display) + '</span>';
+    }
+
+    function reviewProfileFieldHtml(label, key, value) {
+      return '<article class="review-profile-field"><span>' + html(label) + '</span><p>' +
+        reviewValueHtml(key, value) + '</p></article>';
+    }
+
+    function reviewCurrentProfileHtml(clinic, payload) {
+      payload = payload || {};
+      var name = displayFieldValue(currentClinicField(clinic, "display_name") || payload.clinic_name);
+      var city = displayFieldValue(currentClinicField(clinic, "city") || payload.clinic_city);
+      var country = displayFieldValue(currentClinicField(clinic, "country") || payload.clinic_country);
+      var status = currentClinicField(clinic, "status") || clinic.status;
+      var identity = clinic && clinic.identity_confirmed_at ? '<span class="pill">Datos confirmados por el centro</span>' : "";
+      var summary = currentClinicField(clinic, "summary");
+      var fieldKeys = [
+        ["Web", "website"],
+        ["Dirección", "address"],
+        ["Servicios", "services"],
+        ["Especialidades", "specialties"],
+        ["Unidades", "unidades"],
+        ["Especialistas publicados", "profesionales"],
+        ["Tecnología", "tech"],
+        ["Email", "email"],
+        ["Teléfono", "telefono"],
+        ["Instagram", "instagram"]
+      ];
+      var fields = fieldKeys.map(function (item) {
+        var value = currentClinicField(clinic, item[1]);
+        return normalizedFieldValue(value) ? reviewProfileFieldHtml(item[0], item[1], value) : "";
+      }).filter(Boolean);
+      if (!fields.length) {
+        fields.push('<p class="empty">No hay más campos públicos guardados para esta ficha.</p>');
+      }
+      return '<section class="review-profile-card current-profile-card">' +
+        '<div class="review-profile-head"><div><span>Ficha actual en Vitalarga</span><h3>' + html(name) + '</h3><p>' +
+        html([city, country].filter(function (item) { return item && item !== "—"; }).join(" · ") || "Sin ubicación visible") +
+        '</p></div><div class="review-profile-tags">' + clinicStatusPill(status) + identity + '</div></div>' +
+        '<div class="review-profile-summary"><span>Resumen público</span><p>' + reviewValueHtml("summary", summary) + '</p></div>' +
+        '<div class="review-profile-fields">' + fields.join("") + '</div>' +
+        '</section>';
+    }
+
+    function portalRequesterHtml(payload) {
+      payload = payload || {};
+      var rows = [
+        ["Solicitante", payload.requester_name],
+        ["Email", payload.requester_email],
+        ["Cargo o relación", payload.requester_role]
+      ].map(function (item) {
+        return reviewProfileFieldHtml(item[0], "text", item[1] || "—");
+      }).join("");
+      var message = text(payload.message).trim();
+      var risks = portalRiskItems(payload);
+      var riskHtml = risks.length
+        ? '<div class="review-portal-alerts"><span>Alertas automáticas</span><ul class="compact-list">' + risks.map(function (item) {
+            return '<li>' + html(item) + '</li>';
+          }).join("") + '</ul></div>'
+        : "";
+      return '<section class="review-profile-card portal-request-card">' +
+        '<div class="review-profile-head"><div><span>Solicitud del portal</span><h3>Quién pide acceso o revisión</h3><p>Revisa identidad y contexto antes de decidir.</p></div></div>' +
+        '<div class="review-profile-fields">' + rows + '</div>' +
+        '<div class="review-user-message"><span>Mensaje del formulario</span><p>' + html(message || "Sin mensaje adicional.") + '</p></div>' +
+        riskHtml +
+        '</section>';
+    }
+
+    function portalSourceHtml(payload) {
+      var urls = Array.isArray(payload.source_urls) ? payload.source_urls : [];
+      urls = urls.filter(function (url) { return text(url).trim(); });
+      if (!urls.length) return "";
+      return '<div class="review-user-message"><span>Fuentes aportadas</span><ul class="compact-list">' + urls.map(function (url) {
+        return '<li><a href="' + html(url) + '" target="_blank" rel="noopener">' + html(url) + '</a></li>';
+      }).join("") + '</ul></div>';
+    }
+
+    function portalChangeComparisonHtml(clinic, payload) {
+      payload = payload || {};
+      var fields = proposedFields(payload);
+      var keys = Object.keys(fields).filter(function (key) {
+        return proposalListValue(fields[key]);
+      });
+      var changes = keys.map(function (key) {
+        var currentKey = currentKeyForProposal(key);
+        return diffItemHtml(key, currentClinicField(clinic, currentKey), fields[key], "Ficha actual", "Propuesto");
+      }).join("");
+      if (!changes) {
+        changes = '<p class="empty">No hay campos estructurados; revisa el mensaje del formulario.</p>';
+      }
+      var message = text(payload.message).trim();
+      var messageHtml = '<div class="review-user-message"><span>Mensaje del formulario</span><p>' +
+        html(message || "Sin mensaje adicional.") + '</p></div>';
+      var risks = portalRiskItems(payload);
+      var riskHtml = risks.length
+        ? '<div class="review-portal-alerts"><span>Alertas automáticas</span><ul class="compact-list">' + risks.map(function (item) {
+            return '<li>' + html(item) + '</li>';
+          }).join("") + '</ul></div>'
+        : "";
+      return '<section class="review-profile-card portal-request-card">' +
+        '<div class="review-profile-head"><div><span>Cambios propuestos</span><h3>' + html(keys.length ? keys.length + (keys.length === 1 ? " campo impactado" : " campos impactados") : "Mensaje sin campos estructurados") +
+        '</h3><p>Compara la ficha actual con lo que pide la clínica antes de cargarlo en el editor.</p></div></div>' +
+        '<div class="review-change-list">' + changes + '</div>' +
+        messageHtml + portalSourceHtml(payload) + riskHtml +
+        '</section>';
+    }
+
+    function renderReviewProfilePanel(row, payload) {
+      var panel = el("reviewProfilePanel");
+      if (!panel) return false;
+      var showProfilePanel = isClinicClaimReview(row) || isPortalChangeReview(row);
+      if (!showProfilePanel) {
+        panel.innerHTML = "";
+        show(panel, false);
+        return false;
+      }
+      var clinic = reviewClinicForRow(row, payload);
+      var requestHtml = isClinicClaimReview(row)
+        ? portalRequesterHtml(payload)
+        : portalChangeComparisonHtml(clinic, payload);
+      panel.innerHTML = reviewCurrentProfileHtml(clinic, payload) + requestHtml;
+      show(panel, true);
+      return true;
+    }
+
     function resetProposalPreview() {
       show(el("clinicProposalPreview"), false);
       el("clinicProposalChanges").innerHTML = "";
@@ -6440,6 +6612,9 @@
         "Fuente revisada: " + date(payload.retrieved_at)
       ].concat(materialChangeItems(payload)) : candidateList(candidate, "services"));
       setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange || isClaim) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
+      var usesProfilePanel = renderReviewProfilePanel(activeReview, payload);
+      show(el("reviewCandidateServicesBlock"), !usesProfilePanel);
+      show(el("reviewCandidateProfessionalsBlock"), !usesProfilePanel);
       renderReviewContext(activeReview, payload, blocksDraft);
       renderReviewGuidance(activeReview, payload);
       renderReviewRules(payload);
@@ -6459,6 +6634,8 @@
       activeReview = null;
       show(el("relatedReviewsPanel"), false);
       el("relatedReviewsList").innerHTML = "";
+      show(el("reviewProfilePanel"), false);
+      el("reviewProfilePanel").innerHTML = "";
       show(el("reviewProposedLinksBlock"), false);
       el("reviewCandidateProposedLinks").textContent = "—";
       show(el("reviewNeedsInfoBtn"), false);
@@ -6712,7 +6889,7 @@
 
         var clinicRows = await client
           .from("clinics")
-          .select("id, slug, canonical_name, display_name, website, country, city, region, address, status, summary, current_data, profile_confidence, verification_status, updated_at")
+          .select("id, slug, canonical_name, display_name, website, country, city, region, address, status, summary, current_data, profile_confidence, verification_status, identity_confirmed_at, updated_at")
           .order("updated_at", { ascending: false })
           .limit(80);
 

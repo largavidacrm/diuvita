@@ -43,6 +43,13 @@
     node.className = "portal-message" + (tone ? " " + tone : "");
   }
 
+  function completeIntakeSubmission() {
+    show(el("claimForm"), false);
+    show(el("recommendForm"), false);
+    show(document.querySelector(".intake-panel .mode-tabs"), false);
+    setMessage("intakeMessage", "¡Muchas gracias! Revisaremos tu solicitud manualmente con la mayor brevedad posible.", "success");
+  }
+
   function asUuid(value) {
     value = text(value).trim();
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ? value : null;
@@ -189,7 +196,7 @@
     }
     form.reset();
     populateClaimClinics();
-    setMessage("intakeMessage", "Solicitud recibida. Queda pendiente de validación manual.", "success");
+    completeIntakeSubmission();
   }
 
   async function submitRecommendation(event) {
@@ -220,7 +227,7 @@
     }
     form.reset();
     el("recommendCountry").value = "España";
-    setMessage("intakeMessage", "Recomendación recibida. Vitalarga la revisará antes de crear una ficha.", "success");
+    completeIntakeSubmission();
   }
 
   async function login(event) {
