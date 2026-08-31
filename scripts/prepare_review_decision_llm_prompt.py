@@ -38,6 +38,7 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
             "key": item.get("key"),
             "label": item.get("label"),
             "google_maps_review": sanitize_for_prompt(item.get("google_maps_review") or {}),
+            "google_reviews_review": sanitize_for_prompt(item.get("google_reviews_review") or {}),
         }
         for item in packet.get("proposed_change") or []
         if isinstance(item, dict)
@@ -55,6 +56,7 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
     manual_context = packet.get("manual_review_context") if isinstance(packet.get("manual_review_context"), dict) else {}
     source_job = packet.get("source_job_request") if isinstance(packet.get("source_job_request"), dict) else {}
     source_context = packet.get("source_job_context") if isinstance(packet.get("source_job_context"), dict) else {}
+    source_origin = packet.get("source_origin_status") if isinstance(packet.get("source_origin_status"), dict) else {}
     return {
         "review_id": packet.get("review_id"),
         "packet_schema_version": packet.get("schema_version") or PACKET_SCHEMA_VERSION,
@@ -84,6 +86,7 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
             "allowed_output": source_context.get("allowed_output"),
             "write_policy": source_context.get("write_policy"),
         } if source_context else {},
+        "source_origin_status": sanitize_for_prompt(source_origin) if source_origin else {},
         "source_job_request": {
             "status": source_job.get("status"),
             "source_requirement": source_job.get("source_requirement"),

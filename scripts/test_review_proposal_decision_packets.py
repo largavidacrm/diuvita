@@ -156,6 +156,10 @@ def main():
         "Google reviews without Maps should ask for the main profile first",
     )
     check(reviews_context["safe_to_auto_publish"] is False, "Google reviews should stay human-gated")
+    reviews_origin = reviews_packet["source_origin_status"]
+    check(reviews_origin["status"] == "source_without_context", "legacy source-only cards should expose missing source context")
+    check(reviews_origin["source_host"] == "clinic.example", "legacy source context should keep only the host by default")
+    check("source_url" not in reviews_origin, "legacy source context should not expose full URL by default")
     reviews_with_maps_packet = decision_packet({
         "id": "reviews-2",
         "title": "Revisar valoraciones Google: Clinic",
@@ -193,6 +197,10 @@ def main():
     check(source_context["ui_route"] == "manual_review_banner_source_handoff", "source job context should keep UI route")
     check(source_context["allowed_output"] == "review_queue_proposal_only", "source job context should keep proposal-only output")
     check("source_url" not in source_context, "safe source job context should omit full source URL")
+    origin_status = safe_packet["source_origin_status"]
+    check(origin_status["status"] == "context_ready", "source origin should detect ready operator context")
+    check(origin_status["source_host"] == "imda.example", "source origin should keep the safe source host")
+    check(origin_status["llm_boundary"] == "respect_source_job_context_scope", "source origin should keep LLM scope")
     check(
         "Google Maps debe ser el perfil real de la clínica" in " ".join(safe_packet["warnings"]),
         "weak Maps warning missing",
@@ -225,6 +233,10 @@ def main():
     check(
         valued_packet["source_job_context"]["source_url"] == "https://imda.example/contacto",
         "explicit value mode should include source-job URL",
+    )
+    check(
+        valued_packet["source_origin_status"]["source_url"] == "https://imda.example/contacto",
+        "explicit value mode should include source origin URL",
     )
     check(
         "persona@example.com" in " ".join(valued_packet["warnings"]),

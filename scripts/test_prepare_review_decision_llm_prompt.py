@@ -72,6 +72,21 @@ def sample_quality_packet():
     })
 
 
+def sample_reviews_packet():
+    return decision_packet({
+        "id": "reviews-1",
+        "title": "Revisar valoraciones Google: Clinic",
+        "review_type": "clinic_profile_enrichment",
+        "payload": {
+            "source_url": "https://clinic.example/contacto",
+            "proposed_fields": {
+                "google_reviews_url": "https://www.google.com/maps/place/Clinic/reviews",
+            },
+        },
+        "clinic": {"display_name": "Clinic", "current_data": {}},
+    }, include_values=True)
+
+
 def main():
     full_packet = sample_packet(include_values=True)
     prompt = build_prompt(full_packet)
@@ -92,6 +107,9 @@ def main():
     check(source_context["ui_route"] == "manual_review_banner_source_handoff", "prompt digest should keep source UI route")
     check(source_context["target_scope"] == "primary_target_first", "prompt digest should keep source scope")
     check(source_context["primary_requested_fields"] == ["profesionales"], "prompt digest should keep primary requested source fields")
+    source_origin = prompt["packet_digest"]["source_origin_status"]
+    check(source_origin["status"] == "context_ready", "prompt digest should keep source origin status")
+    check(source_origin["source_host"] == "imda.example", "prompt digest should keep source origin host")
     check(prompt["messages"][0]["role"] == "system", "system message missing")
     check("No publicas" in prompt["messages"][0]["content"], "system safety instruction missing")
     check("Responde solo JSON" in prompt["messages"][0]["content"], "JSON-only instruction missing")
@@ -145,6 +163,19 @@ def main():
         "manual_review_targets" in quality_prompt["messages"][1]["content"],
         "safe prompt should include manual target metadata",
     )
+
+    reviews_prompt = build_prompt(sample_reviews_packet())
+    reviews_field = reviews_prompt["packet_digest"]["fields"][0]["google_reviews_review"]
+    check(
+        reviews_field["approval_dependency"]["satisfied"] is False,
+        "prompt digest should keep missing Google Reviews dependency",
+    )
+    check(
+        reviews_prompt["packet_digest"]["source_origin_status"]["status"] == "source_without_context",
+        "prompt digest should warn about source-only cards without operator context",
+    )
+    reviews_dumped = str(reviews_prompt)
+    check("https://clinic.example/contacto" not in reviews_dumped, "safe reviews prompt should redact source URLs")
 
     full_prompt = build_prompt(full_packet, allow_full_values=True)
     full_dumped = str(full_prompt)

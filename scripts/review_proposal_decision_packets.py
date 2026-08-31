@@ -493,6 +493,31 @@ def source_job_context(payload: dict[str, Any], include_values: bool = False) ->
     return {key: value for key, value in context.items() if has_visible_value(value)}
 
 
+def source_origin_status(payload: dict[str, Any], include_values: bool = False) -> dict[str, Any]:
+    context = source_job_context(payload, include_values=include_values)
+    sources = source_candidates(payload)
+    first_source = sources[0][1] if sources else ""
+    host = urlparse(first_source).netloc if first_source else ""
+    if context:
+        status = {
+            "status": "context_ready",
+            "llm_boundary": "respect_source_job_context_scope",
+        }
+    elif sources:
+        status = {
+            "status": "source_without_context",
+            "next_step": "review_manually_do_not_infer_original_intent_from_url",
+            "llm_boundary": "do_not_infer_operator_intent_from_source_host_only",
+        }
+    else:
+        return {}
+    if host:
+        status["source_host"] = host
+    if include_values and first_source:
+        status["source_url"] = first_source
+    return status
+
+
 def google_maps_urls_from_value(key: str, value: Any) -> list[str]:
     clean_key = canonical_field(key)
     if clean_key == "maps_url":
@@ -746,6 +771,9 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
     operator_source_context = source_job_context(payload, include_values=include_values)
     if operator_source_context:
         packet["source_job_context"] = operator_source_context
+    origin_status = source_origin_status(payload, include_values=include_values)
+    if origin_status:
+        packet["source_origin_status"] = origin_status
     packet_manual_targets = dedupe_targets(all_manual_targets)
     if packet_manual_targets:
         packet["manual_review_targets"] = packet_manual_targets

@@ -31,6 +31,10 @@ El contrato principal es:
   conserva `source_job_context`: origen aportado por Daniel, campo pedido,
   alcance, ruta del admin y política de salida. Sin `--include-values`, las URLs
   completas siguen ocultas.
+- Si una propuesta antigua solo trae una fuente pero no conserva contexto de
+  trabajo, el paquete expone `source_origin_status:
+  "source_without_context"` con el host y el límite LLM: no inferir intención
+  original solo por la URL.
 - La salida por defecto no incluye valores completos, emails, teléfonos crudos
   ni URLs completas de evidencia.
 - El script no resuelve tarjetas, no edita clínicas y no publica páginas.
@@ -75,6 +79,8 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
   `specialist_source_only`, sin proponer cambios de otros campos de la ficha.
 - contexto del trabajo de fuente que produjo la propuesta, para saber si nació
   de una URL aportada por Daniel y qué campo debía resolver primero.
+- estado de origen de la fuente, distinguiendo entre contexto recuperable y
+  fuente sin contexto para no convertir una URL útil en permiso implícito.
 - estado estructurado de Google Maps cuando la propuesta trae ese campo,
   recordando que incluso un enlace con pinta de perfil directo requiere
   comprobación humana antes de aprobar.

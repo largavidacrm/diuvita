@@ -1027,6 +1027,12 @@ Next 10 technical steps:
      now expose whether a confirmed clinic Google Maps profile exists, and the
      LLM suggestion guard rejects approve/modify advice for Google Reviews when
      that dependency is missing.
+197. Mark source-only review cards for future LLM help. Done locally in
+     `scripts/review_proposal_decision_packets.py` and
+     `scripts/prepare_review_decision_llm_prompt.py`: legacy enrichment cards
+     with a source URL but no operator/job context now carry
+     `source_origin_status: source_without_context`, so LLM assistance can use
+     the source as evidence without inferring why that URL was supplied.
 
 ## Daniel decision checkpoints
 
