@@ -538,6 +538,11 @@ Next 10 technical steps:
      whether Daniel should open an existing review, consolidate a clinic group,
      use the already selected source in the batch or look for a more specific
      official source.
+103. Repair specialist pending evidence in the clinic editor. Done locally in
+     `/admin/`: specialist suggestions now come from specialist review cards and
+     internal professional claims, while location evidence remains separate; the
+     panel refreshes after claims load and still requires manual save before
+     anything appears publicly.
 
 ## Daniel decision checkpoints
 

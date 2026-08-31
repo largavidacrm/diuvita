@@ -62,6 +62,7 @@ def main() -> None:
         "function pendingLocationsForClinic",
         "function renderPendingLocationsForClinic",
         "function addPendingLocationsToForm",
+        "addClaimLocationSuggestions(existingKeys, pendingByKey);",
         "function locationsHaveAddress",
         "Sedes detectadas en revisión interna",
         "Cargar sedes al formulario",

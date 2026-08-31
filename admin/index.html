@@ -3939,6 +3939,7 @@
       if (!count) {
         activeClinicBlockingClaimCount = 0;
         renderPendingLocationsForClinic();
+        renderPendingSpecialistsForClinic();
         el("clinicClaimsList").innerHTML = '<p class="empty">No hay evidencias internas para esta ficha todavía.</p>';
         updateFinalValidation();
         return;
@@ -3960,6 +3961,7 @@
       }).join("");
       activeClinicBlockingClaimCount = blockingCount;
       renderPendingLocationsForClinic();
+      renderPendingSpecialistsForClinic();
       updateFinalValidation();
     }
 
@@ -4002,6 +4004,22 @@
           rowsById[row.id] = row;
         });
         rows = Object.keys(rowsById).map(function (id) { return rowsById[id]; });
+      }
+      var specialistClaimsResult = await client
+        .from("field_claims")
+        .select(claimSelect)
+        .eq("clinic_id", clinicId)
+        .in("field_path", ["professionals.published", "team.public_professionals"])
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (requestId !== activeClinicClaimRequest) return;
+      if (!specialistClaimsResult.error) {
+        var specialistRowsById = {};
+        rows.concat(specialistClaimsResult.data || []).forEach(function (row) {
+          if (!row || !row.id || specialistRowsById[row.id]) return;
+          specialistRowsById[row.id] = row;
+        });
+        rows = Object.keys(specialistRowsById).map(function (id) { return specialistRowsById[id]; });
       }
       var sourceIds = rows.map(function (row) {
         return row.source_record_id;
@@ -4448,6 +4466,48 @@
       return linesToLocations(value);
     }
 
+    function claimPersonValues(value) {
+      if (Array.isArray(value)) {
+        return value.reduce(function (items, item) {
+          return items.concat(claimPersonValues(item));
+        }, []);
+      }
+      if (value && typeof value === "object") {
+        if (Array.isArray(value.profesionales)) return claimPersonValues(value.profesionales);
+        if (Array.isArray(value.professionals)) return claimPersonValues(value.professionals);
+        if (Array.isArray(value.value)) return claimPersonValues(value.value);
+        var name = value.name || value.full_name || value.display_name || value.nombre;
+        return name ? [name] : [];
+      }
+      if (typeof value === "string") return linesToArray(value);
+      return [];
+    }
+
+    function claimCanSuggestSpecialist(row) {
+      if (!row || ["professionals.published", "team.public_professionals"].indexOf(row.field_path) < 0) return false;
+      var status = text(row.verification_status).toLowerCase();
+      return ["rejected", "stale", "conflict"].indexOf(status) < 0;
+    }
+
+    function addClaimSpecialistSuggestions(publishedKeys, pendingByKey) {
+      (activeClinicClaims || []).forEach(function (row) {
+        if (!claimCanSuggestSpecialist(row)) return;
+        var source = activeClinicClaimSources[row.source_record_id || ""] || null;
+        var sourceUrl = claimSourceUrl(source);
+        claimPersonValues(row.value).forEach(function (person) {
+          var name = text(person).trim();
+          var key = normalizedPersonKey(name);
+          if (!key || publishedKeys[key] || pendingByKey[key]) return;
+          pendingByKey[key] = {
+            name: name,
+            reviewId: "",
+            reviewTitle: "Evidencia interna",
+            sources: sourceUrl ? [sourceUrl] : []
+          };
+        });
+      });
+    }
+
     function claimCanSuggestLocation(row) {
       if (!row || row.field_path !== "location.locations") return false;
       var status = text(row.verification_status).toLowerCase();
@@ -4565,7 +4625,7 @@
           };
         });
       });
-      addClaimLocationSuggestions(existingKeys, pendingByKey);
+      addClaimSpecialistSuggestions(publishedKeys, pendingByKey);
       return Object.keys(pendingByKey).map(function (key) { return pendingByKey[key]; });
     }
 
@@ -4662,6 +4722,7 @@
           };
         });
       });
+      addClaimLocationSuggestions(existingKeys, pendingByKey);
       return Object.keys(pendingByKey).map(function (key) { return pendingByKey[key]; });
     }
 

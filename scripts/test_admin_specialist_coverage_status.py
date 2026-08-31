@@ -33,6 +33,9 @@ def main() -> None:
         "clinicPendingSpecialistsPanel",
         "Detectados en revisión interna",
         "function normalizedPersonKey",
+        "function claimPersonValues",
+        "function claimCanSuggestSpecialist",
+        "function addClaimSpecialistSuggestions",
         "function pendingSpecialistsForClinic",
         "function renderPendingSpecialistsForClinic",
         "function addPendingSpecialistsToForm",
@@ -41,6 +44,8 @@ def main() -> None:
         "especialistas cargados. Revisa y guarda.",
         "renderUnsavedChanges();",
         "Están recogidos como propuesta",
+        "Evidencia interna",
+        "addClaimSpecialistSuggestions(publishedKeys, pendingByKey);",
         "clinicPendingSpecialistsPanel\").addEventListener",
         '.select("id, slug, display_name, city, status, current_data")',
         '.in("status", ["published", "preliminary"])',
@@ -66,6 +71,15 @@ def main() -> None:
         "nextTarget",
     ]:
         check(marker in index, f"missing admin specialist coverage marker: {marker}")
+
+    specialist_body = index[
+        index.index("function pendingSpecialistsForClinic"):
+        index.index("function renderPendingSpecialistsForClinic")
+    ]
+    check(
+        "addClaimLocationSuggestions" not in specialist_body,
+        "specialist pending loader should not call location suggestions",
+    )
 
     check(
         "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);"
