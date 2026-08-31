@@ -32,9 +32,12 @@ SOURCE_MARKERS = [
     ("admin manual review scoped source", "admin/index.html", "function reviewSourceJobTargets"),
     ("admin source job scope metadata", "admin/index.html", "target_scope: sourceJob.targetScope"),
     ("admin manual review field focus", "admin/index.html", "openReviewManualField(button.getAttribute(\"data-review-manual-field\"));"),
+    ("admin review next-card panel", "admin/index.html", 'id="reviewSelectionOpenBtn"'),
+    ("admin review next-card renderer", "admin/index.html", "function renderReviewQueueSelection"),
     ("admin manual review wording", "admin/index.html", "Revisión manual de fichas"),
     ("admin compact priority filter", "admin/index.html", "Prioridad: todas"),
     ("admin visual scale tokens", "admin/admin.css", "--text-ui"),
+    ("admin non-flat review columns", "admin/admin.css", "minmax(0, 1fr) minmax(260px, 320px)"),
     ("LLM manual review context", "scripts/review_proposal_decision_packets.py", "manual_review_context"),
     ("LLM manual source scope", "scripts/review_proposal_decision_packets.py", "primary_target_first"),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
@@ -50,8 +53,11 @@ DIST_MARKERS = [
     ("built admin manual review scoped source", "dist/admin/index.html", "function reviewSourceJobTargets"),
     ("built admin source job scope metadata", "dist/admin/index.html", "target_scope: sourceJob.targetScope"),
     ("built admin manual review field focus", "dist/admin/index.html", "openReviewManualField(button.getAttribute(\"data-review-manual-field\"));"),
+    ("built admin review next-card panel", "dist/admin/index.html", 'id="reviewSelectionOpenBtn"'),
+    ("built admin review next-card renderer", "dist/admin/index.html", "function renderReviewQueueSelection"),
     ("built admin compact priority filter", "dist/admin/index.html", "Prioridad: todas"),
     ("built admin visual scale tokens", "dist/admin/admin.css", "--text-ui"),
+    ("built admin non-flat review columns", "dist/admin/admin.css", "minmax(0, 1fr) minmax(260px, 320px)"),
     ("built Tiara profile remains", "dist/clinica/tiara-health/index.html", "Tiara Health"),
 ]
 
@@ -226,6 +232,39 @@ def state_label(value: bool | None) -> str:
     return "No comprobado"
 
 
+def daniel_reading(report: dict[str, Any]) -> list[str]:
+    git = report.get("git") or {}
+    production = report.get("production") or {}
+    uncommitted = git.get("uncommitted_changes") or []
+    lines: list[str] = []
+
+    if uncommitted:
+        lines.append(f"Hay {len(uncommitted)} cambio(s) sin commit: están solo en este worktree.")
+    elif report.get("local_ready"):
+        lines.append("Los cambios están preparados en local y la build generada contiene los marcadores esperados.")
+    else:
+        lines.append("El estado local necesita revisión antes de pensar en publicar.")
+
+    upstream = git.get("upstream")
+    ahead = git.get("ahead")
+    if not upstream:
+        lines.append("Este worktree no tiene upstream configurado: trátalo como local hasta que Daniel autorice push y despliegue.")
+    elif ahead:
+        lines.append(f"Hay {ahead} commit(s) locales pendientes de push: no pueden darse por online.")
+    else:
+        lines.append("Git no muestra commits locales pendientes frente al upstream actual.")
+
+    if not production.get("checked"):
+        lines.append("Producción no se ha comprobado en esta ejecución: no hay prueba de que estos cambios estén online.")
+    elif production.get("ok"):
+        lines.append("La web pública respondió a las comprobaciones, pero eso no sustituye la autorización de publicación.")
+    else:
+        lines.append("La web pública necesita atención: faltan marcadores o hubo error de comprobación.")
+
+    lines.append("Este informe no publica, no hace push y no toca datos.")
+    return lines
+
+
 def format_report(report: dict[str, Any]) -> str:
     git = report.get("git") or {}
     production = report.get("production") or {}
@@ -248,6 +287,8 @@ def format_report(report: dict[str, Any]) -> str:
         lines.append("- Upstream: no configurado en este worktree")
     uncommitted = git.get("uncommitted_changes") or []
     lines.append(f"- Cambios sin commit: {'sí (' + str(len(uncommitted)) + ')' if uncommitted else 'no'}")
+    lines.extend(["", "## Lectura para Daniel"])
+    lines.extend(f"- {line}" for line in daniel_reading(report))
     lines.extend(["", "## Comprobaciones locales"])
     for item in report.get("local_checks") or []:
         state = state_label(item.get("ok"))

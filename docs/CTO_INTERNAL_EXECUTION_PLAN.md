@@ -1000,6 +1000,11 @@ Next 10 technical steps:
      next useful card and its own **Revisar siguiente** button, while manual
      review field edits keep the validated target and focus it after the form
      layout is ready.
+192. Make local-vs-online status Daniel-readable. Done locally in
+     `scripts/release_readiness_report.py`: the read-only release report now
+     includes **Lectura para Daniel**, stating whether changes are prepared only
+     in the worktree, whether commits remain local and whether production was
+     actually checked, without push, deploy or Supabase writes.
 
 ## Daniel decision checkpoints
 

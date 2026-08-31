@@ -123,7 +123,9 @@ En **Estado del sistema**, mira especialmente:
 Cuando tengas duda de si una mejora técnica del panel ya está online o sigue
 solo en este worktree, Codex puede usar el informe interno de preparación para
 publicación. Ese informe no publica nada: solo separa cambios locales, commits
-pendientes y comprobaciones de la web pública.
+pendientes y comprobaciones de la web pública. La sección **Lectura para
+Daniel** es la respuesta corta: si dice que hay commits locales pendientes o que
+producción no está comprobada, trátalo como **no demostrado online**.
 
 En **Necesitan revisión**, la bandeja se mantiene deliberadamente simple:
 filtros, tabla y botón **Revisar**. El sistema puede usar señales internas para
