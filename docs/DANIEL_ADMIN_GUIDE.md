@@ -166,11 +166,11 @@ espera ese campo. **Perfil revisable** no significa aprobado: significa que el
 enlace tiene forma de ficha de Google Maps y aun así debes abrirlo y comprobar
 que es la clínica correcta.
 
-En las revisiones manuales de calidad, usa **Revisión manual** dentro del campo
-pendiente para abrir la ficha directamente en ese dato. Al guardar la ficha,
-esa revisión queda cerrada y el panel pasa a la siguiente propuesta pendiente.
-Al entrar en la ficha desde esa acción, arriba verás una banda de **Revisión
-manual** con el campo afectado y el motivo exacto de la tarjeta.
+En las revisiones manuales de calidad, al pulsar **Revisar** se abre la ficha
+directamente en el dato pendiente. Al guardar la ficha, esa revisión queda
+cerrada y el panel pasa a la siguiente propuesta pendiente. Al entrar en la
+ficha desde esa acción, arriba verás una banda de **Revisión manual** con el
+campo afectado y el motivo exacto de la tarjeta.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
@@ -197,14 +197,13 @@ pulsar **Cargar al formulario** para pasar esos nombres al campo de
 especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
 revises antes de guardar.
 
-Si una revisión manual dice que faltan datos pero la fuente está clara, pulsa
-**Revisión manual** dentro del campo pendiente. Ese botón abre la ficha
-directamente en el dato que falta, para que lo edites tú. Si conoces una URL
-oficial donde el agente debe mirar, pégala en **Dile al agente dónde mirar** y
-pulsa **Enviar URL al agente**. Por ejemplo, si faltan especialistas, pega la
-página oficial de equipo o especialistas. Eso crea trabajo interno para
-propuestas revisables, limitado a los campos pendientes de esa tarjeta; no
-guarda ni publica datos.
+Si una revisión manual dice que faltan datos pero la fuente está clara, abre la
+tarjeta: el panel te llevará directamente al dato que falta, para que lo edites
+tú. Si conoces una URL oficial donde el agente debe mirar, pégala en **Dile al
+agente dónde mirar** y pulsa **Enviar URL al agente**. Por ejemplo, si faltan
+especialistas, pega la página oficial de equipo o especialistas. Eso crea
+trabajo interno para propuestas revisables, limitado a los campos pendientes de
+esa tarjeta; no guarda ni publica datos.
 
 En el editor de clínica, **Modalidad de atención** describe si la clínica es
 presencial, online o mixta. No decide la publicación. La publicación se decide

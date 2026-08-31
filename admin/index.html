@@ -631,7 +631,7 @@
             <div class="review-filter-panel" id="reviewFilterChips" aria-label="Filtros rápidos de revisiones"></div>
           </details>
           <div class="table-wrap">
-            <table>
+            <table class="review-table">
               <thead>
                 <tr>
                   <th>Asunto</th>
@@ -5568,6 +5568,13 @@
       return reviewMissingFieldTargetsForText(reviewIssueSearchText(row));
     }
 
+    function reviewHasManualFieldRoute(row) {
+      return Boolean(row && row.review_type === "clinic_quality_audit" &&
+        !isBlockingClaimReview(row) &&
+        reviewCanEditClinicFields(row) &&
+        firstReviewMissingFieldTargetId(row));
+    }
+
     function firstReviewMissingFieldTargetId(row) {
       var target = reviewMissingFieldTargets(row)[0];
       return target ? target.inputId : "";
@@ -7949,6 +7956,7 @@
       var specialistReview = firstSpecialistTargetReview(reviewCache);
       var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
       var actionLead = reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget);
+      el("reviewWorkArea").classList.toggle("review-work-list-only", !activeReview);
       renderReviewFilterChips();
       renderReviewCasePanel();
       show(el("reviewActionStrip"), false);
@@ -8065,8 +8073,12 @@
       loadClinicClaims(activeClinic.id);
       loadClinicSources(activeClinic.id);
       show(el("clinicEditor"), true);
-      el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
-      el("clinicName").focus();
+      if (activeClinicReviewFocusTarget && activeClinicReviewFocusTarget.inputId) {
+        focusPublishField(activeClinicReviewFocusTarget.inputId);
+      } else {
+        el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
+        el("clinicName").focus();
+      }
     }
 
     function applyClinicProposal(payload) {
@@ -8151,6 +8163,10 @@
     function openReviewEditor(id) {
       activeReview = reviewCache.find(function (row) { return row.id === id; });
       if (!activeReview) return;
+      if (reviewHasManualFieldRoute(activeReview)) {
+        openClinicEditorForReview(activeReview, firstReviewMissingFieldTargetId(activeReview));
+        return;
+      }
 
       var payload = activeReview.payload || {};
       var duplicateProbability = Number(payload.duplicate_probability || 0);

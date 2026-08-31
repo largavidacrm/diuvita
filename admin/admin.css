@@ -21,6 +21,8 @@ body.admin-body {
   margin: 0;
   min-height: 100vh;
   font-family: "Archivo", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
   color: var(--ink);
   background: var(--bg);
 }
@@ -30,6 +32,7 @@ input,
 select,
 textarea {
   font: inherit;
+  line-height: 1.25;
 }
 
 button {
@@ -809,6 +812,18 @@ body.sidebar-collapsed .control-sidebar {
   align-items: start;
 }
 
+.work-grid.review-work-list-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.review-work-list-only .review-list-panel {
+  grid-column: 1 / -1;
+}
+
+.review-work-list-only .review-selection-panel {
+  display: none;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1211,11 +1226,13 @@ body.sidebar-collapsed .control-sidebar {
 
 .review-subject-cell strong {
   min-width: 0;
+  font-size: 0.94rem;
+  line-height: 1.18;
   overflow-wrap: anywhere;
 }
 
 .review-subject-cell small {
-  max-width: 34rem;
+  max-width: 28rem;
   color: var(--muted);
   line-height: 1.25;
 }
@@ -1226,12 +1243,52 @@ table {
   min-width: 680px;
 }
 
+.review-table {
+  min-width: 620px;
+  table-layout: fixed;
+  font-size: 0.9rem;
+}
+
+.review-table th:nth-child(1),
+.review-table td:nth-child(1) {
+  width: 34%;
+}
+
+.review-table th:nth-child(2),
+.review-table td:nth-child(2) {
+  width: 24%;
+}
+
+.review-table th:nth-child(3),
+.review-table td:nth-child(3) {
+  width: 18%;
+}
+
+.review-table th:nth-child(4),
+.review-table td:nth-child(4) {
+  width: 15%;
+}
+
+.review-table th:nth-child(5),
+.review-table td:nth-child(5) {
+  width: 9%;
+  text-align: right;
+}
+
 th,
 td {
   padding: 0.7rem 1rem;
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: top;
+}
+
+.review-table th,
+.review-table td {
+  padding: 0.58rem 0.7rem;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  vertical-align: middle;
 }
 
 th {
@@ -1251,6 +1308,16 @@ td small {
   color: var(--muted);
   font-size: 0.78rem;
   margin-top: 0.08rem;
+}
+
+.review-table .pill {
+  font-size: 0.76rem;
+}
+
+.review-table .link-btn {
+  min-height: 1.95rem;
+  padding: 0.26rem 0.52rem;
+  font-size: 0.82rem;
 }
 
 .empty {

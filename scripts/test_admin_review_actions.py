@@ -21,6 +21,7 @@ def main() -> None:
         'id="reviewPriorityFilter"',
         'id="reviewListPanel"',
         'id="reviewsBody"',
+        'class="review-table"',
         'data-review-id',
         'id="reviewClinicPanel"',
         'id="reviewClinicProfileMeta"',
@@ -229,6 +230,7 @@ def main() -> None:
         and "function reviewProposalFocusActionHtml" in index
         and "function reviewMissingFieldTargetsForText" in index
         and "function reviewMissingFieldTargets" in index
+        and "function reviewHasManualFieldRoute" in index
         and "function reviewManualFieldTarget" in index
         and "function openClinicEditorForReview" in index
         and "function openReviewManualField" in index
@@ -259,6 +261,12 @@ def main() -> None:
         and "openClinicEditorForReview(activeReview, targetId || firstReviewMissingFieldTargetId(activeReview))" in index
         and 'el("reviewProposalFocusList").addEventListener("click"' in index,
         "quality audit fields should offer direct manual review into the matching clinic field",
+    )
+    check(
+        "if (reviewHasManualFieldRoute(activeReview))" in index
+        and "openClinicEditorForReview(activeReview, firstReviewMissingFieldTargetId(activeReview));" in index
+        and "focusPublishField(activeClinicReviewFocusTarget.inputId);" in index,
+        "manual review cards should open the clinic editor directly at the pending field",
     )
     check(
         '"Completar en ficha"' not in index
@@ -325,6 +333,8 @@ def main() -> None:
     )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".review-decision" in css, "single decision container should be styled")
+    check(".review-table" in css, "review queue table should have compact dedicated styling")
+    check(".work-grid.review-work-list-only" in css, "review list should use full width when no proposal is open")
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")

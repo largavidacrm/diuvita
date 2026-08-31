@@ -858,6 +858,12 @@ Next 10 technical steps:
      filters, summaries, workgroups, dismissal notes and LLM packet labels now
      say **Revisión manual** instead of **Auditoría**, while the underlying
      technical `clinic_quality_audit` type remains unchanged.
+163. Make manual review open the exact clinic field. Done locally in `/admin/`:
+     quality-review cards with a known missing field now open the clinic editor
+     directly at that field, keep the manual-review banner visible, and leave
+     source-change/proposal cards on the single-decision approve/reject/modify
+     path. The review queue also uses a full-width compact table when no
+     proposal is open so dates, priorities and actions fit more consistently.
 
 ## Daniel decision checkpoints
 
