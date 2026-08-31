@@ -614,7 +614,7 @@
               <option value="clinic_profile_enrichment">Mejoras de ficha</option>
               <option value="blocking_claim_review">Claims bloqueantes</option>
               <option value="clinic_claim_request">Reclamaciones</option>
-              <option value="clinic_quality_audit">Auditorías</option>
+              <option value="clinic_quality_audit">Revisión manual</option>
               <option value="source_change_detected">Cambios de fuente</option>
               <option value="specialist_review">Especialistas</option>
             </select>
@@ -906,7 +906,7 @@
       ["clinic_profile_enrichment", "Mejoras"],
       ["blocking_claim_review", "Claims bloqueantes"],
       ["clinic_claim_request", "Reclamaciones"],
-      ["clinic_quality_audit", "Auditorías"],
+      ["clinic_quality_audit", "Revisión manual"],
       ["source_change_detected", "Fuentes"],
       ["specialist_review", "Especialistas"]
     ];
@@ -2394,7 +2394,7 @@
     function reviewTypeLabel(type) {
       var labels = {
         candidate_clinic: "Clínica nueva",
-        clinic_quality_audit: "Auditoría de calidad",
+        clinic_quality_audit: "Revisión manual",
         clinic_profile_enrichment: "Mejora de ficha",
         clinic_claim_request: "Reclamación de ficha",
         source_change_detected: "Cambio de fuente"
@@ -2999,7 +2999,7 @@
       if (counts.claimRequests) steps.push("reclamaciones");
       if (counts.sources) steps.push("fuentes cambiadas");
       if (counts.improvements) steps.push("mejoras de ficha");
-      if (counts.audits) steps.push("auditorías");
+      if (counts.audits) steps.push("revisión manual");
       if (counts.candidates) steps.push("candidatas");
       return steps.join(" -> ") || "prioridad normal";
     }
@@ -3027,7 +3027,7 @@
         ["Reclamaciones", counts.claimRequests, "warning"],
         ["Fuentes", counts.sources, ""],
         ["Mejoras", counts.improvements, ""],
-        ["Auditorías", counts.audits, ""],
+        ["Revisión manual", counts.audits, ""],
         ["Candidatas", counts.candidates, ""]
       ].forEach(function (item) {
         if (item[1]) chips.push(item);
@@ -3360,7 +3360,7 @@
         ["Mejora de ficha", countWhere(rows, function (row) { return row.review_type === "clinic_profile_enrichment"; })],
         ["Claim bloqueante", countWhere(rows, isBlockingClaimReview)],
         ["Reclamación de ficha", countWhere(rows, isClinicClaimRequestReview)],
-        ["Auditoría de calidad", countWhere(rows, function (row) { return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row); })],
+        ["Revisión manual", countWhere(rows, function (row) { return row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row); })],
         ["Cambio de fuente", countWhere(rows, function (row) { return row.review_type === "source_change_detected"; })]
       ].filter(function (item) { return Number(item[1] || 0) > 0; }).map(function (item) {
         return item[1] + " " + item[0].toLowerCase();
@@ -3763,7 +3763,7 @@
       if (reviewType === "candidate_clinic") return "Descartar candidata";
       if (reviewType === "source_change_detected") return "Marcar revisado";
       if (reviewType === "clinic_claim_request") return "Cerrar reclamación";
-      if (reviewType === "clinic_quality_audit") return "Cerrar auditoría";
+      if (reviewType === "clinic_quality_audit") return "Cerrar revisión manual";
       return "Descartar propuesta";
     }
 
@@ -3771,7 +3771,7 @@
       var notes = {
         candidate_clinic: "Candidata descartada tras revisión manual.",
         clinic_profile_enrichment: "Propuesta descartada tras revisión manual.",
-        clinic_quality_audit: "Auditoría cerrada sin cambios en la ficha.",
+        clinic_quality_audit: "Revisión manual cerrada sin cambios en la ficha.",
         clinic_claim_request: "Reclamación cerrada sin cambios en la ficha.",
         source_change_detected: "Cambio de fuente revisado; no requiere edición."
       };
@@ -3845,8 +3845,8 @@
       }
       if (row.review_type === "clinic_quality_audit") {
         return {
-          title: "Auditoría de ficha existente.",
-          detail: "Esta tarjeta señala campos pendientes. No cambia datos por sí sola; sirve para abrir la ficha, completar lo claro y guardar con validación final."
+          title: "Revisión manual de ficha existente.",
+          detail: "Esta tarjeta señala un campo pendiente. No cambia datos por sí sola; sirve para abrir la ficha, corregir lo claro y guardar con validación final."
         };
       }
       return {
@@ -3884,8 +3884,8 @@
         meta = "Solicitud de clínica: siempre requiere decisión humana.";
         notes = ["Verifica identidad y cierra la reclamación sin cambios automáticos."];
       } else if (reviewType === "clinic_quality_audit") {
-        meta = "La auditoría señala campos que conviene revisar.";
-        notes = ["Abre la ficha, completa lo claro y valida antes de guardar."];
+        meta = "La revisión manual señala un campo que conviene revisar.";
+        notes = ["Abre la ficha, corrige solo lo claro y valida antes de guardar."];
       }
       if (!notes.length) {
         show(panel, false);
@@ -4145,7 +4145,7 @@
         ["Reclamaciones", countWhere(bundle, isClinicClaimRequestReview)],
         ["Fuentes", countWhere(bundle, function (item) { return item.review_type === "source_change_detected"; })],
         ["Mejoras", countWhere(bundle, function (item) { return item.review_type === "clinic_profile_enrichment"; })],
-        ["Auditorías", countWhere(bundle, function (item) { return item.review_type === "clinic_quality_audit" && !isBlockingClaimReview(item); })]
+        ["Revisión manual", countWhere(bundle, function (item) { return item.review_type === "clinic_quality_audit" && !isBlockingClaimReview(item); })]
       ].filter(function (item) { return item[1] > 0; });
       var chips = counts.map(function (item) {
         return '<span class="pill' + (item[0] === "Bloqueantes" || item[0] === "Reclamaciones" ? " warning" : "") + '">' +
@@ -8208,7 +8208,7 @@
       if (reviewType === "clinic_profile_enrichment") applyClinicProposal(payload);
       if (!trimmed("clinicNote")) {
         setInput("clinicNote", reviewType === "clinic_quality_audit"
-          ? "Ficha actualizada desde auditoría de calidad."
+          ? "Ficha actualizada desde revisión manual."
           : "Ficha actualizada desde revisión manual.");
       }
       if (focusTarget) {

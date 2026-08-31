@@ -852,6 +852,12 @@ Next 10 technical steps:
      `scripts/release_readiness_report.py`: local-vs-production reporting now
      checks the admin manual-review banner, manual-review wording and LLM
      `manual_review_context`, plus the built admin marker after `build.py`.
+162. Normalize quality-audit labels to manual-review language. Done locally in
+     `/admin/`, `scripts/admin_digest.py`, `scripts/daniel_review_brief.py`,
+     `scripts/review_backlog_brief.py` and review decision packets: Daniel-facing
+     filters, summaries, workgroups, dismissal notes and LLM packet labels now
+     say **Revisión manual** instead of **Auditoría**, while the underlying
+     technical `clinic_quality_audit` type remains unchanged.
 
 ## Daniel decision checkpoints
 

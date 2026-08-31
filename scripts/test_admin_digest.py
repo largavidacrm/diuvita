@@ -308,6 +308,7 @@ def main():
         "candidate_reviews": 0,
     }
     check(format_review_type("clinic_claim_request") == "reclamaciones de ficha", "claim-request label missing")
+    check(format_review_type("clinic_quality_audit") == "revisiones manuales", "quality-audit label should be manual review")
     check(next_action_label(claim_request_digest) == "Revisar reclamación de ficha", "claim request should be next before candidates")
     check(
         first_clinic_workgroup(claim_request_digest)
@@ -337,7 +338,7 @@ def main():
     )
     check(next_source_action(digest) == "Revisar 2 claims bloqueantes de Kairos Longevity Clinic", "next source action missing")
     check(
-        first_clinic_workgroup(digest) == "Abrir Sensabell: 5 tarjetas (1 claim bloqueante / 3 mejoras / 1 auditoría)",
+        first_clinic_workgroup(digest) == "Abrir Sensabell: 5 tarjetas (1 claim bloqueante / 3 mejoras / 1 revisión manual)",
         "first clinic workgroup missing",
     )
     check(

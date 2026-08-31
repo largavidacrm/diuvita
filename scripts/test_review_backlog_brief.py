@@ -113,7 +113,7 @@ def main():
     check(review_type_label("clinic_claim_request") == "reclamación de ficha", "claim-request label missing")
     check(
         format_workgroup_card(report["clinic_workgroups"][0]["cards"][0])
-        == "  - Revisar Sensabell: auditoría · P85 · creada 2026-08-30 08:30",
+        == "  - Revisar Sensabell: revisión manual · P85 · creada 2026-08-30 08:30",
         "workgroup card formatting missing",
     )
     check(
@@ -164,7 +164,7 @@ def main():
         "first action should prefer blocking clinic workgroups",
     )
     check(
-        workgroup_order(report["clinic_workgroups"][0]) == "claims bloqueantes -> mejoras -> auditorías",
+        workgroup_order(report["clinic_workgroups"][0]) == "claims bloqueantes -> mejoras -> revisión manual",
         "clinic workgroup order missing",
     )
     check(
@@ -173,7 +173,7 @@ def main():
     )
     check(
         format_clinic_workgroup(report["clinic_workgroups"][0])
-        == "- Sensabell · Valencia · publicada · 5 tarjetas · 1 claim bloqueante / 3 mejoras / 1 auditoría · P85 · más antigua 2026-08-30 08:30 · orden: claims bloqueantes -> mejoras -> auditorías · primero quitar o corregir datos dudosos",
+        == "- Sensabell · Valencia · publicada · 5 tarjetas · 1 claim bloqueante / 3 mejoras / 1 revisión manual · P85 · más antigua 2026-08-30 08:30 · orden: claims bloqueantes -> mejoras -> revisión manual · primero quitar o corregir datos dudosos",
         "clinic workgroup formatting missing",
     )
     claim_group = {
@@ -229,7 +229,7 @@ def main():
     check("Sensabell · Valencia · publicada · 3 tarjetas · P80" in output, "duplicate group missing")
     check("Consulta: Sensabell" in clinic_output, "clinic query should be shown")
     check("## Tarjetas del caso" in clinic_output, "clinic-specific card section missing")
-    check("Revisar Sensabell: auditoría · P85" in clinic_output, "first case card missing")
+    check("Revisar Sensabell: revisión manual · P85" in clinic_output, "first case card missing")
     check("Ampliar ficha: Sensabell: mejora · P80" in clinic_output, "second case card missing")
     check("No hay grupos duplicados" not in output, "should not show empty duplicate state")
     check("no descarta ni resuelve tarjetas" in output, "safety note missing")

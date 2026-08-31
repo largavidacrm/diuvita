@@ -1218,7 +1218,7 @@ def format_review_type(review_type: str) -> str:
     labels = {
         "candidate_clinic": "clinicas candidatas",
         "clinic_profile_enrichment": "mejoras de ficha",
-        "clinic_quality_audit": "auditorias de calidad",
+        "clinic_quality_audit": "revisiones manuales",
         "blocking_claim_review": "claims bloqueantes",
         "clinic_claim_request": "reclamaciones de ficha",
         "source_change_detected": "cambios de fuente",
@@ -1344,7 +1344,7 @@ def first_clinic_workgroup(digest: dict[str, Any]) -> str:
         ("claim_request_reviews", "reclamación de ficha", "reclamaciones de ficha"),
         ("enrichment_reviews", "mejora", "mejoras"),
         ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
-        ("quality_reviews", "auditoría", "auditorías"),
+        ("quality_reviews", "revisión manual", "revisiones manuales"),
         ("candidate_reviews", "candidata", "candidatas"),
     ]:
         count = as_int(target.get(key))

@@ -228,7 +228,7 @@ review_type_summary as (
           when review_type = 'clinic_quality_audit'
             and payload ->> 'quality_context' = 'blocking_claims'
             then 'claims bloqueantes'
-          when review_type = 'clinic_quality_audit' then 'auditorias de calidad'
+          when review_type = 'clinic_quality_audit' then 'revisiones manuales'
           when review_type = 'clinic_profile_enrichment' then 'mejoras de ficha'
           when review_type = 'clinic_claim_request' then 'reclamaciones de ficha'
           when review_type = 'candidate_clinic' then 'clinicas candidatas'
@@ -398,7 +398,7 @@ def status_label(status: Any) -> str:
 
 def review_type_label(review_type: Any) -> str:
     labels = {
-        "clinic_quality_audit": "auditoría",
+        "clinic_quality_audit": "revisión manual",
         "clinic_profile_enrichment": "mejora",
         "clinic_claim_request": "reclamación de ficha",
         "candidate_clinic": "clínica candidata",
@@ -431,7 +431,7 @@ def workgroup_order(row: dict[str, Any]) -> str:
     if as_int(row.get("enrichment_reviews")):
         steps.append("mejoras")
     if as_int(row.get("quality_reviews")):
-        steps.append("auditorías")
+        steps.append("revisión manual")
     if as_int(row.get("candidate_reviews")):
         steps.append("candidatas")
     return " -> ".join(steps) if steps else "prioridad normal"
@@ -462,7 +462,7 @@ def format_clinic_workgroup(row: dict[str, Any]) -> str:
         ("claim_request_reviews", "reclamación", "reclamaciones"),
         ("enrichment_reviews", "mejora", "mejoras"),
         ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
-        ("quality_reviews", "auditoría", "auditorías"),
+        ("quality_reviews", "revisión manual", "revisiones manuales"),
         ("candidate_reviews", "candidata", "candidatas"),
     ]:
         count = as_int(row.get(key))

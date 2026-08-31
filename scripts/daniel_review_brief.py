@@ -38,7 +38,7 @@ TYPE_LABELS = {
     "candidate_clinic": ("clínica nueva", "clínicas nuevas"),
     "clinic_profile_enrichment": ("mejora de ficha", "mejoras de ficha"),
     "source_change_detected": ("cambio de fuente", "cambios de fuente"),
-    "clinic_quality_audit": ("auditoría de calidad", "auditorías de calidad"),
+    "clinic_quality_audit": ("revisión manual", "revisiones manuales"),
 }
 ACCOUNT_FIELD_KEYS = {"admin_email"}
 ACTION_TYPE_ORDER = {
@@ -288,7 +288,7 @@ def review_first_step_copy(item: dict[str, Any]) -> list[str]:
     if review_type == "clinic_quality_audit":
         return [
             "Primero abre revisión manual de fichas incompletas.",
-            review_case_line(item, "Auditorías"),
+            review_case_line(item, "Revisión manual"),
         ]
     return [
         "Primero abre la revisión prioritaria.",
@@ -429,7 +429,7 @@ def first_step(digest: dict[str, Any]) -> list[str]:
     if counts.get("clinic_quality_audit"):
         return [
             "Primero abre revisión manual de fichas incompletas.",
-            review_case_line(first_review(digest, "clinic_quality_audit"), "Auditorías"),
+            review_case_line(first_review(digest, "clinic_quality_audit"), "Revisión manual"),
         ]
     return ["No hay una acción urgente.", "Puedes revisar el panel o dejar que el sistema siga en modo sombra."]
 

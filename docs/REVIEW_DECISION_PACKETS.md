@@ -9,14 +9,14 @@ El contrato principal es:
 - Un paquete representa una tarjeta abierta y una sola decisión.
 - Las acciones posibles son siempre `approve`, `reject` o `modify`.
 - `modify` solo puede tocar los campos listados en `editable_fields`.
-- Las auditorías de calidad que solo traen un "campo pendiente" pueden incluir
-  `manual_review_targets`, que apuntan al campo exacto del admin que Daniel debe
-  revisar. Es una ruta de trabajo manual, no un permiso para que el LLM invente
-  valores.
-- Esas auditorías también pueden incluir `manual_review_context`: un resumen
-  seguro con el título legible, el campo del admin, el motivo pendiente y el
-  paso humano esperado. Sirve para asistencia futura con LLM sin darle permiso
-  para escribir datos ni resolver la tarjeta.
+- Las revisiones manuales de calidad que solo traen un "campo pendiente" pueden
+  incluir `manual_review_targets`, que apuntan al campo exacto del admin que
+  Daniel debe revisar. Es una ruta de trabajo manual, no un permiso para que el
+  LLM invente valores.
+- Esas revisiones manuales también pueden incluir `manual_review_context`: un
+  resumen seguro con el título legible, el campo del admin, el motivo pendiente
+  y el paso humano esperado. Sirve para asistencia futura con LLM sin darle
+  permiso para escribir datos ni resolver la tarjeta.
 - La salida por defecto no incluye valores completos, emails, teléfonos crudos
   ni URLs completas de evidencia.
 - El script no resuelve tarjetas, no edita clínicas y no publica páginas.
@@ -52,7 +52,8 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - motivo;
 - advertencias que Daniel debe mirar;
 - propuesta corregida si la acción sugerida es `modify`.
-- campo manual que abrir si la tarjeta es una auditoría sin valores propuestos.
+- campo manual que abrir si la tarjeta es una revisión manual sin valores
+  propuestos.
 - contexto manual de campo, motivo y siguiente paso cuando exista.
 
 El LLM no debe:

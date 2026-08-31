@@ -166,11 +166,11 @@ espera ese campo. **Perfil revisable** no significa aprobado: significa que el
 enlace tiene forma de ficha de Google Maps y aun así debes abrirlo y comprobar
 que es la clínica correcta.
 
-En las auditorías de calidad, usa **Revisión manual** dentro del campo pendiente
-para abrir la ficha directamente en ese dato. Al guardar la ficha, esa revisión
-queda cerrada y el panel pasa a la siguiente propuesta pendiente. Al entrar en
-la ficha desde esa acción, arriba verás una banda de **Revisión manual** con el
-campo afectado y el motivo exacto de la tarjeta.
+En las revisiones manuales de calidad, usa **Revisión manual** dentro del campo
+pendiente para abrir la ficha directamente en ese dato. Al guardar la ficha,
+esa revisión queda cerrada y el panel pasa a la siguiente propuesta pendiente.
+Al entrar en la ficha desde esa acción, arriba verás una banda de **Revisión
+manual** con el campo afectado y el motivo exacto de la tarjeta.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
@@ -197,7 +197,7 @@ pulsar **Cargar al formulario** para pasar esos nombres al campo de
 especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
 revises antes de guardar.
 
-Si una auditoría dice que faltan datos pero la fuente está clara, pulsa
+Si una revisión manual dice que faltan datos pero la fuente está clara, pulsa
 **Revisión manual** dentro del campo pendiente. Ese botón abre la ficha
 directamente en el dato que falta, para que lo edites tú. Si conoces una URL
 oficial donde el agente debe mirar, pégala en **Dile al agente dónde mirar** y
@@ -240,8 +240,8 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 5. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
 6. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
    confirma con **Guardar modificación**.
-   En auditorías sin datos concretos, el botón cambia a **Editar ficha** y te
-   lleva al campo que falta.
+   En revisiones manuales sin datos concretos, el botón cambia a **Editar
+   ficha** y te lleva al campo que falta.
 7. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
    pendiente. Si no queda ninguna, vuelve a la lista.
 
@@ -372,7 +372,7 @@ En **Crear trabajo**, puedes elegir **Auditar fichas**.
 
 Eso revisa las fichas visibles y crea tareas si falta algo importante, por ejemplo especialistas, servicios, especialidades, dirección, resumen o contacto.
 
-La auditoría no cambia la web. Solo crea tareas internas para revisar.
+La revisión manual no cambia la web. Solo crea tareas internas para revisar.
 
 ## Estados importantes
 

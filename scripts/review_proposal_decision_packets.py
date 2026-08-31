@@ -85,7 +85,7 @@ REVIEW_TYPE_LABELS = {
     "clinic_profile_enrichment": "Mejora de ficha",
     "blocking_claim_review": "Claim bloqueante",
     "clinic_claim_request": "Reclamación de ficha",
-    "clinic_quality_audit": "Auditoría de calidad",
+    "clinic_quality_audit": "Revisión manual",
     "source_change_detected": "Cambio de fuente",
     "specialist_review": "Especialistas",
 }
