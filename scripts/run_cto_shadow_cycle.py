@@ -459,7 +459,7 @@ def cycle_next_clicks(digest: dict[str, Any]) -> list[str]:
         return ["Abrir el panel y usar Abrir prioridad."]
     clicks: list[str] = []
     guard = review_backlog_guard_status(digest)
-    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+    if guard.startswith(("margen corto", "pausa preventiva", "freno activo")):
         clicks.append(f"No crear trabajos nuevos: {guard}.")
     priority_click = priority_review_click(digest)
     if priority_click:

@@ -100,7 +100,9 @@ En **Estado del sistema**, mira especialmente:
 - **Sedes explícitas**: cuenta cuántas sedes están guardadas como sedes separadas y cuántas clínicas son multisede.
 - **Sedes sin Maps**: avisa si alguna sede guardada no tiene enlace a ficha de clínica en Google Maps.
 - **Sedes sin valoraciones**: avisa si alguna sede guardada no tiene enlace directo a valoraciones de Google.
-- **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean más tarjetas internas y cuántas propuestas quedan antes de la pausa preventiva.
+- **Freno bandeja**: avisa si el sistema está cerca de pausar pasos que crean
+  más tarjetas internas y cuántas propuestas quedan antes de la pausa
+  preventiva. La pausa empieza antes del límite máximo para no llenar la cola.
 - **Reclamaciones de ficha**: solicitudes de una clínica para revisar una ficha; siempre requieren decisión humana.
 - **Grupo por clínica**: señala qué clínica concentra varias tarjetas abiertas para que puedas filtrarlas y abrirlas una por una.
 - **Duplicados mejoras**: avisa si hay varias tarjetas abiertas para mejorar la misma clínica.

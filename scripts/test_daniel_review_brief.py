@@ -247,7 +247,7 @@ def main():
     check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")
     check("Próximos clics" in output, "next-clicks section missing")
-    check("No crees trabajos nuevos hasta bajar la bandeja; ahora está cerca del freno: 48/50 abiertas." in output, "near-limit click guard missing")
+    check("No crees trabajos nuevos hasta bajar la bandeja; ahora está pausa preventiva: 48/50 abiertas; baja de 45." in output, "near-limit click guard missing")
     check("Pulsa Abrir prioridad: Revisar claims bloqueantes: Sensabell." in output, "priority review click missing")
     check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad. En total hay 17 especialistas propuestos en la bandeja." in output, "specialist click missing")
     check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "Google Maps click missing")
@@ -280,7 +280,7 @@ def main():
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
     check("Grupo por clínica: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
     check("Atascos de mejoras: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
-    check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
+    check("Freno de bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard status missing")
     check(len(next_clicks(digest)) == 4, "next clicks should stay short")
 
     audit_priority_digest = sample_digest()

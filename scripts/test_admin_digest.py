@@ -345,7 +345,12 @@ def main():
         "source coverage status missing",
     )
     check(first_backlog_bottleneck(digest) == "Ordenar Sensabell: 2 mejoras abiertas", "first backlog bottleneck missing")
-    check(review_backlog_guard_status(digest) == "cerca del freno: 48/50 abiertas", "review backlog guard missing")
+    check(review_backlog_guard_status(digest) == "pausa preventiva: 48/50 abiertas; baja de 45", "review backlog guard missing")
+    margin_digest = {"summary": {"reviews": {"open": 43}}}
+    check(
+        review_backlog_guard_status(margin_digest) == "margen corto: 43/50 abiertas; quedan 2 propuestas antes de la pausa preventiva",
+        "preventive backlog margin should be visible before the pause",
+    )
     check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending profile field missing")
     check(
         location_coverage_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sin Maps de clínica; 3 sin valoraciones; 0 sin dirección",
@@ -411,7 +416,7 @@ def main():
         "pending publication status should be explicit",
     )
     check("Publicacion web: con cambios pendientes de verse online" in pending_output, "pending publication line missing")
-    check("Freno bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard line missing")
+    check("Freno bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
     check("proposed_google_maps_check = google_maps_profile_url_sql(\"proposed.value\")" in source, "review digest should use direct-only Maps SQL")

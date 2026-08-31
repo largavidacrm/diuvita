@@ -26,6 +26,7 @@ from submit_discovery_candidates import (
 from submit_blocking_claim_reviews import NON_NOISY_BLOCKING_CLAIM_SQL
 
 SAFE_WRITE_REVIEW_BACKLOG_LIMIT = 50
+SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN = 5
 
 
 def as_int(value: Any) -> int:
@@ -1561,7 +1562,11 @@ def next_action_label(digest: dict[str, Any]) -> str:
     return "Sin accion urgente"
 
 
-def review_backlog_guard_status(digest: dict[str, Any], limit: int = SAFE_WRITE_REVIEW_BACKLOG_LIMIT) -> str:
+def review_backlog_guard_status(
+    digest: dict[str, Any],
+    limit: int = SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
+    pause_margin: int = SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN,
+) -> str:
     summary = digest.get("summary") or {}
     reviews = summary.get("reviews") or {}
     open_reviews = as_int(reviews.get("open"))
@@ -1569,10 +1574,14 @@ def review_backlog_guard_status(digest: dict[str, Any], limit: int = SAFE_WRITE_
         return "sin freno configurado"
     if open_reviews >= limit:
         return f"freno activo: {open_reviews}/{limit} revisiones abiertas"
-    remaining = limit - open_reviews
-    if remaining <= 5:
-        return f"cerca del freno: {open_reviews}/{limit} abiertas"
-    return f"normal: {open_reviews}/{limit} abiertas"
+    pause_at = max(0, limit - max(0, pause_margin))
+    remaining_to_pause = max(0, pause_at - open_reviews)
+    slot_label = "queda 1 propuesta" if remaining_to_pause == 1 else f"quedan {remaining_to_pause} propuestas"
+    if open_reviews >= pause_at:
+        return f"pausa preventiva: {open_reviews}/{limit} abiertas; baja de {pause_at}"
+    if remaining_to_pause <= 3:
+        return f"margen corto: {open_reviews}/{limit} abiertas; {slot_label} antes de la pausa preventiva"
+    return f"normal: {open_reviews}/{limit} abiertas; {slot_label} antes de la pausa preventiva"
 
 
 def first_backlog_bottleneck(digest: dict[str, Any]) -> str:

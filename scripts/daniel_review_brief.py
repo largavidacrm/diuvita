@@ -239,7 +239,7 @@ def backlog_bottleneck_signal(digest: dict[str, Any]) -> str:
     if not duplicate_clinics:
         return first_backlog_bottleneck(digest)
     guard = review_backlog_guard_status(digest)
-    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+    if guard.startswith(("margen corto", "pausa preventiva", "freno activo")):
         return first_backlog_bottleneck(digest)
     clinic_label = "clínica" if duplicate_clinics == 1 else "clínicas"
     return f"{duplicate_clinics} {clinic_label} con mejoras repetidas; se ordenan después de la prioridad actual"
@@ -363,7 +363,7 @@ def specialists_click(digest: dict[str, Any]) -> str:
 def next_clicks(digest: dict[str, Any]) -> list[str]:
     clicks: list[str] = []
     guard = review_backlog_guard_status(digest)
-    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+    if guard.startswith(("margen corto", "pausa preventiva", "freno activo")):
         clicks.append(f"No crees trabajos nuevos hasta bajar la bandeja; ahora está {guard}.")
     for candidate in (
         priority_review_click(digest),
