@@ -6283,7 +6283,7 @@
     function setReviewModifyMode(enabled) {
       activeReviewModifyMode = Boolean(enabled);
       show(el("reviewModifyPanel"), activeReviewModifyMode);
-      el("reviewModifyBtn").textContent = "Modificar";
+      el("reviewModifyBtn").textContent = activeReviewModifyMode ? "Guardar modificación" : "Modificar";
       el("reviewModifyBtn").title = activeReviewModifyMode
         ? "Guardar la versión modificada de esta propuesta."
         : "Corregir solo los campos incluidos en esta propuesta.";

@@ -50,6 +50,7 @@ def main() -> None:
         ">Aprobar</button>",
         ">Rechazar</button>",
         ">Modificar</button>",
+        'activeReviewModifyMode ? "Guardar modificación" : "Modificar"',
         "Clínica afectada",
         "Tipo de propuesta",
         "Datos actuales relevantes",

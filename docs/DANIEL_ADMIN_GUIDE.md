@@ -25,8 +25,9 @@ no toca Netlify y no expone el archivo `.env`.
 6. Si parece una clínica válida, pulsa **Aprobar**. En una clínica nueva, eso
    crea un borrador interno para editarlo con calma.
 7. Si no encaja con Vitalarga, pulsa **Rechazar**.
-8. Si el dato es útil pero necesita corrección, pulsa **Modificar** y cambia
-   solo los campos que aparecen en esa propuesta.
+8. Si el dato es útil pero necesita corrección, pulsa **Modificar**, cambia
+   solo los campos que aparecen en esa propuesta y confirma con **Guardar
+   modificación**.
 
 Aprobar una clínica nueva no publica la clínica. Solo crea una ficha interna.
 El botón de publicar aparece después, al editar esa ficha, dentro de
@@ -216,7 +217,7 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
    relevantes, el cambio propuesto, las fuentes y los avisos imprescindibles.
 4. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
 5. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
-   confirma con **Modificar**.
+   confirma con **Guardar modificación**.
 6. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
    pendiente. Si no queda ninguna, vuelve a la lista.
 
