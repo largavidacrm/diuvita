@@ -99,6 +99,10 @@ def main() -> None:
     check(".review-context" in css, "review context should be styled")
     check(".compact-list small" in css, "proposed link URLs should remain readable on mobile")
     check(".compact-list em" in css, "proposed link warnings should be styled")
+    check("quick-primary" in index and "quick-action" in index, "quick review actions should be classified")
+    check(".review-action-strip .quick-primary" in css, "primary quick action should be styled")
+    check("grid-template-columns: minmax(220px, 1.35fr) repeat(3, minmax(140px, 1fr))" in css, "quick actions should use a stable grid")
+    check("grid-template-columns: 1fr" in css, "quick actions should stack on mobile")
     print("OK admin review actions: dismiss keeps context")
 
 

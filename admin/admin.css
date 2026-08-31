@@ -867,8 +867,8 @@ button:disabled {
 }
 
 .review-action-strip {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.35fr) repeat(3, minmax(140px, 1fr));
   gap: 0.42rem;
   padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--line);
@@ -877,13 +877,25 @@ button:disabled {
 
 .review-action-strip .btn {
   min-height: 2rem;
-  max-width: min(100%, 240px);
+  width: 100%;
+  max-width: none;
   padding: 0.34rem 0.58rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.8rem;
   line-height: 1.1;
+  text-align: left;
+}
+
+.review-action-strip .quick-primary {
+  border-color: rgba(14, 79, 74, 0.24);
+  background: var(--wash);
+  color: var(--green-deep);
+}
+
+.review-action-strip .quick-action {
+  background: var(--panel-strong);
 }
 
 .panel-body {
@@ -1919,6 +1931,7 @@ td small {
   }
 
   .review-action-strip {
+    grid-template-columns: 1fr;
     padding: 0.55rem 0.7rem;
   }
 

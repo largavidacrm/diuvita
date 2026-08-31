@@ -457,6 +457,10 @@ Next 10 technical steps:
     `scripts/clinic_publication_readiness.py`: CTO runs can ask why a specific
     clinic cannot be made visible yet and get the missing required fields
     without editing Supabase or triggering Netlify.
+84. Tighten the review quick-action strip. Done locally in `/admin/`: the
+    priority action and secondary shortcuts are laid out in a stable grid and
+    collapse cleanly on mobile, reducing the scattered-button effect in the
+    control center.
 
 ## Daniel decision checkpoints
 
