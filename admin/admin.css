@@ -824,6 +824,10 @@ body.sidebar-collapsed .control-sidebar {
   align-items: start;
 }
 
+.work-grid > .panel {
+  min-width: 0;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1508,6 +1512,30 @@ td small {
   margin: 0;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.review-selection-panel {
+  position: sticky;
+  top: 5rem;
+}
+
+.review-selection-empty {
+  display: grid;
+  gap: 0.42rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(14, 79, 74, 0.18);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.review-selection-empty .pill {
+  justify-self: start;
+}
+
+.review-selection-empty h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.15;
 }
 
 .review-clinic-panel {
@@ -2934,7 +2962,6 @@ td small {
   }
 
   .metrics,
-  .work-grid,
   .detail-grid,
   .diff-cols,
   .review-proposal-item,
@@ -2980,6 +3007,16 @@ td small {
   .admin-main {
     width: min(94vw, 1180px);
     padding-top: 1rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .work-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .review-selection-panel {
+    position: static;
   }
 }
 

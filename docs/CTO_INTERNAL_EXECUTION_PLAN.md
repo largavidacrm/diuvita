@@ -891,6 +891,11 @@ Next 10 technical steps:
      `target_scope`, `ui_route`, `primary_requested_fields` and
      `primary_requested_field_labels`, so future workers can respect Daniel's
      exact manual-review field instead of broadening the source task.
+170. Keep review columns visible on desktop/tablet. Done locally in `/admin/`:
+     the review queue now keeps its two-column workspace until narrow mobile
+     widths and shows a compact right-side placeholder before a proposal is
+     selected, so the dashboard does not look like it has fallen back to a
+     full-width list.
 
 ## Daniel decision checkpoints
 

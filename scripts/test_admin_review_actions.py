@@ -358,6 +358,18 @@ def main() -> None:
     check(".review-decision" in css, "single decision container should be styled")
     check(".review-table" in css, "review queue table should have compact dedicated styling")
     check(".review-work-list-only" not in css and "review-work-list-only" not in index, "review queue should keep the two-column work area")
+    check(
+        "review-selection-empty" in index
+        and "Pulsa Revisar y verás aquí la ficha afectada y el cambio concreto para decidir." in index,
+        "review queue should keep a visible right-side selection panel",
+    )
+    tablet_chunk = css[css.index("@media (max-width: 860px)"):css.index("@media (max-width: 700px)")]
+    check(".work-grid" not in tablet_chunk, "review work area should not collapse before narrow mobile widths")
+    check(
+        "@media (max-width: 700px)" in css
+        and ".work-grid {\n    grid-template-columns: 1fr;" in css,
+        "review work area should stack only on narrow mobile screens",
+    )
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
