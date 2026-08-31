@@ -792,6 +792,12 @@ Next 10 technical steps:
      can attach an official URL as a queued `EXTRACT_CLINIC_PROFILE` job for
      later agent extraction. None of this publishes data or grants clinic
      access automatically.
+152. Add a worker for review-supplied source URLs. Done locally in
+     `scripts/process_extract_clinic_profile_jobs.py`: queued
+     `EXTRACT_CLINIC_PROFILE` jobs created from a review can now fetch the
+     supplied source, run the shadow extractor/verifier, filter findings to the
+     fields requested by that review, create a new enrichment card when useful
+     and mark the job completed. It never edits clinic data or publishes.
 
 ## Daniel decision checkpoints
 

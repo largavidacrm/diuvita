@@ -155,6 +155,17 @@ STEP_ITEM_KEYS = {
         "proposed_fields",
         "created_review",
     ),
+    "process_extract_clinic_profile_jobs": (
+        "job_id",
+        "clinic_slug",
+        "clinic_name",
+        "source_url",
+        "status",
+        "requested_fields",
+        "missing_fields",
+        "proposed_fields",
+        "created_review",
+    ),
     "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
     "check_public_site_freshness": ("slug", "name", "url", "fresh", "missing_markers", "error"),
     "clinic_public_visibility_report": ("slug", "clinic_name", "status", "updated_at"),
@@ -200,6 +211,7 @@ STEP_LABELS = {
     "monitor_source_changes": "vigilancia de cambios de fuentes",
     "process_source_change_reviews": "conversion de cambios en propuestas",
     "submit_source_shadow_reviews": "extraccion shadow desde fuentes guardadas",
+    "process_extract_clinic_profile_jobs": "extraccion desde fuentes indicadas en revision",
     "submit_blocking_claim_reviews": "claims bloqueantes",
     "measure_source_snapshot_retention": "retencion de evidencias",
     "measure_source_coverage": "cobertura de fuentes",
@@ -223,6 +235,7 @@ REVIEW_CARD_CREATING_STEPS = {
     "process_source_change_reviews",
     "discover_clinic_google_links",
     "submit_source_shadow_reviews",
+    "process_extract_clinic_profile_jobs",
     "submit_blocking_claim_reviews",
 }
 
@@ -881,6 +894,26 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             max(90, args.source_change_limit * args.fetch_timeout + 30),
         ),
     ])
+    if args.extract_profile_job:
+        extract_job_args = [
+            "process_extract_clinic_profile_jobs.py",
+            "--pick-next",
+            "--timeout",
+            str(args.fetch_timeout),
+            "--compact",
+            *apply_flag,
+        ]
+        if args.extract_profile_job_replace_existing:
+            extract_job_args.append("--replace-existing")
+        if args.extract_profile_job_allow_multiple_open_clinic_reviews:
+            extract_job_args.append("--allow-multiple-open-clinic-reviews")
+        steps.append(
+            (
+                "process_extract_clinic_profile_jobs",
+                extract_job_args,
+                max(90, args.fetch_timeout + 30),
+            )
+        )
     if args.source_shadow_limit:
         source_shadow_args = [
             "submit_source_shadow_reviews.py",
@@ -1108,6 +1141,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-shadow-limit", type=int, default=0, help="Optional saved-source shadow extraction batch.")
     parser.add_argument("--source-shadow-clinic-slug", help="Limit optional saved-source batch to one clinic.")
     parser.add_argument("--source-shadow-replace-existing", action="store_true", help="Refresh matching open review cards.")
+    parser.add_argument(
+        "--extract-profile-job",
+        action="store_true",
+        help="Optionally process one queued EXTRACT_CLINIC_PROFILE job created from a review source URL.",
+    )
+    parser.add_argument(
+        "--extract-profile-job-replace-existing",
+        action="store_true",
+        help="Refresh an existing enrichment card for the same review-supplied source URL.",
+    )
+    parser.add_argument(
+        "--extract-profile-job-allow-multiple-open-clinic-reviews",
+        action="store_true",
+        help="Allow the review-supplied source URL to create a card even if the clinic already has another enrichment card.",
+    )
     parser.add_argument("--digest-limit", type=int, default=8)
     parser.add_argument("--claim-limit", type=int, default=100)
     parser.add_argument("--blocking-claim-limit", type=int, default=20)

@@ -766,6 +766,9 @@ def main():
         source_shadow_limit=0,
         source_shadow_clinic_slug=None,
         source_shadow_replace_existing=False,
+        extract_profile_job=False,
+        extract_profile_job_replace_existing=False,
+        extract_profile_job_allow_multiple_open_clinic_reviews=False,
         digest_limit=5,
         claim_limit=6,
         blocking_claim_limit=9,
@@ -809,6 +812,7 @@ def main():
     check("discover_clinic_google_links" not in names, "Google-link discovery should be off by default")
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
+    check("process_extract_clinic_profile_jobs" not in names, "review-supplied source jobs should be off by default")
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
     check("check_production_health" not in names, "production health should be off by default")
     check("check_public_site_freshness" not in names, "public freshness should be off by default")
@@ -856,6 +860,9 @@ def main():
         source_shadow_limit=0,
         source_shadow_clinic_slug=None,
         source_shadow_replace_existing=False,
+        extract_profile_job=False,
+        extract_profile_job_replace_existing=False,
+        extract_profile_job_allow_multiple_open_clinic_reviews=False,
         digest_limit=5,
         claim_limit=6,
         blocking_claim_limit=9,
@@ -928,6 +935,9 @@ def main():
         source_shadow_limit=2,
         source_shadow_clinic_slug="sensabell",
         source_shadow_replace_existing=True,
+        extract_profile_job=True,
+        extract_profile_job_replace_existing=True,
+        extract_profile_job_allow_multiple_open_clinic_reviews=True,
         digest_limit=5,
         claim_limit=6,
         blocking_claim_limit=9,
@@ -966,6 +976,7 @@ def main():
         clinic_visibility_missing_limit=30,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
+    extract_job_step = [step for step in optional_steps if step[0] == "process_extract_clinic_profile_jobs"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
     team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
     google_reconciliation_step = [step for step in optional_steps if step[0] == "google_link_review_reconciliation"][0]
@@ -981,6 +992,12 @@ def main():
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")
+    check("--apply" in extract_job_step[1], "review-supplied source job should follow safe apply mode")
+    check("--pick-next" in extract_job_step[1], "review-supplied source job should pick one queued job")
+    check("--compact" in extract_job_step[1], "review-supplied source job should stay compact")
+    check("--replace-existing" in extract_job_step[1], "review-supplied source job replace flag should pass through")
+    check("--allow-multiple-open-clinic-reviews" in extract_job_step[1], "review-supplied source job multiple-review flag should pass through")
+    check(optional_steps.index(extract_job_step) < optional_steps.index(source_shadow_step), "review-supplied source jobs should run before saved-source batches")
     check("--json" in google_reconciliation_step[1], "Google reconciliation should be machine readable")
     check("Arvila" in google_reconciliation_step[1], "Google reconciliation clinic should pass through")
     check("4" in google_reconciliation_step[1], "Google reconciliation limit should pass through")

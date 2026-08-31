@@ -191,7 +191,8 @@ Si una auditoría dice que faltan datos pero la fuente está clara, pulsa
 **Editar ficha** para abrir la ficha en el campo pendiente. Si conoces una URL
 oficial donde el agente debe mirar, pégala en **Fuente para completar esta
 ficha** y pulsa **Crear trabajo con esta fuente**. Eso crea trabajo interno para
-propuestas revisables; no guarda ni publica datos.
+propuestas revisables, limitado a los campos pendientes de esa tarjeta; no
+guarda ni publica datos.
 
 En el editor de clínica, **Modalidad de atención** describe si la clínica es
 presencial, online o mixta. No decide la publicación. La publicación se decide

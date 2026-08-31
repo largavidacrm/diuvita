@@ -33,6 +33,7 @@ TEST_STEPS = [
     ("test: review submission", "scripts/test_submit_shadow_extraction_review.py"),
     ("test: manual profile enrichment submission", "scripts/test_submit_profile_enrichment_reviews.py"),
     ("test: source shadow reviews", "scripts/test_submit_source_shadow_reviews.py"),
+    ("test: extract profile jobs", "scripts/test_process_extract_clinic_profile_jobs.py"),
     ("test: source shadow claim capture", "scripts/test_capture_source_shadow_claims.py"),
     ("test: admin review filters", "scripts/test_admin_review_filters.py"),
     ("test: admin review case panel", "scripts/test_admin_review_case_panel.py"),
