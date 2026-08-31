@@ -656,6 +656,9 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .mini-logo:hover{text-decoration:none;background:#fff;border-color:#C7DBD5}
 .mini-logo:focus-visible{outline:3px solid rgba(14,79,74,.25);outline-offset:3px}
 .mini-logo img{max-width:126px;max-height:26px;object-fit:contain;display:block}
+.logo-fallback{display:none;color:var(--green-deep);font-size:.82rem;font-weight:800;line-height:1.1;overflow-wrap:anywhere}
+.logo-failed img{display:none}
+.logo-failed .logo-fallback{display:block}
 .results-section{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
 .wrap{max-width:1180px;margin:0 auto;padding:0 5vw 4rem}
 .resbar{position:sticky;top:66px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:.9rem;margin:.5rem 0 1rem;padding:.72rem .85rem;border:1px solid var(--line);border-radius:8px;background:rgba(247,244,238,.94);backdrop-filter:blur(12px)}
@@ -685,8 +688,10 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .logo-link:focus-visible{outline:3px solid rgba(14,79,74,.25);outline-offset:3px}
 .logobox{height:44px;width:fit-content;max-width:190px;display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:.35rem .65rem;align-self:flex-start}
 .logobox img{max-height:29px;max-width:160px;object-fit:contain;display:block}
+.logobox .logo-fallback{max-width:160px}
 .flogo{height:62px;max-width:255px;margin-bottom:1rem}
 .flogo img{max-height:43px;max-width:225px}
+.flogo .logo-fallback{max-width:225px;font-size:1rem}
 .hidden{display:none!important}
 .empty-state{padding:2rem;border:1px dashed var(--line-strong);border-radius:8px;background:rgba(247,244,238,.72);color:var(--muted);text-align:center}
 .ficha{max-width:1120px;margin:0 auto;padding:2.1rem 5vw 4rem}
@@ -849,7 +854,11 @@ def logo_img(c, ficha=False):
     if not fn:
         return ""
     cls = "logobox flogo" if ficha else "logobox"
-    return f'<span class="{cls}"><img src="/assets/logos/{sub}/{h(fn)}" alt="Logo de {h(c["name"])}" loading="lazy"></span>'
+    return (
+        f'<span class="{cls}"><img src="/assets/logos/{sub}/{h(fn)}" '
+        f'alt="Logo de {h(c["name"])}" loading="lazy" onerror="this.closest(\'.logobox\').classList.add(\'logo-failed\')">'
+        f'<span class="logo-fallback">{h(c["name"])}</span></span>'
+    )
 
 def card_logo(c):
     logo = logo_img(c)
@@ -892,7 +901,7 @@ spec_chips = "".join(f'<button class="chip" data-f="spec" data-v="{h(s)}">{h(s)}
 allcards = "".join(card(c) for c in clinics)
 featured_logo_clinics = [c for c in clinics if c.get("slug") in thumb_files][:12]
 featured_logos = "".join(
-    f'<a class="mini-logo" href="/clinica/{h(c["slug"])}/" aria-label="Ver ficha de {h(c["name"])}"><img src="/assets/logos/thumb/{h(thumb_files[c["slug"]])}" alt="{h(c["name"])}" loading="lazy"></a>'
+    f'<a class="mini-logo" href="/clinica/{h(c["slug"])}/" aria-label="Ver ficha de {h(c["name"])}"><img src="/assets/logos/thumb/{h(thumb_files[c["slug"]])}" alt="{h(c["name"])}" loading="lazy" onerror="this.closest(\'.mini-logo\').classList.add(\'logo-failed\')"><span class="logo-fallback">{h(c["name"])}</span></a>'
     for c in featured_logo_clinics
 )
 

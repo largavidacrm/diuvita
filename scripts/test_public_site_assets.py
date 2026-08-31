@@ -35,6 +35,10 @@ def main() -> None:
         "def _looks_like_logo_asset",
         "b\"<html\"",
         "_looks_like_logo_asset(os.path.join(dirpath, fn))",
+        ".logo-fallback",
+        ".logo-failed img{display:none}",
+        "this.closest(\\'.logobox\\').classList.add(\\'logo-failed\\')",
+        "this.closest(\\'.mini-logo\\').classList.add(\\'logo-failed\\')",
     ]:
         check(marker in source, f"missing public asset marker: {marker}")
 

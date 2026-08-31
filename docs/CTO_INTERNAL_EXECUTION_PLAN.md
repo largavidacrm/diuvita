@@ -902,6 +902,10 @@ Next 10 technical steps:
      proposal keeps `primary_requested_fields`, `primary_requested_field_labels`,
      `target_scope` and `ui_route`, so the future LLM workflow stays focused on
      the exact field Daniel wanted to inspect.
+172. Guard public logos against broken images. Done locally in `build.py`: logo
+     chips and clinic-card logos now include a text fallback that appears if an
+     approved image asset fails to load, preventing broken-image icons such as
+     the Tiara Health case Daniel spotted.
 
 ## Daniel decision checkpoints
 
