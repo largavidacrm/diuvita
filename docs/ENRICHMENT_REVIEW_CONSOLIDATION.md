@@ -29,7 +29,7 @@ python3 scripts/consolidate_profile_enrichment_reviews.py --json
 Enfocar una clinica:
 
 ```bash
-python3 scripts/consolidate_profile_enrichment_reviews.py --clinic Sensabell
+python3 scripts/consolidate_profile_enrichment_reviews.py --clinic "Nombre de la clinica"
 ```
 
 ## Que mira

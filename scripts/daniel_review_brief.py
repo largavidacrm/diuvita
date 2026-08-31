@@ -129,6 +129,30 @@ def review_backlog_status(digest: dict[str, Any]) -> str:
     return f"{duplicate_clinics} {clinic_label} con varias mejoras abiertas; {duplicate_reviews} tarjetas"
 
 
+def profile_queue_signal(digest: dict[str, Any]) -> str:
+    next_action = next_action_label(digest)
+    if next_action in {"Mejorar fichas existentes", "Completar fichas"}:
+        return next_profile_action(digest)
+    completeness = digest.get("profile_completeness") or {}
+    visible = as_int(completeness.get("visible_clinics"))
+    pending = as_int(completeness.get("with_pending_fields"))
+    if visible and pending:
+        return f"{pending}/{visible} fichas con campos pendientes; se revisan después de la prioridad actual"
+    return "sin ficha pendiente medida"
+
+
+def backlog_bottleneck_signal(digest: dict[str, Any]) -> str:
+    quality = digest.get("review_backlog_quality") or {}
+    duplicate_clinics = as_int(quality.get("duplicate_enrichment_clinics"))
+    if not duplicate_clinics:
+        return first_backlog_bottleneck(digest)
+    guard = review_backlog_guard_status(digest)
+    if guard.startswith("cerca del freno") or guard.startswith("freno activo"):
+        return first_backlog_bottleneck(digest)
+    clinic_label = "clínica" if duplicate_clinics == 1 else "clínicas"
+    return f"{duplicate_clinics} {clinic_label} con mejoras repetidas; se ordenan después de la prioridad actual"
+
+
 def review_professionals_note(item: dict[str, Any] | None) -> str:
     count = as_int((item or {}).get("professionals_count"))
     if not count:
@@ -320,7 +344,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Completitud de fichas: {profile_completeness_status(digest)}.",
         f"- Campo más pendiente: {top_pending_profile_field(digest)}.",
         f"- Google Maps pendientes: {google_link_review_status(digest)}.",
-        f"- Siguiente ficha: {next_profile_action(digest)}.",
+        f"- Fichas pendientes: {profile_queue_signal(digest)}.",
         f"- Especialistas publicados: {specialist_status(digest)}.",
         f"- Tarjetas con especialistas: {specialist_review_status(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
@@ -329,7 +353,7 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Bandeja: {review_backlog_status(digest)}.",
         f"- Grupo por clínica: {first_clinic_workgroup(digest)}.",
-        f"- Primer atasco: {first_backlog_bottleneck(digest)}.",
+        f"- Atascos de mejoras: {backlog_bottleneck_signal(digest)}.",
         f"- Freno de bandeja: {review_backlog_guard_status(digest)}.",
         f"- Fallos técnicos abiertos: {failed_jobs}.",
     ])

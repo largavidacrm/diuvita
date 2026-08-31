@@ -608,7 +608,7 @@ Next 10 technical steps:
 118. Add clinic-focused review backlog reports. Done locally in
      `scripts/review_backlog_brief.py`: the read-only backlog brief now accepts
      `--clinic` and, when focused, shows the concrete cards in that clinic case
-     so Daniel can work Sensabell-style groups together.
+     so Daniel can work related clinic-case groups together.
 119. Update Daniel's admin guide for the new review workflow. Done locally in
      `docs/DANIEL_ADMIN_GUIDE.md`: the guide now explains the case-recommended
      review panel, proposal-only specialist rows, the "Pendientes de web
@@ -675,6 +675,11 @@ Next 10 technical steps:
      `scripts/serve_local_dashboard.py`: the local review URL can be served from
      `dist/` only, defaults to `127.0.0.1:8765`, blocks network-exposed hosts
      and avoids serving the worktree root or `.env`.
+131. Reduce clinic-name bias in Daniel's review brief. Done locally in
+     `scripts/daniel_review_brief.py`: when a higher-priority item such as a
+     clinic claim request is open, secondary profile and duplicate-backlog
+     signals stay aggregate instead of repeatedly naming a lower-priority
+     clinic.
 
 ## Daniel decision checkpoints
 

@@ -204,6 +204,11 @@ def main():
         "No confirma identidad, no da acceso y no cambia datos por sí sola." in claim_output,
         "claim-request safety wording missing",
     )
+    check(
+        "Atascos de mejoras: 1 clínica con mejoras repetidas; se ordenan después de la prioridad actual" in claim_output,
+        "claim-request brief should keep duplicate backlog secondary",
+    )
+    check("Primer atasco:" not in claim_output, "claim-request brief should avoid old bottleneck wording")
     check(first_step(digest)[0] == "Primero baja un grupo repetido.", "near-limit clinic groups should be first")
     check("# Vitalarga: brief de revisión" in output, "title missing")
     check("Qué mirar primero" in output, "first action section missing")
@@ -225,7 +230,10 @@ def main():
     check("Completitud de fichas: 0/19 fichas sin campos pendientes medidos; 19 con pendientes" in output, "profile completeness missing")
     check("Campo más pendiente: Google Maps · 19 fichas" in output, "top pending profile field missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps review target missing")
-    check("Siguiente ficha: Revisar Kairos Longevity Clinic" in output, "next profile action missing")
+    check(
+        "Fichas pendientes: 19/19 fichas con campos pendientes; se revisan después de la prioridad actual" in output,
+        "secondary profile queue should not name a non-primary clinic",
+    )
     check("Especialistas publicados: 2/19 fichas con especialistas; 17 pendientes" in output, "specialist coverage missing")
     check("Tarjetas con especialistas: 2 tarjetas; 17 especialistas propuestos" in output, "specialist review status missing")
     check("Siguiente especialistas: Revisar Age Reversal: ya tiene 2 revisiones abiertas" in output, "next specialist action missing")
@@ -234,7 +242,7 @@ def main():
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in output, "next source missing")
     check("Bandeja: 1 clínica con varias mejoras abiertas; 2 tarjetas" in output, "review backlog quality missing")
     check("Grupo por clínica: Trabajar Sensabell: 5 tarjetas" in output, "clinic workgroup missing")
-    check("Primer atasco: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
+    check("Atascos de mejoras: Ordenar Sensabell: 2 mejoras abiertas" in output, "first backlog bottleneck missing")
     check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "backlog guard status missing")
     check(len(next_clicks(digest)) == 4, "next clicks should stay short")
 

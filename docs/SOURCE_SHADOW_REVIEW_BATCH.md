@@ -37,13 +37,13 @@ python3 scripts/submit_source_shadow_reviews.py --apply
 Focus one clinic:
 
 ```bash
-python3 scripts/submit_source_shadow_reviews.py --clinic-slug sensabell
+python3 scripts/submit_source_shadow_reviews.py --clinic-slug nombre-clinica
 ```
 
 Refresh an existing open card for the same source:
 
 ```bash
-python3 scripts/submit_source_shadow_reviews.py --clinic-slug sensabell --replace-existing --apply
+python3 scripts/submit_source_shadow_reviews.py --clinic-slug nombre-clinica --replace-existing --apply
 ```
 
 Allow multiple open cards for the same clinic only when deliberately comparing
