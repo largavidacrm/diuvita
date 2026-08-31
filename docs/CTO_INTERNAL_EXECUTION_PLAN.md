@@ -944,6 +944,12 @@ Next 10 technical steps:
      `scripts/admin_digest.py`: Google Maps review counts now include weak or
      malformed proposed Maps URLs, while the save/publication guards still
      accept only real clinic Google Business/Profile links after human review.
+181. Keep manual reviews sequential without losing columns. Done locally in
+     `/admin/`: clicking **Revisar** on a manual review now opens the normal
+     clinic-plus-decision workspace instead of jumping straight to the full
+     clinic editor, shows only the next pending field, and keeps source handoff
+     scoped to that visible field for future LLM assistance. The review table
+     also clamps long titles to keep row heights consistent.
 
 ## Daniel decision checkpoints
 

@@ -172,17 +172,18 @@ Google Maps, pero sigue siendo obligatorio abrirlo y confirmar que corresponde
 a esa clínica. **No guardar tal cual** significa que parece búsqueda, ruta,
 dirección suelta o enlace insuficiente.
 
-En las revisiones manuales de calidad, al pulsar **Revisar** se abre la ficha
-directamente en el dato pendiente. Al guardar la ficha, esa revisión queda
-cerrada solo para ese campo. Si la misma tarjeta tenía más faltantes, el panel
-vuelve a abrir el siguiente campo pendiente; no los da por resueltos en bloque.
-Al entrar en la ficha desde esa acción, arriba verás una banda de **Revisión
-manual** con el campo afectado y el motivo exacto de la tarjeta. Si sabes que el
-dato está en una página oficial de la clínica, puedes pegar esa URL en **Pasar
-URL al agente**; el agente/LLM la usará para el campo que estás revisando, o
-para los campos pendientes de esa tarjeta si no hay un campo único claro.
-Siempre crea propuestas revisables, sin publicar ni guardar datos
-automáticamente.
+En las revisiones manuales de calidad, al pulsar **Revisar** se abre primero la
+vista de decisión en columnas: ficha de la clínica a la izquierda y un solo
+campo pendiente a la derecha. Pulsa **Revisión manual** para abrir directamente
+ese campo en el editor de la ficha. Al guardar, esa revisión queda cerrada solo
+para ese campo. Si la misma tarjeta tenía más faltantes, el panel vuelve a abrir
+el siguiente campo pendiente; no los da por resueltos en bloque.
+
+Al entrar en la ficha desde **Revisión manual**, arriba verás una banda con el
+campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en
+una página oficial de la clínica, puedes pegar esa URL en **Pasar URL al
+agente**; el agente/LLM la usará para el campo que estás revisando. Siempre crea
+propuestas revisables, sin publicar ni guardar datos automáticamente.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
@@ -251,8 +252,7 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 5. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
 6. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
    confirma con **Guardar modificación**.
-   En revisiones manuales sin datos concretos, el botón cambia a **Editar
-   ficha** y te lleva al campo que falta.
+   En revisiones manuales, **Revisión manual** te lleva al campo que falta.
 7. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
    pendiente. Si no queda ninguna, vuelve a la lista.
 

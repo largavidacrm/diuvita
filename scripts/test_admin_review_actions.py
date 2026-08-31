@@ -85,6 +85,7 @@ def main() -> None:
         "Ficha de la clínica",
         "Datos visibles en la ficha",
         "Contacto interno",
+        "Campo a revisar ahora",
         "Campo a corregir: ",
         "Dato pendiente: ",
         "Guarda la ficha para cerrar esta revisión y pasar a la siguiente.",
@@ -237,6 +238,7 @@ def main() -> None:
         and "function reviewMissingFieldTargets" in index
         and "function reviewHasManualFieldRoute" in index
         and "function reviewManualFieldTarget" in index
+        and "function reviewActiveManualTarget" in index
         and "function openClinicEditorForReview" in index
         and "function openReviewManualField" in index
         and "function reviewSourceJobTargets" in index
@@ -273,10 +275,10 @@ def main() -> None:
         "quality audit fields should offer direct manual review into the matching clinic field",
     )
     check(
-        "if (reviewHasManualFieldRoute(activeReview))" in index
-        and "openClinicEditorForReview(activeReview, firstReviewMissingFieldTargetId(activeReview));" in index
+        "if (reviewHasManualFieldRoute(activeReview))" not in index
+        and "visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1)" in index
         and "focusPublishField(activeClinicReviewFocusTarget.inputId);" in index,
-        "manual review cards should open the clinic editor directly at the pending field",
+        "manual review cards should first open the two-column decision view and expose one field at a time",
     )
     check(
         '"Completar en ficha"' not in index
@@ -308,6 +310,8 @@ def main() -> None:
     )
     check(
         "return focusedTargets.length ? focusedTargets : fallbackTargets;" in index
+        and "reviewSourceJobContext(row, reviewActiveManualTarget(row))" in index
+        and 'createReviewSourceJobFor(activeReview, "reviewSourceJobUrl", "reviewSourceJobBtn", reviewActiveManualTarget(activeReview))' in index
         and 'createReviewSourceJobFor(activeClinicReview, "clinicManualReviewSourceUrl", "clinicManualReviewSourceBtn", activeClinicReviewFocusTarget)' in index
         and "var targets = sourceJob.targets;" in index,
         "manual-review source jobs should target the focused field before falling back to all missing fields",
@@ -383,6 +387,7 @@ def main() -> None:
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".review-decision" in css, "single decision container should be styled")
     check(".review-table" in css, "review queue table should have compact dedicated styling")
+    check("-webkit-line-clamp: 2" in css and "font-size: var(--text-ui)" in css, "review queue table should keep long rows visually compact")
     check(".review-work-list-only" not in css and "review-work-list-only" not in index, "review queue should keep the two-column work area")
     check(
         "review-selection-empty" in index

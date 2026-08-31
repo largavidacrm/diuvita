@@ -5811,6 +5811,12 @@
       };
     }
 
+    function reviewActiveManualTarget(row) {
+      if (!row || row.review_type !== "clinic_quality_audit" || isBlockingClaimReview(row)) return null;
+      var item = reviewProposalFocusItems(row)[0];
+      return reviewManualFieldTarget(row, item) || reviewManualTargetForInput(row, firstReviewMissingFieldTargetId(row));
+    }
+
     function reviewSourceJobExampleForTargets(targets) {
       var keys = (targets || []).map(function (item) { return item.key; });
       if (keys.indexOf("profesionales") >= 0) {
@@ -6842,7 +6848,9 @@
         });
       }
       if (!items.length && row.review_type === "clinic_quality_audit") {
-        issueLabels(payload.issues).forEach(function (item, index) {
+        var auditIssues = issueLabels(payload.issues);
+        var visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1);
+        visibleAuditIssues.forEach(function (item, index) {
           pushProposalFocusItem(items, seen, row, "quality_issue_" + index, item, "Campo pendiente", "Revisión manual");
         });
       }
@@ -6890,7 +6898,7 @@
       if (row.review_type === "candidate_clinic") return "Datos de candidata";
       if (row.review_type === "clinic_profile_enrichment") return "Información nueva a valorar";
       if (row.review_type === "source_change_detected") return "Cambios detectados en fuente";
-      if (row.review_type === "clinic_quality_audit") return "Campos que conviene revisar";
+      if (row.review_type === "clinic_quality_audit") return "Campo a revisar ahora";
       if (row.review_type === "clinic_claim_request") return "Solicitud recibida";
       return "Información propuesta";
     }
@@ -6961,8 +6969,10 @@
       }
       var items = reviewProposalFocusItems(row);
       el("reviewProposalFocusTitle").textContent = reviewProposalFocusTitle(row);
-      el("reviewProposalFocusMeta").textContent = "Decide solo sobre este cambio. No se publican datos automáticamente.";
-      el("reviewProposalFocusCount").textContent = items.length + (items.length === 1 ? " dato" : " datos");
+      el("reviewProposalFocusMeta").textContent = row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row)
+        ? "Revisa solo este campo. No se publican datos automáticamente."
+        : "Decide solo sobre este cambio. No se publican datos automáticamente.";
+      el("reviewProposalFocusCount").textContent = items.length + (row.review_type === "clinic_quality_audit" ? (items.length === 1 ? " campo" : " campos") : (items.length === 1 ? " dato" : " datos"));
       list.innerHTML = items.length
         ? items.map(function (item) {
           var hint = reviewProposalFocusHint(item);
@@ -7115,7 +7125,7 @@
     function renderReviewSourceJobPanel(row) {
       var panel = el("reviewSourceJobPanel");
       if (!panel) return;
-      var sourceJob = reviewSourceJobContext(row);
+      var sourceJob = reviewSourceJobContext(row, reviewActiveManualTarget(row));
       if (!sourceJob) {
         show(panel, false);
         setInput("reviewSourceJobUrl", "");
@@ -8362,6 +8372,7 @@
     }
 
     function closeClinicEditor() {
+      var wasReviewEdit = Boolean(activeClinicReview);
       activeClinicVersionRequest++;
       activeClinicLockRequest++;
       activeClinicClaimRequest++;
@@ -8378,15 +8389,22 @@
       activeClinicSourceCount = 0;
       setLockInputsDisabled(false);
       show(el("clinicEditor"), false);
+      if (wasReviewEdit) {
+        activeControlSection = "reviewWorkArea";
+        setControlNavActive("reviewWorkArea");
+        setControlSectionVisible("reviewWorkArea");
+        show(el("jobCreatePanel"), true);
+        show(el("reviewListPanel"), true);
+        show(el("reviewSelectionPanel"), true);
+        show(el("reviewClinicPanel"), false);
+        show(el("reviewEditor"), false);
+        renderReviews();
+      }
     }
 
     function openReviewEditor(id) {
       activeReview = reviewCache.find(function (row) { return row.id === id; });
       if (!activeReview) return;
-      if (reviewHasManualFieldRoute(activeReview)) {
-        openClinicEditorForReview(activeReview, firstReviewMissingFieldTargetId(activeReview));
-        return;
-      }
 
       var payload = activeReview.payload || {};
       var duplicateProbability = Number(payload.duplicate_probability || 0);
@@ -8441,6 +8459,14 @@
       activeClinicReview = row;
       activeClinicReviewIds = [row.id];
       openClinicEditor(row.clinic_id);
+      activeControlSection = "reviewWorkArea";
+      setControlNavActive("reviewWorkArea");
+      setControlSectionVisible("reviewWorkArea");
+      show(el("jobCreatePanel"), false);
+      show(el("reviewListPanel"), false);
+      show(el("reviewClinicPanel"), false);
+      show(el("reviewSelectionPanel"), false);
+      show(el("reviewEditor"), false);
       if (reviewType === "clinic_profile_enrichment") applyClinicProposal(payload);
       if (!trimmed("clinicNote")) {
         setInput("clinicNote", reviewType === "clinic_quality_audit"
@@ -8987,7 +9013,7 @@
     }
 
     async function createReviewSourceJob() {
-      await createReviewSourceJobFor(activeReview, "reviewSourceJobUrl", "reviewSourceJobBtn");
+      await createReviewSourceJobFor(activeReview, "reviewSourceJobUrl", "reviewSourceJobBtn", reviewActiveManualTarget(activeReview));
     }
 
     async function createClinicManualReviewSourceJob() {

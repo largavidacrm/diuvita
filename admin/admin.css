@@ -1230,15 +1230,24 @@ body.sidebar-collapsed .control-sidebar {
 }
 
 .review-subject-cell strong {
+  display: -webkit-box;
   min-width: 0;
-  font-size: 0.94rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: var(--text-ui);
   line-height: 1.18;
   overflow-wrap: anywhere;
 }
 
 .review-subject-cell small {
+  display: -webkit-box;
   max-width: 28rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   color: var(--muted);
+  font-size: var(--text-small);
   line-height: 1.25;
 }
 
@@ -1251,7 +1260,7 @@ table {
 .review-table {
   min-width: 620px;
   table-layout: fixed;
-  font-size: 0.9rem;
+  font-size: var(--text-ui);
 }
 
 .review-table th:nth-child(1),
@@ -1290,8 +1299,8 @@ td {
 
 .review-table th,
 .review-table td {
-  padding: 0.58rem 0.7rem;
-  font-size: 0.9rem;
+  padding: 0.54rem 0.66rem;
+  font-size: var(--text-ui);
   line-height: 1.25;
   vertical-align: middle;
 }
@@ -1323,6 +1332,7 @@ td small {
   min-height: 1.95rem;
   padding: 0.26rem 0.52rem;
   font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .empty {
