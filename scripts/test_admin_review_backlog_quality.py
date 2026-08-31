@@ -15,9 +15,6 @@ def main() -> None:
     index = (ROOT / "admin" / "index.html").read_text(encoding="utf-8")
 
     for marker in [
-        'id="relatedReviewsPanel"',
-        'id="relatedReviewPlan"',
-        'id="relatedReviewsList"',
         "function reviewBacklogQuality",
         "function reviewBacklogGuardStatus",
         "function isClinicClaimRequestReview",
@@ -54,10 +51,8 @@ def main() -> None:
         "duplicateReviews",
         "reviewDuplicateFilter",
         "data-review-duplicate",
-        "data-related-review-id",
-        "Otras revisiones de esta clínica",
         "tarjetas abiertas en este grupo",
-        "Revisa los campos solapados antes de guardar",
+        "Úsalo para priorizar y decide una propuesta cada vez",
         "Campos repetidos",
         "Sin campos detallados en la propuesta",
         "Orden recomendado",
@@ -67,8 +62,8 @@ def main() -> None:
         "Sedes propuestas",
         "Teléfonos propuestos",
         "Especialistas propuestos",
-        "Carga mejoras juntas como propuesta",
-        "Corrige teléfonos dudosos antes de guardar mejoras juntas.",
+        "Prioriza estas tarjetas, pero valida una propuesta cada vez.",
+        "Corrige teléfonos dudosos antes de aprobar esa propuesta.",
         "Atascos",
         "Varias propuestas",
         "Duplicados mejoras",
@@ -96,6 +91,16 @@ def main() -> None:
         "Sin duplicados",
     ]:
         check(marker in index, f"missing admin review backlog marker: {marker}")
+
+    for hidden_marker in [
+        'id="relatedReviewsPanel"',
+        'id="relatedReviewPlan"',
+        'id="relatedReviewsList"',
+        "data-related-review-id",
+        "data-load-related-proposals",
+        "Cargar mejoras juntas",
+    ]:
+        check(hidden_marker not in index, f"group helpers should not appear in the open proposal UI: {hidden_marker}")
 
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     for marker in [

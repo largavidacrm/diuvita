@@ -32,6 +32,10 @@ def main() -> None:
         'id="navClinicMeta"',
         'id="navJobMeta"',
         'id="navEventMeta"',
+        'class="panel job-side-panel"',
+        'id="jobCreatePanel"',
+        'id="jobForm"',
+        "Buscar y proponer",
         'id="reviewWorkArea"',
         'id="clinicsPanel"',
         'id="jobsPanel"',
@@ -57,11 +61,17 @@ def main() -> None:
         ".control-nav-item",
         ".control-nav-item.active",
         ".control-section-hidden",
-        "grid-template-columns: 190px minmax(0, 1fr)",
+        "grid-template-columns: 260px minmax(0, 1fr)",
+        ".job-side-panel",
         "grid-auto-flow: column",
         "overflow-x: auto",
     ]:
         check(marker in css, f"missing control sidebar style: {marker}")
+
+    check(
+        index.index('id="jobCreatePanel"') < index.index('class="control-content"'),
+        "job creation should live beside the menu, before the main content",
+    )
 
     print("OK admin control sidebar: navigation is manageable")
 

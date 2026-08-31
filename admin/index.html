@@ -81,6 +81,41 @@
               <strong id="navEventMeta">0 movs.</strong>
             </button>
           </nav>
+          <section class="panel job-side-panel" id="jobCreatePanel">
+            <div class="panel-head">
+              <h2>Crear trabajo</h2>
+            </div>
+            <div class="panel-body">
+              <form class="job-form" id="jobForm">
+                <div class="job-help" id="jobHelp">
+                  <strong>Qué hace este trabajo</strong>
+                  <p>Busca información y la deja como propuesta interna. Nada se publica solo.</p>
+                </div>
+                <div class="field">
+                  <label for="jobType">Tipo</label>
+                  <select id="jobType" name="jobType">
+                    <option value="DISCOVER_CLINIC">Buscar clínicas nuevas</option>
+                    <option value="QUALITY_AUDIT">Auditar fichas existentes</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="jobQuery">Búsqueda</label>
+                  <input id="jobQuery" name="jobQuery" value="longevity clinic Spain" placeholder="Nombre de clínica, ciudad o dato que falta">
+                </div>
+                <div class="field">
+                  <label for="jobCountry">País</label>
+                  <input id="jobCountry" name="jobCountry" value="España">
+                </div>
+                <div class="job-examples" aria-label="Ejemplos de búsqueda">
+                  <button class="link-btn" type="button" data-job-query="Unidad de Longevidad IMDA dirección teléfono especialistas">IMDA: dirección y contacto</button>
+                  <button class="link-btn" type="button" data-job-query="Regenera Clinic especialistas equipo médico">Regenera: especialistas</button>
+                  <button class="link-btn" type="button" data-job-query="RoseBar Longevity Club dirección Google Maps teléfono">RoseBar: ubicación</button>
+                </div>
+                <p class="job-backlog-hint" id="jobBacklogHint">El freno de bandeja se calculará al cargar el panel.</p>
+                <button class="btn" id="jobBtn" type="submit">Buscar y proponer</button>
+              </form>
+            </div>
+          </section>
         </aside>
         <div class="control-content">
       <div class="hero-row">
@@ -505,102 +540,6 @@
         </form>
       </section>
 
-      <section class="panel editor-panel hidden" id="reviewEditor">
-        <div class="panel-head">
-          <div>
-            <h2 id="reviewEditorTitle">Revisar propuesta</h2>
-            <span class="muted" id="reviewEditorMeta"></span>
-          </div>
-          <button class="btn secondary" id="reviewCloseTop" type="button">Cerrar</button>
-        </div>
-        <section class="review-context" id="reviewContextPanel">
-          <strong id="reviewContextTitle">Contexto de revisión</strong>
-          <p id="reviewContextDetail">Esta tarjeta no publica nada por sí sola.</p>
-        </section>
-        <div class="review-detail">
-          <dl class="detail-grid">
-            <div>
-              <dt>Nombre</dt>
-              <dd id="reviewCandidateName">—</dd>
-            </div>
-            <div>
-              <dt>Ciudad</dt>
-              <dd id="reviewCandidateCity">—</dd>
-            </div>
-            <div>
-              <dt>País</dt>
-              <dd id="reviewCandidateCountry">—</dd>
-            </div>
-            <div>
-              <dt>Confianza</dt>
-              <dd id="reviewCandidateConfidence">—</dd>
-            </div>
-            <div class="detail-wide">
-              <dt>Web</dt>
-              <dd id="reviewCandidateWebsite">—</dd>
-            </div>
-            <div class="detail-wide">
-              <dt>Fuente</dt>
-              <dd id="reviewCandidateSource">—</dd>
-            </div>
-            <div class="detail-wide hidden" id="reviewProposedLinksBlock">
-              <dt>Enlaces propuestos</dt>
-              <dd id="reviewCandidateProposedLinks">—</dd>
-            </div>
-            <div class="detail-wide">
-              <dt>Coincidencias en Vitalarga</dt>
-              <dd id="reviewCandidateDuplicates">—</dd>
-            </div>
-            <div>
-              <dt>Servicios / campos</dt>
-              <dd id="reviewCandidateServices">—</dd>
-            </div>
-            <div>
-              <dt>Especialistas publicados</dt>
-              <dd id="reviewCandidateProfessionals">—</dd>
-            </div>
-          </dl>
-          <section class="review-flow hidden" id="reviewFlowPanel">
-            <div>
-              <h3>Camino de publicación</h3>
-              <p id="reviewFlowMeta">La candidata no se publica directamente.</p>
-            </div>
-            <div class="review-flow-steps" id="reviewFlowSteps"></div>
-          </section>
-          <section class="review-rules hidden" id="reviewGuidancePanel">
-            <div>
-              <h3>Paso recomendado</h3>
-              <p id="reviewGuidanceText">Revisa la evidencia antes de guardar.</p>
-            </div>
-          </section>
-          <section class="review-rules hidden" id="reviewRulesPanel">
-            <div>
-              <h3>Reglas aplicadas</h3>
-              <p id="reviewRulesMeta">Decisiones internas antes de publicar.</p>
-            </div>
-            <div class="rule-list" id="reviewRulesList"></div>
-          </section>
-          <section class="related-reviews hidden" id="relatedReviewsPanel">
-            <div>
-              <h3>Otras revisiones de esta clínica</h3>
-              <p id="relatedReviewsMeta">Tarjetas abiertas para revisar juntas.</p>
-            </div>
-            <div class="related-review-plan" id="relatedReviewPlan"></div>
-            <div class="related-review-list" id="relatedReviewsList"></div>
-          </section>
-          <div class="field">
-            <label for="reviewResolutionNote">Nota interna</label>
-            <textarea id="reviewResolutionNote" rows="2"></textarea>
-          </div>
-          <p class="review-action-note" id="reviewActionNote">La publicación final se decide después, en Validación final.</p>
-          <div class="form-actions">
-            <button class="btn" id="reviewCreateDraftBtn" type="button">Crear borrador y validar</button>
-            <button class="btn danger" id="reviewDismissBtn" type="button">Descartar</button>
-            <button class="btn secondary" id="reviewCloseBtn" type="button">Cerrar</button>
-          </div>
-        </div>
-      </section>
-
       <section class="work-grid" id="reviewWorkArea">
         <section class="panel review-panel">
           <div class="panel-head review-panel-head">
@@ -678,39 +617,82 @@
           </div>
         </section>
 
-        <section class="panel" id="jobCreatePanel">
+        <section class="panel review-selection-panel" id="reviewSelectionPanel">
           <div class="panel-head">
-            <h2>Crear trabajo</h2>
+            <h2>Revisión seleccionada</h2>
           </div>
           <div class="panel-body">
-            <form class="job-form" id="jobForm">
-              <div class="job-help" id="jobHelp">
-                <strong>Qué hace este trabajo</strong>
-                <p>Busca información y la deja como propuesta interna. Nada se publica solo.</p>
+            <p id="reviewSelectionMessage">Abre una tarjeta de la bandeja para revisar una propuesta y decidirla.</p>
+          </div>
+        </section>
+
+        <section class="panel editor-panel review-editor-panel hidden" id="reviewEditor">
+          <div class="panel-head">
+            <div>
+              <h2 id="reviewEditorTitle">Validar propuesta</h2>
+              <span class="muted" id="reviewEditorMeta"></span>
+            </div>
+          </div>
+          <div class="review-decision">
+            <section class="review-decision-summary" id="reviewDecisionSummary">
+              <div>
+                <span>Clínica afectada</span>
+                <strong id="reviewAffectedClinic">—</strong>
+                <small id="reviewAffectedClinicMeta">—</small>
               </div>
-              <div class="field">
-                <label for="jobType">Tipo</label>
-                <select id="jobType" name="jobType">
-                  <option value="DISCOVER_CLINIC">Buscar clínicas nuevas</option>
-                  <option value="QUALITY_AUDIT">Auditar fichas existentes</option>
-                </select>
+              <div>
+                <span>Tipo de propuesta</span>
+                <strong id="reviewProposalType">—</strong>
+                <small id="reviewProposalDate">—</small>
               </div>
-              <div class="field">
-                <label for="jobQuery">Búsqueda</label>
-                <input id="jobQuery" name="jobQuery" value="longevity clinic Spain" placeholder="Nombre de clínica, ciudad o dato que falta">
+            </section>
+            <section class="review-current-relevant" id="reviewCurrentRelevantPanel">
+              <div class="review-section-head">
+                <h3>Datos actuales relevantes</h3>
+                <span class="pill" id="reviewCurrentRelevantCount">0 campos</span>
               </div>
-              <div class="field">
-                <label for="jobCountry">País</label>
-                <input id="jobCountry" name="jobCountry" value="España">
+              <div class="review-current-list" id="reviewCurrentRelevantList"></div>
+            </section>
+            <section class="review-proposal-focus" id="reviewProposalFocus">
+              <div class="review-section-head">
+                <div>
+                  <h3 id="reviewProposalFocusTitle">Cambio propuesto</h3>
+                  <p id="reviewProposalFocusMeta">Revisa solo esta propuesta.</p>
+                </div>
+                <span class="pill" id="reviewProposalFocusCount">0 datos</span>
               </div>
-              <div class="job-examples" aria-label="Ejemplos de búsqueda">
-                <button class="link-btn" type="button" data-job-query="Unidad de Longevidad IMDA dirección teléfono especialistas">IMDA: dirección y contacto</button>
-                <button class="link-btn" type="button" data-job-query="Regenera Clinic especialistas equipo médico">Regenera: especialistas</button>
-                <button class="link-btn" type="button" data-job-query="RoseBar Longevity Club dirección Google Maps teléfono">RoseBar: ubicación</button>
+              <div class="review-proposal-list" id="reviewProposalFocusList"></div>
+            </section>
+            <section class="review-evidence-panel" id="reviewEvidencePanel">
+              <div class="review-section-head">
+                <h3>Fuente o evidencia</h3>
+                <span class="pill" id="reviewEvidenceCount">0 fuentes</span>
               </div>
-              <p class="job-backlog-hint" id="jobBacklogHint">El freno de bandeja se calculará al cargar el panel.</p>
-              <button class="btn" id="jobBtn" type="submit">Enviar a cola</button>
-            </form>
+              <div class="review-evidence-list" id="reviewEvidenceList"></div>
+            </section>
+            <section class="review-warning-panel hidden" id="reviewWarningPanel">
+              <div class="review-section-head">
+                <h3>Advertencias imprescindibles</h3>
+                <span class="pill warning" id="reviewWarningCount">0 avisos</span>
+              </div>
+              <ul class="compact-list" id="reviewWarningList"></ul>
+            </section>
+            <section class="review-modify-panel hidden" id="reviewModifyPanel">
+              <div class="review-section-head">
+                <h3>Modificar propuesta</h3>
+                <span class="pill">Solo estos campos</span>
+              </div>
+              <div class="review-modify-fields" id="reviewModifyFields"></div>
+            </section>
+            <div class="field review-note-field">
+              <label for="reviewResolutionNote">Observación breve</label>
+              <textarea id="reviewResolutionNote" rows="2" placeholder="Opcional, útil sobre todo al rechazar."></textarea>
+            </div>
+            <div class="form-actions review-decision-actions">
+              <button class="btn" id="reviewApproveBtn" type="button">Aprobar</button>
+              <button class="btn danger" id="reviewRejectBtn" type="button">Rechazar</button>
+              <button class="btn secondary" id="reviewModifyBtn" type="button">Modificar</button>
+            </div>
           </div>
         </section>
       </section>
@@ -826,6 +808,7 @@
     var clinicPublishFilter = "";
     var activeClinic = null;
     var activeReview = null;
+    var activeReviewModifyMode = false;
     var activeClinicReview = null;
     var activeClinicReviewIds = [];
     var activeClinicVersions = [];
@@ -2436,7 +2419,7 @@
       if (group) {
         var enrichmentCount = countOpenReviewsByType(group.rows || [], "clinic_profile_enrichment");
         if (enrichmentCount > 1) {
-          return "Ruta: Filtrar grupo · Abrir una mejora · Cargar mejoras juntas · Revisar y guardar.";
+          return "Ruta: Filtrar grupo · Abrir una propuesta · Aprobar, rechazar o modificar · Siguiente automática.";
         }
         return "Ruta: Filtrar grupo · Abrir tarjeta · Revisar ficha · Guardar o cerrar.";
       }
@@ -2638,7 +2621,7 @@
       if (clinicGroup) {
         return {
           title: "Trabajar grupo",
-          detail: clinicWorkgroupSubject(clinicGroup) + ". Varias tarjetas de una misma clínica; revísalas juntas si encajan."
+          detail: clinicWorkgroupSubject(clinicGroup) + ". Varias tarjetas de una misma clínica; abre una propuesta cada vez."
         };
       }
       if (duplicateReview) {
@@ -3655,6 +3638,7 @@
     }
 
     function renderReviewContext(row, payload, blocksDraft) {
+      if (!el("reviewContextPanel")) return;
       var copy = reviewContextCopy(row, payload || {}, blocksDraft);
       el("reviewContextTitle").textContent = copy.title;
       el("reviewContextDetail").textContent = copy.detail;
@@ -3664,59 +3648,34 @@
     function renderReviewFlow(reviewType, blocksDraft) {
       var panel = el("reviewFlowPanel");
       if (!panel) return;
-      var steps = [];
+      var notes = [];
       var meta = "La web pública solo cambia desde el editor de clínica.";
       if (reviewType === "candidate_clinic" && blocksDraft) {
         meta = "Parece que ya existe una ficha parecida.";
-        steps = [
-          ["1", "Mirar coincidencias", "Comprueba si es la misma clínica."],
-          ["2", "Decidir", "Si ya existe, descarta la candidata."],
-          ["3", "Crear solo si falta", "El borrador seguirá interno."]
-        ];
+        notes = ["Revisa coincidencias antes de crear una ficha nueva."];
       } else if (reviewType === "candidate_clinic") {
         meta = "La candidata no se publica directamente.";
-        steps = [
-          ["1", "Crear borrador", "Crea una ficha interna."],
-          ["2", "Completar datos", "Revisa campos y evidencias."],
-          ["3", "Publicar", "Cambia Estado a preliminar o publicada."]
-        ];
+        notes = ["Si encaja, crea un borrador interno y valida la ficha completa."];
       } else if (reviewType === "clinic_profile_enrichment") {
         meta = "La propuesta actualiza una ficha existente solo si la guardas.";
-        steps = [
-          ["1", "Abrir ficha", "Carga la propuesta en el editor."],
-          ["2", "Revisar cambios", "Comprueba datos y fuentes."],
-          ["3", "Guardar", "Decide el estado final."]
-        ];
+        notes = ["Carga la propuesta, revisa campos y guarda solo lo claro."];
       } else if (reviewType === "source_change_detected") {
         meta = "La fuente cambió; primero se revisa la ficha.";
-        steps = [
-          ["1", "Abrir ficha", "Revisa qué cambió en la fuente."],
-          ["2", "Ajustar datos", "Edita solo lo que esté claro."],
-          ["3", "Guardar", "Publica solo si el estado es visible."]
-        ];
+        notes = ["Compara la fuente y cambia solo datos claros en la ficha."];
       } else if (reviewType === "clinic_claim_request") {
         meta = "Solicitud de clínica: siempre requiere decisión humana.";
-        steps = [
-          ["1", "Ver solicitud", "Comprueba qué ficha se reclama."],
-          ["2", "Confirmar identidad", "Daniel decide si pide prueba, concede acceso o rechaza."],
-          ["3", "Cerrar tarjeta", "Resuelve o descarta solo después de decidir."]
-        ];
+        notes = ["Verifica identidad y cierra la reclamación sin cambios automáticos."];
       } else if (reviewType === "clinic_quality_audit") {
         meta = "La auditoría señala campos que conviene revisar.";
-        steps = [
-          ["1", "Abrir ficha", "Ve al editor de la clínica."],
-          ["2", "Completar", "Corrige los campos pendientes."],
-          ["3", "Validar", "Guarda cuando la ficha esté lista."]
-        ];
+        notes = ["Abre la ficha, completa lo claro y valida antes de guardar."];
       }
-      if (!steps.length) {
+      if (!notes.length) {
         show(panel, false);
         return;
       }
       el("reviewFlowMeta").textContent = meta;
-      el("reviewFlowSteps").innerHTML = steps.map(function (step) {
-        return '<div class="review-flow-step"><span>' + html(step[0]) + '</span><strong>' +
-          html(step[1]) + '</strong><p>' + html(step[2]) + '</p></div>';
+      el("reviewFlowSteps").innerHTML = notes.map(function (note) {
+        return '<span class="review-flow-note">' + html(note) + '</span>';
       }).join("");
       show(panel, true);
     }
@@ -3759,6 +3718,7 @@
 
     function renderReviewGuidance(row, payload) {
       var panel = el("reviewGuidancePanel");
+      if (!panel) return;
       if (!isBlockingClaimReview(row)) {
         show(panel, false);
         return;
@@ -3776,6 +3736,7 @@
       var decisions = (payload && payload.rule_decisions) || [];
       var panel = el("reviewRulesPanel");
       var list = el("reviewRulesList");
+      if (!panel || !list) return;
       if (!Array.isArray(decisions) || !decisions.length) {
         show(panel, false);
         list.innerHTML = "";
@@ -3947,22 +3908,20 @@
         return "Empieza por la fuente cambiada y después consolida las mejoras de ficha.";
       }
       if (proposalPhoneWarningsForRows(rows).length) {
-        return "Corrige teléfonos dudosos antes de guardar mejoras juntas.";
+        return "Corrige teléfonos dudosos antes de aprobar esa propuesta.";
       }
       if (proposalReviewHotspotsForRows(rows).length) {
-        return "Carga mejoras juntas como propuesta y revisa los campos destacados antes de guardar.";
+        return "Prioriza estas tarjetas, pero valida una propuesta cada vez.";
       }
       if (rows.some(function (item) { return item.review_type === "clinic_profile_enrichment"; })) {
-        return "Revisa las mejoras juntas y guarda una sola versión coherente de la ficha.";
+        return "Revisa cada mejora como una decisión separada para no mezclar cambios.";
       }
-      return "Revisa estas tarjetas juntas antes de decidir si la ficha se guarda o se cierra.";
+      return "Usa el grupo para priorizar, pero decide una tarjeta cada vez.";
     }
 
     function renderRelatedReviewPlan(row, bundle) {
       var node = el("relatedReviewPlan");
-      var enrichmentRows = (bundle || []).filter(function (item) {
-        return item.review_type === "clinic_profile_enrichment";
-      });
+      if (!node) return;
       var counts = [
         ["Bloqueantes", countWhere(bundle, isBlockingClaimReview)],
         ["Reclamaciones", countWhere(bundle, isClinicClaimRequestReview)],
@@ -3986,17 +3945,15 @@
       proposalReviewHotspotsForRows(bundle).forEach(function (item) {
         chips += '<span class="pill warning">' + html(item) + '</span>';
       });
-      var groupAction = enrichmentRows.length > 1
-        ? '<button class="link-btn" type="button" data-load-related-proposals>Cargar mejoras juntas</button>'
-        : "";
       node.innerHTML = '<div><span>Orden recomendado</span><strong>' +
         html(reviewWorkgroupRecommendation(bundle)) + '</strong></div><div class="related-review-counts">' +
-        chips + '<span class="pill">Actual: ' + html(reviewVisibleLabel(row)) + '</span>' + groupAction + '</div>';
+        chips + '<span class="pill">Actual: ' + html(reviewVisibleLabel(row)) + '</span></div>';
     }
 
     function renderRelatedReviews(row) {
       var panel = el("relatedReviewsPanel");
       var list = el("relatedReviewsList");
+      if (!panel || !list) return;
       var bundle = clinicReviewBundle(row);
       var related = sortReviewWorkgroup(relatedOpenReviews(row));
       if (!related.length) {
@@ -4008,15 +3965,15 @@
       show(panel, true);
       el("relatedReviewsMeta").textContent = bundle.length + (bundle.length === 1
         ? " tarjeta abierta en este grupo."
-        : " tarjetas abiertas en este grupo.") + " Revisa los campos solapados antes de guardar.";
+        : " tarjetas abiertas en este grupo.") + " Úsalo para priorizar y decide una propuesta cada vez.";
       renderRelatedReviewPlan(row, bundle);
       list.innerHTML = related.map(function (item) {
-        return '<button class="related-review-item" type="button" data-related-review-id="' + html(item.id) + '">' +
+        return '<article class="related-review-item">' +
           '<div><strong>' + html(reviewVisibleLabel(item)) + '</strong>' +
           '<span>' + html(priorityLabel(item.priority)) + " · " + html(date(item.created_at)) + '</span></div>' +
           '<small>' + html(item.title || "Revisión abierta") + '</small>' +
           relatedReviewFieldsHtml(item) +
-          '</button>';
+          '</article>';
       }).join("");
     }
 
@@ -5300,6 +5257,7 @@
     }
 
     function setDuplicateMatches(matches, probability) {
+      if (!el("reviewCandidateDuplicates")) return;
       if (!Array.isArray(matches) || !matches.length) {
         el("reviewCandidateDuplicates").textContent = "—";
         return;
@@ -5915,6 +5873,802 @@
       return clean.slice(0, Math.max(0, maxLength - 1)).trim() + "…";
     }
 
+    function clinicCareModeLabel(value) {
+      var clean = value && typeof value === "object"
+        ? clinicCareModeValue(value)
+        : text(value).trim().toLowerCase();
+      var labels = {
+        presencial: "Presencial",
+        online: "Online",
+        hibrida: "Mixta",
+        no_consta: "No consta"
+      };
+      return labels[clean] || text(value).trim() || "Pendiente";
+    }
+
+    function reviewClinicForRow(row) {
+      if (!row || !row.clinic_id) return null;
+      return (clinicCache || []).find(function (clinic) {
+        return clinic.id === row.clinic_id;
+      }) || null;
+    }
+
+    function snapshotListHtml(items) {
+      var values = (items || []).map(function (item) {
+        return text(item).trim();
+      }).filter(Boolean);
+      if (!values.length) return '<span class="snapshot-empty">Pendiente</span>';
+      return '<ul class="compact-list">' + values.map(function (item) {
+        return '<li>' + html(item) + '</li>';
+      }).join("") + '</ul>';
+    }
+
+    function snapshotLocationHtml(value) {
+      var locations = normalizedLocations(value);
+      if (!locations.length) return '<span class="snapshot-empty">Pendiente</span>';
+      return '<ul class="compact-list">' + locations.map(function (location) {
+        var badges = [
+          locationIsOnlineKind(location) ? "Online" : "Presencial",
+          locationVisibilityValue(location) ? "Visible" : "Solo interna"
+        ];
+        return '<li><strong>' + html(locationDisplayText(location)) + '</strong><small>' +
+          html(badges.join(" · ")) + '</small></li>';
+      }).join("") + '</ul>';
+    }
+
+    function snapshotValueHtml(key, value) {
+      if (key === "locations") return snapshotLocationHtml(value);
+      if (key === "status") return html(clinicStatusLabel(value));
+      if (key === "care_mode") return html(clinicCareModeLabel(value));
+      if (Array.isArray(value)) {
+        if (value.some(function (item) { return item && typeof item === "object"; })) {
+          return snapshotLocationHtml(value);
+        }
+        return snapshotListHtml(value);
+      }
+      if (value && typeof value === "object") {
+        return html(locationLine(value) || compactText(JSON.stringify(value), 320));
+      }
+      var clean = text(value).trim();
+      if (!clean) return '<span class="snapshot-empty">Pendiente</span>';
+      if (/^https?:\/\//i.test(clean)) {
+        return '<a href="' + html(clean) + '" rel="nofollow noopener" target="_blank">' + html(compactText(clean, 130)) + '</a>';
+      }
+      if (clean.indexOf("\n") >= 0) return snapshotListHtml(linesToArray(clean));
+      return html(clean);
+    }
+
+    function snapshotItemHtml(label, key, value) {
+      return '<div><dt>' + html(label) + '</dt><dd>' + snapshotValueHtml(key, value) + '</dd></div>';
+    }
+
+    function snapshotSectionHtml(title, items) {
+      return '<article class="review-snapshot-section"><h4>' + html(title) + '</h4><dl>' +
+        items.map(function (item) {
+          return snapshotItemHtml(item[0], item[1], item[2]);
+        }).join("") + '</dl></article>';
+    }
+
+    function reviewFieldIsSynthetic(key) {
+      return text(key).indexOf("quality_issue") === 0 ||
+        text(key).indexOf("source_change") === 0 ||
+        text(key) === "claim_request";
+    }
+
+    function reviewCandidateIdentity(row) {
+      var payload = (row && row.payload) || {};
+      var candidate = candidateFromReview(row);
+      var clinic = reviewClinicForRow(row);
+      var data = (clinic && clinic.current_data) || {};
+      var name = clinic
+        ? clinic.display_name || data.name
+        : candidate.name || candidate.clinic_name || payload.clinic_name || (row && row.title);
+      var city = clinic
+        ? clinic.city || data.city
+        : candidate.city || payload.clinic_city || payload.city;
+      var country = clinic
+        ? clinic.country || data.country
+        : candidate.country || payload.clinic_country || (payload.job_input || {}).country;
+      var status = clinic ? clinicStatusLabel(clinic.status) : "Candidata";
+      return {
+        clinic: clinic,
+        name: name || "Clínica sin nombre",
+        place: [city, country].filter(Boolean).join(" · ") || "Ubicación pendiente",
+        status: status
+      };
+    }
+
+    function renderReviewDecisionSummary(row) {
+      var identity = reviewCandidateIdentity(row);
+      el("reviewAffectedClinic").textContent = identity.name;
+      el("reviewAffectedClinicMeta").textContent = identity.place + " · " + identity.status;
+      el("reviewProposalType").textContent = reviewVisibleLabel(row);
+      el("reviewProposalDate").textContent = "Prioridad " + (row && row.priority) + " · " + date(row && row.created_at);
+    }
+
+    function reviewCurrentRelevantItems(row, proposalItems) {
+      if (!row) return [];
+      var clinic = reviewClinicForRow(row);
+      if (!clinic) {
+        return [{
+          label: "Ficha actual",
+          key: "display_name",
+          value: "No hay ficha guardada todavía; si se aprueba, se crea un borrador interno."
+        }];
+      }
+      var items = (proposalItems || []).filter(function (item) {
+        return !reviewFieldIsSynthetic(item.key);
+      }).map(function (item) {
+        return {
+          label: item.label,
+          key: item.key,
+          value: currentClinicField(clinic, item.key)
+        };
+      });
+      if (items.length) return items;
+      return [
+        { label: "Nombre", key: "display_name", value: currentClinicField(clinic, "display_name") },
+        { label: "Estado interno", key: "status", value: currentClinicField(clinic, "status") },
+        { label: "Web", key: "website", value: currentClinicField(clinic, "website") }
+      ];
+    }
+
+    function renderReviewCurrentRelevant(row, proposalItems) {
+      var items = reviewCurrentRelevantItems(row, proposalItems);
+      el("reviewCurrentRelevantCount").textContent = items.length + (items.length === 1 ? " campo" : " campos");
+      el("reviewCurrentRelevantList").innerHTML = items.length
+        ? items.map(function (item) {
+          return '<article class="review-current-item"><span>' + html(item.label) + '</span><div>' +
+            snapshotValueHtml(item.key, item.value) + '</div></article>';
+        }).join("")
+        : '<p class="empty">No hay datos actuales relevantes para esta propuesta.</p>';
+    }
+
+    function proposalFieldOrder() {
+      return [
+        "display_name",
+        "name",
+        "website",
+        "web",
+        "country",
+        "city",
+        "region",
+        "address",
+        "locations",
+        "maps_url",
+        "google_maps_url",
+        "google_reviews_url",
+        "reviews_url",
+        "summary",
+        "services",
+        "specialties",
+        "unidades",
+        "profesionales",
+        "professionals",
+        "years_in_practice",
+        "specialists_count",
+        "team_credentialing_visible",
+        "public_pricing",
+        "pricing_url",
+        "tech",
+        "email",
+        "telefono",
+        "phone",
+        "telephone",
+        "phone_fixed",
+        "phone_mobile",
+        "phone_whatsapp",
+        "instagram"
+      ];
+    }
+
+    function proposalFocusAction(row, key, value) {
+      if (isClinicClaimRequestReview(row)) return "Decisión humana; no cambia datos";
+      if (key === "maps_url") {
+        return reviewedMapsProfileValue(proposalListValue(value)) ? "Perfil revisable" : "Confirmar perfil real";
+      }
+      if (key === "locations") return "Cargar sedes y revisar";
+      if (key === "profesionales") return "Revisar equipo";
+      if (["public_pricing", "pricing_url", "team_credentialing_visible"].indexOf(key) >= 0) return "Revisión humana";
+      if (key.indexOf("quality_issue") === 0) return "Completar en ficha";
+      if (key.indexOf("source_change") === 0) return "Comparar con fuente";
+      return "Cargar y revisar";
+    }
+
+    function pushProposalFocusItem(items, seen, row, key, value, label, action) {
+      var canonicalKey = canonicalProposalField(key);
+      var cleanValue = proposalListValue(value);
+      if (!cleanValue) return;
+      var identity = canonicalKey + "|" + normalizedFieldValue(value).toLowerCase();
+      if (seen[identity]) return;
+      seen[identity] = true;
+      items.push({
+        key: canonicalKey,
+        label: label || proposalLabel(canonicalKey),
+        value: value,
+        action: action || proposalFocusAction(row, canonicalKey, value)
+      });
+    }
+
+    function reviewProposalFocusItems(row) {
+      if (!row) return [];
+      var payload = row.payload || {};
+      var candidate = candidateFromReview(row);
+      var fields = proposedFields(payload);
+      var items = [];
+      var seen = {};
+      proposalFieldOrder().forEach(function (key) {
+        if (hasOwn(fields, key)) pushProposalFocusItem(items, seen, row, key, fields[key]);
+      });
+      Object.keys(fields).forEach(function (key) {
+        pushProposalFocusItem(items, seen, row, key, fields[key]);
+      });
+      if (!items.length && row.review_type === "candidate_clinic") {
+        [
+          ["display_name", candidate.name || candidate.clinic_name || payload.clinic_name],
+          ["website", candidate.website || candidate.web || payload.website],
+          ["city", candidate.city || payload.clinic_city],
+          ["country", candidate.country || payload.clinic_country || (payload.job_input || {}).country],
+          ["services", candidate.services],
+          ["profesionales", candidate.profesionales || candidate.professionals]
+        ].forEach(function (item) {
+          pushProposalFocusItem(items, seen, row, item[0], item[1], null, "Crear borrador si encaja");
+        });
+      }
+      if (!items.length && row.review_type === "source_change_detected") {
+        materialChangeItems(payload).forEach(function (item, index) {
+          pushProposalFocusItem(items, seen, row, "source_change_" + index, item, "Cambio posible", "Comparar con fuente");
+        });
+      }
+      if (!items.length && row.review_type === "clinic_quality_audit") {
+        issueLabels(payload.issues).forEach(function (item, index) {
+          pushProposalFocusItem(items, seen, row, "quality_issue_" + index, item, "Campo pendiente", "Completar en ficha");
+        });
+      }
+      if (!items.length && row.review_type === "clinic_claim_request") {
+        var claimText = [
+          payload.clinic_name || candidate.clinic_name || candidate.name || row.title,
+          payload.requester_name,
+          payload.requester_email || payload.email,
+          payload.message
+        ].filter(function (item) { return text(item).trim(); }).join("\n");
+        pushProposalFocusItem(items, seen, row, "claim_request", claimText || row.title, "Solicitud de ficha", "Verificar identidad");
+      }
+      return items;
+    }
+
+    function reviewProposalFocusTitle(row) {
+      if (!row) return "Información propuesta";
+      if (row.review_type === "candidate_clinic") return "Datos de candidata";
+      if (row.review_type === "clinic_profile_enrichment") return "Información nueva a valorar";
+      if (row.review_type === "source_change_detected") return "Cambios detectados en fuente";
+      if (row.review_type === "clinic_quality_audit") return "Campos que conviene revisar";
+      if (row.review_type === "clinic_claim_request") return "Solicitud recibida";
+      return "Información propuesta";
+    }
+
+    function renderReviewProposalFocus(row) {
+      var list = el("reviewProposalFocusList");
+      if (!row) {
+        el("reviewProposalFocusTitle").textContent = "Cambio propuesto";
+        el("reviewProposalFocusMeta").textContent = "Selecciona una revisión para ver el cambio.";
+        el("reviewProposalFocusCount").textContent = "0 datos";
+        list.innerHTML = '<p class="empty">Sin revisión seleccionada.</p>';
+        return;
+      }
+      var items = reviewProposalFocusItems(row);
+      el("reviewProposalFocusTitle").textContent = reviewProposalFocusTitle(row);
+      el("reviewProposalFocusMeta").textContent = "Decide solo sobre este cambio. No se publican datos automáticamente.";
+      el("reviewProposalFocusCount").textContent = items.length + (items.length === 1 ? " dato" : " datos");
+      list.innerHTML = items.length
+        ? items.map(function (item) {
+          return '<article class="review-proposal-item"><h4>' + html(item.label) + '</h4><div class="review-proposal-value">' +
+            snapshotValueHtml(item.key, item.value) + '</div></article>';
+        }).join("")
+        : '<p class="empty">Esta tarjeta no trae campos nuevos detectados; puedes aprobarla como revisada o rechazarla.</p>';
+    }
+
+    function reviewEvidenceItems(row) {
+      if (!row) return [];
+      var payload = row.payload || {};
+      var candidate = candidateFromReview(row);
+      var website = candidate.website || candidate.web || payload.website;
+      var source = candidate.source_url || payload.candidate_source_url || payload.source_url || website;
+      var values = [];
+      function add(label, value) {
+        var clean = text(value).trim();
+        if (!clean) return;
+        if (values.some(function (item) { return item.value === clean; })) return;
+        values.push({ label: label, value: clean });
+      }
+      if (row.review_type === "candidate_clinic") {
+        candidateReviewSources(candidate, payload, source).forEach(function (url) {
+          add("Fuente", url);
+        });
+      } else {
+        sourceList(payload).forEach(function (url) { add("Fuente", url); });
+        add("Fuente", payload.source_url);
+      }
+      proposalLinkItems(payload).forEach(function (item) {
+        add(item.label, item.url);
+      });
+      return values;
+    }
+
+    function renderReviewEvidence(row) {
+      var items = reviewEvidenceItems(row);
+      el("reviewEvidenceCount").textContent = items.length + (items.length === 1 ? " fuente" : " fuentes");
+      el("reviewEvidenceList").innerHTML = items.length
+        ? '<ul class="compact-list">' + items.map(function (item) {
+          var value = /^https?:\/\//i.test(item.value)
+            ? '<a href="' + html(item.value) + '" rel="nofollow noopener" target="_blank">' + html(item.value) + '</a>'
+            : html(item.value);
+          return '<li><strong>' + html(item.label) + '</strong><small>' + value + '</small></li>';
+        }).join("") + '</ul>'
+        : '<p class="empty">Sin fuente registrada en esta tarjeta.</p>';
+    }
+
+    function reviewWarningItems(row, proposalItems) {
+      if (!row) return [];
+      var payload = row.payload || {};
+      var warnings = [];
+      function add(value) {
+        var clean = text(value).trim();
+        if (clean && warnings.indexOf(clean) < 0) warnings.push(clean);
+      }
+      if (isClinicClaimRequestReview(row)) {
+        add("Reclamación de ficha: no confirma identidad, no concede acceso y no cambia datos por sí sola.");
+      }
+      if (isBlockingClaimReview(row)) {
+        add(reviewRecommendedStep(payload));
+      }
+      if (Array.isArray(payload.warnings)) payload.warnings.forEach(add);
+      var duplicateProbability = Number(payload.duplicate_probability || 0);
+      if (duplicateProbability >= 0.9) add("Duplicado probable: revisa antes de crear una ficha nueva.");
+      proposalLinkItems(payload).forEach(function (item) {
+        var warning = proposalLinkWarning(item);
+        if (warning) add(item.label + ": " + warning);
+      });
+      (proposalItems || []).forEach(function (item) {
+        var phoneWarning = proposalPhoneWarning(item.key, item.value);
+        if (phoneWarning) add(phoneWarning);
+        if (["status", "profile_confidence", "verification_status"].indexOf(item.key) >= 0) {
+          add(proposalLabel(item.key) + ": se revisa fuera de la aprobación directa para no cambiar la publicación por accidente.");
+        }
+      });
+      return warnings;
+    }
+
+    function renderReviewWarnings(row, proposalItems) {
+      var warnings = reviewWarningItems(row, proposalItems);
+      el("reviewWarningCount").textContent = warnings.length + (warnings.length === 1 ? " aviso" : " avisos");
+      el("reviewWarningList").innerHTML = warnings.map(function (warning) {
+        return '<li>' + html(warning) + '</li>';
+      }).join("");
+      show(el("reviewWarningPanel"), Boolean(warnings.length));
+    }
+
+    function reviewEditableItems(row) {
+      return reviewProposalFocusItems(row).filter(function (item) {
+        return !reviewFieldIsSynthetic(item.key) &&
+          ["status", "profile_confidence", "verification_status"].indexOf(item.key) < 0;
+      });
+    }
+
+    function proposalEditValue(key, value) {
+      if (key === "locations") return locationsToLines(value);
+      if (Array.isArray(value)) return value.map(function (item) {
+        return item && typeof item === "object" ? locationLine(item) : text(item).trim();
+      }).filter(Boolean).join("\n");
+      if (value && typeof value === "object") return locationLine(value) || JSON.stringify(value);
+      return text(value).trim();
+    }
+
+    function renderReviewModifyPanel(row) {
+      var panel = el("reviewModifyPanel");
+      var list = el("reviewModifyFields");
+      var items = reviewEditableItems(row);
+      if (!items.length) {
+        list.innerHTML = '<p class="empty">Esta propuesta no trae campos editables.</p>';
+        return;
+      }
+      list.innerHTML = items.map(function (item) {
+        return '<div class="field"><label for="modify_' + html(item.key) + '">' + html(item.label) + '</label>' +
+          '<textarea id="modify_' + html(item.key) + '" data-review-modify-key="' + html(item.key) + '" rows="3">' +
+          html(proposalEditValue(item.key, item.value)) + '</textarea></div>';
+      }).join("");
+      show(panel, true);
+    }
+
+    function setReviewModifyMode(enabled) {
+      activeReviewModifyMode = Boolean(enabled);
+      show(el("reviewModifyPanel"), activeReviewModifyMode);
+      el("reviewModifyBtn").textContent = "Modificar";
+      el("reviewModifyBtn").title = activeReviewModifyMode
+        ? "Guardar la versión modificada de esta propuesta."
+        : "Corregir solo los campos incluidos en esta propuesta.";
+    }
+
+    function renderReviewValidationView(row) {
+      if (!row) {
+        renderReviewProposalFocus(null);
+        renderReviewCurrentRelevant(null, []);
+        renderReviewEvidence(null);
+        renderReviewWarnings(null, []);
+        setReviewModifyMode(false);
+        return;
+      }
+      var proposalItems = reviewProposalFocusItems(row);
+      renderReviewDecisionSummary(row);
+      renderReviewCurrentRelevant(row, proposalItems);
+      renderReviewProposalFocus(row);
+      renderReviewEvidence(row);
+      renderReviewWarnings(row, proposalItems);
+      el("reviewModifyFields").innerHTML = "";
+      setReviewModifyMode(false);
+    }
+
+    function cloneJson(value) {
+      return JSON.parse(JSON.stringify(value || {}));
+    }
+
+    function reviewFieldsFromItems(items) {
+      var fields = {};
+      (items || []).forEach(function (item) {
+        if (!item || reviewFieldIsSynthetic(item.key)) return;
+        fields[item.key] = item.value;
+      });
+      return fields;
+    }
+
+    function reviewOriginalDecisionFields(row) {
+      return reviewFieldsFromItems(reviewProposalFocusItems(row));
+    }
+
+    function reviewModifiedDecisionFields(row) {
+      var fields = reviewOriginalDecisionFields(row);
+      Array.prototype.slice.call(document.querySelectorAll("[data-review-modify-key]")).forEach(function (input) {
+        var key = input.getAttribute("data-review-modify-key");
+        var value = input.value;
+        if (key === "locations") {
+          fields[key] = linesToLocations(value);
+        } else if (["services", "specialties", "unidades", "profesionales", "tech"].indexOf(key) >= 0) {
+          fields[key] = linesToArray(value);
+        } else {
+          fields[key] = value.trim();
+        }
+      });
+      return fields;
+    }
+
+    function approvalSafetyWarnings(fields) {
+      var warnings = [];
+      function add(value) {
+        var clean = text(value).trim();
+        if (clean && warnings.indexOf(clean) < 0) warnings.push(clean);
+      }
+      Object.keys(fields || {}).forEach(function (rawKey) {
+        var key = canonicalProposalField(rawKey);
+        var value = fields[rawKey];
+        if (["status", "profile_confidence", "verification_status"].indexOf(key) >= 0) {
+          add(proposalLabel(key) + " no se cambia desde aprobación directa.");
+        }
+        if (key === "maps_url") {
+          var mapsUrl = proposalListValue(value);
+          if (mapsUrl && !reviewedMapsProfileValue(mapsUrl)) {
+            add("Google Maps debe ser el perfil real de la clínica, no una búsqueda, ruta o dirección.");
+          }
+        }
+        if (key === "locations") {
+          normalizedLocations(value).forEach(function (location) {
+            var mapsUrl = locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]);
+            var message = googleMapsReviewMessage(mapsUrl);
+            if (message) add("Sede propuesta: " + message);
+          });
+        }
+        var phoneWarning = proposalPhoneWarning(key, value);
+        if (phoneWarning) add(phoneWarning);
+      });
+      return warnings;
+    }
+
+    function applyApprovedFieldToDraft(draft, key, value) {
+      var canonicalKey = canonicalProposalField(key);
+      if (canonicalKey !== key) return applyApprovedFieldToDraft(draft, canonicalKey, value);
+      var clean = proposalListValue(value);
+      if (canonicalKey === "display_name") {
+        draft.displayName = clean || draft.displayName;
+        setJsonText(draft.currentData, "name", clean);
+        return;
+      }
+      if (canonicalKey === "website") {
+        draft.website = clean || "";
+        setJsonText(draft.currentData, "web", clean);
+        return;
+      }
+      if (canonicalKey === "country") {
+        draft.country = clean || draft.country;
+        setJsonText(draft.currentData, "country", clean);
+        return;
+      }
+      if (canonicalKey === "city") {
+        draft.city = clean || draft.city;
+        setJsonText(draft.currentData, "city", clean);
+        return;
+      }
+      if (canonicalKey === "region") {
+        draft.region = clean;
+        setJsonText(draft.currentData, "region", clean);
+        return;
+      }
+      if (canonicalKey === "address") {
+        draft.address = clean;
+        setJsonText(draft.currentData, "address", clean);
+        return;
+      }
+      if (canonicalKey === "summary") {
+        draft.summary = clean;
+        setJsonText(draft.currentData, "summary", clean);
+        return;
+      }
+      if (canonicalKey === "maps_url") {
+        setJsonText(draft.currentData, "maps_url", reviewedMapsProfileValue(clean));
+        return;
+      }
+      if (canonicalKey === "google_reviews_url") {
+        setJsonText(draft.currentData, "google_reviews_url", clean);
+        return;
+      }
+      if (canonicalKey === "locations") {
+        setJsonLocations(draft.currentData, "locations", mergeListField(storedClinicLocations(draft.clinic), value, true));
+        return;
+      }
+      if (["services", "specialties", "unidades", "profesionales"].indexOf(canonicalKey) >= 0) {
+        draft.currentData[canonicalKey] = mergeListField(draft.currentData[canonicalKey] || [], value, false);
+        return;
+      }
+      if (canonicalKey === "specialists_count") {
+        setJsonInteger(draft.currentData, "specialists_count", clean);
+        return;
+      }
+      setJsonText(draft.currentData, canonicalKey, clean);
+    }
+
+    function buildApprovedClinicDraft(clinic, fields) {
+      var data = clinic.current_data || {};
+      var status = clinic.status || "review";
+      var draft = {
+        clinic: clinic,
+        currentData: Object.assign({}, data),
+        displayName: clinic.display_name || data.name || "",
+        website: clinic.website || data.web || "",
+        country: clinic.country || data.country || "",
+        city: clinic.city || data.city || "",
+        region: clinic.region || data.region || "",
+        address: clinic.address || data.address || "",
+        status: status,
+        summary: clinic.summary || data.summary || "",
+        confidence: Number(clinic.profile_confidence || 0),
+        verification: clinic.verification_status || data.verification_status || "human_curated"
+      };
+      draft.currentData.slug = clinic.slug;
+      draft.currentData.status = publicStatus(status);
+      Object.keys(fields || {}).forEach(function (key) {
+        applyApprovedFieldToDraft(draft, key, fields[key]);
+      });
+      if (!draft.displayName || !draft.country || !draft.city) {
+        return { error: "Nombre, ciudad y país son obligatorios para guardar la ficha." };
+      }
+      return { draft: draft };
+    }
+
+    function candidatePayloadWithDecisionFields(row, fields) {
+      var payload = cloneJson((row && row.payload) || {});
+      var candidate = cloneJson(payload.candidate || payload);
+      Object.keys(fields || {}).forEach(function (rawKey) {
+        var key = canonicalProposalField(rawKey);
+        var value = fields[rawKey];
+        if (key === "display_name") candidate.name = proposalListValue(value);
+        else if (key === "website") candidate.website = proposalListValue(value);
+        else if (["country", "city", "region", "summary", "address"].indexOf(key) >= 0) candidate[key] = proposalListValue(value);
+        else if (["services", "specialties", "unidades", "profesionales", "tech"].indexOf(key) >= 0) candidate[key] = Array.isArray(value) ? value : linesToArray(value);
+        else if (key === "locations") candidate.locations = normalizedLocations(value);
+        else candidate[key] = proposalListValue(value);
+      });
+      payload.candidate = candidate;
+      payload.proposed_fields = Object.assign({}, payload.proposed_fields || {}, fields || {});
+      return payload;
+    }
+
+    async function persistModifiedCandidatePayload(row, fields) {
+      var payload = candidatePayloadWithDecisionFields(row, fields);
+      var result = await client
+        .from("review_queue")
+        .update({ payload: payload })
+        .eq("id", row.id);
+      if (result.error) return false;
+      row.payload = payload;
+      return true;
+    }
+
+    async function resolveReviewItem(reviewId, status, note) {
+      return client.rpc("admin_resolve_review_item", {
+        p_review_id: reviewId,
+        p_status: status,
+        p_note: note
+      });
+    }
+
+    function nextReviewAfterCurrent(currentId) {
+      return (reviewCache || []).find(function (row) {
+        return row.id !== currentId && row.status === "open";
+      }) || null;
+    }
+
+    async function finishReviewDecision(message, currentId) {
+      closeReviewEditor();
+      await loadDashboard();
+      var nextReview = nextReviewAfterCurrent(currentId);
+      if (nextReview) {
+        toast(message + " Paso a la siguiente propuesta.");
+        openReviewEditor(nextReview.id);
+        return;
+      }
+      el("reviewSelectionMessage").textContent = "Cola terminada. No quedan propuestas pendientes.";
+      show(el("reviewSelectionPanel"), true);
+      toast(message + " Cola terminada.");
+    }
+
+    function setReviewDecisionLoading(loading) {
+      var approveBlocked = !loading && activeReview && Number(((activeReview.payload || {}).duplicate_probability) || 0) >= 0.9;
+      el("reviewApproveBtn").disabled = loading || approveBlocked;
+      el("reviewRejectBtn").disabled = loading;
+      el("reviewModifyBtn").disabled = loading;
+    }
+
+    async function approveExistingClinicReview(fields, modified) {
+      var clinic = reviewClinicForRow(activeReview);
+      if (!clinic) {
+        toast("No encuentro la ficha enlazada para aprobar esta propuesta.");
+        return false;
+      }
+      var safetyWarnings = approvalSafetyWarnings(fields);
+      if (safetyWarnings.length) {
+        toast(safetyWarnings[0]);
+        return false;
+      }
+      if (!Object.keys(fields || {}).length) {
+        var resolvedOnly = await resolveReviewItem(
+          activeReview.id,
+          "resolved",
+          trimmed("reviewResolutionNote") || "Propuesta revisada sin cambios de datos."
+        );
+        if (resolvedOnly.error) {
+          toast("No se pudo resolver la propuesta.");
+          return false;
+        }
+        return true;
+      }
+      var built = buildApprovedClinicDraft(clinic, fields);
+      if (built.error) {
+        toast(built.error);
+        return false;
+      }
+      var draft = built.draft;
+      var note = trimmed("reviewResolutionNote") || (modified
+        ? "Propuesta aprobada con modificación manual."
+        : "Propuesta aprobada y aplicada.");
+      var updateResult = await client.rpc("admin_update_clinic", {
+        p_clinic_id: clinic.id,
+        p_display_name: draft.displayName,
+        p_website: draft.website || null,
+        p_country: draft.country,
+        p_city: draft.city,
+        p_region: draft.region || null,
+        p_address: draft.address || null,
+        p_status: draft.status,
+        p_summary: draft.summary || null,
+        p_current_data: draft.currentData,
+        p_profile_confidence: draft.confidence,
+        p_verification_status: draft.verification,
+        p_change_note: note
+      });
+      if (updateResult.error) {
+        toast("No se pudo guardar la ficha.");
+        return false;
+      }
+      var resolveResult = await resolveReviewItem(activeReview.id, "resolved", note);
+      if (resolveResult.error) {
+        toast("Ficha guardada, pero la propuesta no se cerró automáticamente.");
+        return false;
+      }
+      return true;
+    }
+
+    async function approveCandidateReview(fields, modified) {
+      if (Number(((activeReview.payload || {}).duplicate_probability) || 0) >= 0.9) {
+        toast("Duplicado probable: no apruebo una ficha nueva desde esta tarjeta.");
+        return false;
+      }
+      var safetyWarnings = approvalSafetyWarnings(fields);
+      if (safetyWarnings.length) {
+        toast(safetyWarnings[0]);
+        return false;
+      }
+      if (modified) {
+        var savedPayload = await persistModifiedCandidatePayload(activeReview, fields);
+        if (!savedPayload) {
+          toast("No se pudo guardar la modificación de la propuesta.");
+          return false;
+        }
+      }
+      var result = await client.rpc("admin_create_draft_clinic_from_review_v2", {
+        p_review_id: activeReview.id,
+        p_note: trimmed("reviewResolutionNote") || (modified
+          ? "Candidata aprobada con modificación manual."
+          : "Candidata aprobada como borrador interno.")
+      });
+      if (result.error) {
+        toast("No se pudo aprobar la candidata. Revisa duplicados o datos mínimos.");
+        return false;
+      }
+      return true;
+    }
+
+    async function approveReview(modified) {
+      if (!activeReview) return;
+      var currentId = activeReview.id;
+      var fields = modified ? reviewModifiedDecisionFields(activeReview) : reviewOriginalDecisionFields(activeReview);
+      setReviewDecisionLoading(true);
+      var ok = false;
+      if (activeReview.review_type === "candidate_clinic") {
+        ok = await approveCandidateReview(fields, modified);
+      } else if (activeReview.clinic_id) {
+        ok = await approveExistingClinicReview(fields, modified);
+      } else {
+        var result = await resolveReviewItem(
+          activeReview.id,
+          "resolved",
+          trimmed("reviewResolutionNote") || "Propuesta aprobada tras revisión manual."
+        );
+        ok = !result.error;
+        if (!ok) toast("No se pudo resolver la propuesta.");
+      }
+      setReviewDecisionLoading(false);
+      if (ok) await finishReviewDecision(modified ? "Modificación guardada." : "Propuesta aprobada.", currentId);
+    }
+
+    async function rejectReview() {
+      if (!activeReview) return;
+      var currentId = activeReview.id;
+      var reviewType = activeReview.review_type;
+      setReviewDecisionLoading(true);
+      var result = await resolveReviewItem(
+        activeReview.id,
+        "dismissed",
+        trimmed("reviewResolutionNote") || defaultDismissNote(reviewType)
+      );
+      setReviewDecisionLoading(false);
+      if (result.error) {
+        toast("No se pudo rechazar la propuesta.");
+        return;
+      }
+      await finishReviewDecision("Propuesta rechazada.", currentId);
+    }
+
+    function modifyReview() {
+      if (!activeReview) return;
+      if (!activeReviewModifyMode) {
+        renderReviewModifyPanel(activeReview);
+        setReviewModifyMode(true);
+        var firstField = el("reviewModifyFields").querySelector("textarea");
+        if (firstField) firstField.focus();
+        else toast("Esta propuesta no trae campos editables; aprueba o rechaza.");
+        return;
+      }
+      approveReview(true);
+    }
+
     function versionClinicData(row) {
       var data = (row && row.data) || {};
       var current = data.current_data || {};
@@ -6233,6 +6987,7 @@
     function setProposedLinks(payload) {
       var block = el("reviewProposedLinksBlock");
       var target = el("reviewCandidateProposedLinks");
+      if (!block || !target) return;
       var links = proposalLinkItems(payload);
       if (!links.length) {
         target.textContent = "—";
@@ -6413,22 +7168,7 @@
     }
 
     function loadRelatedEnrichmentProposals() {
-      if (!activeReview || !activeReview.clinic_id) return;
-      var rows = clinicReviewBundle(activeReview).filter(function (row) {
-        return row.clinic_id === activeReview.clinic_id && row.review_type === "clinic_profile_enrichment";
-      });
-      if (rows.length < 2) {
-        toast("No hay varias mejoras abiertas para cargar juntas.");
-        return;
-      }
-      var clinicId = activeReview.clinic_id;
-      activeClinicReview = activeReview;
-      activeClinicReviewIds = rows.map(function (row) { return row.id; }).filter(Boolean);
-      var payload = mergeReviewPayloads(rows);
-      closeReviewEditor();
-      openClinicEditor(clinicId);
-      applyClinicProposal(payload);
-      toast(rows.length + " mejoras cargadas juntas. Revisa y guarda una sola vez.");
+      toast("Las propuestas se validan una a una para no mezclar decisiones.");
     }
 
     function clinicSearchText(row) {
@@ -6507,7 +7247,12 @@
       var actionLead = reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget);
       renderReviewFilterChips();
       renderReviewCasePanel();
-      show(el("reviewActionStrip"), Boolean(nextReview || clinicGroup || duplicateReview || sourceTarget || googleLinkReview || specialistTarget));
+      if (activeReview) {
+        show(el("reviewActionStrip"), false);
+        show(el("reviewCasePanel"), false);
+      } else {
+        show(el("reviewActionStrip"), Boolean(nextReview || clinicGroup || duplicateReview || sourceTarget || googleLinkReview || specialistTarget));
+      }
       el("reviewActionTitle").textContent = actionLead.title;
       el("reviewActionDetail").textContent = actionLead.detail;
       show(el("openPriorityReviewBtn"), Boolean(nextReview));
@@ -6700,60 +7445,35 @@
       activeReview = reviewCache.find(function (row) { return row.id === id; });
       if (!activeReview) return;
 
-      var candidate = candidateFromReview(activeReview);
       var payload = activeReview.payload || {};
-      var isQualityAudit = activeReview.review_type === "clinic_quality_audit";
-      var isEnrichment = activeReview.review_type === "clinic_profile_enrichment";
-      var isSourceChange = activeReview.review_type === "source_change_detected";
-      var website = candidate.website || candidate.web;
-      var source = candidate.source_url || payload.candidate_source_url || website;
-      var confidence = candidate.discovery_confidence || candidate.confidence;
       var duplicateProbability = Number(payload.duplicate_probability || 0);
       var blocksDraft = duplicateProbability >= 0.9;
 
       el("reviewEditorTitle").textContent = activeReview.title || "Revisar propuesta";
       el("reviewEditorMeta").textContent = reviewVisibleLabel(activeReview) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
-      setText("reviewCandidateName", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_name : candidate.name || candidate.clinic_name);
-      setText("reviewCandidateCity", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_city : candidate.city);
-      setText("reviewCandidateCountry", (isQualityAudit || isEnrichment || isSourceChange) ? payload.clinic_country : candidate.country || (payload.job_input || {}).country);
-      setText("reviewCandidateConfidence", confidence == null ? "" : pct(confidence));
-      setLink("reviewCandidateWebsite", (isQualityAudit || isEnrichment || isSourceChange) ? payload.website || payload.source_url : website);
-      if (isEnrichment) {
-        setLinks("reviewCandidateSource", sourceList(payload));
-      } else if (isSourceChange) {
-        setLinks("reviewCandidateSource", [payload.source_url].filter(Boolean));
-      } else {
-        setLinks("reviewCandidateSource", candidateReviewSources(candidate, payload, source));
-      }
-      setProposedLinks(payload);
-      setDuplicateMatches(payload.duplicate_matches, duplicateProbability);
-      setInlineList("reviewCandidateServices", isQualityAudit ? issueLabels(payload.issues) : isEnrichment ? proposalFieldItems(payload) : isSourceChange ? [
-        "Hash anterior: " + text(payload.previous_hash || "").slice(0, 12),
-        "Hash actual: " + text(payload.current_hash || "").slice(0, 12),
-        "Fuente revisada: " + date(payload.retrieved_at)
-      ].concat(materialChangeItems(payload)) : candidateList(candidate, "services"));
-      setInlineList("reviewCandidateProfessionals", (isQualityAudit || isSourceChange) ? [] : isEnrichment ? proposalProfessionals(payload) : candidateList(candidate, "profesionales", "professionals"));
-      renderReviewContext(activeReview, payload, blocksDraft);
-      renderReviewGuidance(activeReview, payload);
-      renderReviewRules(payload);
-      renderReviewFlow(activeReview.review_type, blocksDraft);
-      renderRelatedReviews(activeReview);
-      el("reviewCreateDraftBtn").disabled = !isQualityAudit && !isEnrichment && !isSourceChange && blocksDraft;
-      el("reviewCreateDraftBtn").textContent = primaryReviewButtonLabel(activeReview.review_type, blocksDraft);
-      el("reviewActionNote").textContent = reviewActionNote(activeReview.review_type, blocksDraft);
-      el("reviewDismissBtn").textContent = dismissButtonLabel(activeReview.review_type);
+      renderReviewValidationView(activeReview);
+      el("reviewApproveBtn").disabled = blocksDraft;
+      el("reviewApproveBtn").title = blocksDraft ? "Duplicado probable: rechaza o modifica tras revisar." : "";
+      el("reviewRejectBtn").disabled = false;
+      el("reviewModifyBtn").disabled = false;
       setInput("reviewResolutionNote", "");
+      activeControlSection = "reviewWorkArea";
+      setControlNavActive("reviewWorkArea");
+      setControlSectionVisible("reviewWorkArea");
+      show(el("jobCreatePanel"), false);
+      show(el("reviewSelectionPanel"), false);
       show(el("reviewEditor"), true);
+      renderReviews();
       el("reviewEditor").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function closeReviewEditor() {
       activeReview = null;
-      show(el("relatedReviewsPanel"), false);
-      el("relatedReviewsList").innerHTML = "";
-      show(el("reviewProposedLinksBlock"), false);
-      el("reviewCandidateProposedLinks").textContent = "—";
+      renderReviewValidationView(null);
       show(el("reviewEditor"), false);
+      show(el("reviewSelectionPanel"), true);
+      show(el("jobCreatePanel"), true);
+      renderReviews();
     }
 
     async function saveClinic(event) {
@@ -6859,7 +7579,7 @@
       if (activeClinicReview && activeClinicReview.clinic_id === activeClinic.id) {
         var reviewIdsToResolve = activeClinicReviewIds.length ? activeClinicReviewIds.slice() : [activeClinicReview.id];
         var defaultNote = reviewIdsToResolve.length > 1
-          ? "Ficha actualizada desde propuestas agrupadas."
+          ? "Ficha actualizada desde revisión manual."
           : activeClinicReview.review_type === "clinic_profile_enrichment"
           ? "Ficha actualizada desde propuesta de ampliación."
           : "Ficha actualizada desde revisión de calidad.";
@@ -7085,14 +7805,16 @@
         return;
       }
 
-      el("reviewCreateDraftBtn").disabled = true;
-      el("reviewDismissBtn").disabled = true;
+      var createDraftBtn = el("reviewCreateDraftBtn");
+      var dismissBtn = el("reviewDismissBtn");
+      if (createDraftBtn) createDraftBtn.disabled = true;
+      if (dismissBtn) dismissBtn.disabled = true;
       var result = await client.rpc("admin_create_draft_clinic_from_review_v2", {
         p_review_id: activeReview.id,
         p_note: trimmed("reviewResolutionNote") || null
       });
-      el("reviewCreateDraftBtn").disabled = false;
-      el("reviewDismissBtn").disabled = false;
+      if (createDraftBtn) createDraftBtn.disabled = false;
+      if (dismissBtn) dismissBtn.disabled = false;
 
       if (result.error) {
         toast("No se pudo crear el borrador. Puede que ya exista.");
@@ -7111,15 +7833,17 @@
       if (!activeReview) return;
       var reviewType = activeReview.review_type;
       var note = trimmed("reviewResolutionNote") || defaultDismissNote(reviewType);
-      el("reviewCreateDraftBtn").disabled = true;
-      el("reviewDismissBtn").disabled = true;
+      var createDraftBtn = el("reviewCreateDraftBtn");
+      var dismissBtn = el("reviewDismissBtn");
+      if (createDraftBtn) createDraftBtn.disabled = true;
+      if (dismissBtn) dismissBtn.disabled = true;
       var result = await client.rpc("admin_resolve_review_item", {
         p_review_id: activeReview.id,
         p_status: "dismissed",
         p_note: note
       });
-      el("reviewCreateDraftBtn").disabled = false;
-      el("reviewDismissBtn").disabled = false;
+      if (createDraftBtn) createDraftBtn.disabled = false;
+      if (dismissBtn) dismissBtn.disabled = false;
 
       if (result.error) {
         toast("No se pudo descartar la propuesta.");
@@ -7318,10 +8042,9 @@
       el("clinicCancelTop").addEventListener("click", closeClinicEditor);
       el("clinicDiscardBtn").addEventListener("click", discardActiveClinic);
       el("clinicPublishBtn").addEventListener("click", publishActiveClinic);
-      el("reviewCloseBtn").addEventListener("click", closeReviewEditor);
-      el("reviewCloseTop").addEventListener("click", closeReviewEditor);
-      el("reviewCreateDraftBtn").addEventListener("click", createClinicDraftFromReview);
-      el("reviewDismissBtn").addEventListener("click", dismissReview);
+      el("reviewApproveBtn").addEventListener("click", function () { approveReview(false); });
+      el("reviewRejectBtn").addEventListener("click", rejectReview);
+      el("reviewModifyBtn").addEventListener("click", modifyReview);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);
       el("clinicPublishFilter").addEventListener("change", renderClinics);
@@ -7343,14 +8066,6 @@
       el("reviewTypeFilter").addEventListener("change", renderReviews);
       el("reviewPriorityFilter").addEventListener("change", renderReviews);
       el("reviewClearFilters").addEventListener("click", clearReviewFilters);
-      el("relatedReviewsList").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-related-review-id]");
-        if (button) openReviewEditor(button.getAttribute("data-related-review-id"));
-      });
-      el("relatedReviewPlan").addEventListener("click", function (event) {
-        var button = event.target.closest("[data-load-related-proposals]");
-        if (button) loadRelatedEnrichmentProposals();
-      });
       el("reviewFilterChips").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group],[data-review-group-clear]");
         if (!button) return;

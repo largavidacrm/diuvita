@@ -438,7 +438,7 @@ def clinic_workgroup_click_from_digest(digest: dict[str, Any]) -> str:
     count = as_int(group.get("open_count"))
     if not name or not count:
         return ""
-    return f"Filtrar grupo: {name}, {count} tarjetas juntas."
+    return f"Filtrar grupo: {name}, {count} tarjetas, una por una."
 
 
 def cycle_next_clicks(digest: dict[str, Any]) -> list[str]:

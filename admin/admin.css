@@ -269,7 +269,7 @@ button:disabled {
 
 .control-layout {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
   min-width: 0;
@@ -279,6 +279,8 @@ button:disabled {
   position: sticky;
   top: 5rem;
   z-index: 5;
+  display: grid;
+  gap: 0.75rem;
   min-width: 0;
   max-width: 100%;
 }
@@ -771,7 +773,7 @@ button:disabled {
 
 .work-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  grid-template-columns: minmax(0, 0.95fr) minmax(300px, 1.05fr);
   gap: 1rem;
   align-items: start;
 }
@@ -1062,6 +1064,37 @@ button:disabled {
   padding: 1rem;
 }
 
+.job-side-panel .panel-head,
+.job-side-panel .panel-body {
+  padding: 0.72rem;
+}
+
+.job-side-panel .panel-head h2 {
+  font-size: 0.92rem;
+}
+
+.job-side-panel .job-form {
+  gap: 0.62rem;
+}
+
+.job-side-panel .job-help {
+  padding: 0.62rem;
+}
+
+.job-side-panel .job-help p,
+.job-side-panel .job-backlog-hint {
+  font-size: 0.82rem;
+}
+
+.job-side-panel .job-examples {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.job-side-panel .btn {
+  width: 100%;
+}
+
 .review-filter-panel {
   display: grid;
   gap: 0.42rem;
@@ -1294,74 +1327,168 @@ td small {
   scroll-margin-top: 5rem;
 }
 
-.review-detail {
+.review-selection-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.review-editor-panel {
+  position: sticky;
+  top: 5rem;
+  max-height: calc(100vh - 6rem);
+  overflow: auto;
+}
+
+.review-decision {
   display: grid;
-  gap: 1rem;
+  gap: 0.8rem;
   padding: 1rem;
 }
 
-.review-action-note {
-  margin: -0.15rem 0 0;
-  color: var(--muted);
-  font-size: 0.96rem;
-  line-height: 1.4;
-}
-
-.review-flow {
+.review-decision-summary {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.55fr);
   gap: 0.75rem;
-  padding: 0.85rem;
+  padding: 0.82rem;
   border: 1px solid rgba(14, 79, 74, 0.22);
   border-radius: 8px;
   background: var(--wash);
 }
 
-.review-flow h3 {
+.review-decision-summary span,
+.review-current-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.review-decision-summary strong,
+.review-decision-summary small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.review-decision-summary strong {
+  margin-top: 0.16rem;
+  line-height: 1.2;
+}
+
+.review-decision-summary small {
+  margin-top: 0.14rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.review-proposal-focus,
+.review-current-relevant,
+.review-evidence-panel,
+.review-warning-panel,
+.review-modify-panel {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.review-proposal-focus {
+  background: #fff;
+}
+
+.review-current-relevant,
+.review-evidence-panel,
+.review-modify-panel {
+  background: rgba(247, 244, 238, 0.72);
+}
+
+.review-warning-panel {
+  border-color: rgba(166, 129, 62, 0.42);
+  background: #f8ecd8;
+}
+
+.review-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.review-section-head h3,
+.review-proposal-item h4 {
   margin: 0;
   font-size: 0.96rem;
+  line-height: 1.2;
 }
 
-.review-flow p {
-  margin: 0.12rem 0 0;
+.review-section-head p {
+  margin: 0.16rem 0 0;
   color: var(--muted);
+  line-height: 1.35;
 }
 
-.review-flow-steps {
+.review-proposal-list,
+.review-current-list,
+.review-evidence-list,
+.review-modify-fields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.55rem;
+  gap: 0.62rem;
 }
 
-.review-flow-step {
-  min-width: 0;
-  padding: 0.68rem;
+.review-proposal-item {
+  display: grid;
+  padding: 0.72rem;
+  border: 1px solid rgba(14, 79, 74, 0.2);
+  border-radius: 8px;
+  background: var(--wash);
+}
+
+.review-proposal-value {
+  margin-top: 0.28rem;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.review-current-item {
+  padding: 0.72rem;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
 }
 
-.review-flow-step span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.45rem;
-  height: 1.45rem;
-  border-radius: 8px;
-  background: var(--green);
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.review-flow-step strong {
-  display: block;
-  margin-top: 0.45rem;
-  line-height: 1.18;
-}
-
-.review-flow-step p {
+.review-current-item div {
   margin-top: 0.22rem;
-  line-height: 1.32;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.review-current-item a,
+.review-proposal-value a,
+.review-evidence-list a {
+  color: var(--green-deep);
+  font-weight: 700;
+}
+
+.snapshot-empty {
+  color: var(--muted);
+}
+
+.review-note-field textarea {
+  min-height: 4rem;
+}
+
+.review-decision-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.review-decision-actions .btn {
+  width: 100%;
 }
 
 .review-rules,
@@ -2220,24 +2347,48 @@ td small {
   z-index: 20;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 760px) {
   .control-layout {
     grid-template-columns: 1fr;
   }
 
   .control-sidebar {
+    position: static;
     top: 4.8rem;
+    grid-template-columns: minmax(132px, 0.42fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .control-nav {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    overflow-x: visible;
+    padding: 0.5rem;
+  }
+
+  .control-nav-item {
+    min-height: 3rem;
+  }
+
+  .job-side-panel {
+    max-width: none;
+  }
+
+  .review-editor-panel {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .control-sidebar {
+    grid-template-columns: 1fr;
   }
 
   .control-nav {
     grid-auto-flow: column;
     grid-auto-columns: minmax(118px, 1fr);
     overflow-x: auto;
-    padding: 0.5rem;
-  }
-
-  .control-nav-item {
-    min-height: 3rem;
   }
 }
 
@@ -2333,6 +2484,11 @@ td small {
     width: 100%;
   }
 
+  .review-editor-panel {
+    position: static;
+    max-height: none;
+  }
+
   .clinic-public-sync {
     align-items: stretch;
     flex-direction: column;
@@ -2351,7 +2507,10 @@ td small {
   .work-grid,
   .detail-grid,
   .diff-cols,
-  .review-flow-steps,
+  .review-proposal-item,
+  .review-snapshot-section dl,
+  .review-decision-summary,
+  .review-decision-actions,
   .global-plan-orientation,
   .global-plan-checkpoints,
   .global-plan-simple,

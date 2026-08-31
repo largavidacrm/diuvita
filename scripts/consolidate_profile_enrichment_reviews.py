@@ -380,11 +380,11 @@ def consolidated_group(group: dict[str, Any]) -> dict[str, Any]:
         if field in PHONE_FIELDS and not plausible_phone(value)
     )
     if conflicts:
-        next_step = "resolver conflictos antes de cargar mejoras juntas"
+        next_step = "resolver conflictos antes de validar propuestas"
     elif weak_phone_fields:
-        next_step = "revisar telefonos dudosos antes de cargar mejoras juntas"
+        next_step = "revisar telefonos dudosos antes de validar propuestas"
     elif review_fields:
-        next_step = "abrir el caso y usar Cargar mejoras juntas"
+        next_step = "abrir el caso y resolver una propuesta cada vez"
     else:
         next_step = "confirmar que la ficha ya lo contiene y cerrar tarjetas sobrantes"
 
@@ -574,7 +574,7 @@ def format_report(report: dict[str, Any]) -> str:
         lines.append(format_group(group))
     lines.extend([
         "",
-        "Nota: este informe no resuelve tarjetas. Sirve para cargar mejoras juntas y revisar conflictos antes de guardar.",
+        "Nota: este informe no resuelve tarjetas. Sirve para priorizar revisiones, detectar conflictos y preparar campos antes de decidir tarjetas una a una.",
     ])
     return "\n".join(lines) + "\n"
 

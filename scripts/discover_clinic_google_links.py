@@ -629,6 +629,28 @@ def compact_summary(summary: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def safe_compact_summary(summary: dict[str, Any]) -> dict[str, Any]:
+    compact = compact_summary(summary)
+    for key in ("ready_items", "empty_with_candidates", "failed_items"):
+        cleaned = []
+        for item in compact.get(key) or []:
+            proposed_fields = item.get("proposed_fields") if isinstance(item.get("proposed_fields"), dict) else {}
+            cleaned.append({
+                **item,
+                "proposed_field_keys": sorted(proposed_fields.keys()),
+                "maps_proposed": "maps_url" in proposed_fields,
+                "reviews_proposed": "google_reviews_url" in proposed_fields,
+            })
+            cleaned[-1].pop("proposed_fields", None)
+        compact[key] = cleaned
+    compact["safe_compact"] = True
+    compact["safety"] = (
+        str(compact.get("safety") or "")
+        + "; compact output omits proposed Google URLs"
+    ).strip("; ")
+    return compact
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=10)
@@ -644,6 +666,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--apply", action="store_true", help="Create internal review cards. Never edits clinics.")
     parser.add_argument("--compact", action="store_true", help="Print a compact summary without full Google candidate URLs.")
+    parser.add_argument("--safe-compact", action="store_true", help="Print compact counts without proposed Google URLs.")
     return parser.parse_args()
 
 
@@ -664,7 +687,9 @@ def main() -> int:
         for clinic in clinics
     ]
     output = summarize(results, args.apply)
-    if args.compact:
+    if args.safe_compact:
+        output = safe_compact_summary(output)
+    elif args.compact:
         output = compact_summary(output)
     print(json.dumps(output, ensure_ascii=False, indent=2))
     return 0 if output["failed"] == 0 else 1

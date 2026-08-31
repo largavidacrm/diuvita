@@ -168,7 +168,7 @@ def main():
     check("No activar todavía: muestra humana insuficiente: 2/200 candidatas" in output, "not-ready quick line missing")
     check("## Siguiente en el panel" in output, "panel next-click section missing")
     check("No crees trabajos nuevos hasta bajar la bandeja; ahora está cerca del freno: 48/50 abiertas." in output, "panel backlog guard missing")
-    check("Pulsa Filtrar grupo y trabaja Sensabell: 5 tarjetas juntas." in output, "panel clinic-group click missing")
+    check("Pulsa Filtrar grupo y abre Sensabell: 5 tarjetas, una por una." in output, "panel clinic-group click missing")
     check("Pulsa Especialistas y abre primero la tarjeta con más nombres: Regenera Clinic Medicina de la Longevidad." in output, "panel specialist click missing")
     check("Pulsa Google Maps y valida que el enlace abre el perfil real de la clínica: Completar enlaces Google: Sensabell." in output, "panel Google Maps click missing")
     check("Fase activa: centro de control y reducción de bandeja" in output, "phase line missing")

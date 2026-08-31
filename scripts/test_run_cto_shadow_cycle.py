@@ -296,7 +296,7 @@ def main():
                 "weak_phone_fields": ["phone_fixed"],
                 "merged_fields": {"profesionales": ["Dra. Example"]},
                 "source_urls": ["https://sensabell.example/equipo/"],
-                "next_step": "resolver conflictos antes de cargar mejoras juntas",
+                "next_step": "resolver conflictos antes de validar propuestas",
             }
         ],
     })

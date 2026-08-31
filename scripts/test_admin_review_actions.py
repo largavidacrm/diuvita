@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks that admin review actions keep their context after closing panels."""
+"""Checks that admin review proposals stay single-decision and traceable."""
 import re
 from pathlib import Path
 
@@ -14,65 +14,94 @@ def check(condition: bool, message: str) -> None:
 
 def main() -> None:
     index = (ROOT / "admin" / "index.html").read_text(encoding="utf-8")
-    match = re.search(r"async function dismissReview\(\) \{([\s\S]+?)\n    \}", index)
-    check(match is not None, "dismissReview function missing")
-    body = match.group(1)
+
+    for marker in [
+        'id="reviewSearch"',
+        'id="reviewTypeFilter"',
+        'id="reviewPriorityFilter"',
+        'id="reviewsBody"',
+        'data-review-id',
+        'id="reviewSelectionPanel"',
+        'id="reviewDecisionSummary"',
+        'id="reviewAffectedClinic"',
+        'id="reviewAffectedClinicMeta"',
+        'id="reviewProposalType"',
+        'id="reviewProposalDate"',
+        'id="reviewCurrentRelevantPanel"',
+        'id="reviewCurrentRelevantCount"',
+        'id="reviewCurrentRelevantList"',
+        'id="reviewProposalFocus"',
+        'id="reviewProposalFocusTitle"',
+        'id="reviewProposalFocusMeta"',
+        'id="reviewProposalFocusCount"',
+        'id="reviewProposalFocusList"',
+        'id="reviewEvidencePanel"',
+        'id="reviewEvidenceCount"',
+        'id="reviewEvidenceList"',
+        'id="reviewWarningPanel"',
+        'id="reviewWarningCount"',
+        'id="reviewWarningList"',
+        'id="reviewModifyPanel"',
+        'id="reviewModifyFields"',
+        'id="reviewResolutionNote"',
+        'id="reviewApproveBtn"',
+        'id="reviewRejectBtn"',
+        'id="reviewModifyBtn"',
+        ">Aprobar</button>",
+        ">Rechazar</button>",
+        ">Modificar</button>",
+        "Clínica afectada",
+        "Tipo de propuesta",
+        "Datos actuales relevantes",
+        "Cambio propuesto",
+        "Fuente o evidencia",
+        "Advertencias imprescindibles",
+        "Observación breve",
+    ]:
+        check(marker in index, f"missing single-decision review marker: {marker}")
+
+    for removed_dom in [
+        'id="reviewActionNote"',
+        'id="reviewFlowPanel"',
+        'id="reviewGuidancePanel"',
+        'id="relatedReviewsPanel"',
+        'id="reviewClinicSnapshot"',
+        'id="reviewCreateDraftBtn"',
+        'id="reviewDismissBtn"',
+        'data-load-related-proposals',
+        'data-related-review-id',
+    ]:
+        check(removed_dom not in index, f"old chained review UI should not be present: {removed_dom}")
+
+    check("Cargar mejoras juntas" not in index, "single proposals should not offer grouped loading")
+    check("Ver solicitud" not in index and "Confirmar identidad" not in index and "Cerrar tarjeta" not in index, "old review steps should be removed")
+    check('class="review-flow-step"' not in index, "old oversized step cards should be removed")
 
     check(
-        "var reviewType = activeReview.review_type;" in body,
-        "dismissReview should keep review type before closing",
+        index.index('id="reviewCurrentRelevantPanel"')
+        < index.index('id="reviewProposalFocus"')
+        < index.index('id="reviewEvidencePanel"')
+        < index.index('id="reviewWarningPanel"')
+        < index.index('id="reviewModifyPanel"')
+        < index.index('id="reviewApproveBtn"')
+        < index.index('id="reviewRejectBtn"')
+        < index.index('id="reviewModifyBtn"'),
+        "review editor should end with the three decision actions",
     )
-    check(
-        'var note = trimmed("reviewResolutionNote") || defaultDismissNote(reviewType);' in body,
-        "dismissReview should keep the resolution note before closing",
-    )
-    check("p_note: note" in body, "dismissReview should submit the preserved note")
 
-    after_close = body.split("closeReviewEditor();", 1)[-1]
-    check(
-        "activeReview.review_type" not in after_close,
-        "dismissReview should not read activeReview after closeReviewEditor",
-    )
     check(
         "function candidateReviewSources" in index
         and "candidate.source_urls" in index
-        and 'setLinks("reviewCandidateSource", candidateReviewSources(candidate, payload, source));' in index,
-        "candidate reviews should show all source URLs",
-    )
-    check(
-        'id="reviewProposedLinksBlock"' in index
-        and 'id="reviewCandidateProposedLinks"' in index
-        and "function proposalLinkUrl(value)" in index
-        and "function proposalLinkItems(payload)" in index
-        and "function proposalLinkWarning(item)" in index
-        and "function setProposedLinks(payload)" in index
-        and "setProposedLinks(payload);" in index,
-        "review editor should show proposed links separately",
-    )
-    check(
-        'id="reviewContextPanel"' in index
-        and 'id="reviewContextTitle"' in index
-        and 'id="reviewContextDetail"' in index
-        and "function reviewContextCopy" in index
-        and "function renderReviewContext" in index
-        and "renderReviewContext(activeReview, payload, blocksDraft);" in index,
-        "review editor should show publication context for every review card",
-    )
-    check(
-        "Candidata: todavía no está en la guía." in index
-        and "Sus datos no aparecerán online hasta crear un borrador" in index
-        and "especialistas propuestos" in index
-        and "Mejora de ficha existente." in index
-        and "La información está recogida como propuesta interna" in index,
-        "candidate and enrichment review context should explain why data is not public yet",
+        and "function reviewEvidenceItems" in index
+        and "candidateReviewSources(candidate, payload, source).forEach" in index
+        and "proposalLinkItems(payload).forEach" in index,
+        "candidate evidence should keep all source URLs in the focused evidence block",
     )
     check(
         'value="clinic_claim_request"' in index
         and "function isClinicClaimRequestReview" in index
         and "Reclamación de ficha" in index
-        and "Revisar reclamación" in index
         and "No confirma identidad, no da acceso y no cambia datos" in index
-        and "Solicitud de clínica: siempre requiere decisión humana." in index
         and "Cerrar reclamación" in index
         and "Reclamación cerrada sin cambios en la ficha." in index,
         "clinic claim requests should be a human-only review flow",
@@ -93,19 +122,20 @@ def main() -> None:
         "proposed Google Maps links should warn on weak URLs without numbered sede labels",
     )
     check(
-        'data-load-related-proposals' in index
-        and "Cargar mejoras juntas" in index
-        and "function canonicalProposalField" in index
+        "function canonicalProposalField" in index
         and "function mergeReviewPayloads(rows)" in index
         and "function loadRelatedEnrichmentProposals()" in index
+        and "function relatedOpenReviews" in index
+        and "function clinicReviewBundle" in index
+        and "function reviewWorkgroupRecommendation" in index
         and "activeClinicReviewIds" in index,
-        "related enrichment reviews should be loadable as one grouped proposal",
+        "group analysis helpers should remain available for future automation",
     )
     check(
-        "Ficha actualizada desde propuestas agrupadas." in index
+        "Ficha actualizada desde revisión manual." in index
         and "alguna tarjeta no se cerró automáticamente" in index
         and "Conflicto en " in index,
-        "saving grouped proposals should resolve grouped cards and warn on conflicts",
+        "legacy grouped-save safeguards should remain safe and non-public",
     )
     check(
         'phone: "telefono"' in index
@@ -123,6 +153,30 @@ def main() -> None:
         "grouped proposals should normalize aliases, merge technology and warn on weak phones",
     )
     check(
+        "function approveReview" in index
+        and "function approveExistingClinicReview" in index
+        and "function approveCandidateReview" in index
+        and "function rejectReview" in index
+        and "function modifyReview" in index
+        and "function finishReviewDecision" in index
+        and 'await finishReviewDecision(modified ? "Modificación guardada." : "Propuesta aprobada.", currentId)' in index
+        and 'await finishReviewDecision("Propuesta rechazada.", currentId)' in index
+        and "openReviewEditor(nextReview.id)" in index
+        and "Cola terminada. No quedan propuestas pendientes." in index
+        and "admin_update_clinic" in index
+        and "admin_create_draft_clinic_from_review_v2" in index
+        and "admin_resolve_review_item" in index,
+        "approve, reject and modify should resolve one proposal and continue the queue",
+    )
+    check(
+        'show(el("jobCreatePanel"), false)' in index
+        and 'show(el("reviewSelectionPanel"), false)' in index
+        and 'show(el("reviewEditor"), true)' in index
+        and 'show(el("reviewActionStrip"), false)' in index
+        and 'show(el("reviewCasePanel"), false)' in index,
+        "opening a review should hide non-decision panels",
+    )
+    check(
         'reviewType === "clinic_claim_request"' in index
         and "Reclamación sin ficha enlazada. No crearé un borrador automáticamente." in index
         and "Reclamación abierta. No concede acceso ni cambia datos automáticamente." in index
@@ -130,9 +184,12 @@ def main() -> None:
         "clinic claim requests should open existing clinic context instead of creating a draft",
     )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
-    check(".review-context" in css, "review context should be styled")
-    check(".compact-list small" in css, "proposed link URLs should remain readable on mobile")
-    check(".compact-list em" in css, "proposed link warnings should be styled")
+    check(".review-decision" in css, "single decision container should be styled")
+    check(".review-decision-summary" in css, "review decision summary should be styled")
+    check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
+    check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")
+    check(".review-modify-panel" in css and ".review-decision-actions" in css, "modify and action panels should be styled")
+    check("grid-template-columns: repeat(3, minmax(0, 1fr))" in css, "three review actions should share one row")
     check("quick-primary" in index and "quick-action" in index, "quick review actions should be classified")
     check("review-action-lead" in index and "review-action-buttons" in index, "quick review actions should have lead copy and grouped buttons")
     check(
@@ -149,7 +206,7 @@ def main() -> None:
     check("grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.15fr)" in css, "quick actions should use a compact lead/buttons grid")
     check(".review-action-buttons" in css and "repeat(auto-fit, minmax(8.4rem, 1fr))" in css, "quick action buttons should be gridded")
     check("grid-template-columns: 1fr" in css, "quick actions should stack on mobile")
-    print("OK admin review actions: dismiss keeps context")
+    print("OK admin review actions: single-decision queue flow")
 
 
 if __name__ == "__main__":

@@ -445,8 +445,8 @@ def workgroup_recommendation(row: dict[str, Any]) -> str:
     if as_int(row.get("source_change_reviews")):
         return "primero revisar qué cambió en la fuente"
     if as_int(row.get("enrichment_reviews")):
-        return "consolidar una sola versión de ficha"
-    return "revisar juntas antes de cerrar"
+        return "priorizar y resolver una propuesta cada vez"
+    return "priorizar antes de cerrar"
 
 
 def format_clinic_workgroup(row: dict[str, Any]) -> str:

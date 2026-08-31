@@ -153,18 +153,19 @@ perfil real de la clínica, el campo queda pendiente; no usamos enlaces genéric
 a una dirección.
 
 Si una tarjeta muestra un aviso bajo el enlace de Google Maps, trátalo como
-pendiente: abre el enlace y guárdalo solo si ves la ficha real de la clínica.
+pendiente: abre el enlace y apruébalo solo si ves la ficha real de la clínica.
 
-Dentro de una tarjeta con varias revisiones relacionadas verás **Orden
-recomendado**. Empieza por lo que marque ahí: normalmente claims bloqueantes o
-fuentes cambiadas antes de guardar la ficha final.
+Cuando una misma clínica tenga varias tarjetas abiertas, el panel puede usarlo
+para ordenar prioridades o filtrar la lista. Al abrir una tarjeta, aun así,
+decides solo esa propuesta: aprobar, rechazar o modificar. No se mezclan varias
+decisiones dentro de la misma ficha.
 
-Si ese bloque muestra **Contacto dudoso**, no cargues y guardes de corrido:
-significa que alguna propuesta trae un teléfono con forma rara o mezclada.
-Puedes cargar las mejoras, pero antes de guardar corrige el teléfono, sepáralo
-en fijo/móvil/WhatsApp si procede o bórralo si no es claramente un contacto.
-Si el panel ya separa dos números claros en principal/fijo/móvil, revísalos
-igualmente antes de guardar: la separación ayuda, pero no aprueba el dato.
+Si una propuesta muestra **Contacto dudoso**, no la apruebes tal cual: significa
+que trae un teléfono con forma rara o mezclada. Puedes modificar solo ese campo,
+separarlo en fijo/móvil/WhatsApp si procede o rechazarlo si no es claramente un
+contacto. Si el panel ya separa dos números claros en principal/fijo/móvil,
+revísalos igualmente antes de aprobar: la separación ayuda, pero no aprueba el
+dato.
 
 El botón **Abrir fuente** abre la primera tarjeta relacionada con la ficha
 marcada en **Siguiente fuente**. Si no hay una tarjeta exacta visible, filtra la
@@ -195,10 +196,10 @@ Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. S
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
 
-En **Crear trabajo**, el panel avisa cuando la bandeja está casi llena. Si el
-freno está cerca del límite, pausa crear más trabajos hasta limpiar revisiones.
-Así evitamos llenar la bandeja con más tarjetas antes de cerrar las que ya
-existen.
+En el lateral, debajo del menú, tienes **Crear trabajo**. El panel avisa cuando
+la bandeja está casi llena. Si el freno está cerca del límite, pausa crear más
+trabajos hasta limpiar revisiones. Así evitamos llenar la bandeja con más
+tarjetas antes de cerrar las que ya existen.
 
 ## Revisar mejoras de una ficha existente
 
@@ -206,48 +207,41 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 
 1. Entra en **Necesitan revisión**.
 2. Abre una tarjeta de tipo `clinic_profile_enrichment`.
-3. Revisa los campos propuestos y sus fuentes.
-4. Pulsa **Editar clínica**.
-5. El panel carga la propuesta dentro del formulario.
-6. Revisa el contenido, elige el estado de la ficha y guarda solo si te encaja.
+3. Verás solo la clínica afectada, el tipo de propuesta, los datos actuales
+   relevantes, el cambio propuesto, las fuentes y los avisos imprescindibles.
+4. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
+5. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
+   confirma con **Modificar**.
+6. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
+   pendiente. Si no queda ninguna, vuelve a la lista.
 
-Hasta que no guardes, la web pública no cambia. Después de guardar una ficha
-publicada o preliminar, puede quedar **pendiente de verse online** hasta que se
-ejecute la publicación agrupada.
+La aprobación aplica la propuesta mediante el flujo existente, pero no cambia la
+publicación por accidente. Datos sensibles, Google Maps dudoso, precios, equipo
+o claims conflictivos siguen requiriendo revisión humana y pueden quedar
+bloqueados como aviso.
 
-En las tarjetas de mejora puede aparecer **Enlaces propuestos**. Ahí se muestran
-clicables los enlaces que el sistema cree relevantes: Google Maps, valoraciones
-de Google, página de precios o web propuesta. Es una ayuda de revisión, no una
-aprobación automática.
-
-Al abrir una revisión verás un bloque de contexto arriba. Si dice
-**Candidata**, esa clínica todavía no está en la guía pública aunque tenga
-profesionales detectados; primero se crea un borrador y después se decide si se
-publica. Si dice **Mejora de ficha existente**, la información ya está asociada
-a una clínica conocida, pero sigue pendiente de cargarla en el editor y
-guardarla.
-
-Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, pulsa **Editar clínica** y revisa el bloque **Evidencias propuestas** antes de guardar o cerrar la revisión. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
+Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, revisa **Fuente o evidencia** y decide si apruebas, rechazas o modificas esa propuesta. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
 
 Si ves una tarjeta llamada **Reclamación de ficha**, trátala como una solicitud
-de verificación humana. El botón principal abre la ficha para mirar contexto,
-pero no crea borrador, no publica, no cambia datos y no concede acceso por sí
-solo. Daniel decide si se pide prueba, si se acepta o si se cierra.
+de verificación humana. La tarjeta sirve para mirar contexto, pero no crea
+borrador, no publica, no cambia datos y no concede acceso por sí sola. Daniel
+decide si se pide prueba, si se acepta o si se cierra.
 
-En las tarjetas de claims bloqueantes verás **Paso recomendado**. No es una
-decisión automática: te orienta sobre si conviene comparar evidencias, buscar
+En las tarjetas de claims bloqueantes verás avisos imprescindibles. No son una
+decisión automática: te orientan sobre si conviene comparar evidencias, buscar
 una fuente oficial o dejar ese dato fuera de publicación.
 
-En **Evidencias propuestas**, cada claim muestra el motivo de la regla, cuándo
-se guardó y un enlace a la fuente cuando existe. Eso te permite ver de dónde
-sale un dato sin leer información técnica cruda.
+En **Fuente o evidencia**, cada propuesta muestra los enlaces o datos que
+justifican el cambio cuando existen. Eso te permite ver de dónde sale un dato
+sin leer información técnica cruda.
 
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
 Puedes usar el filtro **Especialistas** para ver solo tarjetas que mencionan
 especialistas publicados o profesionales detectados.
 
-En la tarjeta de revisión verás **Camino de publicación**. Ese bloque recuerda el flujo:
-crear borrador interno, completar datos y publicar solo desde el editor de clínica.
+Al abrir una tarjeta, no verás caminos de publicación, otras revisiones,
+resúmenes de cola ni acciones para crear trabajo. La ficha abierta representa
+una propuesta y una decisión.
 
 ## Editar sedes de una clínica
 
@@ -279,24 +273,16 @@ Cuando sea un duplicado probable, el botón de crear borrador queda bloqueado. E
 
 Si varias tarjetas abiertas intentan mejorar la misma ficha, la tabla muestra **Varias propuestas**. Puedes usar el filtro rápido **Atascos** para ver solo esas repeticiones.
 
-Cuando abras una tarjeta y existan otras revisiones abiertas para la misma
-clínica, verás **Otras revisiones de esta clínica**. Úsalo para revisar esas
-tarjetas juntas y evitar resolver una propuesta sin mirar las relacionadas.
-
 El sistema también puede generar un informe interno de consolidación para esas
-mejoras duplicadas. Ese informe no cambia nada: solo dice qué campos se pueden
-unir, qué fuentes hay detrás y si hay conflictos como dos teléfonos principales
-distintos. Si no hay conflictos, lo normal es abrir el caso y usar **Cargar
-mejoras juntas**.
+mejoras duplicadas. Ese informe no cambia nada: solo dice qué campos se repiten,
+qué fuentes hay detrás y si hay conflictos como dos teléfonos principales
+distintos. Sirve para priorizar y para futura ayuda con LLM, pero la decisión en
+el panel sigue siendo una propuesta cada vez.
 
-Antes de cargar mejoras juntas, el panel puede destacar cuántas sedes,
-teléfonos o especialistas entran en la propuesta agrupada. Es una señal para
-revisar con calma esos campos antes de guardar la ficha.
-
-Si al cargar mejoras aparece un aviso bajo un teléfono, no guardes la ficha tal
-cual. Ese valor no parece un teléfono español real; bórralo o sustitúyelo por el
-contacto correcto antes de guardar. Así evitamos convertir identificadores,
-colegiaciones u otros números internos en contacto público.
+Si una propuesta de teléfono muestra un aviso, no la apruebes tal cual. Ese
+valor no parece un teléfono español real; modifícalo o recházalo. Así evitamos
+convertir identificadores, colegiaciones u otros números internos en contacto
+público.
 
 ## Editar una clínica
 

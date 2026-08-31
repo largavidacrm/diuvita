@@ -174,7 +174,7 @@ def clinic_workgroup_click(digest: dict[str, Any]) -> str:
     count = as_int(group.get("open_count"))
     if not name or not count:
         return ""
-    return f"Pulsa Filtrar grupo y trabaja {name}: {count} tarjetas juntas."
+    return f"Pulsa Filtrar grupo y abre {name}: {count} tarjetas, una por una."
 
 
 def claim_request_click(digest: dict[str, Any]) -> str:

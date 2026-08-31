@@ -30,10 +30,23 @@ def main() -> None:
         'id="clinicPhoneFixedWarning"',
         'id="clinicPhoneMobileWarning"',
         'id="clinicPhoneWhatsappWarning"',
-        'id="reviewActionNote"',
-        'id="reviewFlowPanel"',
-        'id="reviewFlowMeta"',
-        'id="reviewFlowSteps"',
+        'id="reviewDecisionSummary"',
+        'id="reviewAffectedClinic"',
+        'id="reviewProposalType"',
+        'id="reviewCurrentRelevantPanel"',
+        'id="reviewCurrentRelevantList"',
+        'id="reviewProposalFocus"',
+        'id="reviewProposalFocusTitle"',
+        'id="reviewProposalFocusMeta"',
+        'id="reviewProposalFocusCount"',
+        'id="reviewProposalFocusList"',
+        'id="reviewEvidencePanel"',
+        'id="reviewEvidenceList"',
+        'id="reviewWarningPanel"',
+        'id="reviewModifyPanel"',
+        'id="reviewApproveBtn"',
+        'id="reviewRejectBtn"',
+        'id="reviewModifyBtn"',
         "function publicVisibilityText",
         "function isPublicClinicStatus",
         "function clinicHasPendingPublicChange",
@@ -47,8 +60,10 @@ def main() -> None:
         "function clinicMatchesPublishFilter",
         "function updateClinicSaveButtonLabel",
         "function isBlockingClinicClaim",
-        "function reviewActionNote",
-        "function renderReviewFlow",
+        "function renderReviewValidationView",
+        "function approveExistingClinicReview",
+        "function approvalSafetyWarnings",
+        "function finishReviewDecision",
         "function spanishPhoneDigits",
         "function isPlausibleSpanishPhone",
         "function clinicPhoneReviewMessage",
@@ -60,12 +75,9 @@ def main() -> None:
         "Teléfonos reales, no identificadores",
         "Teléfono pendiente: corrige o borra el campo marcado antes de guardar.",
         "No parece un teléfono español válido. Corrígelo o bórralo antes de guardar.",
-        "La candidata no se publica directamente.",
-        "Cambia Estado a preliminar o publicada.",
-        "La web pública solo cambia desde el editor de clínica.",
-        "Crear borrador y validar",
-        "Primero crea un borrador interno",
-        "La publicación se decide después en el editor, en Validación final.",
+        "No se publican datos automáticamente.",
+        "Google Maps debe ser el perfil real de la clínica",
+        "Duplicado probable: no apruebo una ficha nueva desde esta tarjeta.",
         "Guardar como publicada",
         "Guardar borrador",
         "Falta para publicar",
@@ -95,6 +107,24 @@ def main() -> None:
         'if (filter === "web_pending") return clinicHasPendingPublicChange(row, publicationControlCache);',
         "no aparecerá en la web",
         "aparecerá en la web",
+        'id="reviewSelectionPanel"',
+        "Datos actuales relevantes",
+        "Información nueva a valorar",
+        "Fuente o evidencia",
+        "Advertencias imprescindibles",
+        "Aprobar",
+        "Rechazar",
+        "Modificar",
+        "function renderReviewProposalFocus",
+        "function reviewProposalFocusItems",
+        "function renderReviewDecisionSummary",
+        "function renderReviewCurrentRelevant",
+        "function renderReviewEvidence",
+        "function renderReviewWarnings",
+        "function reviewClinicForRow",
+        "function snapshotValueHtml",
+        "show(el(\"reviewSelectionPanel\"), false)",
+        "show(el(\"reviewSelectionPanel\"), true)",
     ]:
         check(marker in index, f"missing publication-flow marker: {marker}")
 
@@ -113,10 +143,15 @@ def main() -> None:
     check(".publish-cell.is-web-pending strong" in css, "clinic web-pending style missing")
     check(".publish-web-note" in css, "clinic table web-pending note style missing")
     check(".field-attention" in css, "field attention style missing")
-    check(".review-action-note" in css, "review action note style missing")
-    check(".review-flow" in css, "review flow style missing")
-    check(".review-flow-steps" in css, "review flow steps style missing")
-    check(".review-flow-step" in css, "review flow step style missing")
+    check(".review-decision" in css, "review decision style missing")
+    check(".review-decision-summary" in css, "review decision summary style missing")
+    check(".review-proposal-focus" in css, "review proposal focus style missing")
+    check(".review-current-relevant" in css, "review current data style missing")
+    check(".review-selection-panel" in css, "review selection placeholder style missing")
+    check(".review-evidence-panel" in css, "review evidence style missing")
+    check(".review-warning-panel" in css, "review warning style missing")
+    check(".review-modify-panel" in css, "review modify style missing")
+    check(".review-decision-actions" in css, "review decision action style missing")
     print("OK admin publication flow: status consequences are visible")
 
 

@@ -645,8 +645,9 @@ Next 10 technical steps:
      `scripts/consolidate_profile_enrichment_reviews.py` and the CTO cycle:
      duplicate `clinic_profile_enrichment` cards for the same clinic can now be
      merged into one proposed field set, with source counts, already-present
-     fields and scalar conflicts shown before Daniel uses "Cargar mejoras
-     juntas". It does not resolve cards, edit clinics or publish anything.
+     fields and scalar conflicts shown before Daniel reviews the affected
+     proposals one by one. It does not resolve cards, edit clinics or publish
+     anything.
 126. Block weak phone proposals in the admin editor. Done locally in `/admin/`:
      phone fields now warn when a value does not look like a plausible Spanish
      contact number, grouped enrichment proposals normalize aliases such as
@@ -662,9 +663,9 @@ Next 10 technical steps:
      being treated like draft-creation cards.
 128. Warn about weak contact data before grouped proposal loading. Done locally
      in `/admin/`: related review groups now show a **Contacto dudoso** warning
-     inside the recommended-order block when grouped enrichment cards contain
-     phone-like values that do not look like plausible Spanish contact numbers,
-     so Daniel sees the issue before using "Cargar mejoras juntas".
+     when enrichment cards contain phone-like values that do not look like
+     plausible Spanish contact numbers, so Daniel sees the issue before
+     approving the affected proposal.
 129. Split clear multi-phone enrichment proposals. Done locally in `/admin/`
      and `scripts/consolidate_profile_enrichment_reviews.py`: when a grouped
      proposal contains multiple clear Spanish phone numbers in one contact
@@ -681,10 +682,10 @@ Next 10 technical steps:
      signals stay aggregate instead of repeatedly naming a lower-priority
      clinic.
 132. Make grouped enrichment payload size visible before loading it. Done
-     locally in `/admin/`: the clinic-case panel now highlights how many
-     proposed locations, phone numbers and specialists are about to be loaded
-     when Daniel uses **Cargar mejoras juntas**, keeping high-volume cases like
-     IMDA reviewable without auto-saving or publishing data.
+     locally in `/admin/`: the clinic-case panel can highlight how many
+     proposed locations, phone numbers and specialists a high-volume case like
+     IMDA contains, while keeping the human decision sequential and without
+     auto-saving or publishing data.
 133. Make focused backlog case cards distinguishable without exposing payloads.
      Done locally in `scripts/review_backlog_brief.py`: clinic-focused reports
      now show safe proposed-field labels and counts of sedes, phones and
@@ -731,6 +732,18 @@ Next 10 technical steps:
      `scripts/google_link_review_reconciliation.py`: manual Google Maps review
      checks can now print counts and next steps without dumping long Google URLs,
      while the full mode remains available for deliberate link-by-link review.
+142. Add safe compact Google-link discovery output. Done locally in
+     `scripts/discover_clinic_google_links.py`: dry-run discovery can now report
+     ready, rejected and failed clinic counts without printing proposed Google
+     URLs, keeping review logs small and safe while full output remains
+     available for deliberate operator inspection.
+143. Make clinic proposal validation sequential. Done locally in `/admin/`:
+     opening a review card now shows only the affected clinic, proposal type,
+     current relevant data, proposed change, evidence and essential warnings,
+     then offers exactly Approve, Reject or Modify. Finishing any decision
+     resolves that one card and advances to the next open proposal, while
+     group-analysis helpers remain available for future LLM-assisted
+     prioritisation without grouping human decisions.
 
 ## Daniel decision checkpoints
 

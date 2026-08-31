@@ -3,8 +3,9 @@
 `scripts/consolidate_profile_enrichment_reviews.py` revisa tarjetas abiertas de
 tipo `clinic_profile_enrichment` y agrupa las que pertenecen a la misma clinica.
 
-Objetivo: que Daniel pueda trabajar una ficha como un solo caso, en vez de
-abrir varias propuestas separadas con campos repetidos.
+Objetivo: que el sistema detecte repeticion, conflictos y campos claros antes de
+que Daniel revise. La decision humana en el panel sigue siendo una tarjeta cada
+vez.
 
 ## Seguridad
 
@@ -47,11 +48,12 @@ python3 scripts/consolidate_profile_enrichment_reviews.py --clinic "Nombre de la
 
 ## Resultado esperado
 
-Si no hay conflictos, el siguiente paso humano normal es abrir el caso en
-`/admin/` y usar **Cargar mejoras juntas**.
+Si no hay conflictos, el siguiente paso humano normal es abrir el grupo en
+`/admin/` y resolver una propuesta cada vez.
 
-Si hay conflictos, Daniel debe comparar las fuentes antes de guardar la ficha.
+Si hay conflictos, Daniel debe comparar las fuentes antes de aprobar la
+propuesta afectada.
 
 Si el informe separa telefonos, Daniel debe revisar que cada numero corresponde
-a la clinica antes de guardar. La separacion no publica ni aprueba el dato por
+a la clinica antes de aprobar. La separacion no publica ni aprueba el dato por
 si sola.

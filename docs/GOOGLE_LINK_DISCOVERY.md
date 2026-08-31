@@ -29,6 +29,13 @@ Compact read-only output for large batches:
 python3 scripts/discover_clinic_google_links.py --limit 19 --compact
 ```
 
+Safe compact output hides proposed Google URLs and keeps only field names,
+counts and rejection reasons:
+
+```bash
+python3 scripts/discover_clinic_google_links.py --limit 19 --safe-compact
+```
+
 To inspect open Google-link review cards without creating new work:
 
 ```bash

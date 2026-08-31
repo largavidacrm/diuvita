@@ -15,6 +15,7 @@ from discover_clinic_google_links import (
     has_direct_place_identifier,
     process_clinic,
     review_payload,
+    safe_compact_summary,
 )
 
 
@@ -254,6 +255,23 @@ def main():
     check(compact["empty_with_candidates"][0]["clinic_slug"] == "address-only", "compact empty candidate item missing")
     check("rejection_reason" in compact["empty_with_candidates"][0], "compact output should keep rejection reason")
     check("google_link_candidates" not in compact["ready_items"][0], "compact output should omit full candidates")
+    safe_compact = safe_compact_summary({
+        "mode": "dry_run",
+        "writes_data": False,
+        "clinics_seen": 2,
+        "ready": 1,
+        "empty": 1,
+        "failed": 0,
+        "maps_links_found": 1,
+        "review_links_found": 0,
+        "items": [dry_run],
+        "safety": "safe",
+    })
+    check(safe_compact["safe_compact"] is True, "safe compact marker missing")
+    check(safe_compact["ready_items"][0]["proposed_field_keys"] == ["google_reviews_url", "maps_url"], "safe compact should keep field names")
+    check(safe_compact["ready_items"][0]["maps_proposed"], "safe compact should keep Maps count signal")
+    check("proposed_fields" not in safe_compact["ready_items"][0], "safe compact should omit proposed URLs")
+    check("https://www.google.com/maps" not in str(safe_compact), "safe compact should not contain Google URLs")
 
     already_complete = dict(clinic, has_google_maps=True, has_google_reviews=True)
     complete = process_clinic(already_complete, args, "admin@example.test", {}, fake_fetcher, fake_review_creator)

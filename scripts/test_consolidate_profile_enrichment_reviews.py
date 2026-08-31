@@ -99,7 +99,7 @@ def main():
     check(consolidated["conflict_count"] == 1, "conflict count missing")
     check(consolidated["weak_phone_fields"] == ["phone_fixed"], "weak phone field should be flagged")
     check(consolidated["source_count"] == 2, "source dedupe count missing")
-    check(consolidated["next_step"] == "resolver conflictos antes de cargar mejoras juntas", "conflict next step missing")
+    check(consolidated["next_step"] == "resolver conflictos antes de validar propuestas", "conflict next step missing")
     check(report["summary"]["groups"] == 1, "group summary missing")
     check(report["summary"]["cards"] == 2, "card summary missing")
     check(report["summary"]["groups_with_conflicts"] == 1, "conflict group summary missing")
@@ -115,8 +115,8 @@ def main():
     clean_report = build_report([clean])
     check(clean_report["groups"][0]["conflict_count"] == 0, "matching scalars should not conflict")
     check(
-        clean_report["groups"][0]["next_step"] == "abrir el caso y usar Cargar mejoras juntas",
-        "clean groups should point to grouped loading",
+        clean_report["groups"][0]["next_step"] == "abrir el caso y resolver una propuesta cada vez",
+        "clean groups should point to sequential review",
     )
     multi_phone_group = {
         "clinic_id": "clinic-2",
@@ -143,7 +143,7 @@ def main():
     check(multi_phone["merged_fields"]["phone_mobile"] == "695567297", "mobile split phone missing")
     check(multi_phone["weak_phone_count"] == 0, "clear split phones should not be weak")
     check(
-        multi_phone["next_step"] == "abrir el caso y usar Cargar mejoras juntas",
+        multi_phone["next_step"] == "abrir el caso y resolver una propuesta cada vez",
         "clear split phones should be actionable",
     )
 
