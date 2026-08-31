@@ -140,6 +140,18 @@ def visibility_message(row: dict[str, Any]) -> str:
     return f"No visible: esta como {label}. Para aparecer debe pasar a preliminar o publicada."
 
 
+def next_publication_step(row: dict[str, Any], missing: list[str]) -> str:
+    status = str(row.get("status") or "")
+    if missing:
+        first = missing[0]
+        if status in PUBLIC_STATUSES:
+            return f"Completar primero: {first}. La ficha ya es visible, pero no esta lista sin ese punto."
+        return f"Completar primero: {first}. Despues podra pasar a preliminar o publicada si Daniel lo valida."
+    if status in PUBLIC_STATUSES:
+        return "No hay faltantes obligatorios; si no ves cambios online, revisa si falta regenerar la web publica."
+    return "No hay faltantes obligatorios; Daniel puede decidir si pasa a preliminar o publicada."
+
+
 def format_match(row: dict[str, Any]) -> list[str]:
     missing = missing_required_fields(row)
     name = row.get("clinic_name") or row.get("slug") or "Clinica sin nombre"
@@ -158,6 +170,7 @@ def format_match(row: dict[str, Any]) -> list[str]:
         lines.append("- Falta para publicar: " + ", ".join(missing))
     else:
         lines.append("- Falta para publicar: nada obligatorio detectado")
+    lines.append(f"- Siguiente paso: {next_publication_step(row, missing)}")
     return lines
 
 

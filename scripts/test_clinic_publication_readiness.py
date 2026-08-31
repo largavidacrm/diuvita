@@ -3,6 +3,7 @@
 from clinic_publication_readiness import (
     format_readiness,
     missing_required_fields,
+    next_publication_step,
     visibility_message,
 )
 
@@ -37,6 +38,10 @@ def main() -> None:
     check("Google Maps de clinica" in missing, "missing direct Maps profile should be reported")
     check("Claims bloqueantes" in missing, "blocking reviews should be reported")
     check("No visible" in visibility_message(draft), "draft visibility should be explicit")
+    check(
+        next_publication_step(draft, missing).startswith("Completar primero: Direccion o sede"),
+        "next step should point to the first missing field",
+    )
 
     complete = dict(draft)
     complete.update({
@@ -48,6 +53,7 @@ def main() -> None:
     })
     check(not missing_required_fields(complete), "complete profile should have no required blockers")
     check("Visible en la web" in visibility_message(complete), "published visibility should be explicit")
+    check("si no ves cambios online" in next_publication_step(complete, []), "published complete next step should mention public freshness")
 
     output = format_readiness({
         "query": "rose",
@@ -56,6 +62,7 @@ def main() -> None:
     })
     check("Rose Bar Longevity" in output, "clinic name should be shown")
     check("Falta para publicar:" in output, "publication blockers line should be shown")
+    check("Siguiente paso: Completar primero: Direccion o sede" in output, "next publication step should be shown")
     check("Writes data: no" in output, "read-only guarantee should be shown")
 
     empty = format_readiness({"query": "missing", "matches": [], "generated_at": "2026-08-31T07:31:00+00:00"})

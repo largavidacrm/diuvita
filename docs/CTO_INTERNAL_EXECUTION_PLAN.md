@@ -489,6 +489,10 @@ Next 10 technical steps:
     in `scripts/run_cto_shadow_cycle.py`: unattended diagnostics can now use
     `--public-freshness-clinic "Monarka"` while the exact slug option remains
     available for automation.
+92. Add a plain next step to per-clinic publication diagnostics. Done locally in
+    `scripts/clinic_publication_readiness.py`: reports now say the first field
+    Daniel should complete before making a draft visible, or point to public
+    freshness if a published clinic has no required blockers.
 
 ## Daniel decision checkpoints
 
