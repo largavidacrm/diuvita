@@ -24,6 +24,7 @@ def sample_packet():
             "source_url": "https://imda.example/contacto",
             "warnings": ["Contrastar https://imda.example/equipo con persona@example.com y +34 600 111 222."],
             "proposed_fields": {
+                "maps_url": "https://www.google.com/maps/place/Unidad+de+Longevidad+IMDA/",
                 "telefono": "916 000 000",
                 "profesionales": ["Dra. Example"],
             },
@@ -118,6 +119,22 @@ def main():
         "action": "modify",
     })
     check(not empty_modify["valid"], "modify should require concrete field changes")
+
+    bad_phone = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "modify",
+        "field_changes": {"telefono": "ABC-123"},
+    })
+    check(not bad_phone["valid"], "weak phone suggestions should be blocked")
+    check(any("Teléfono dudoso" in error for error in bad_phone["errors"]), "weak phone error missing")
+
+    bad_maps = validate_suggestion(packet, {
+        "review_id": "review-1",
+        "action": "modify",
+        "field_changes": {"maps_url": "https://www.google.com/maps/search/Unidad+de+Longevidad+IMDA"},
+    })
+    check(not bad_maps["valid"], "weak Google Maps suggestions should be blocked")
+    check(any("Google Maps debe ser el perfil real" in error for error in bad_maps["errors"]), "weak Maps error missing")
 
     source = (ROOT / "scripts" / "validate_review_decision_suggestion.py").read_text(encoding="utf-8")
     check("admin_update_clinic" in source, "forbidden operation list should name risky admin writes")

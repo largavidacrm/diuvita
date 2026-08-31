@@ -8,7 +8,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from review_proposal_decision_packets import DECISION_ACTIONS, canonical_field, redacted_text
+from review_proposal_decision_packets import (
+    DECISION_ACTIONS,
+    canonical_field,
+    maps_warning,
+    phone_warning,
+    redacted_text,
+)
 
 
 GUARD_SCHEMA_VERSION = "review_decision_suggestion_guard.v1"
@@ -161,6 +167,23 @@ def attention_flags(packet: dict[str, Any], change_keys: list[str]) -> list[str]
     return flags
 
 
+def field_safety_errors(key: str, value: Any) -> list[str]:
+    clean_key = canonical_field(key)
+    errors: list[str] = []
+    for message in [phone_warning(clean_key, value), maps_warning(clean_key, value)]:
+        if message:
+            errors.append(f"unsafe value for {clean_key}: {message}")
+    if clean_key == "locations":
+        locations = value if isinstance(value, list) else [value]
+        for location in locations:
+            if not isinstance(location, dict):
+                continue
+            message = maps_warning("maps_url", location.get("maps_url") or location.get("google_maps_url"))
+            if message:
+                errors.append(f"unsafe value for locations: {message}")
+    return errors
+
+
 def validate_suggestion(
     packet: dict[str, Any],
     suggestion: dict[str, Any],
@@ -200,6 +223,8 @@ def validate_suggestion(
         errors.append("field changes are only allowed when action is modify")
     if action == "modify" and not normalized_changes:
         errors.append("modify action requires at least one editable field change")
+    for key, value in normalized_changes.items():
+        errors.extend(field_safety_errors(key, value))
 
     for path in forbidden_control_paths(suggestion):
         errors.append(f"suggestion tries to control a forbidden operation: {path}")
