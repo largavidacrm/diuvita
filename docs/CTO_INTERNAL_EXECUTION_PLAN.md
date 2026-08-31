@@ -533,6 +533,11 @@ Next 10 technical steps:
      `scripts/measure_specialist_coverage.py`: clinics like Arvila that already
      have some specialists published but more names detected now show the
      consolidation step instead of looking finished.
+102. Explain skipped source-shadow work as a next action. Done locally in
+     `scripts/submit_source_shadow_reviews.py`: compact source reports now say
+     whether Daniel should open an existing review, consolidate a clinic group,
+     use the already selected source in the batch or look for a more specific
+     official source.
 
 ## Daniel decision checkpoints
 

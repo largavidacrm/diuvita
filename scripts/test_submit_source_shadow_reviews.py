@@ -10,6 +10,7 @@ from submit_source_shadow_reviews import (
     process_source,
     process_sources,
     proposed_field_counts,
+    source_shadow_next_step,
     summarize_results,
 )
 
@@ -69,6 +70,7 @@ def main():
     check("specialists" in result["pending_fields"], "pending-field context should be preserved")
     check(result["specialists_pending"] is True, "specialist priority context should be preserved")
     check(result["team_source_priority"] == 0, "team source priority should be preserved")
+    check("validación humana" in result["next_step"], "ready source should explain human validation step")
 
     skipped = process_source(
         dict(source, has_open_review=True, open_review={"id": "review-source-1", "title": "Open source review"}),
@@ -80,6 +82,7 @@ def main():
     check(skipped["status"] == "skipped", "existing open review should be skipped by default")
     check("already exists" in skipped["reason"], "skip reason should be readable")
     check(skipped["open_review"]["title"] == "Open source review", "source skip should explain existing review")
+    check("revisión existente" in skipped["next_step"], "source skip should point to existing review")
 
     clinic_skipped = process_source(
         dict(source, has_open_clinic_review=True, open_clinic_review={"id": "review-clinic-1", "title": "Open clinic review"}),
@@ -91,6 +94,7 @@ def main():
     check(clinic_skipped["status"] == "skipped", "existing clinic review should be skipped by default")
     check("for this clinic" in clinic_skipped["reason"], "clinic skip reason should be readable")
     check(clinic_skipped["open_clinic_review"]["title"] == "Open clinic review", "clinic skip should explain existing review")
+    check("grupo de la clínica" in clinic_skipped["next_step"], "clinic skip should point to grouped review work")
 
     calls = []
 
@@ -140,6 +144,7 @@ def main():
     check("already queued" in batch[1]["reason"], "same-batch skip reason should be readable")
     check(batch[1]["source_type"] == "official_team_page", "same-batch skip should preserve source type")
     check(batch[1]["team_source_priority"] == 1, "same-batch skip should preserve team priority")
+    check("fuente ya seleccionada" in batch[1]["next_step"], "same-batch skip should explain next action")
 
     summary = summarize_results([result, skipped, applied])
     check(summary["sources_seen"] == 3, "summary source count missing")
@@ -153,6 +158,15 @@ def main():
     check(len(compact["failed_items"]) == 1, "compact output should keep failed items")
     check("verification_summary" not in compact["ready_items"][0], "compact output should omit verification details")
     check(compact["ready_items"][0]["proposed_field_counts"]["profesionales"] == 1, "compact output should keep useful counts")
+    check("next_step" in compact["skipped_items"][0], "compact output should keep next-step guidance")
+    check(
+        "más específica" in source_shadow_next_step({"status": "empty", "pending_fields": ["specialists"]}),
+        "empty source with pending fields should ask for a better official source",
+    )
+    check(
+        "fuente oficial alternativa" in source_shadow_next_step({"status": "failed", "error": "timeout"}),
+        "failed source should explain retry or alternate-source step",
+    )
     check(
         proposed_field_counts({"profesionales": ["A", "B"], "telefono": "+34", "tech": ""})
         == {"profesionales": 2, "telefono": 1, "tech": 0},

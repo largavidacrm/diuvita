@@ -269,6 +269,42 @@ def filter_proposed_fields_for_pending(
     }
 
 
+def source_shadow_next_step(item: dict[str, Any]) -> str:
+    status = str(item.get("status") or "")
+    reason = str(item.get("reason") or "")
+    pending_fields = item.get("pending_fields") or []
+
+    if status == "ready":
+        if item.get("created_review"):
+            return "abrir la revisión creada y validar los campos antes de guardar la ficha"
+        return "revisar la propuesta; cargar campos en la ficha solo tras validación humana"
+
+    if status == "empty":
+        if pending_fields:
+            return "buscar una fuente oficial más específica para los campos pendientes"
+        return "no crear propuesta; la ficha no tiene huecos medidos"
+
+    if status == "failed":
+        return "reintentar la fuente o buscar una fuente oficial alternativa"
+
+    if status == "skipped":
+        if "already queued" in reason:
+            return "trabajar primero la fuente ya seleccionada para esta clínica en este lote"
+        if "for this clinic" in reason:
+            return "abrir el grupo de la clínica y consolidar la tarjeta existente antes de crear otra"
+        if "already exists" in reason:
+            return "abrir la revisión existente de esta fuente y consolidarla antes de refrescar"
+        if "missing clinic slug or source URL" in reason:
+            return "revisar el registro interno de fuente antes de procesarlo"
+        return "mantener como pendiente interno hasta que baje la bandeja de revisión"
+
+    return "revisar manualmente el resultado antes de crear una propuesta"
+
+
+def with_next_step(item: dict[str, Any]) -> dict[str, Any]:
+    return {**item, "next_step": source_shadow_next_step(item)}
+
+
 def process_source(
     source: dict[str, Any],
     args: argparse.Namespace,
@@ -294,23 +330,23 @@ def process_source(
     }
 
     if not clinic_slug or not source_url:
-        return {**result, "status": "skipped", "reason": "missing clinic slug or source URL"}
+        return with_next_step({**result, "status": "skipped", "reason": "missing clinic slug or source URL"})
 
     if source.get("has_open_review") and not args.replace_existing:
-        return {**result, "status": "skipped", "reason": "open enrichment review already exists"}
+        return with_next_step({**result, "status": "skipped", "reason": "open enrichment review already exists"})
 
     if (
         source.get("has_open_clinic_review")
         and not source.get("has_open_review")
         and not args.allow_multiple_open_clinic_reviews
     ):
-        return {**result, "status": "skipped", "reason": "open enrichment review already exists for this clinic"}
+        return with_next_step({**result, "status": "skipped", "reason": "open enrichment review already exists for this clinic"})
 
     try:
         extraction = extract_from_fetch(fetcher(source_url, timeout=args.timeout))
         verification = verify_extraction(extraction)
     except (HTTPError, URLError, TimeoutError, ValueError, OSError) as error:
-        return {**result, "status": "failed", "error": str(error)}
+        return with_next_step({**result, "status": "failed", "error": str(error)})
 
     payload = payload_for_source(source, verification)
     payload["proposed_fields"] = filter_proposed_fields_for_pending(
@@ -334,11 +370,11 @@ def process_source(
             args.replace_existing,
             args.allow_multiple_open_clinic_reviews,
         )
-    return result
+    return with_next_step(result)
 
 
 def duplicate_clinic_result(source: dict[str, Any]) -> dict[str, Any]:
-    return {
+    return with_next_step({
         "source_record_id": source.get("source_record_id"),
         "clinic_slug": source.get("clinic_slug"),
         "clinic_name": source.get("clinic_name"),
@@ -350,7 +386,7 @@ def duplicate_clinic_result(source: dict[str, Any]) -> dict[str, Any]:
         "team_source_priority": source.get("team_source_priority") or 0,
         "status": "skipped",
         "reason": "another source for this clinic is already queued in this batch",
-    }
+    })
 
 
 def process_sources(
@@ -401,6 +437,7 @@ def compact_item(item: dict[str, Any]) -> dict[str, Any]:
         "reason": item.get("reason"),
         "pending_count": item.get("pending_count"),
         "pending_fields": item.get("pending_fields") or [],
+        "next_step": item.get("next_step") or source_shadow_next_step(item),
         "proposed_fields": item.get("proposed_fields") or [],
         "proposed_field_counts": item.get("proposed_field_counts") or {},
         "has_open_review": bool(item.get("open_review")),
