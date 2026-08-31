@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Checks the per-clinic publication readiness formatter."""
 from clinic_publication_readiness import (
+    compact_lookup_key,
     format_readiness,
     missing_required_fields,
     next_publication_step,
@@ -14,6 +15,9 @@ def check(condition: bool, message: str) -> None:
 
 
 def main() -> None:
+    check(compact_lookup_key("Rose Bar") == "rosebar", "lookup key should remove spaces")
+    check(compact_lookup_key("Clínica Benzaquén") == "clinicabenzaquen", "lookup key should remove accents")
+
     draft = {
         "slug": "rose-bar-longevity",
         "clinic_name": "Rose Bar Longevity",

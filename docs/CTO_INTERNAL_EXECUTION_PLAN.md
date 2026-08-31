@@ -493,6 +493,10 @@ Next 10 technical steps:
     `scripts/clinic_publication_readiness.py`: reports now say the first field
     Daniel should complete before making a draft visible, or point to public
     freshness if a published clinic has no required blockers.
+93. Make clinic-name diagnostics tolerant of human spelling. Done locally in
+    `scripts/clinic_publication_readiness.py` and
+    `scripts/check_public_site_freshness.py`: names now match through spaces,
+    hyphens and accents, so "Rose Bar" can find "RoseBar".
 
 ## Daniel decision checkpoints
 

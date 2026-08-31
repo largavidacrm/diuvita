@@ -6,6 +6,7 @@ from check_public_site_freshness import (
     check_clinic,
     clean_base_url,
     clinic_matches_query,
+    compact_lookup_key,
     format_report,
     marker_present,
     normalize_digits,
@@ -59,10 +60,13 @@ def main():
 
     check(clean_base_url("https://example.test/") == "https://example.test", "base URL should be normalized")
     check(normalize_digits("+34 930 490 300") == "34930490300", "phone digits should normalize")
+    check(compact_lookup_key("Rose Bar") == "rosebar", "lookup key should remove spaces")
+    check(compact_lookup_key("Clínica Benzaquén") == "clinicabenzaquen", "lookup key should remove accents")
     check(marker_present("Tel. 930 49 03 00", {"value": "+34 930 490 300", "mode": "digits"}), "phone marker should be spacing tolerant")
     check(clinic_matches_query(clinic, "Monarka"), "normal clinic names should match freshness checks")
     check(clinic_matches_query(clinic, "barcelona"), "clinic city should match freshness checks")
     check(not clinic_matches_query(clinic, "Rose Bar"), "unrelated clinic query should not match")
+    check(clinic_matches_query({"name": "RoseBar Longevity Club"}, "Rose Bar"), "spaced query should match compact clinic names")
     check(fresh_result["fresh"] is True, "fresh page should have all public markers")
     check(old_result["fresh"] is False, "old page should miss new public markers")
     check(old_result["missing_markers"] > 0, "old page should report missing markers")

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import unicodedata
 from typing import Any
 
 from admin_digest import as_int, parse_timestamp
@@ -35,6 +36,12 @@ REQUIRED_FIELDS = (
 )
 
 
+def compact_lookup_key(value: Any) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value or ""))
+    ascii_value = normalized.encode("ascii", "ignore").decode("ascii").lower()
+    return "".join(char for char in ascii_value if char.isalnum())
+
+
 def load_readiness(query: str, limit: int, local_env: dict[str, str]) -> dict[str, Any]:
     clean_query = query.strip()
     if not clean_query:
@@ -43,6 +50,7 @@ def load_readiness(query: str, limit: int, local_env: dict[str, str]) -> dict[st
     has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
     query_literal = sql_literal(clean_query)
     like_literal = sql_literal(f"%{clean_query}%")
+    compact_literal = sql_literal(f"%{compact_lookup_key(clean_query)}%")
     sql = f"""
 with clinic_rows as (
   select
@@ -104,6 +112,8 @@ with clinic_rows as (
   where lower(c.slug) = lower({query_literal})
     or c.slug ilike {like_literal}
     or c.display_name ilike {like_literal}
+    or regexp_replace(translate(lower(coalesce(c.slug, '')), 'áéíóúüñ', 'aeiouun'), '[^a-z0-9]+', '', 'g') like {compact_literal}
+    or regexp_replace(translate(lower(coalesce(c.display_name, '')), 'áéíóúüñ', 'aeiouun'), '[^a-z0-9]+', '', 'g') like {compact_literal}
   order by
     case when lower(c.slug) = lower({query_literal}) then 0 else 1 end,
     case when c.status in ('published', 'preliminary') then 0 else 1 end,

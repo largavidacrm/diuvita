@@ -8,6 +8,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
 from typing import Any
@@ -193,7 +194,15 @@ def clinic_matches_query(clinic: dict[str, Any], query: str) -> bool:
         clinic.get("country"),
     ]
     haystack = " ".join(str(value or "").lower() for value in values)
-    return clean in haystack
+    compact_query = compact_lookup_key(clean)
+    compact_haystack = compact_lookup_key(haystack)
+    return clean in haystack or bool(compact_query and compact_query in compact_haystack)
+
+
+def compact_lookup_key(value: Any) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value or ""))
+    ascii_value = normalized.encode("ascii", "ignore").decode("ascii").lower()
+    return "".join(char for char in ascii_value if char.isalnum())
 
 
 def run_freshness_check(
