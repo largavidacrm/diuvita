@@ -29,6 +29,8 @@ def main() -> None:
         'id="globalPlanOpenNextBtn"',
         'id="globalPlanCheckpoints"',
         'id="globalPlanRoadmap"',
+        'class="global-plan-details"',
+        "Ver desglose del plan",
         "globalPlanNextReviewId",
         "globalPlanNextGroupId",
         "function globalPlanRoleCard",
@@ -67,6 +69,7 @@ def main() -> None:
         "Después de bajar bandeja",
         "Primero mira tu próximo clic. Lo demás es contexto.",
         "Estamos bajando la bandeja antes de crear más trabajo.",
+        "Pulsa Filtrar grupo, abre una mejora y usa Cargar mejoras juntas.",
         "Tu foco",
         "Trabajo Codex",
         "Mejoras seguras",
@@ -108,6 +111,8 @@ def main() -> None:
         ".global-plan-checkpoints",
         ".global-plan-checkpoint",
         ".global-plan-checkpoint.is-active",
+        ".global-plan-details summary",
+        ".global-plan-details[open]",
     ]:
         check(marker in css, f"missing global plan checkpoint style: {marker}")
 

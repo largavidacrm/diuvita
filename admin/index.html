@@ -83,18 +83,21 @@
               <button class="link-btn hidden" id="globalPlanOpenNextBtn" type="button">Abrir siguiente</button>
             </div>
           </div>
-          <div class="global-plan-checkpoints" id="globalPlanCheckpoints">
-            <p class="empty">Cargando ahora, bloqueo y después.</p>
-          </div>
-          <div class="global-plan-simple" id="globalPlanGrid">
-            <p class="empty">Cargando estado del plan.</p>
-          </div>
-          <div>
-            <div class="global-plan-section-title">Mapa simple del plan</div>
-            <div class="global-plan-roadmap" id="globalPlanRoadmap">
-              <p class="empty">Cargando desglose del plan.</p>
+          <details class="global-plan-details">
+            <summary>Ver desglose del plan</summary>
+            <div class="global-plan-checkpoints" id="globalPlanCheckpoints">
+              <p class="empty">Cargando ahora, bloqueo y después.</p>
             </div>
-          </div>
+            <div class="global-plan-simple" id="globalPlanGrid">
+              <p class="empty">Cargando estado del plan.</p>
+            </div>
+            <div>
+              <div class="global-plan-section-title">Mapa simple del plan</div>
+              <div class="global-plan-roadmap" id="globalPlanRoadmap">
+                <p class="empty">Cargando desglose del plan.</p>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -1716,7 +1719,13 @@
     }
 
     function globalPlanNextDetailText(group, sourceTarget, profileTarget, candidateOpenCount) {
-      if (group) return "Trabaja esa clínica en bloque para no revisar lo mismo varias veces.";
+      if (group) {
+        var enrichmentCount = countOpenReviewsByType(group.rows || [], "clinic_profile_enrichment");
+        if (enrichmentCount > 1) {
+          return "Pulsa Filtrar grupo, abre una mejora y usa Cargar mejoras juntas. Después revisa y guarda una vez.";
+        }
+        return "Trabaja esa clínica en bloque para no revisar lo mismo varias veces.";
+      }
       if (candidateOpenCount) return "Revisa las candidatas buenas: crear borrador no publica, solo prepara la ficha interna.";
       if (sourceTarget && sourceTarget !== "—") return "Revisa esa fuente para convertir información guardada en datos aprovechables.";
       if (profileTarget && profileTarget !== "—") return "Completa esa ficha primero porque ya concentra trabajo interno.";

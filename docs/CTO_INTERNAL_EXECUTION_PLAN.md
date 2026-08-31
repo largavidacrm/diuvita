@@ -376,6 +376,10 @@ Next 10 technical steps:
     has several open profile-improvement cards, Daniel can load those proposed
     fields into one editor pass and resolve the grouped cards after one
     reviewed save.
+65. Simplify the global-plan landing state. Done locally in `/admin/`: the
+    first view now focuses on where we are and the next click, while the
+    detailed roadmap stays available under a collapsed "Ver desglose del plan"
+    section.
 
 ## Daniel decision checkpoints
 
