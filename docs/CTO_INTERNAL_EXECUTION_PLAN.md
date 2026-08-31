@@ -510,6 +510,11 @@ Next 10 technical steps:
     safe action for each pending sede, including the direct Google Business
     profile requirement and keeping generic Maps searches or address links
     pending.
+97. Add a combined clinic visibility diagnostic. Done locally in
+    `scripts/clinic_public_visibility_report.py`: CTO checks can now explain
+    whether a clinic is missing from the public site because it is not public,
+    has publication blockers, or is saved in Supabase but waiting for a public
+    rebuild. The report stays read-only and groups stale fields by category.
 
 ## Daniel decision checkpoints
 

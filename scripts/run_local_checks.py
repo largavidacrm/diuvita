@@ -18,6 +18,7 @@ TEST_STEPS = [
     ("test: source snapshot retention", "scripts/test_measure_source_snapshot_retention.py"),
     ("test: production health formatter", "scripts/test_check_production_health.py"),
     ("test: public-site freshness formatter", "scripts/test_check_public_site_freshness.py"),
+    ("test: clinic public visibility report", "scripts/test_clinic_public_visibility_report.py"),
     ("test: Netlify deploy guard", "scripts/test_netlify_ignore_build.py"),
     ("test: public-site rebuild control", "scripts/test_public_site_rebuild_pending_control.py"),
     ("test: operational limits", "scripts/test_check_operational_limits.py"),
