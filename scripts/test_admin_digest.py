@@ -361,6 +361,12 @@ def main():
         google_link_review_status(digest) == "4 tarjetas; primera: Completar enlaces Google: Sensabell",
         "Google link review status missing",
     )
+    source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
+    check(
+        'proposed_google_maps_check = "btrim(proposed.value) ~* \'^https?://\'"' in source
+        and 'location_maps_check = f"btrim({location_maps_value}) ~* \'^https?://\'"' in source,
+        "Google link digest should count any proposed Maps URL, including weak links for review",
+    )
     check(
         specialist_review_status(digest) == "2 tarjetas; 17 especialistas propuestos; primera: Regenera Clinic Medicina de la Longevidad · 11 especialistas",
         "specialist review status missing",
@@ -420,10 +426,16 @@ def main():
     check("Freno bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
-    check("proposed_google_maps_check = google_maps_profile_url_sql(\"proposed.value\")" in source, "review digest should use direct-only Maps SQL")
+    check(
+        'proposed_google_maps_check = "btrim(proposed.value) ~* \'^https?://\'"' in source,
+        "review digest should count weak proposed Maps URLs for human review",
+    )
     check("proposed.key in ('maps_url', 'google_maps_url')" in source, "review digest should detect proposed Maps fields")
     check("proposed.key in ('google_reviews_url', 'reviews_url')" in source, "review digest should still include Google review links")
-    check("where {location_maps_check}" in source, "review digest should use direct-only location Maps SQL")
+    check(
+        'location_maps_check = f"btrim({location_maps_value}) ~* \'^https?://\'"' in source,
+        "review digest should count weak location Maps URLs for human review",
+    )
     check("publication_readiness_base as (" in source, "digest should calculate publication readiness")
     check("'publication_readiness', (select data from publication_readiness)" in source, "digest should expose publication readiness")
     check("Especialistas pendientes: 2 tarjetas; 17 especialistas propuestos" in output, "specialist pending line missing")

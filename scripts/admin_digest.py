@@ -52,10 +52,9 @@ def parse_timestamp(value: Any) -> str:
 
 def load_digest(admin_email: str, limit: int, local_env: dict[str, str]) -> dict[str, Any]:
     has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
-    proposed_google_maps_check = google_maps_profile_url_sql("proposed.value")
-    location_maps_check = google_maps_profile_url_sql(
-        coalesced_jsonb_text_sql("location.value", ("maps_url", "google_maps_url", "map_url"))
-    )
+    proposed_google_maps_check = "btrim(proposed.value) ~* '^https?://'"
+    location_maps_value = coalesced_jsonb_text_sql("location.value", ("maps_url", "google_maps_url", "map_url"))
+    location_maps_check = f"btrim({location_maps_value}) ~* '^https?://'"
     sql = f"""
 with claims as (
   select set_config(

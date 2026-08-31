@@ -11,8 +11,10 @@ It answers:
 - whether several open enrichment cards are stacked on the same clinic;
 - which clinic concentrates the highest-priority group of open review cards;
 - whether the review inbox is near the safe-write backlog guard;
-- whether Google Maps/review-link proposals are open and which safe review card
-  should be opened first;
+- whether Google Maps/review-link proposals are open and which review card
+  should be opened first; this intentionally includes weak Maps URLs so Daniel
+  can reject or correct them instead of leaving them hidden outside the Maps
+  review path;
 - whether specialist proposals are already present and which card has the
   largest batch;
 - what the next recommended internal action is;

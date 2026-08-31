@@ -940,6 +940,10 @@ Next 10 technical steps:
      `/admin/`: the **Google Maps** filter now catches any proposed Maps or
      review-link URL, including links that later need rejection or correction,
      so dudosos do not hide outside Daniel's Maps review path.
+180. Align the read-only digest with Maps review filtering. Done locally in
+     `scripts/admin_digest.py`: Google Maps review counts now include weak or
+     malformed proposed Maps URLs, while the save/publication guards still
+     accept only real clinic Google Business/Profile links after human review.
 
 ## Daniel decision checkpoints
 
