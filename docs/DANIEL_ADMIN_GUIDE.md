@@ -22,10 +22,15 @@ no toca Netlify y no expone el archivo `.env`.
 3. Si aparece **Abrir prioridad**, úsalo para abrir la revisión más importante.
 4. También puedes pulsar **Revisar** en una propuesta concreta.
 5. Comprueba nombre, web, ciudad, fuente, servicios y especialistas detectados.
-6. Si parece una clínica válida, pulsa **Crear borrador y validar**.
-7. Si no encaja con Vitalarga, pulsa **Descartar**.
+6. Si parece una clínica válida, pulsa **Aprobar**. En una clínica nueva, eso
+   crea un borrador interno para editarlo con calma.
+7. Si no encaja con Vitalarga, pulsa **Rechazar**.
+8. Si el dato es útil pero necesita corrección, pulsa **Modificar** y cambia
+   solo los campos que aparecen en esa propuesta.
 
-Crear borrador no publica la clínica. Solo crea una ficha interna para editarla con calma. El botón de publicar aparece después, al editar esa ficha, dentro de **Validación final**.
+Aprobar una clínica nueva no publica la clínica. Solo crea una ficha interna.
+El botón de publicar aparece después, al editar esa ficha, dentro de
+**Validación final**.
 
 ## Ver el plan global
 
