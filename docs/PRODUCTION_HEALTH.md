@@ -79,3 +79,15 @@ python3 scripts/run_cto_shadow_cycle.py --public-freshness --public-freshness-cl
 
 That freshness step is diagnostic only. A stale page should be resolved through
 the admin's batched public rebuild action once the edit batch is finished.
+
+## Release readiness
+
+For a plain local answer to "is this online yet?", use:
+
+```bash
+python3 scripts/release_readiness_report.py
+```
+
+Add `--production-health` when the report should also check the deployed
+website without publishing anything. The report keeps the same boundary: it does
+not push, deploy, edit Supabase or trigger Netlify.

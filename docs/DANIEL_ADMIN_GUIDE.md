@@ -112,6 +112,11 @@ En **Estado del sistema**, mira especialmente:
   **Web pública** en el editor: si dice que está pendiente, el dato está
   guardado y lo que falta es regenerar la web pública.
 
+Cuando tengas duda de si una mejora técnica del panel ya está online o sigue
+solo en este worktree, Codex puede usar el informe interno de preparación para
+publicación. Ese informe no publica nada: solo separa cambios locales, commits
+pendientes y comprobaciones de la web pública.
+
 En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta del
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
 clínica.

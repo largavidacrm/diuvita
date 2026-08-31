@@ -779,6 +779,11 @@ Next 10 technical steps:
      pages are no longer treated as valid images. Tiara Health remains in the
      guide, but its blocked logo download is marked invalid until a real
      official logo asset is available.
+150. Add local release-readiness reporting. Done locally in
+     `scripts/release_readiness_report.py`: Codex can now answer whether a
+     change is only local or also visible in production using read-only local
+     markers, git state and optional public health checks. The report never
+     pushes, deploys, edits Supabase or triggers Netlify.
 
 ## Daniel decision checkpoints
 
