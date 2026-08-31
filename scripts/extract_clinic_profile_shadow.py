@@ -20,9 +20,11 @@ from urllib.parse import urlparse
 
 from capture_source_snapshot import (
     FetchResult,
+    decode_body,
     fetch_url,
     load_from_html_file,
     normalize_space,
+    parse_html,
     safe_host,
     snapshot_from_fetch,
 )
@@ -106,6 +108,14 @@ PROFESSIONAL_RE = re.compile(
     rf"\b(?P<title>{TITLE_PREFIX})\s+(?P<name>{NAME_WORD}(?:\s+{NAME_WORD}){{0,5}})"
 )
 TITLE_SCAN_RE = re.compile(rf"\b(?P<title>{TITLE_PREFIX})\s+")
+TITLE_SEGMENT_STOP_RE = re.compile(
+    r"\b(?:"
+    r"a\s+graduate|an\s+expert|a\s+specialist|is|are|was|were|has|have|having|"
+    r"cares|boasting|graduate|specialist|practitioner|renowned|laureate|"
+    r"university|hospital|faculty|department|private|clinic|clinics|geneva|switzerland|london-based"
+    r")\b",
+    re.I,
+)
 TEAM_MARKERS = (
     "equipo",
     "equipo de",
@@ -120,6 +130,15 @@ TEAM_MARKERS = (
     "staff médico",
     "cuadro medico",
     "cuadro médico",
+    "our team",
+    "our team of experts",
+    "team of experts",
+    "medical board",
+    "clinicians",
+    "advisory board",
+)
+TEAM_PAGE_MARKERS = tuple(
+    marker for marker in TEAM_MARKERS if marker not in {"equipo", "equipo de"}
 )
 TEAM_END_MARKERS = (
     "contáctanos",
@@ -409,6 +428,9 @@ TITLE_NOISE_TERMS = {
     "adaptarse",
     "bienvenido",
     "contacto",
+    "equipo",
+    "experts",
+    "expertos",
     "home",
     "inicio",
     "nace",
@@ -416,6 +438,7 @@ TITLE_NOISE_TERMS = {
     "quienes",
     "servicios",
     "somos",
+    "team",
 }
 DECADE_WORDS = {
     "un": 1,
@@ -669,6 +692,61 @@ def professional_team_window(text: str) -> str:
     return text[start:end]
 
 
+def extraction_contact_prefix(text: str) -> str:
+    contacts = []
+    contacts.extend(EMAIL_RE.findall(text))
+    contacts.extend(match.group(0).strip(".,;:") for match in PHONE_RE.finditer(text))
+    contacts.extend("https://www.instagram.com/" + match.group(1).strip("/") for match in INSTAGRAM_URL_RE.finditer(text))
+    seen = set()
+    clean = []
+    for value in contacts:
+        item = normalize_space(value)
+        key = fold(item)
+        if item and key not in seen:
+            seen.add(key)
+            clean.append(item)
+    return " ".join(clean[:8])
+
+
+def source_looks_like_team_page(source_url: str, title: str, text: str) -> bool:
+    url_title = " ".join([source_url, title]).replace("-", " ").replace("_", " ").lower()
+    if any(marker in url_title for marker in TEAM_PAGE_MARKERS):
+        return True
+    haystack = text[:6000].lower()
+    return any(marker in haystack for marker in TEAM_PAGE_MARKERS)
+
+
+def extraction_text_excerpt(readable_text: str, title: str, source_url: str, limit: int) -> str:
+    readable_text = normalize_space(readable_text)
+    if not readable_text:
+        return ""
+    if not source_looks_like_team_page(source_url, title, readable_text):
+        return readable_text[:limit]
+
+    prefix = extraction_contact_prefix(readable_text)
+    team_window = professional_team_window(readable_text)
+    if not team_window:
+        return readable_text[:limit]
+
+    start = max(0, readable_text.find(team_window) - 260)
+    focused = normalize_space(" ".join([prefix, readable_text[start : start + limit]]))
+    return focused[:limit]
+
+
+def extraction_snapshot_from_fetch(result: FetchResult) -> dict[str, Any]:
+    html_text = decode_body(result.body, result.content_type)
+    title, readable_text = parse_html(html_text)
+    snapshot = snapshot_from_fetch(result, excerpt_chars=EXTRACTION_EXCERPT_CHARS)
+    snapshot["source_title"] = title or snapshot.get("source_title")
+    snapshot["text_excerpt"] = extraction_text_excerpt(
+        readable_text,
+        str(snapshot.get("source_title") or ""),
+        str(snapshot.get("final_url") or snapshot.get("source_url") or ""),
+        EXTRACTION_EXCERPT_CHARS,
+    ) or snapshot.get("text_excerpt")
+    return snapshot
+
+
 def name_words(raw: str) -> list[str]:
     return re.findall(NAME_WORD, raw)
 
@@ -695,6 +773,9 @@ def title_name_segment(text: str, start: int) -> str:
     punctuation = re.search(r"[.,;:|¿?¡!]", segment)
     if punctuation:
         segment = segment[: punctuation.start()]
+    bio_stop = TITLE_SEGMENT_STOP_RE.search(segment)
+    if bio_stop:
+        segment = segment[: bio_stop.start()]
     return segment
 
 
@@ -994,7 +1075,7 @@ def claim_website(url: str) -> str | None:
 
 
 def extract_from_fetch(result: FetchResult) -> dict[str, Any]:
-    snapshot = snapshot_from_fetch(result, excerpt_chars=EXTRACTION_EXCERPT_CHARS)
+    snapshot = extraction_snapshot_from_fetch(result)
     claims = build_claims(snapshot)
     return {
         "workflow": "EXTRACT_CLINIC_PROFILE",

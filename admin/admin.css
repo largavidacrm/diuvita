@@ -1576,9 +1576,16 @@ td small {
   gap: 0.55rem;
 }
 
-.review-proposal-title .pill {
+.review-proposal-title .pill,
+.review-proposal-title .review-manual-btn {
   flex: 0 0 auto;
   max-width: 48%;
+}
+
+.review-manual-btn {
+  min-height: 1.7rem;
+  padding: 0.22rem 0.56rem;
+  font-size: 0.78rem;
 }
 
 .review-proposal-value {

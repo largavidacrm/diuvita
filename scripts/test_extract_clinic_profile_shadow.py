@@ -147,6 +147,49 @@ def main():
         "IMDA address should keep postcode and access note",
     )
 
+    long_intro = " ".join(["navigation"] * 520)
+    tiara_team_html = f"""
+<!doctype html>
+<html>
+<head><title>Our Team of Experts TIARA HEALTH</title></head>
+<body>
+  <p>{long_intro}</p>
+  <main>
+    <h1>Our Team of Experts</h1>
+    <p>Dr. Francisco Martinez University Seville Bachelor Medicine</p>
+    <p>Dr. Esmail Sheybani Geneva longevity physician</p>
+    <p>Dr. Ryan Lukas Farhad is a specialist in sports medicine</p>
+    <p>Dr. Joseph Crespo London-based Private Outpatients Department</p>
+    <p>Contact info@tiarahealth.com +34 682 269 673</p>
+  </main>
+</body>
+</html>
+""".encode("utf-8")
+    tiara_extraction = extract_from_fetch(
+        FetchResult(
+            source_url="https://www.tiarahealth.com/our-team-of-experts/",
+            final_url="https://www.tiarahealth.com/our-team-of-experts/",
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=tiara_team_html,
+        )
+    )
+    tiara_profile = tiara_extraction["candidate_profile"]
+    tiara_fields = {claim["field_path"]: claim for claim in tiara_extraction["field_claims"]}
+    check("name" not in tiara_profile, "team-page title should not become clinic identity")
+    check(tiara_profile["emails"] == ["info@tiarahealth.com"], "team-page email should survive focused excerpt")
+    check(tiara_profile["phones"] == ["+34 682 269 673"], "team-page phone should survive focused excerpt")
+    check(
+        tiara_profile["professionals"] == [
+            "Dr. Francisco Martinez",
+            "Dr. Esmail Sheybani",
+            "Dr. Ryan Lukas Farhad",
+            "Dr. Joseph Crespo",
+        ],
+        "long English team page should produce clean professional proposals",
+    )
+    check("identity.canonical_name" not in tiara_fields, "team-page title should not create identity claim")
+
     regenera_text = (
         "NUESTRO EQUIPO Te acompañamos desde la ciencia y la empatía "
         "Dra. Délia Vilá Dirección Xavier Carretero Gerente / Nutrición "

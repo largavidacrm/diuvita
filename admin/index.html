@@ -5453,8 +5453,8 @@
       }).join(" ").toLowerCase();
     }
 
-    function reviewMissingFieldTargets(row) {
-      var haystack = reviewIssueSearchText(row);
+    function reviewMissingFieldTargetsForText(value) {
+      var haystack = text(value).toLowerCase();
       var targets = [];
       function add(inputId, label, key) {
         if (!targets.some(function (item) { return item.inputId === inputId; })) {
@@ -5495,9 +5495,25 @@
       return targets;
     }
 
+    function reviewMissingFieldTargets(row) {
+      return reviewMissingFieldTargetsForText(reviewIssueSearchText(row));
+    }
+
     function firstReviewMissingFieldTargetId(row) {
       var target = reviewMissingFieldTargets(row)[0];
       return target ? target.inputId : "";
+    }
+
+    function reviewManualFieldTarget(row, item) {
+      if (!row || !item || !reviewCanEditClinicFields(row)) return null;
+      if (item.action !== "Completar en ficha" && item.key.indexOf("quality_issue") !== 0) return null;
+      var directTarget = reviewMissingFieldTargetsForText([
+        item.key,
+        item.label,
+        proposalListValue(item.value),
+        item.action
+      ].join(" "))[0];
+      return directTarget || reviewMissingFieldTargets(row)[0] || null;
     }
 
     function reviewCanEditClinicFields(row) {
@@ -6550,6 +6566,16 @@
       return "Información propuesta";
     }
 
+    function reviewProposalFocusActionHtml(row, item) {
+      var target = reviewManualFieldTarget(row, item);
+      if (target) {
+        return '<button class="link-btn review-manual-btn" type="button" data-review-manual-field="' +
+          html(target.inputId) + '" title="Abrir ' + html(target.label) +
+          ' en la ficha">Revisión manual</button>';
+      }
+      return '<span class="pill">' + html(item.action) + '</span>';
+    }
+
     function renderReviewProposalFocus(row) {
       var list = el("reviewProposalFocusList");
       if (!row) {
@@ -6567,7 +6593,7 @@
         ? items.map(function (item) {
           var hint = reviewProposalFocusHint(item);
           return '<article class="review-proposal-item"><div class="review-proposal-title"><h4>' + html(item.label) +
-            '</h4><span class="pill">' + html(item.action) + '</span></div><div class="review-proposal-value">' +
+            '</h4>' + reviewProposalFocusActionHtml(row, item) + '</div><div class="review-proposal-value">' +
             snapshotValueHtml(item.key, item.value) + '</div>' +
             (hint ? '<p class="review-proposal-hint">' + html(hint) + '</p>' : '') + '</article>';
         }).join("")
@@ -7989,7 +8015,7 @@
       renderReviews();
     }
 
-    function openClinicEditorForReview(row) {
+    function openClinicEditorForReview(row, focusTargetId) {
       if (!row || !row.clinic_id) return false;
       var clinic = reviewClinicForRow(row);
       if (!clinic) {
@@ -7998,7 +8024,7 @@
       }
       var reviewType = row.review_type;
       var payload = row.payload || {};
-      var focusTarget = firstReviewMissingFieldTargetId(row);
+      var focusTarget = focusTargetId || firstReviewMissingFieldTargetId(row);
       activeClinicReview = row;
       activeClinicReviewIds = [row.id];
       closeReviewEditor();
@@ -8018,6 +8044,11 @@
       }
       toast("Edita el campo pendiente y guarda la ficha para cerrar esta revisión.");
       return true;
+    }
+
+    function openReviewManualField(targetId) {
+      if (!activeReview) return;
+      openClinicEditorForReview(activeReview, targetId || firstReviewMissingFieldTargetId(activeReview));
     }
 
     async function saveClinic(event) {
@@ -8677,6 +8708,11 @@
       el("reviewRejectBtn").addEventListener("click", rejectReview);
       el("reviewModifyBtn").addEventListener("click", modifyReview);
       el("reviewSourceJobBtn").addEventListener("click", createReviewSourceJob);
+      el("reviewProposalFocusList").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-review-manual-field]");
+        if (!button) return;
+        openReviewManualField(button.getAttribute("data-review-manual-field"));
+      });
       el("reviewBackToListBtn").addEventListener("click", closeReviewEditor);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);

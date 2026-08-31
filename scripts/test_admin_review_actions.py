@@ -69,6 +69,8 @@ def main() -> None:
         ">Modificar</button>",
         "function reviewModifyIdleLabel",
         "Editar ficha",
+        "Revisión manual",
+        "data-review-manual-field",
         "Modificar contacto",
         "Ficha de la clínica",
         "Datos visibles en la ficha",
@@ -216,8 +218,12 @@ def main() -> None:
         and "function finishReviewDecision" in index
         and "function renderReviewClinicPanel" in index
         and "function reviewProposalFocusHint" in index
+        and "function reviewProposalFocusActionHtml" in index
+        and "function reviewMissingFieldTargetsForText" in index
         and "function reviewMissingFieldTargets" in index
+        and "function reviewManualFieldTarget" in index
         and "function openClinicEditorForReview" in index
+        and "function openReviewManualField" in index
         and "function createReviewSourceJob" in index
         and '"EXTRACT_CLINIC_PROFILE"' in index
         and "from_review_id" in index
@@ -234,6 +240,12 @@ def main() -> None:
         and "admin_create_draft_clinic_from_review_v2" in index
         and "admin_resolve_review_item" in index,
         "approve, reject and modify should resolve one proposal and continue the queue",
+    )
+    check(
+        'item.action !== "Completar en ficha"' in index
+        and "openClinicEditorForReview(activeReview, targetId || firstReviewMissingFieldTargetId(activeReview))" in index
+        and 'el("reviewProposalFocusList").addEventListener("click"' in index,
+        "quality audit fields should offer direct manual review into the matching clinic field",
     )
     check(
         'show(el("jobCreatePanel"), false)' in index
@@ -287,7 +299,7 @@ def main() -> None:
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
-    check(".review-proposal-title" in css and ".review-proposal-hint" in css, "proposal action hints should be styled")
+    check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")
     check(".review-modify-panel" in css and ".review-source-job-panel" in css and ".review-decision-actions" in css, "modify, source job and action panels should be styled")

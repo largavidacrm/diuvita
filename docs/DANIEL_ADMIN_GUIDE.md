@@ -162,6 +162,10 @@ espera ese campo. **Perfil revisable** no significa aprobado: significa que el
 enlace tiene forma de ficha de Google Maps y aun así debes abrirlo y comprobar
 que es la clínica correcta.
 
+En las auditorías de calidad, usa **Revisión manual** dentro del campo pendiente
+para abrir la ficha directamente en ese dato. Al guardar la ficha, esa revisión
+queda cerrada y el panel pasa a la siguiente propuesta pendiente.
+
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
 **Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
 perfil real de la clínica, el campo queda pendiente; no usamos enlaces genéricos
