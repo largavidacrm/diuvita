@@ -26,6 +26,10 @@ def main() -> None:
         'id="clinicPublishReadinessMeta"',
         'id="clinicPublishMissingList"',
         'id="clinicPublishFilter"',
+        'id="clinicPhoneWarning"',
+        'id="clinicPhoneFixedWarning"',
+        'id="clinicPhoneMobileWarning"',
+        'id="clinicPhoneWhatsappWarning"',
         'id="reviewActionNote"',
         'id="reviewFlowPanel"',
         'id="reviewFlowMeta"',
@@ -45,8 +49,17 @@ def main() -> None:
         "function isBlockingClinicClaim",
         "function reviewActionNote",
         "function renderReviewFlow",
+        "function spanishPhoneDigits",
+        "function isPlausibleSpanishPhone",
+        "function clinicPhoneReviewMessage",
+        "function updateClinicPhoneWarnings",
+        "function hasWeakClinicPhoneCandidate",
+        "function focusFirstWeakClinicPhone",
         "activeClinicBlockingClaimCount",
         "Sin claims bloqueantes pendientes",
+        "Teléfonos reales, no identificadores",
+        "Teléfono pendiente: corrige o borra el campo marcado antes de guardar.",
+        "No parece un teléfono español válido. Corrígelo o bórralo antes de guardar.",
         "La candidata no se publica directamente.",
         "Cambia Estado a preliminar o publicada.",
         "La web pública solo cambia desde el editor de clínica.",
@@ -86,6 +99,8 @@ def main() -> None:
         check(marker in index, f"missing publication-flow marker: {marker}")
 
     check("updateClinicSaveButtonLabel();" in index, "validation should refresh save button label")
+    check("if (hasWeakClinicPhoneCandidate())" in index, "save should block suspicious phone values")
+    check("updateClinicPhoneWarnings();" in index, "validation should refresh phone warnings")
     check(".publication-hint" in css, "publication hint style missing")
     check(".publication-hint.visible-target" in css, "public-target hint style missing")
     check(".clinic-public-sync" in css, "clinic public sync style missing")

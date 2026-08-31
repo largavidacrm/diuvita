@@ -647,6 +647,12 @@ Next 10 technical steps:
      merged into one proposed field set, with source counts, already-present
      fields and scalar conflicts shown before Daniel uses "Cargar mejoras
      juntas". It does not resolve cards, edit clinics or publish anything.
+126. Block weak phone proposals in the admin editor. Done locally in `/admin/`:
+     phone fields now warn when a value does not look like a plausible Spanish
+     contact number, grouped enrichment proposals normalize aliases such as
+     `phone`/`telephone` to `telefono`, and saving is stopped until suspicious
+     contact values are corrected or removed. This prevents IDs such as medical
+     registration numbers from being closed as public phone data.
 
 ## Daniel decision checkpoints
 

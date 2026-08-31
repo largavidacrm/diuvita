@@ -427,18 +427,22 @@
           <div class="field">
             <label for="clinicPhone">Teléfono principal</label>
             <input id="clinicPhone" name="clinicPhone">
+            <p class="field-warning hidden" id="clinicPhoneWarning">No parece un teléfono español válido. Corrígelo o bórralo antes de guardar.</p>
           </div>
           <div class="field">
             <label for="clinicPhoneFixed">Fijo</label>
             <input id="clinicPhoneFixed" name="clinicPhoneFixed">
+            <p class="field-warning hidden" id="clinicPhoneFixedWarning">No parece un teléfono español válido. Corrígelo o bórralo antes de guardar.</p>
           </div>
           <div class="field">
             <label for="clinicPhoneMobile">Móvil</label>
             <input id="clinicPhoneMobile" name="clinicPhoneMobile">
+            <p class="field-warning hidden" id="clinicPhoneMobileWarning">No parece un teléfono español válido. Corrígelo o bórralo antes de guardar.</p>
           </div>
           <div class="field">
             <label for="clinicPhoneWhatsapp">WhatsApp</label>
             <input id="clinicPhoneWhatsapp" name="clinicPhoneWhatsapp">
+            <p class="field-warning hidden" id="clinicPhoneWhatsappWarning">No parece un teléfono español válido. Corrígelo o bórralo antes de guardar.</p>
           </div>
           <div class="field">
             <label for="clinicInstagram">Instagram</label>
@@ -1658,6 +1662,66 @@
 
     function compactDigits(value) {
       return text(value).replace(/\D/g, "");
+    }
+
+    function spanishPhoneDigits(value) {
+      var digits = compactDigits(value);
+      if (digits.indexOf("0034") === 0 && digits.length === 13) return digits.slice(4);
+      if (digits.indexOf("34") === 0 && digits.length === 11) return digits.slice(2);
+      return digits;
+    }
+
+    function isPlausibleSpanishPhone(value) {
+      var digits = spanishPhoneDigits(value);
+      return digits.length === 9 && /^[6789]/.test(digits);
+    }
+
+    function clinicPhoneFields() {
+      return [
+        { key: "telefono", inputId: "clinicPhone", warningId: "clinicPhoneWarning", label: "teléfono principal" },
+        { key: "phone_fixed", inputId: "clinicPhoneFixed", warningId: "clinicPhoneFixedWarning", label: "fijo" },
+        { key: "phone_mobile", inputId: "clinicPhoneMobile", warningId: "clinicPhoneMobileWarning", label: "móvil" },
+        { key: "phone_whatsapp", inputId: "clinicPhoneWhatsapp", warningId: "clinicPhoneWhatsappWarning", label: "WhatsApp" }
+      ];
+    }
+
+    function clinicPhoneFieldByKey(key) {
+      var canonical = canonicalProposalField(key);
+      return clinicPhoneFields().find(function (field) { return field.key === canonical; }) || null;
+    }
+
+    function clinicPhoneReviewMessage(value) {
+      var clean = text(value).trim();
+      if (!clean || isPlausibleSpanishPhone(clean)) return "";
+      return "No parece un teléfono español válido. Corrígelo o bórralo antes de guardar.";
+    }
+
+    function weakClinicPhoneFields() {
+      return clinicPhoneFields().filter(function (field) {
+        return Boolean(clinicPhoneReviewMessage(trimmed(field.inputId)));
+      });
+    }
+
+    function firstWeakClinicPhoneTargetId() {
+      var field = weakClinicPhoneFields()[0];
+      return field ? field.inputId : "";
+    }
+
+    function hasWeakClinicPhoneCandidate() {
+      return Boolean(firstWeakClinicPhoneTargetId());
+    }
+
+    function focusFirstWeakClinicPhone() {
+      focusPublishField(firstWeakClinicPhoneTargetId() || "clinicPhone");
+    }
+
+    function updateClinicPhoneWarnings() {
+      clinicPhoneFields().forEach(function (field) {
+        var message = clinicPhoneReviewMessage(trimmed(field.inputId));
+        el(field.warningId).textContent = message;
+        show(el(field.warningId), Boolean(message));
+        el(field.inputId).classList.toggle("field-attention", Boolean(message));
+      });
     }
 
     function phoneValuesFromData(data) {
@@ -4750,6 +4814,7 @@
       var hasPhysicalLocation = locationsHavePhysicalLocation(locationsForValidation);
       var hasClinicMapsProfile = hasReviewedClinicMapsProfile(publicTarget);
       var hasGenericMapsCandidate = hasGenericClinicMapsCandidate(publicTarget);
+      var weakPhoneTarget = firstWeakClinicPhoneTargetId();
       return [
         validationItem("Nombre, ciudad y país completos", trimmed("clinicName") && trimmed("clinicCity") && trimmed("clinicCountry"), true, "clinicName"),
         validationItem("Web oficial revisada", /^https?:\/\//i.test(trimmed("clinicWebsite")), true, "clinicWebsite"),
@@ -4759,6 +4824,7 @@
         validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget, "clinicEvidencePanel"),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false, "clinicSourcePanel"),
         validationItem("Google Maps de clínica, no dirección suelta", !hasPhysicalLocation || (hasClinicMapsProfile && !hasGenericMapsCandidate), (publicTarget && hasPhysicalLocation) || hasGenericMapsCandidate, "clinicMapsUrl"),
+        validationItem("Teléfonos reales, no identificadores", !weakPhoneTarget, Boolean(weakPhoneTarget), weakPhoneTarget || "clinicPhone"),
         validationItem("Especialistas publicados revisados si la clínica los muestra", linesToArray(el("clinicProfessionals").value).length > 0, false, "clinicProfessionals"),
         validationItem("Transparencia revisada si existe en la web", trimmed("clinicYearsInPractice") || trimmed("clinicSpecialistsCount") || trimmed("clinicTeamCredentialingVisible") || trimmed("clinicPublicPricing"), false, "clinicYearsInPractice")
       ];
@@ -4798,6 +4864,7 @@
       });
       updateClinicSaveButtonLabel();
       updateClinicMapsWarnings();
+      updateClinicPhoneWarnings();
       renderPublishReadiness(publicItems, targetStatus);
       el("clinicPublicationHint").textContent = publicVisibilityText(targetStatus);
       el("clinicPublicationHint").className = "publication-hint" + (publicTarget ? " visible-target" : "");
@@ -5053,6 +5120,20 @@
       return Object.prototype.hasOwnProperty.call(object, key);
     }
 
+    function canonicalProposalField(key) {
+      var aliases = {
+        name: "display_name",
+        web: "website",
+        phone: "telefono",
+        telephone: "telefono",
+        google_maps_url: "maps_url",
+        reviews_url: "google_reviews_url",
+        professionals: "profesionales"
+      };
+      var clean = text(key).trim();
+      return aliases[clean] || clean;
+    }
+
     function proposalListValue(value) {
       if (Array.isArray(value)) {
         if (value.some(function (item) { return item && typeof item === "object"; })) {
@@ -5079,11 +5160,13 @@
         maps_url: "Google Maps",
         google_maps_url: "Google Maps",
         google_reviews_url: "Valoraciones Google",
+        reviews_url: "Valoraciones Google",
         summary: "Resumen",
         services: "Servicios",
         specialties: "Especialidades",
         unidades: "Unidades",
         profesionales: "Especialistas",
+        professionals: "Especialistas",
         years_in_practice: "Años en ejercicio",
         specialists_count: "Número de especialistas",
         team_credentialing_visible: "Colegiación visible",
@@ -5092,6 +5175,8 @@
         tech: "Tecnología",
         email: "Email",
         telefono: "Teléfono",
+        phone: "Teléfono",
+        telephone: "Teléfono",
         phone_fixed: "Fijo",
         phone_mobile: "Móvil",
         phone_whatsapp: "WhatsApp",
@@ -5100,7 +5185,7 @@
       var items = Object.keys(labels).filter(function (key) {
         return hasOwn(fields, key) && proposalListValue(fields[key]);
       }).map(function (key) {
-        return labels[key] + ": " + proposalListValue(fields[key]);
+        return proposalLabel(key) + ": " + proposalListValue(fields[key]);
       });
       if (Array.isArray(payload.warnings)) {
         payload.warnings.forEach(function (warning) {
@@ -5468,6 +5553,7 @@
     }
 
     function proposalLabel(key) {
+      var labelKey = canonicalProposalField(key);
       var labels = {
         display_name: "Nombre",
         name: "Nombre",
@@ -5505,10 +5591,12 @@
         profile_confidence: "Confianza",
         verification_status: "Verificación"
       };
-      return labels[key] || key;
+      return labels[labelKey] || labelKey;
     }
 
     function currentClinicField(clinic, key) {
+      var canonicalKey = canonicalProposalField(key);
+      if (canonicalKey !== key) return currentClinicField(clinic, canonicalKey);
       var data = (clinic && clinic.current_data) || {};
       if (key === "locations") return storedClinicLocations(clinic);
       if (key === "care_mode") return clinicCareModeValue(data);
@@ -5654,6 +5742,8 @@
     }
 
     function versionClinicField(row, key) {
+      var canonicalKey = canonicalProposalField(key);
+      if (canonicalKey !== key) return versionClinicField(row, canonicalKey);
       var data = (row && row.data) || {};
       var current = data.current_data || {};
       var topLevel = {
@@ -5970,6 +6060,13 @@
       return rows;
     }
 
+    function proposalPhoneWarning(key, value) {
+      var field = clinicPhoneFieldByKey(key);
+      var clean = proposalListValue(value);
+      if (!field || !clean || isPlausibleSpanishPhone(clean)) return "";
+      return proposalLabel(field.key) + ": no parece un teléfono español válido.";
+    }
+
     function mergeReviewPayloads(rows) {
       var merged = {
         proposed_fields: {},
@@ -5983,7 +6080,8 @@
         specialties: true,
         unidades: true,
         profesionales: true,
-        locations: true
+        locations: true,
+        tech: true
       };
       (rows || []).forEach(function (row) {
         var payload = (row && row.payload) || {};
@@ -6003,9 +6101,15 @@
             if (clean) merged.warnings.push(clean);
           });
         }
-        Object.keys(proposedFields(payload)).forEach(function (key) {
-          var value = proposedFields(payload)[key];
+        Object.keys(proposedFields(payload)).forEach(function (rawKey) {
+          var key = canonicalProposalField(rawKey);
+          var value = proposedFields(payload)[rawKey];
           if (!proposalListValue(value)) return;
+          var phoneWarning = proposalPhoneWarning(key, value);
+          if (phoneWarning && !warnedFields["phone:" + key]) {
+            warnedFields["phone:" + key] = true;
+            merged.warnings.push(phoneWarning);
+          }
           if (listFields[key]) {
             merged.proposed_fields[key] = mergeListField(merged.proposed_fields[key] || [], value, key === "locations");
             return;
@@ -6254,6 +6358,8 @@
         tech: "clinicTech",
         email: "clinicEmail",
         telefono: "clinicPhone",
+        phone: "clinicPhone",
+        telephone: "clinicPhone",
         phone_fixed: "clinicPhoneFixed",
         phone_mobile: "clinicPhoneMobile",
         phone_whatsapp: "clinicPhoneWhatsapp",
@@ -6269,6 +6375,7 @@
       if (hasOwn(fields, "specialties")) setInput("clinicSpecialties", arrayLines(fields.specialties));
       if (hasOwn(fields, "unidades")) setInput("clinicUnits", arrayLines(fields.unidades));
       if (hasOwn(fields, "profesionales")) setInput("clinicProfessionals", arrayLines(fields.profesionales));
+      if (hasOwn(fields, "professionals")) setInput("clinicProfessionals", arrayLines(fields.professionals));
       if (hasOwn(fields, "locations")) renderLocationEditor(fields.locations);
       renderPendingSpecialistsForClinic();
       renderPendingLocationsForClinic();
@@ -6384,6 +6491,12 @@
         updateClinicMapsWarnings();
         focusFirstGenericMapsCandidate();
         toast("Google Maps pendiente: pega el perfil real de la clínica, no una búsqueda, ruta o dirección.");
+        return;
+      }
+      if (hasWeakClinicPhoneCandidate()) {
+        updateClinicPhoneWarnings();
+        focusFirstWeakClinicPhone();
+        toast("Teléfono pendiente: corrige o borra el campo marcado antes de guardar.");
         return;
       }
       var missingValidation = missingFinalValidationLabels();

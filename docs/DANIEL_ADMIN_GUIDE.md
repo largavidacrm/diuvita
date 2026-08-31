@@ -253,6 +253,11 @@ unir, qué fuentes hay detrás y si hay conflictos como dos teléfonos principal
 distintos. Si no hay conflictos, lo normal es abrir el caso y usar **Cargar
 mejoras juntas**.
 
+Si al cargar mejoras aparece un aviso bajo un teléfono, no guardes la ficha tal
+cual. Ese valor no parece un teléfono español real; bórralo o sustitúyelo por el
+contacto correcto antes de guardar. Así evitamos convertir identificadores,
+colegiaciones u otros números internos en contacto público.
+
 ## Editar una clínica
 
 1. Baja al bloque **Clínicas**.

@@ -84,6 +84,7 @@ def main() -> None:
     check(
         'data-load-related-proposals' in index
         and "Cargar mejoras juntas" in index
+        and "function canonicalProposalField" in index
         and "function mergeReviewPayloads(rows)" in index
         and "function loadRelatedEnrichmentProposals()" in index
         and "activeClinicReviewIds" in index,
@@ -94,6 +95,17 @@ def main() -> None:
         and "alguna tarjeta no se cerró automáticamente" in index
         and "Conflicto en " in index,
         "saving grouped proposals should resolve grouped cards and warn on conflicts",
+    )
+    check(
+        'phone: "telefono"' in index
+        and 'telephone: "telefono"' in index
+        and 'professionals: "profesionales"' in index
+        and "var key = canonicalProposalField(rawKey);" in index
+        and "function proposalPhoneWarning" in index
+        and "phone: \"clinicPhone\"" in index
+        and "telephone: \"clinicPhone\"" in index
+        and "tech: true" in index,
+        "grouped proposals should normalize aliases, merge technology and warn on weak phones",
     )
     css = (ROOT / "admin" / "admin.css").read_text(encoding="utf-8")
     check(".review-context" in css, "review context should be styled")
