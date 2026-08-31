@@ -147,6 +147,15 @@ def reconcile_row(row: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def summarize_cards(cards: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "review_cards": len(cards),
+        "cards_with_direct_maps": sum(1 for card in cards if as_int(card.get("direct_map_count")) > 0),
+        "cards_with_unsafe_maps": sum(1 for card in cards if as_int(card.get("unsafe_map_count")) > 0),
+        "cards_with_review_links": sum(1 for card in cards if as_int(card.get("review_link_count")) > 0),
+    }
+
+
 def clinic_lookup_filter(query: str) -> str:
     clean = query.strip()
     if not clean:
@@ -216,6 +225,7 @@ from (
             str(row.get("created_at") or ""),
         ),
     )
+    raw["summary"] = summarize_cards(raw["review_cards"])
     return raw
 
 
@@ -239,6 +249,7 @@ def format_reconciliation(report: dict[str, Any]) -> str:
         f"Generado: {parse_timestamp(report.get('generated_at'))}",
         f"Consulta: {report.get('query') or 'todas las tarjetas abiertas'}",
         "- Writes data: no",
+        f"- Tarjetas: {as_int((report.get('summary') or {}).get('review_cards'))}",
         "",
     ]
     if not cards:

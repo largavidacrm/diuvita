@@ -561,6 +561,10 @@ Next 10 technical steps:
      cards can now be inspected for direct clinic-profile links, unsafe
      search/route/address links and the next manual validation step without
      editing clinics or creating more review cards.
+108. Wire Google-link reconciliation into CTO cycle. Done locally in
+     `scripts/run_cto_shadow_cycle.py`: optional cycle runs can now include a
+     compact Google-link review summary, showing direct-profile readiness or
+     unsafe Maps cards without printing long URLs or review payloads.
 
 ## Daniel decision checkpoints
 

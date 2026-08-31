@@ -134,6 +134,17 @@ STEP_ITEM_KEYS = {
     "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
     "check_public_site_freshness": ("slug", "name", "url", "fresh", "missing_markers", "error"),
     "clinic_public_visibility_report": ("slug", "clinic_name", "status", "updated_at"),
+    "google_link_review_reconciliation": (
+        "clinic_name",
+        "clinic_slug",
+        "title",
+        "priority",
+        "direct_map_count",
+        "unsafe_map_count",
+        "review_link_count",
+        "map_status_counts",
+        "next_step",
+    ),
     "specialist_review_reconciliation": (
         "clinic_name",
         "slug",
@@ -169,6 +180,7 @@ STEP_LABELS = {
     "check_production_health": "salud de la web publica",
     "check_public_site_freshness": "frescura de la web publica",
     "clinic_public_visibility_report": "visibilidad publica por clinica",
+    "google_link_review_reconciliation": "conciliacion de enlaces Google",
     "specialist_review_reconciliation": "conciliacion de especialistas",
 }
 
@@ -290,6 +302,14 @@ def compact_summary(name: str, summary: Any) -> Any:
             for item in review_examples[:5]
         ]
         compact.pop("review_examples_by_type", None)
+    review_cards = compact.get("review_cards")
+    if isinstance(review_cards, list):
+        compact["review_cards_count"] = len(review_cards)
+        compact["sample_review_cards"] = [
+            compact_item(item, STEP_ITEM_KEYS.get(name, ()))
+            for item in review_cards[:3]
+        ]
+        compact.pop("review_cards", None)
     checks = compact.get("checks")
     if isinstance(checks, list):
         compact["checks_count"] = len(checks)
@@ -447,6 +467,26 @@ def specialist_reconciliation_status(step: dict[str, Any] | None) -> str:
     return f"{name}: sin pendientes detectados"
 
 
+def google_link_reconciliation_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobada en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    cards = as_int(counts.get("review_cards") or summary.get("review_cards_count"))
+    if not cards:
+        return "sin tarjetas Google medidas"
+    direct = as_int(counts.get("cards_with_direct_maps"))
+    unsafe = as_int(counts.get("cards_with_unsafe_maps"))
+    reviews = as_int(counts.get("cards_with_review_links"))
+    if unsafe:
+        return f"{unsafe}/{cards} con Maps que no se debe guardar sin corregir"
+    if direct:
+        return f"{direct}/{cards} con perfil Maps directo; {reviews} con valoraciones"
+    return f"{cards} tarjetas sin perfil Maps directo"
+
+
 def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     steps = [step for step in output.get("steps") or [] if isinstance(step, dict)]
     failed_step = first_failed_step(steps)
@@ -510,6 +550,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         public_freshness = f"{stale_count} con desfase" if stale_count else "revisar"
     visibility_step = find_step(steps, "clinic_public_visibility_report")
     clinic_visibility = clinic_visibility_status(visibility_step)
+    google_link_step = find_step(steps, "google_link_review_reconciliation")
+    google_link_reconciliation = google_link_reconciliation_status(google_link_step)
     specialist_step = find_step(steps, "specialist_review_reconciliation")
     specialist_reconciliation = specialist_reconciliation_status(specialist_step)
 
@@ -562,6 +604,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "production_health": production_health,
         "public_freshness": public_freshness,
         "clinic_visibility": clinic_visibility,
+        "google_link_reconciliation": google_link_reconciliation,
         "specialist_reconciliation": specialist_reconciliation,
         "attention": attention,
     }
@@ -585,6 +628,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Web publica: {brief.get('production_health')}.",
         f"- Frescura web: {brief.get('public_freshness')}.",
         f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
+        f"- Conciliacion Google: {brief.get('google_link_reconciliation')}.",
         f"- Conciliacion especialistas: {brief.get('specialist_reconciliation')}.",
     ]
     if as_int(brief.get("skipped_steps")):
@@ -745,6 +789,16 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
     ])
+    if args.google_link_reconciliation or args.google_link_reconciliation_clinic:
+        google_link_reconciliation_args = [
+            "google_link_review_reconciliation.py",
+            "--limit",
+            str(args.google_link_reconciliation_limit),
+            "--json",
+        ]
+        if args.google_link_reconciliation_clinic:
+            google_link_reconciliation_args.extend(["--clinic", args.google_link_reconciliation_clinic])
+        steps.append(("google_link_review_reconciliation", google_link_reconciliation_args, 45))
     if args.specialist_reconciliation or args.specialist_reconciliation_clinic:
         specialist_reconciliation_args = [
             "specialist_review_reconciliation.py",
@@ -870,6 +924,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--profile-completeness-limit", type=int, default=12)
     parser.add_argument("--backlog-brief-limit", type=int, default=8)
     parser.add_argument(
+        "--google-link-reconciliation",
+        action="store_true",
+        help="Optionally reconcile open Google Maps/review proposals; read-only.",
+    )
+    parser.add_argument("--google-link-reconciliation-clinic", default="", help="Clinic name, slug or review-title fragment for Google link reconciliation.")
+    parser.add_argument("--google-link-reconciliation-limit", type=int, default=8)
+    parser.add_argument(
         "--specialist-reconciliation",
         action="store_true",
         help="Optionally reconcile published/proposed/internal specialists; read-only.",
@@ -937,6 +998,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
         args.public_freshness_missing_limit,
         args.clinic_visibility_missing_limit,
@@ -959,6 +1021,7 @@ def main() -> int:
         args.snapshot_retention_limit,
         args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")

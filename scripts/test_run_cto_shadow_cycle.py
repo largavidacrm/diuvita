@@ -10,6 +10,7 @@ from run_cto_shadow_cycle import (
     compact_summary,
     cycle_next_clicks,
     format_cycle_brief,
+    google_link_reconciliation_status,
     open_review_count_from_digest,
     skipped_step,
     specialist_reconciliation_status,
@@ -107,6 +108,43 @@ def main():
     check(compact_google_links["items_count"] == 1, "Google-link discovery count should be kept")
     check("google_link_candidates" not in compact_google_links["sample_items"][0], "large Google-link candidates should be omitted")
     check("proposed_fields" in compact_google_links["sample_items"][0], "Google-link proposals should be kept")
+    compact_google_reconciliation = compact_summary("google_link_review_reconciliation", {
+        "summary": {
+            "review_cards": 2,
+            "cards_with_direct_maps": 1,
+            "cards_with_unsafe_maps": 1,
+            "cards_with_review_links": 1,
+        },
+        "review_cards": [
+            {
+                "clinic_name": "Clinic A",
+                "clinic_slug": "clinic-a",
+                "title": "Completar enlaces Google: Clinic A",
+                "priority": 60,
+                "direct_map_count": 1,
+                "unsafe_map_count": 0,
+                "review_link_count": 1,
+                "map_status_counts": {"direct_profile": 1},
+                "maps_urls": ["https://www.google.com/maps/place/Clinic+A/"],
+                "payload": {"large": True},
+                "next_step": "abrir enlace",
+            }
+        ],
+    })
+    check(compact_google_reconciliation["review_cards_count"] == 1, "Google reconciliation card count should be kept")
+    check("review_cards" not in compact_google_reconciliation, "full Google reconciliation cards should be removed")
+    check("maps_urls" not in compact_google_reconciliation["sample_review_cards"][0], "long Google URLs should stay out of cycle output")
+    check("payload" not in compact_google_reconciliation["sample_review_cards"][0], "Google payload should stay out of cycle output")
+    google_reconciliation_step = {
+        "name": "google_link_review_reconciliation",
+        "ok": True,
+        "summary": compact_google_reconciliation,
+    }
+    check(
+        google_link_reconciliation_status(google_reconciliation_step)
+        == "1/2 con Maps que no se debe guardar sin corregir",
+        "Google reconciliation status should flag unsafe Maps",
+    )
     compact_top_sources = compact_summary("measure_source_snapshot_retention", {
         "summary": {"total_snapshots": 2},
         "top_sources": [
@@ -404,6 +442,7 @@ def main():
     check("Cobertura fuentes: 11/19 fichas con fuente" in brief_text, "plain brief source coverage missing")
     check("Siguiente fuente: Revisar 2 claims bloqueantes de Kairos Longevity Clinic" in brief_text, "plain brief source target missing")
     check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
+    check("Conciliacion Google: no comprobada en este ciclo" in brief_text, "plain brief Google reconciliation line missing")
     check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
     guarded_brief = build_cycle_brief({
@@ -459,6 +498,26 @@ def main():
         in format_cycle_brief(specialist_cycle_brief),
         "plain brief should show specialist reconciliation result",
     )
+    google_link_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [
+            {
+                "name": "google_link_review_reconciliation",
+                "ok": True,
+                "summary": compact_google_reconciliation,
+            },
+        ],
+    })
+    check(
+        google_link_cycle_brief["google_link_reconciliation"] == "1/2 con Maps que no se debe guardar sin corregir",
+        "Google reconciliation should enter cycle brief",
+    )
+    check(
+        "Conciliacion Google: 1/2 con Maps que no se debe guardar sin corregir"
+        in format_cycle_brief(google_link_cycle_brief),
+        "plain brief should show Google reconciliation result",
+    )
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -485,6 +544,9 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        google_link_reconciliation=False,
+        google_link_reconciliation_clinic="",
+        google_link_reconciliation_limit=8,
         specialist_reconciliation=False,
         specialist_reconciliation_clinic="",
         specialist_reconciliation_limit=5,
@@ -512,6 +574,7 @@ def main():
     check("check_production_health" not in names, "production health should be off by default")
     check("check_public_site_freshness" not in names, "public freshness should be off by default")
     check("clinic_public_visibility_report" not in names, "clinic visibility should be off by default")
+    check("google_link_review_reconciliation" not in names, "Google reconciliation should be off by default")
     check("specialist_review_reconciliation" not in names, "specialist reconciliation should be off by default")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
@@ -560,6 +623,9 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        google_link_reconciliation=False,
+        google_link_reconciliation_clinic="",
+        google_link_reconciliation_limit=8,
         specialist_reconciliation=False,
         specialist_reconciliation_clinic="",
         specialist_reconciliation_limit=5,
@@ -616,6 +682,9 @@ def main():
         source_coverage_limit=10,
         profile_completeness_limit=11,
         backlog_brief_limit=4,
+        google_link_reconciliation=True,
+        google_link_reconciliation_clinic="Arvila",
+        google_link_reconciliation_limit=4,
         specialist_reconciliation=True,
         specialist_reconciliation_clinic="Kairos",
         specialist_reconciliation_limit=3,
@@ -636,6 +705,7 @@ def main():
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
     team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
+    google_reconciliation_step = [step for step in optional_steps if step[0] == "google_link_review_reconciliation"][0]
     specialist_reconciliation_step = [step for step in optional_steps if step[0] == "specialist_review_reconciliation"][0]
     check("--apply" in seed_apply_step[1], "source seeding should follow safe apply mode")
     check("--apply" in team_source_step[1], "team source discovery should follow safe apply mode")
@@ -646,6 +716,10 @@ def main():
     check("--apply" in source_shadow_step[1], "source shadow batch should follow safe apply mode")
     check("--clinic-slug" in source_shadow_step[1] and "sensabell" in source_shadow_step[1], "source shadow clinic slug should pass through")
     check("--replace-existing" in source_shadow_step[1], "source shadow replace flag should pass through")
+    check("--json" in google_reconciliation_step[1], "Google reconciliation should be machine readable")
+    check("Arvila" in google_reconciliation_step[1], "Google reconciliation clinic should pass through")
+    check("4" in google_reconciliation_step[1], "Google reconciliation limit should pass through")
+    check(optional_steps.index(google_reconciliation_step) < optional_steps.index([step for step in optional_steps if step[0] == "admin_digest"][0]), "Google reconciliation should run before admin digest")
     check("--json" in specialist_reconciliation_step[1], "specialist reconciliation should be machine readable")
     check("Kairos" in specialist_reconciliation_step[1], "specialist reconciliation clinic should pass through")
     check("3" in specialist_reconciliation_step[1], "specialist reconciliation limit should pass through")

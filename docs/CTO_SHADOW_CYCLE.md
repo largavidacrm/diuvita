@@ -20,15 +20,17 @@ for Daniel instead of implementing, softening or silently discarding the change.
 11. measure visible source coverage without writing evidence;
 12. measure visible-profile completeness without editing clinics;
 13. measure review-inbox bottlenecks without resolving cards;
-14. optionally reconcile published/proposed/internal specialists without
+14. optionally reconcile Google Maps/review-link cards without printing long
+    link payloads;
+15. optionally reconcile published/proposed/internal specialists without
     exposing long professional lists in the cycle output;
-15. print the admin digest;
-16. evaluate stored claims against publication rules.
-17. optionally run strict editorial limit checks;
-18. optionally check public production URLs without logging in or writing data.
-19. optionally explain one clinic's public visibility state without publishing
+16. print the admin digest;
+17. evaluate stored claims against publication rules.
+18. optionally run strict editorial limit checks;
+19. optionally check public production URLs without logging in or writing data.
+20. optionally explain one clinic's public visibility state without publishing
     or exposing long team/professional payloads.
-20. optionally compare saved public data with deployed clinic pages to detect
+21. optionally compare saved public data with deployed clinic pages to detect
     stale pages.
 
 Default mode is dry-run:
@@ -116,6 +118,13 @@ Review-backlog measurement is read-only and helps identify duplicate
 profile-enrichment pressure before adding more cards.
 Source-coverage measurement is read-only and highlights visible clinics whose
 source trail is weak before expanding automation.
+Google-link reconciliation is optional and read-only. It is useful when the next
+manual bottleneck is validating direct clinic Google Business/Profile links:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --google-link-reconciliation
+```
+
 Specialist reconciliation is optional and read-only. It is useful when the
 global plan says the next specialist work is consolidation:
 

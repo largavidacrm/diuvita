@@ -11,6 +11,7 @@ from google_link_review_reconciliation import (
     load_reconciliation,
     proposed_links,
     reconcile_row,
+    summarize_cards,
 )
 
 
@@ -72,13 +73,21 @@ def main() -> None:
     direct = reconcile_row(direct_row)
     unsafe = reconcile_row(unsafe_row)
     review_only = reconcile_row(review_only_row)
+    summary = summarize_cards([direct, unsafe, review_only])
     output = format_reconciliation({
         "query": "",
         "generated_at": "2026-08-31T08:40:00+00:00",
         "writes_data": False,
+        "summary": summary,
         "review_cards": [direct, unsafe, review_only],
     })
 
+    check(summary == {
+        "review_cards": 3,
+        "cards_with_direct_maps": 1,
+        "cards_with_unsafe_maps": 1,
+        "cards_with_review_links": 3,
+    }, "summary counts should classify Google review cards")
     check(direct["direct_map_count"] == 1, "direct Maps count missing")
     check(direct["unsafe_map_count"] == 0, "direct Maps should not be unsafe")
     check("confirmar que es la ficha real" in direct["next_step"], "direct Maps next step missing")
@@ -90,6 +99,7 @@ def main() -> None:
     check("parece dirección suelta; no guardar: 1" in first_status_label(unsafe["map_status_counts"]), "unsafe status label missing")
     check("# Vitalarga Google link review reconciliation" in output, "title missing")
     check("Writes data: no" in output, "read-only marker missing")
+    check("Tarjetas: 3" in output, "summary card count missing")
     check("Estado Maps: parece perfil directo de clínica: 1" in output, "direct output status missing")
     check("Estado Maps: parece dirección suelta; no guardar: 1" in output, "unsafe output status missing")
 
@@ -113,6 +123,7 @@ def main() -> None:
 
     sql = captured.get("sql", "")
     check(loaded["review_cards"][0]["direct_map_count"] == 1, "loaded report should reconcile rows")
+    check(loaded["summary"]["review_cards"] == 2, "loaded report should include summary")
     check("public.review_queue" in sql, "query should read review cards")
     check("rq.status = 'open'" in sql, "query should only inspect open reviews")
     check("maps_url" in sql and "google_reviews_url" in sql, "query should find Google fields")
