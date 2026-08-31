@@ -227,6 +227,11 @@ ese enlace directo guardado. Si todavía falta, no mostramos botón de Google
 Maps: queda pendiente hasta encontrar la ficha real de la clínica. El enlace
 directo a valoraciones de Google se guarda aparte cuando exista.
 
+Si el sistema ha encontrado sedes en una propuesta o en una evidencia interna,
+el editor puede mostrar **Sedes detectadas en revisión interna**. Ese bloque no
+publica nada por sí solo: pulsa **Cargar sedes al formulario**, revisa ciudad,
+dirección y Google Maps, y después guarda la ficha solo si está correcto.
+
 En **Validación final**, Google Maps queda como pendiente si el enlace parece
 una búsqueda genérica, una ruta o una dirección suelta en vez de un perfil de
 clínica.

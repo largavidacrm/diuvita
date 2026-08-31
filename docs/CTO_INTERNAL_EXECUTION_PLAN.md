@@ -444,6 +444,11 @@ Next 10 technical steps:
     specialty/menu fragments and label weak signals as not having a clear
     professional name, so Daniel is not shown specialties as if they were
     people.
+81. Surface internal location evidence in the clinic editor. Done locally in
+    `/admin/`: location claims stored in `field_claims` now appear beside open
+    location proposals as "Sedes detectadas", can be loaded into the form for
+    manual review, and still require Daniel to save before anything public
+    changes.
 
 ## Daniel decision checkpoints
 

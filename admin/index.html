@@ -714,6 +714,8 @@
     var activeClinicLockRequest = 0;
     var activeClinicClaimRequest = 0;
     var activeClinicSourceRequest = 0;
+    var activeClinicClaims = [];
+    var activeClinicClaimSources = {};
     var activeClinicClaimCount = 0;
     var activeClinicBlockingClaimCount = null;
     var activeClinicSourceCount = 0;
@@ -3832,6 +3834,8 @@
     }
 
     function renderClinicClaims(rows, sources) {
+      activeClinicClaims = Array.isArray(rows) ? rows : [];
+      activeClinicClaimSources = sources || {};
       var count = Array.isArray(rows) ? rows.length : 0;
       activeClinicClaimCount = count;
       el("clinicEvidenceCount").textContent = count + (count === 1 ? " claim" : " claims");
@@ -3840,6 +3844,7 @@
         : "Sin claims internos guardados para esta clínica.";
       if (!count) {
         activeClinicBlockingClaimCount = 0;
+        renderPendingLocationsForClinic();
         el("clinicClaimsList").innerHTML = '<p class="empty">No hay evidencias internas para esta ficha todavía.</p>';
         updateFinalValidation();
         return;
@@ -3860,6 +3865,7 @@
           '</article>';
       }).join("");
       activeClinicBlockingClaimCount = blockingCount;
+      renderPendingLocationsForClinic();
       updateFinalValidation();
     }
 
@@ -3869,14 +3875,17 @@
       el("clinicEvidenceCount").textContent = "Cargando";
       el("clinicEvidenceMeta").textContent = "Consultando claims internos.";
       el("clinicClaimsList").innerHTML = '<p class="empty">Cargando evidencias...</p>';
+      var claimSelect = "id, field_path, value, confidence, verification_status, human_locked, source_record_id, created_at";
       var claimsResult = await client
         .from("field_claims")
-        .select("id, field_path, value, confidence, verification_status, human_locked, source_record_id, created_at")
+        .select(claimSelect)
         .eq("clinic_id", clinicId)
         .order("created_at", { ascending: false })
         .limit(14);
       if (requestId !== activeClinicClaimRequest) return;
       if (claimsResult.error) {
+        activeClinicClaims = [];
+        activeClinicClaimSources = {};
         el("clinicEvidenceCount").textContent = "No disponible";
         el("clinicEvidenceMeta").textContent = "No se pudieron cargar las evidencias.";
         el("clinicClaimsList").innerHTML = '<p class="empty">No se pudieron leer los claims de esta clínica.</p>';
@@ -3884,6 +3893,22 @@
         return;
       }
       var rows = claimsResult.data || [];
+      var locationClaimsResult = await client
+        .from("field_claims")
+        .select(claimSelect)
+        .eq("clinic_id", clinicId)
+        .eq("field_path", "location.locations")
+        .order("created_at", { ascending: false })
+        .limit(12);
+      if (requestId !== activeClinicClaimRequest) return;
+      if (!locationClaimsResult.error) {
+        var rowsById = {};
+        rows.concat(locationClaimsResult.data || []).forEach(function (row) {
+          if (!row || !row.id || rowsById[row.id]) return;
+          rowsById[row.id] = row;
+        });
+        rows = Object.keys(rowsById).map(function (id) { return rowsById[id]; });
+      }
       var sourceIds = rows.map(function (row) {
         return row.source_record_id;
       }).filter(Boolean);
@@ -4319,6 +4344,40 @@
       return sanitizedLocationsForSave(fields.locations || []);
     }
 
+    function claimArrayValues(value) {
+      if (Array.isArray(value)) return value;
+      if (value && typeof value === "object") {
+        if (Array.isArray(value.locations)) return value.locations;
+        if (Array.isArray(value.value)) return value.value;
+        return [value];
+      }
+      return linesToLocations(value);
+    }
+
+    function claimCanSuggestLocation(row) {
+      if (!row || row.field_path !== "location.locations") return false;
+      var status = text(row.verification_status).toLowerCase();
+      return ["rejected", "stale", "conflict"].indexOf(status) < 0;
+    }
+
+    function addClaimLocationSuggestions(existingKeys, pendingByKey) {
+      (activeClinicClaims || []).forEach(function (row) {
+        if (!claimCanSuggestLocation(row)) return;
+        var source = activeClinicClaimSources[row.source_record_id || ""] || null;
+        var sourceUrl = claimSourceUrl(source);
+        sanitizedLocationsForSave(claimArrayValues(row.value)).forEach(function (location) {
+          var key = locationIdentityKey(location);
+          if (!key || existingKeys[key] || pendingByKey[key]) return;
+          pendingByKey[key] = {
+            location: location,
+            reviewId: "",
+            reviewTitle: "Evidencia interna",
+            sources: sourceUrl ? [sourceUrl] : []
+          };
+        });
+      });
+    }
+
     function proposalLinkUrl(value) {
       var clean = text(value).trim();
       return /^https?:\/\//i.test(clean) ? clean : "";
@@ -4412,6 +4471,7 @@
           };
         });
       });
+      addClaimLocationSuggestions(existingKeys, pendingByKey);
       return Object.keys(pendingByKey).map(function (key) { return pendingByKey[key]; });
     }
 
@@ -4520,10 +4580,14 @@
         return;
       }
       var shown = pending.slice(0, 8);
+      var hasInternalEvidence = pending.some(function (item) { return !item.reviewId; });
       el("clinicPendingLocationsCount").textContent = pending.length + (pending.length === 1 ? " pendiente" : " pendientes");
-      el("clinicPendingLocationsMeta").textContent = "Están recogidas como propuesta. Solo aparecerán en la web si revisas y guardas la ficha.";
+      el("clinicPendingLocationsMeta").textContent = hasInternalEvidence
+        ? "Están recogidas como propuesta o evidencia interna. Solo aparecerán en la web si revisas y guardas la ficha."
+        : "Están recogidas como propuesta. Solo aparecerán en la web si revisas y guardas la ficha.";
       el("clinicPendingLocationsList").innerHTML = shown.map(function (item) {
-        return "<li>" + html(locationDisplayText(item.location)) + "</li>";
+        var suffix = item.reviewId ? "" : " · evidencia interna";
+        return "<li>" + html(locationDisplayText(item.location) + suffix) + "</li>";
       }).join("") + (pending.length > shown.length ? "<li>" + html("+" + (pending.length - shown.length) + " más") + "</li>" : "");
 
       var actionReviews = [];
@@ -5235,6 +5299,8 @@
       setInput("clinicInstagram", data.instagram);
       setInput("clinicVerification", activeClinic.verification_status || "human_curated");
       setInput("clinicNote", "");
+      activeClinicClaims = [];
+      activeClinicClaimSources = {};
       activeClinicClaimCount = 0;
       activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
@@ -5313,6 +5379,8 @@
       activeClinic = null;
       activeClinicReview = null;
       activeClinicReviewIds = [];
+      activeClinicClaims = [];
+      activeClinicClaimSources = {};
       activeClinicClaimCount = 0;
       activeClinicBlockingClaimCount = null;
       activeClinicSourceCount = 0;
