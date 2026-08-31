@@ -6075,7 +6075,7 @@
 
     function reviewHasGoogleLinkProposal(row) {
       return proposalLinkItems((row && row.payload) || {}).some(function (item) {
-        if (item.kind === "maps_url") return isReviewedGoogleMapsProfileUrl(item.url);
+        if (item.kind === "maps_url") return Boolean(proposalLinkUrl(item.url));
         if (item.kind === "google_reviews_url") return Boolean(proposalLinkUrl(item.url));
         return false;
       });

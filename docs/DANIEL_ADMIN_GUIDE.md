@@ -155,11 +155,11 @@ cuidado: primero abre la web oficial y confirma que esos profesionales aparecen
 publicados por la clínica. **Fuente visible** solo significa que el panel tiene
 un enlace para revisar, no que el dato esté aprobado.
 
-El filtro rápido **Google Maps** muestra las tarjetas que traen un enlace directo
-propuesto a Google Maps o a valoraciones de Google. Ábrelo, comprueba que el
-enlace corresponde al perfil real de la clínica y solo entonces carga la
-propuesta en la ficha. Si el enlace abre una búsqueda genérica, una dirección
-suelta o un perfil dudoso, no lo guardes.
+El filtro rápido **Google Maps** muestra las tarjetas que traen cualquier enlace
+propuesto a Google Maps o a valoraciones de Google, tanto si parece bueno como
+si parece dudoso. Ábrelo, comprueba que el enlace corresponde al perfil real de
+la clínica y solo entonces carga la propuesta en la ficha. Si el enlace abre una
+búsqueda genérica, una dirección suelta o un perfil dudoso, no lo guardes.
 
 Dentro de una propuesta, la etiqueta junto al dato te dice qué tipo de decisión
 espera ese campo. **Perfil revisable** no significa aprobado: significa que el

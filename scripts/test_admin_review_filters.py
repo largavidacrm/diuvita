@@ -55,7 +55,7 @@ def main() -> None:
         "fuente visible",
         "fuente pendiente",
         "Google Maps propuesto. Acepta solo el perfil real de la clínica.",
-        'if (item.kind === "maps_url") return isReviewedGoogleMapsProfileUrl(item.url);',
+        'if (item.kind === "maps_url") return Boolean(proposalLinkUrl(item.url));',
         'if (item.kind === "google_reviews_url") return Boolean(proposalLinkUrl(item.url));',
         'filterChip("Google Maps", googleLinkCount, reviewGoogleLinksFilter, { "data-review-google-links": "true" })',
         'filterChip("Especialistas", specialistCount, reviewSpecialistsFilter, { "data-review-specialists": "true" })',

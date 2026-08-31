@@ -936,6 +936,10 @@ Next 10 technical steps:
      `scripts/audit_review_source_job_context.py`: open enrichment proposals can
      now be checked for LLM-source provenance, including whether missing context
      is recoverable from `agent_jobs` or must stay as purely manual review.
+179. Include weak Maps proposals in the Google quick filter. Done locally in
+     `/admin/`: the **Google Maps** filter now catches any proposed Maps or
+     review-link URL, including links that later need rejection or correction,
+     so dudosos do not hide outside Daniel's Maps review path.
 
 ## Daniel decision checkpoints
 
