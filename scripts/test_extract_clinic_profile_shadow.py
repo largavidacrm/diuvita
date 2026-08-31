@@ -87,6 +87,38 @@ def main():
     check("team.credentialing_visible" in fields, "credentialing claim missing")
     check("prices.public_status" in fields, "pricing claim missing")
     check(extraction["rule_decisions"], "rule decisions missing")
+    imda_contact_html = """
+<!doctype html>
+<html>
+<head><title>Unidad de longevidad - Instituto de Medicina y Dermatología Avanzada</title></head>
+<body>
+  <input id="main-menu-state" class="main-menu-toggle" type="checkbox">
+  <main><h1>Unidad de Longevidad</h1></main>
+  <footer>
+    <a href="mailto:contact@mysite.com"><span>info@imda.es</span></a>
+    <a href="tel:123-456-7890"><span>676 629 862</span></a>
+    <a href="tel:123-456-7890"><span>91 6325659</span></a>
+    <span>C/ Goya 5-7, entreplanta. Entrada por pasaje comercial 28001, Madrid</span>
+  </footer>
+</body>
+</html>
+""".encode("utf-8")
+    imda_extraction = extract_from_fetch(
+        FetchResult(
+            source_url="https://www.imda.es/unidades/unidad-de-longevidad/",
+            final_url="https://www.imda.es/unidades/unidad-de-longevidad/",
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=imda_contact_html,
+        )
+    )
+    imda_profile = imda_extraction["candidate_profile"]
+    imda_fields = {claim["field_path"]: claim for claim in imda_extraction["field_claims"]}
+    check(imda_profile["emails"] == ["info@imda.es"], "IMDA visible email should be extracted")
+    check(imda_profile["phones"] == ["676629862", "916325659"], "IMDA visible phones should be extracted")
+    check(imda_fields["contact.phone"]["value"] == "676629862", "IMDA primary phone claim missing")
+    check(imda_fields["contact.phone_fixed"]["value"] == "916325659", "IMDA fixed phone claim missing")
+    check("contact.phone_mobile" not in imda_fields, "primary mobile phone should not be duplicated")
     extracted_locations = extract_locations(
         "Sedes Calle Serrano 100, 28006 Madrid. Avenida Diagonal 450, 08006 Barcelona. Contacto"
     )
@@ -100,6 +132,16 @@ def main():
         "Hospital Quirónsalud Valencia Avda. Blasco Ibáñez, 14 46010 Valencia Valencia."
     )
     check(len(duplicate_location) == 1, "near-duplicate location addresses should be collapsed")
+    imda_locations = extract_locations(
+        "Dirección: C/ Goya 5-7, entreplanta. Entrada por pasaje comercial 28001, Madrid. "
+        "Almudena Nuño ® Copyright 2026 | Teléfonos de contacto: 676 629 862 y 91 6325659"
+    )
+    check(len(imda_locations) == 1, "IMDA-style split address should be extracted")
+    check(imda_locations[0]["city"] == "Madrid", "IMDA city should be detected")
+    check(
+        imda_locations[0]["address"] == "C/ Goya 5-7, entreplanta. Entrada por pasaje comercial 28001, Madrid",
+        "IMDA address should keep postcode and access note",
+    )
 
     regenera_text = (
         "NUESTRO EQUIPO Te acompañamos desde la ciencia y la empatía "
@@ -155,6 +197,36 @@ def main():
     check(
         all("Unidad" not in item and "Dermatología" not in item for item in imda_professionals),
         "unit or role text should not be part of extracted names",
+    )
+    imda_archive_professionals = extract_professionals(
+        "Miembros Archivos: Miembros del equipo "
+        "Maria María Ortega Enfermera / Responsable de Ensayos clínicos Ver Curriculum "
+        "Laura Laura Ramos Auxiliar de enfermería/ Staff Ver Curriculum "
+        "Luz Luz Mary Arias Auxiliar de enfermería/ Staff mary@imda.es Ver Curriculum "
+        "Simona Simona Grigore Coordinadora de estética / Auxiliar de enfermería simona@imda.es Ver Curriculum "
+        "Alejandra Alejandra Russo Gerente administrativo / Coordinadora del área de atencion al paciente alejandra@imda.es Ver Curriculum "
+        "Lucía F Lucía Fernández Radióloga y Médico Estético Ver Curriculum "
+        "Beatriz Beatriz Martínez Cirujana vascular / Médico Estético beatriz@imda.es @dr.beatrizmturegano Ver Curriculum "
+        "Lucero lucero noguera Dermatóloga / Dermatóloga pediátrica lucero@imda.es Ver Curriculum "
+        "Giulia Giulia Dradi Dermatóloga y Médico Estético giulia@imda.es Ver Curriculum "
+        "Sergio SERGIO MOTA Traumatólogo sergio@imda.es Ver Curriculum"
+    )
+    check("María Ortega" in imda_archive_professionals, "IMDA archive nurse should be captured cleanly")
+    check("Luz Mary Arias" in imda_archive_professionals, "IMDA archive repeated first name should be repaired")
+    check("Lucía Fernández" in imda_archive_professionals, "IMDA archive initial label should be removed")
+    check("Lucero Noguera" in imda_archive_professionals, "IMDA lowercase repeated name should be normalized")
+    check("Sergio Mota" in imda_archive_professionals, "IMDA uppercase repeated name should be normalized")
+    check(len(imda_archive_professionals) == 10, "IMDA archive should produce ten clean public team names")
+    check(
+        all(
+            "Curriculum" not in item
+            and "Staff" not in item
+            and "Médico" not in item
+            and "Dermatóloga" not in item
+            and "@" not in item
+            for item in imda_archive_professionals
+        ),
+        "IMDA archive roles and contact fragments should not be part of names",
     )
 
     arvila_professionals = extract_professionals(

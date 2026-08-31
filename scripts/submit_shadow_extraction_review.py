@@ -31,6 +31,9 @@ ROOT = Path(__file__).resolve().parents[1]
 FIELD_MAP = {
     "contact.email": "email",
     "contact.phone": "telefono",
+    "contact.phone_fixed": "phone_fixed",
+    "contact.phone_mobile": "phone_mobile",
+    "contact.phone_whatsapp": "phone_whatsapp",
     "contact.instagram": "instagram",
     "location.locations": "locations",
     "services.list": "services",

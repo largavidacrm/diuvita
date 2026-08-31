@@ -89,6 +89,44 @@ def main():
     check("Dirección Calle Serrano" in boilerplate_excerpt, "main clinic content should remain visible")
     check("Tratamientos para hombre" not in boilerplate_excerpt, "navigation text should be suppressed")
 
+    elementor_body = """
+<!doctype html>
+<html>
+<head><title>Unidad de longevidad - Instituto de Medicina y Dermatología Avanzada</title></head>
+<body>
+  <input id="main-menu-state" class="main-menu-toggle" type="checkbox">
+  <main>
+    <h1>Unidad de Longevidad</h1>
+    <p>Cuidarte hoy para vivir más y mejor.</p>
+  </main>
+  <footer class="elementor-location-footer">
+    <a href="mailto:contact@mysite.com"><span>info@imda.es</span></a>
+    <a href="tel:123-456-7890"><span>676 629 862</span></a>
+    <a href="tel:123-456-7890"><span>91 6325659</span></a>
+    <span>C/ Goya 5-7, entreplanta. Entrada por pasaje comercial 28001, Madrid</span>
+  </footer>
+</body>
+</html>
+""".encode("utf-8")
+    elementor_snapshot = snapshot_from_fetch(
+        FetchResult(
+            source_url="https://www.imda.es/unidades/unidad-de-longevidad/",
+            final_url="https://www.imda.es/unidades/unidad-de-longevidad/",
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=elementor_body,
+        ),
+        excerpt_chars=500,
+    )
+    elementor_excerpt = elementor_snapshot["text_excerpt"]
+    check("Unidad de Longevidad" in elementor_excerpt, "void menu controls should not hide page text")
+    check("info@imda.es" in elementor_excerpt, "visible email text should be captured")
+    check("contact@mysite.com" not in elementor_excerpt, "template email href should not outrank visible text")
+    check("676 629 862" in elementor_excerpt, "visible phone text should be captured")
+    check("91 6325659" in elementor_excerpt, "second visible phone text should be captured")
+    check("123-456-7890" not in elementor_excerpt, "template phone href should not outrank visible text")
+    check("C/ Goya 5-7" in elementor_excerpt, "visible address text should be captured")
+
     calls = []
     original_open_url = capture_source_snapshot.open_url
 

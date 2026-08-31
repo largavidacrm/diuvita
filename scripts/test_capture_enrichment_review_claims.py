@@ -42,6 +42,8 @@ def main():
             "services": ["VO2 max", "DEXA"],
             "profesionales": ["Dr. Example"],
             "telefono": "+34 930 111 222",
+            "phone_fixed": "91 6325659",
+            "phone_mobile": "676 629 862",
         },
     }
     urls = source_urls(payload)
@@ -54,8 +56,10 @@ def main():
     check(by_path["summary"]["value"] == "Clinic summary", "summary mapping missing")
     check(by_path["services.list"]["value"] == ["VO2 max", "DEXA"], "services mapping missing")
     check(by_path["professionals.published"]["value"] == ["Dr. Example"], "professionals mapping missing")
+    check(by_path["contact.phone_fixed"]["value"] == "91 6325659", "fixed phone mapping missing")
+    check(by_path["contact.phone_mobile"]["value"] == "676 629 862", "mobile phone mapping missing")
     check("identity.canonical_name" not in by_path, "noisy title identity claim should be suppressed")
-    check(len(claims) == 5, "duplicate claim should not be added twice")
+    check(len(claims) == 7, "duplicate claim should not be added twice")
     print("OK capture: enrichment review claims")
 
 

@@ -67,10 +67,12 @@ PUBLIC_PRICING_RE = re.compile(
     re.I,
 )
 LOCATION_ADDRESS_RE = re.compile(
-    r"\b(?P<address>(?:C/|Calle|Carrer|Paseo|Passeig|Avenida|Avda\.?|Plaza|Ronda|"
+    r"\b(?P<address>(?:C/|C\.|Calle|Carrer|Paseo|Pº|P.º|Passeig|Avenida|Av\.?|Avda\.?|"
+    r"Plaza|Pza\.?|Ronda|"
     r"Carretera|Camino|Vía|Via|Gran Vía|Road|Street|Avenue)\s+"
-    r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9][^.;|]{4,120}?"
-    r"(?:\b\d{5}\b\s+[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s-]{2,40}|"
+    r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9][^|]{4,180}?"
+    r"(?:\b\d{5}\b\s*,?\s*(?:Barcelona|Madrid|Valencia|Marbella|Málaga|Malaga|Sevilla|Bilbao|Alicante|"
+    r"Zaragoza|Murcia|Palma|Vigo|Granada|Girona|Tarragona)|"
     r"Barcelona|Madrid|Valencia|Marbella|Málaga|Malaga|Sevilla|Bilbao|Alicante|"
     r"Zaragoza|Murcia|Palma|Vigo|Granada|Girona|Tarragona))",
     re.I,
@@ -189,8 +191,50 @@ ROLE_PHRASES = (
     "Psicologia",
     "Atención al Paciente",
     "Atencion al paciente",
+    "Auxiliar de enfermería",
+    "Auxiliar de enfermeria",
+    "Cirujana vascular",
+    "Cirujano vascular",
+    "Coordinadora de estética",
+    "Coordinadora de estetica",
+    "Coordinador de estética",
+    "Coordinador de estetica",
+    "Coordinadora del área de atencion al paciente",
+    "Coordinadora del área de atención al paciente",
+    "Coordinador del área de atencion al paciente",
+    "Coordinador del área de atención al paciente",
+    "Dermatóloga pediátrica",
+    "Dermatologa pediatrica",
+    "Dermatólogo pediátrico",
+    "Dermatologo pediatrico",
+    "Dermatóloga y Médico Estético",
+    "Dermatologa y Medico Estetico",
+    "Dermatólogo y Médico Estético",
+    "Dermatologo y Medico Estetico",
+    "Dermatóloga",
+    "Dermatologa",
+    "Dermatólogo",
+    "Dermatologo",
+    "Enfermera",
+    "Enfermero",
+    "Gerente administrativo",
+    "Médico Estético",
+    "Medico Estetico",
+    "Radióloga y Médico Estético",
+    "Radiologa y Medico Estetico",
+    "Radiólogo y Médico Estético",
+    "Radiologo y Medico Estetico",
+    "Radióloga",
+    "Radiologa",
+    "Radiólogo",
+    "Radiologo",
+    "Responsable de Ensayos clínicos",
+    "Responsable de Ensayos clinicos",
+    "Traumatólogo",
+    "Traumatologo",
     "Técnico Auxiliar",
     "Responsable RRSS",
+    "Staff",
     "Higienista",
     "Auxiliar",
     "Recepción",
@@ -239,6 +283,8 @@ ROLE_START_WORDS = {
     "Endocrinologa",
     "Endocrinólogo",
     "Endocrinologo",
+    "Enfermera",
+    "Enfermero",
     "Especialista",
     "Estética",
     "Estetica",
@@ -253,6 +299,8 @@ ROLE_START_WORDS = {
     "General",
     "Gerencia",
     "Gerente",
+    "Coordinadora",
+    "Coordinador",
     "Ginecológica",
     "Ginecologica",
     "Ginecología",
@@ -277,6 +325,10 @@ ROLE_START_WORDS = {
     "Nutrición",
     "Nutricion",
     "Nutricionista",
+    "Radióloga",
+    "Radiologa",
+    "Radiólogo",
+    "Radiologo",
     "Odontología",
     "Odontologia",
     "Odontóloga",
@@ -329,6 +381,8 @@ ROLE_START_WORDS = {
     "Subdirector",
     "Subdirectora",
     "Técnico",
+    "Traumatólogo",
+    "Traumatologo",
     "Unidad",
     "Unidades",
 }
@@ -380,6 +434,13 @@ def role_pattern(phrase: str) -> str:
 
 
 ROLE_RE_FRAGMENT = "|".join(role_pattern(phrase) for phrase in sorted(ROLE_PHRASES, key=len, reverse=True))
+MEMBER_ARCHIVE_NAME_RE = re.compile(
+    rf"\b(?P<label>{NAME_WORD})(?:\s+[A-ZÁÉÍÓÚÜÑ]\b)?\s+"
+    rf"(?P=label)\s+"
+    rf"(?P<rest>[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{{2,}}(?:\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ'-]{{2,}}){{0,3}})"
+    rf"(?=\s+(?i:{ROLE_RE_FRAGMENT}))",
+    re.I,
+)
 TEAM_ROLE_PAIR_RE = re.compile(
     rf"\b(?P<name>(?:{TITLE_PREFIX}\s+)?{NAME_WORD}(?:\s+{NAME_WORD}){{0,3}})\s+"
     rf"(?P<role>(?i:{ROLE_RE_FRAGMENT}))(?=\s|$)"
@@ -387,6 +448,12 @@ TEAM_ROLE_PAIR_RE = re.compile(
 TEAM_CTA_RE = re.compile(
     rf"(?i:\b(?:agenda\s+tu\s+cita\s+con|pide\s+cita\s+con|reserva\s+cita\s+con|cita\s+con))\s+{NAME_WORD}\b"
 )
+TEAM_CARD_NOISE_RE = re.compile(r"\b(?:ver\s+curriculum|curriculum|siguiente)\b", re.I)
+TEAM_INLINE_CONTACT_RE = re.compile(
+    r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b|(?<![\w.+-])@[a-z0-9._]{2,30}(?![\w.-])",
+    re.I,
+)
+TEAM_SECONDARY_ROLE_RE = re.compile(rf"\s*/\s*(?i:{ROLE_RE_FRAGMENT})(?=\s+{NAME_WORD}|\s*$)")
 
 KEYWORD_CATALOG = {
     "services.list": {
@@ -538,6 +605,35 @@ def split_phone_candidate(raw: str) -> list[str]:
     return [clean]
 
 
+def spanish_phone_digits(value: str) -> str:
+    digits = re.sub(r"\D", "", value or "")
+    if digits.startswith("34") and len(digits) == 11:
+        return digits[2:]
+    return digits
+
+
+def spanish_phone_kind(value: str) -> str:
+    digits = spanish_phone_digits(value)
+    if len(digits) != 9:
+        return ""
+    if digits[0] in {"6", "7"}:
+        return "mobile"
+    if digits[0] in {"8", "9"}:
+        return "fixed"
+    return ""
+
+
+def first_phone_by_kind(phones: list[str], kind: str, excluded: set[str] | None = None) -> str:
+    excluded = excluded or set()
+    for phone in phones:
+        digits = spanish_phone_digits(phone)
+        if digits in excluded:
+            continue
+        if spanish_phone_kind(phone) == kind:
+            return phone
+    return ""
+
+
 def professional_team_window(text: str) -> str:
     lower = text.lower()
     floor = 0
@@ -611,7 +707,25 @@ def clean_titled_professional(match: re.Match[str]) -> str:
 
 
 def strip_team_ctas(text: str) -> str:
-    return normalize_space(TEAM_CTA_RE.sub(" ", text))
+    clean = TEAM_CTA_RE.sub(" ", text)
+    clean = TEAM_CARD_NOISE_RE.sub(" ", clean)
+    clean = TEAM_INLINE_CONTACT_RE.sub(" ", clean)
+    clean = TEAM_SECONDARY_ROLE_RE.sub(" ", clean)
+    return normalize_space(repair_member_archive_names(clean))
+
+
+def normalized_member_name_word(word: str) -> str:
+    if word.islower() or word.isupper():
+        return word[:1].upper() + word[1:].lower()
+    return word
+
+
+def repair_member_archive_names(text: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        words = [match.group("label"), *match.group("rest").split()]
+        return " ".join(normalized_member_name_word(word) for word in words)
+
+    return MEMBER_ARCHIVE_NAME_RE.sub(replace, text)
 
 
 def clean_team_professional(raw: str) -> str:
@@ -625,6 +739,8 @@ def clean_team_professional(raw: str) -> str:
         if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS:
             break
         words.append(word)
+    if len(words) >= 3 and fold(words[0]) == fold(words[1]):
+        words = words[1:]
     if len(words) < 2:
         return ""
     return " ".join(words[:4])
@@ -802,7 +918,15 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     if contacts["emails"]:
         claims.append(claim("contact.email", contacts["emails"][0], 0.88, source_url))
     if contacts["phones"]:
-        claims.append(claim("contact.phone", contacts["phones"][0], 0.78, source_url))
+        primary_phone = contacts["phones"][0]
+        claims.append(claim("contact.phone", primary_phone, 0.78, source_url))
+        primary_digits = {spanish_phone_digits(primary_phone)}
+        fixed_phone = first_phone_by_kind(contacts["phones"], "fixed", primary_digits)
+        mobile_phone = first_phone_by_kind(contacts["phones"], "mobile", primary_digits)
+        if fixed_phone:
+            claims.append(claim("contact.phone_fixed", fixed_phone, 0.78, source_url))
+        if mobile_phone:
+            claims.append(claim("contact.phone_mobile", mobile_phone, 0.78, source_url))
     if contacts["instagram"]:
         claims.append(claim("contact.instagram", contacts["instagram"][0], 0.80, source_url))
     if locations:

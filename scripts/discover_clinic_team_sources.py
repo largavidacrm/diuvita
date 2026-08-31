@@ -19,7 +19,7 @@ from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urldefrag, urljoin, urlparse
 
-from capture_source_snapshot import FetchResult, decode_body, fetch_url, normalize_space
+from capture_source_snapshot import FetchResult, decode_body, fetch_url, normalize_space, parse_html
 from submit_discovery_candidates import load_env_file, run_psql, sql_literal
 
 
@@ -27,11 +27,17 @@ DISCOVERER_NAME = "vitalarga-team-source-discoverer"
 DISCOVERER_VERSION = "2026-08-30"
 TEAM_SOURCE_TYPE = "official_team_page"
 MAX_LINKS_PER_CLINIC = 3
+COMMON_TEAM_PATHS = (
+    "/equipo/",
+    "/equipo-medico/",
+)
 
 TEAM_TERMS = (
+    ("miembros del equipo", 32),
     ("equipo medico", 30),
     ("equipo medicos", 30),
     ("equipo", 24),
+    ("miembros", 24),
     ("profesionales", 24),
     ("medicos", 22),
     ("doctores", 22),
@@ -43,6 +49,20 @@ TEAM_TERMS = (
     ("team", 16),
     ("staff", 14),
     ("about", 10),
+)
+TEAM_CONTENT_TERMS = (
+    "miembros del equipo",
+    "equipo medico",
+    "equipo médico",
+    "nuestro equipo",
+    "profesionales",
+    "especialistas",
+    "doctores",
+    "doctoras",
+    "dermatologa",
+    "dermatóloga",
+    "enfermera",
+    "ver curriculum",
 )
 NOISE_TERMS = (
     "aviso legal",
@@ -167,6 +187,52 @@ def discover_team_links(base_url: str, html_text: str, max_links: int = MAX_LINK
     return sorted(by_url.values(), key=lambda item: (-item.score, item.url))[:max_links]
 
 
+def merge_team_candidates(candidates: list[LinkCandidate], max_links: int) -> list[LinkCandidate]:
+    by_url: dict[str, LinkCandidate] = {}
+    for candidate in candidates:
+        existing = by_url.get(candidate.url)
+        if not existing or candidate.score > existing.score:
+            by_url[candidate.url] = candidate
+    return sorted(by_url.values(), key=lambda item: (-item.score, item.url))[:max_links]
+
+
+def has_team_content(html_text: str) -> bool:
+    title, readable_text = parse_html(html_text)
+    haystack = fold(" ".join([title, readable_text[:3000]]))
+    return any(fold(term) in haystack for term in TEAM_CONTENT_TERMS)
+
+
+def discover_common_team_links(
+    base_url: str,
+    timeout: int,
+    max_probes: int,
+    fetcher: Callable[..., FetchResult] = fetch_url,
+) -> list[LinkCandidate]:
+    candidates: list[LinkCandidate] = []
+    for path in COMMON_TEAM_PATHS[:max(0, max_probes)]:
+        url = clean_candidate_url(base_url, path)
+        if not url:
+            continue
+        try:
+            result = fetcher(url, timeout=timeout)
+            html_text = decode_body(result.body, result.content_type)
+        except (HTTPError, URLError, TimeoutError, ValueError, OSError):
+            continue
+        final_url = clean_candidate_url(base_url, result.final_url or url)
+        if not final_url or not has_team_content(html_text):
+            continue
+        score, reason = score_candidate(final_url, "Equipo")
+        if score <= 0:
+            continue
+        candidates.append(LinkCandidate(
+            url=final_url,
+            label="Equipo",
+            score=score + 20,
+            reason=reason + ", ruta comprobada",
+        ))
+    return candidates
+
+
 def load_visible_clinics(limit: int, clinic_slug: str | None, local_env: dict[str, str]) -> list[dict[str, Any]]:
     clinic_filter = f"and c.slug = {sql_literal(clinic_slug)}" if clinic_slug else ""
     sql = f"""
@@ -235,6 +301,7 @@ def discover_for_clinic(
     timeout: int,
     max_links_per_clinic: int,
     local_env: dict[str, str],
+    max_common_path_probes: int = len(COMMON_TEAM_PATHS),
     fetcher: Callable[..., FetchResult] = fetch_url,
 ) -> dict[str, Any]:
     website = str(clinic.get("website") or "")
@@ -242,7 +309,18 @@ def discover_for_clinic(
     try:
         result = fetcher(base, timeout=timeout)
         html_text = decode_body(result.body, result.content_type)
-        links = discover_team_links(result.final_url or base, html_text, max_links=max_links_per_clinic)
+        links = merge_team_candidates(
+            [
+                *discover_team_links(result.final_url or base, html_text, max_links=max_links_per_clinic),
+                *discover_common_team_links(
+                    result.final_url or base,
+                    timeout,
+                    max_common_path_probes,
+                    fetcher,
+                ),
+            ],
+            max_links=max_links_per_clinic,
+        )
     except (HTTPError, URLError, TimeoutError, ValueError, OSError) as error:
         return {
             "clinic_slug": clinic.get("slug"),
@@ -350,6 +428,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clinic-slug", help="Discover team sources for one clinic.")
     parser.add_argument("--timeout", type=int, default=15)
     parser.add_argument("--max-links-per-clinic", type=int, default=MAX_LINKS_PER_CLINIC)
+    parser.add_argument("--max-common-path-probes", type=int, default=len(COMMON_TEAM_PATHS))
     parser.add_argument("--apply", action="store_true", help="Store discovered source_records. Never edits clinics.")
     return parser.parse_args()
 
@@ -362,11 +441,19 @@ def main() -> int:
         raise SystemExit("--timeout must be between 3 and 60 seconds.")
     if args.max_links_per_clinic < 1 or args.max_links_per_clinic > 8:
         raise SystemExit("--max-links-per-clinic must be between 1 and 8.")
+    if args.max_common_path_probes < 0 or args.max_common_path_probes > len(COMMON_TEAM_PATHS):
+        raise SystemExit("--max-common-path-probes must be between 0 and the number of common team paths.")
 
     local_env = load_env_file()
     clinics = load_visible_clinics(args.limit, args.clinic_slug, local_env)
     results = [
-        discover_for_clinic(clinic, args.timeout, args.max_links_per_clinic, local_env)
+        discover_for_clinic(
+            clinic,
+            args.timeout,
+            args.max_links_per_clinic,
+            local_env,
+            args.max_common_path_probes,
+        )
         for clinic in clinics
     ]
     new_rows = [

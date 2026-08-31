@@ -4,11 +4,14 @@
 from discover_clinic_team_sources import (
     TEAM_SOURCE_TYPE,
     clean_candidate_url,
+    discover_common_team_links,
     discover_team_links,
     discovery_row,
     insert_sources_sql,
+    merge_team_candidates,
     source_metadata,
 )
+from capture_source_snapshot import FetchResult
 
 
 def check(condition, message):
@@ -56,6 +59,20 @@ def main():
         clean_candidate_url("https://clinic.example/base/", "/equipo.html#doctor") == "https://clinic.example/equipo.html",
         "file-like team URLs should not receive a trailing slash",
     )
+    calls = []
+
+    def fake_fetch(url, timeout=15):
+        calls.append(url)
+        if url.endswith("/equipo/"):
+            body = b"<html><title>Miembros</title><body>Miembros del equipo Dra. Example Name</body></html>"
+            return FetchResult(url, url, 200, "text/html; charset=utf-8", body)
+        raise OSError("not found")
+
+    common_links = discover_common_team_links("https://imda.example/", 15, 2, fake_fetch)
+    check(calls[:2] == ["https://imda.example/equipo/", "https://imda.example/equipo-medico/"], "common team paths should be probed narrowly")
+    check(common_links and common_links[0].url == "https://imda.example/equipo/", "existing common team page should be discovered")
+    combined = merge_team_candidates([*links, *common_links], max_links=3)
+    check("https://imda.example/equipo/" in [item.url for item in combined], "common team page should survive merge")
 
     clinic = {
         "clinic_id": "00000000-0000-0000-0000-000000000001",

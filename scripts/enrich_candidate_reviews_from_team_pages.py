@@ -37,6 +37,10 @@ TEAM_LINK_TERMS = {
     "nosotros": 5,
     "medical-team": 8,
 }
+COMMON_TEAM_PATHS = (
+    "/equipo/",
+    "/equipo-medico/",
+)
 
 AVOID_LINK_TERMS = (
     "aviso-legal",
@@ -102,6 +106,10 @@ def team_url_score(url: str) -> int:
     return score
 
 
+def team_url_key(url: str) -> str:
+    return url.rstrip("/")
+
+
 def discover_team_urls(fetch: FetchResult, limit: int) -> list[str]:
     html = decode_body(fetch.body, fetch.content_type)
     parser = LinkParser()
@@ -110,12 +118,22 @@ def discover_team_urls(fetch: FetchResult, limit: int) -> list[str]:
     seen = set()
     for href in parser.links:
         url = clean_candidate_url(fetch.final_url or fetch.source_url, href)
-        if not url or url in seen:
+        key = team_url_key(url)
+        if not url or key in seen:
             continue
-        seen.add(url)
+        seen.add(key)
         score = team_url_score(url)
         if score:
             scored.append((score, url))
+    for path in COMMON_TEAM_PATHS:
+        url = clean_candidate_url(fetch.final_url or fetch.source_url, path)
+        key = team_url_key(url)
+        if not url or key in seen:
+            continue
+        seen.add(key)
+        score = team_url_score(url)
+        if score:
+            scored.append((score + 6, url))
     return [url for _, url in sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]]
 
 

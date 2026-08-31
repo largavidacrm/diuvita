@@ -24,6 +24,7 @@ def main():
   <p>Equipo de 12 especialistas con más de 20 años de experiencia.</p>
   <p>Consulta inicial: 120 euros.</p>
   <p>Sede principal: Calle Serrano 100, 28006 Madrid.</p>
+  <p>Teléfonos: 91 6325659 y 676 629 862.</p>
   <p>Contact: info@exampleclinic.test @exampleclinic</p>
 </body>
 </html>
@@ -42,6 +43,8 @@ def main():
     check(payload["mode"] == "shadow", "payload should be shadow mode")
     check(payload["clinic_slug"] == "example-clinic", "clinic slug missing")
     check(fields["email"] == "info@exampleclinic.test", "email field missing")
+    check(fields["telefono"] == "91 6325659", "primary phone field missing")
+    check(fields["phone_mobile"] == "676 629 862", "mobile phone field missing")
     check(fields["instagram"] == "@exampleclinic", "instagram field missing")
     check(fields["locations"][0]["address"].startswith("Calle Serrano"), "location field missing")
     check(fields["unidades"] == ["Unidad de Longevidad"], "units field missing")

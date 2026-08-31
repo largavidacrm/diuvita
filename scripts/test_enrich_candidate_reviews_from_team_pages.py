@@ -73,7 +73,20 @@ def main():
     )
     check(urls[0] == "https://clinic.example/equipo-medico", "highest-scoring team URL should win")
     check("https://clinic.example/quienes-somos" in urls, "about/team URL should be included")
+    check("https://clinic.example/equipo/" in urls, "common team archive URL should be included")
     check(all("instagram" not in url for url in urls), "social URLs should be ignored")
+
+    fallback_urls = discover_team_urls(
+        FetchResult(
+            source_url="https://imda.example/",
+            final_url="https://imda.example/",
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=b"<html><body><a href='/quienes-somos'>Quienes somos</a></body></html>",
+        ),
+        limit=3,
+    )
+    check("https://imda.example/equipo/" in fallback_urls, "common team path should be tried when only about page is linked")
 
     skipped = enrich_review(
         {"id": "review-1", "title": "Regenera", "payload": payload},

@@ -18,6 +18,10 @@ It reads one public source page and returns:
 - Publicly listed specialists and clinical units when they are explicit enough.
 - Clear published locations when the address pattern includes a street type and
   city or postcode.
+- Visible contact fields from WordPress/Elementor-style pages even when the
+  technical `mailto:` or `tel:` target contains template data.
+- More than one clear public phone number, with fixed/mobile claims separated
+  when the Spanish numbering pattern is unambiguous.
 - Basic transparency hints when stated clearly: years in practice, public
   specialist count, visible professional credentialing and public pricing
   signals.
@@ -94,13 +98,17 @@ That folder is local/ignored by Git.
   explicit team sections, including pages where the name appears before a clear
   role such as medicina general, oncología integrativa, dermatología,
   fisioterapia, optometría, odontología or reception/admin team roles.
+- It handles simple member-archive cards where the short name is repeated before
+  the full public name, and removes nearby labels such as `Ver Curriculum` or
+  secondary role fragments before proposing names.
 - It skips common WordPress/navigation text and appointment CTAs before
   extracting team names, so menu items such as treatment names are not proposed
   as professionals.
 - It rejects uppercase navigation words such as treatment, benefits, blog or
   program labels before treating a name-role pair as a professional.
-- It only detects locations from clear address patterns. It does not invent sede
-  names and it does not label locations as `Sede 1` or `Sede 2`.
+- It only detects locations from clear address patterns, including compact
+  Spanish addresses split across lines before the postcode/city. It does not
+  invent sede names and it does not label locations as `Sede 1` or `Sede 2`.
 - It does not infer years in practice from founding dates yet.
 - It does not fetch or verify Google Maps profiles yet; those links are edited
   manually or proposed later from explicit sources.

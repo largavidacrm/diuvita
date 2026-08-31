@@ -43,6 +43,9 @@ FIELD_MAP = {
     "email": "contact.email",
     "telefono": "contact.phone",
     "phone": "contact.phone",
+    "phone_fixed": "contact.phone_fixed",
+    "phone_mobile": "contact.phone_mobile",
+    "phone_whatsapp": "contact.phone_whatsapp",
     "instagram": "contact.instagram",
 }
 

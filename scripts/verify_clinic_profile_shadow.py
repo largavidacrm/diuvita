@@ -119,7 +119,7 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
             verdict, confidence, reason = "accepted", 0.96, "website host matches source host"
         else:
             verdict, confidence, reason = "review", 0.65, "website host does not match source host"
-    elif field_path == "contact.phone":
+    elif field_path.startswith("contact.phone"):
         verdict, confidence, reason = verify_contact_phone(value, haystack)
     elif field_path.startswith("contact."):
         supported, reason = value_supported(value, haystack)

@@ -632,6 +632,15 @@ Next 10 technical steps:
      card lacks its own source URL, the read-only report now also shows source
      URLs linked to internal specialist claims, making cases like Neolife
      reviewable without publishing names automatically.
+124. Repair IMDA-style source extraction. Done locally in
+     `scripts/capture_source_snapshot.py`, `scripts/extract_clinic_profile_shadow.py`
+     and team-source discovery: Elementor/WordPress pages no longer hide visible
+     body/footer text behind void menu controls, visible contact labels win over
+     placeholder `mailto:`/`tel:` targets, split Spanish addresses such as IMDA's
+     Goya address become internal location proposals, multiple clear phone
+     numbers can map to principal/fixed/mobile review fields, and checked common
+     team paths such as `/equipo/` are prioritized when they provide cleaner
+     public professional proposals.
 
 ## Daniel decision checkpoints
 

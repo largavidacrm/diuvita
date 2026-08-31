@@ -21,7 +21,7 @@ def main():
   <p>Equipo de 12 especialistas con más de 20 años de experiencia.</p>
   <p>Consulta inicial: 120 euros.</p>
   <p>Sedes: Calle Serrano 100, 28006 Madrid.</p>
-  <p>Email info@exampleclinic.test and phone +34 930 111 222.</p>
+  <p>Email info@exampleclinic.test and phone +34 930 111 222 y 600 111 222.</p>
 </body>
 </html>
 """.encode("utf-8")
@@ -49,6 +49,8 @@ def main():
     check(result["summary"]["claims"] >= 4, "expected verified claims")
     check(verdicts[("contact.website", "https://exampleclinic.test")] == "accepted", "website should verify")
     check(verdicts[("contact.email", "info@exampleclinic.test")] == "accepted", "email should verify")
+    check(verdicts[("contact.phone", "+34 930 111 222")] == "accepted", "primary phone should verify")
+    check(verdicts[("contact.phone_mobile", "600 111 222")] == "accepted", "additional mobile phone should verify")
     check(verdicts[("professionals.published", "['Dra. Laura García Pérez']")] == "accepted", "professional should verify")
     check(verdicts[("transparency.years_in_practice", "más de 20 años")] == "accepted", "years claim should verify")
     check(verdicts[("transparency.specialists_count", "12")] == "accepted", "specialist-count claim should verify")

@@ -33,6 +33,11 @@ The tool only stores `source_records` with `source_type = official_team_page`.
 It does not edit clinic profiles, create or resolve review cards, publish the
 website or change public content.
 
+Besides explicit links found on the homepage, the discoverer can make a very
+small checked probe for common official team paths such as `/equipo/` and
+`/equipo-medico/`. A probed URL is kept only when the page responds on the same
+clinic domain and its visible text contains team/professional signals.
+
 The safe CTO cycle can include this discovery step explicitly:
 
 ```bash

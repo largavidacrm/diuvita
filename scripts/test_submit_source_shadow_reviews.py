@@ -174,9 +174,22 @@ def main():
     )
     check(
         filter_proposed_fields_for_pending(
-            {"email": "a@example.test", "services": ["A"], "public_pricing": "si", "locations": [{"address": "A"}]},
+            {
+                "email": "a@example.test",
+                "phone_fixed": "91 6325659",
+                "phone_mobile": "676 629 862",
+                "services": ["A"],
+                "public_pricing": "si",
+                "locations": [{"address": "A"}],
+            },
             ["contact", "public_pricing", "locations"],
-        ) == {"email": "a@example.test", "public_pricing": "si", "locations": [{"address": "A"}]},
+        ) == {
+            "email": "a@example.test",
+            "phone_fixed": "91 6325659",
+            "phone_mobile": "676 629 862",
+            "public_pricing": "si",
+            "locations": [{"address": "A"}],
+        },
         "source review should keep only fields tied to current gaps",
     )
     check(

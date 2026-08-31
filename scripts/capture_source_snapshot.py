@@ -52,6 +52,8 @@ BOILERPLATE_ATTR_RE = re.compile(
     re.I,
 )
 BOILERPLATE_TAGS = {"nav"}
+CONTACT_EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
+CONTACT_PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
 VOID_TAGS = {
     "area",
     "base",
@@ -80,27 +82,35 @@ class ReadableTextParser(HTMLParser):
         self._boilerplate_depth = 0
         self._boilerplate_stack: list[bool] = []
         self._in_title = False
+        self._contact_href: str | None = None
+        self._contact_text_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag = tag.lower()
         entered_boilerplate = False
         if tag in {"script", "style", "noscript", "svg"}:
             self._skip_depth += 1
-        if not self._skip_depth and is_boilerplate_tag(tag, attrs):
+        if tag == "a" and not self._skip_depth:
+            href = dict(attrs).get("href") or ""
+            if visible_link_value(href):
+                self._contact_href = href
+                self._contact_text_parts = []
+        if tag not in VOID_TAGS and not self._skip_depth and is_boilerplate_tag(tag, attrs):
             self._boilerplate_depth += 1
             entered_boilerplate = True
         if tag not in VOID_TAGS:
             self._boilerplate_stack.append(entered_boilerplate)
         if tag == "title":
             self._in_title = True
-        if tag == "a" and not self._skip_depth:
-            href = dict(attrs).get("href") or ""
-            visible = visible_link_value(href)
-            if visible:
-                self.contact_parts.append(visible)
 
     def handle_endtag(self, tag: str) -> None:
         tag = tag.lower()
+        if tag == "a" and self._contact_href is not None:
+            visible = visible_link_value(self._contact_href, " ".join(self._contact_text_parts))
+            if visible:
+                self.contact_parts.append(visible)
+            self._contact_href = None
+            self._contact_text_parts = []
         if tag in {"script", "style", "noscript", "svg"} and self._skip_depth:
             self._skip_depth -= 1
         if self._boilerplate_stack:
@@ -116,6 +126,8 @@ class ReadableTextParser(HTMLParser):
         clean = normalize_space(data)
         if not clean:
             return
+        if self._contact_href is not None and not self._skip_depth:
+            self._contact_text_parts.append(clean)
         if self._in_title:
             self.title_parts.append(clean)
         elif not self._skip_depth and not self._boilerplate_depth:
@@ -176,7 +188,17 @@ def compact_readable_parts(parts: list[str]) -> list[str]:
     return compacted
 
 
-def visible_link_value(href: str) -> str:
+def visible_link_value(href: str, label: str = "") -> str:
+    visible_label = normalize_space(label)
+    label_email = CONTACT_EMAIL_RE.search(visible_label)
+    if label_email:
+        return label_email.group(0).strip()
+    label_phone = CONTACT_PHONE_RE.search(visible_label)
+    if label_phone:
+        return label_phone.group(0).strip(".,;:")
+    if "instagram.com/" in visible_label.lower():
+        return visible_label
+
     clean = normalize_space(unquote(href))
     lower = clean.lower()
     if lower.startswith("mailto:"):
