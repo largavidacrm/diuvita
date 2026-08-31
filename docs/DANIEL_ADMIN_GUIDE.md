@@ -77,6 +77,8 @@ En **Estado del sistema**, mira especialmente:
   de pedir a Netlify una nueva publicación.
 - **Último rebuild**: muestra cuándo se pidió la última publicación web desde
   Supabase.
+- En el editor de cada clínica, **Web pública** indica si esa ficha concreta
+  tiene cambios guardados que todavía no se ven online.
 
 En **Necesitan revisión**, el botón **Abrir atasco** abre la primera tarjeta del
 grupo repetido más importante cuando hay varias mejoras abiertas para la misma
@@ -138,7 +140,9 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 5. El panel carga la propuesta dentro del formulario.
 6. Revisa el contenido, elige el estado de la ficha y guarda solo si te encaja.
 
-Hasta que no guardes, la web pública no cambia.
+Hasta que no guardes, la web pública no cambia. Después de guardar una ficha
+publicada o preliminar, puede quedar **pendiente de verse online** hasta que se
+ejecute la publicación agrupada.
 
 En las tarjetas de mejora puede aparecer **Enlaces propuestos**. Ahí se muestran
 clicables los enlaces que el sistema cree relevantes: Google Maps, valoraciones

@@ -430,6 +430,10 @@ Next 10 technical steps:
     `scripts/run_cto_shadow_cycle.py`: unattended or manual CTO runs can now
     include a read-only "saved data vs public page" check and report a clear
     desfase before Daniel reviews more clinics.
+78. Add per-clinic public sync guidance. Done locally in `/admin/`: the clinic
+    editor now tells Daniel whether that specific saved ficha is unpublished,
+    still unsaved, pending the next public rebuild or already in sync with the
+    last known web update.
 
 ## Daniel decision checkpoints
 

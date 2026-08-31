@@ -17,6 +17,10 @@ def main() -> None:
 
     for marker in [
         'id="clinicPublicationHint"',
+        'id="clinicPublicSync"',
+        'id="clinicPublicSyncTitle"',
+        'id="clinicPublicSyncDetail"',
+        'id="clinicPublicRebuildBtn"',
         'id="clinicPublishReadiness"',
         'id="clinicPublishReadinessTitle"',
         'id="clinicPublishReadinessMeta"',
@@ -26,6 +30,10 @@ def main() -> None:
         'id="reviewFlowMeta"',
         'id="reviewFlowSteps"',
         "function publicVisibilityText",
+        "function isPublicClinicStatus",
+        "function clinicHasPendingPublicChange",
+        "function renderClinicPublicSync",
+        "function hasUnsavedClinicFormChanges",
         "function renderPublishReadiness",
         "function focusPublishField",
         "function publicRequiredProfileFields",
@@ -48,6 +56,12 @@ def main() -> None:
         "Falta para publicar",
         "Para publicar",
         "Completa estos puntos o guarda la ficha como borrador/revisión interna.",
+        "Cambios todavía no guardados.",
+        "Guardada, pendiente de verse online.",
+        "Esta ficha está guardada en Supabase; se verá en Vitalarga después de actualizar la web.",
+        "No está publicada en la web.",
+        "Última edición de esta ficha:",
+        "última web pública:",
         "Dirección o sede",
         "Google Maps de clínica",
         "data-publish-field",
@@ -59,6 +73,9 @@ def main() -> None:
     check("updateClinicSaveButtonLabel();" in index, "validation should refresh save button label")
     check(".publication-hint" in css, "publication hint style missing")
     check(".publication-hint.visible-target" in css, "public-target hint style missing")
+    check(".clinic-public-sync" in css, "clinic public sync style missing")
+    check(".clinic-public-sync.is-pending" in css, "clinic public sync pending style missing")
+    check(".clinic-public-sync.is-muted" in css, "clinic public sync muted style missing")
     check(".publish-readiness" in css, "publish readiness style missing")
     check(".publish-missing-chip" in css, "publish missing chip style missing")
     check(".publish-cell" in css, "clinic publish cell style missing")

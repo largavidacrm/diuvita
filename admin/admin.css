@@ -1474,6 +1474,56 @@ td small {
   background: var(--wash);
 }
 
+.clinic-public-sync {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.78rem 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.clinic-public-sync.is-pending {
+  border-color: rgba(166, 129, 62, 0.38);
+  background: #f8ecd8;
+}
+
+.clinic-public-sync.is-muted {
+  background: rgba(247, 244, 238, 0.72);
+}
+
+.clinic-public-sync div {
+  min-width: 0;
+}
+
+.clinic-public-sync span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.clinic-public-sync strong {
+  display: block;
+  margin-top: 0.14rem;
+  line-height: 1.18;
+}
+
+.clinic-public-sync p {
+  margin: 0.18rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.clinic-public-sync .btn {
+  flex: 0 0 auto;
+}
+
 .publish-readiness span:not(.pill) {
   display: block;
   color: var(--muted);
@@ -1865,8 +1915,14 @@ td small {
     flex-direction: column;
   }
 
-  .publication-banner .btn {
+  .publication-banner .btn,
+  .clinic-public-sync .btn {
     width: 100%;
+  }
+
+  .clinic-public-sync {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .filter-chip-row {

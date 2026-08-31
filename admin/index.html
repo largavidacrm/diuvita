@@ -212,6 +212,14 @@
             <span class="pill warning" id="clinicValidationStatus">Pendiente</span>
           </div>
           <p class="publication-hint" id="clinicPublicationHint">Elige el estado de la ficha.</p>
+          <div class="clinic-public-sync" id="clinicPublicSync">
+            <div>
+              <span>Web pública</span>
+              <strong id="clinicPublicSyncTitle">Abre una clínica.</strong>
+              <p id="clinicPublicSyncDetail">Aquí verás si los últimos cambios ya pueden estar online.</p>
+            </div>
+            <button class="btn secondary hidden" id="clinicPublicRebuildBtn" type="button">Actualizar web ahora</button>
+          </div>
           <div class="publish-readiness" id="clinicPublishReadiness">
             <div>
               <span>Para publicar</span>
@@ -691,6 +699,7 @@
     var reviewSpecialistsFilter = false;
     var sourceCoverageCache = null;
     var specialistCoverageCache = null;
+    var publicationControlCache = emptyPublicationControl();
     var clinicStatusFilter = "";
     var activeClinic = null;
     var activeReview = null;
@@ -1747,6 +1756,68 @@
       el("publicationBannerTitle").textContent = "Hay cambios guardados que todavía no se ven online.";
       el("publicationBannerDetail").textContent = publicationControlDetail(control);
       show(button, control.canRequestPublicSiteRebuildNow);
+    }
+
+    function isPublicClinicStatus(status) {
+      return status === "published" || status === "preliminary";
+    }
+
+    function clinicHasPendingPublicChange(row, control) {
+      if (!row || !isPublicClinicStatus(row.status)) return false;
+      var updated = parseDateValue(row.updated_at);
+      var lastRebuild = parseDateValue((control || {}).lastPublicSiteRebuildRequestedAt);
+      return Boolean(updated && (!lastRebuild || updated > lastRebuild));
+    }
+
+    function renderClinicPublicSync() {
+      var box = el("clinicPublicSync");
+      var button = el("clinicPublicRebuildBtn");
+      var control = publicationControlCache || emptyPublicationControl();
+      box.className = "clinic-public-sync";
+      show(button, false);
+      if (!activeClinic) {
+        el("clinicPublicSyncTitle").textContent = "Abre una clínica.";
+        el("clinicPublicSyncDetail").textContent = "Aquí verás si los últimos cambios ya pueden estar online.";
+        return;
+      }
+      if (hasUnsavedClinicFormChanges()) {
+        box.classList.add("is-pending");
+        el("clinicPublicSyncTitle").textContent = "Cambios todavía no guardados.";
+        el("clinicPublicSyncDetail").textContent = "Primero guarda la clínica. Si queda publicada o preliminar, después entrará en la publicación agrupada.";
+        return;
+      }
+
+      var selectedStatus = trimmed("clinicStatus") || activeClinic.status;
+      if (!isPublicClinicStatus(selectedStatus)) {
+        box.classList.add("is-muted");
+        el("clinicPublicSyncTitle").textContent = "No está publicada en la web.";
+        el("clinicPublicSyncDetail").textContent = "Está como " + clinicStatusLabel(selectedStatus).toLowerCase() + ". Puedes guardar cambios internos sin que aparezcan online.";
+        return;
+      }
+      if (control.unavailable) {
+        box.classList.add("is-pending");
+        el("clinicPublicSyncTitle").textContent = "No puedo comprobar si esta ficha está online.";
+        el("clinicPublicSyncDetail").textContent = "Está guardada, pero el panel no pudo leer el estado de publicación.";
+        return;
+      }
+      if (!control.rebuildHookConfigured) {
+        box.classList.add("is-pending");
+        el("clinicPublicSyncTitle").textContent = "La web no se actualizará sola.";
+        el("clinicPublicSyncDetail").textContent = "Esta ficha está guardada en Supabase, pero falta activar la publicación agrupada.";
+        return;
+      }
+      if (clinicHasPendingPublicChange(activeClinic, control)) {
+        box.classList.add("is-pending");
+        var updated = activeClinic.updated_at ? date(activeClinic.updated_at) : "edición reciente";
+        var rebuild = control.lastPublicSiteRebuildRequestedAt ? date(control.lastPublicSiteRebuildRequestedAt) : "sin actualización registrada";
+        el("clinicPublicSyncTitle").textContent = "Guardada, pendiente de verse online.";
+        el("clinicPublicSyncDetail").textContent = "Esta ficha está guardada en Supabase; se verá en Vitalarga después de actualizar la web. Última edición de esta ficha: " + updated + " · última web pública: " + rebuild + ".";
+        show(button, control.canRequestPublicSiteRebuildNow);
+        return;
+      }
+      el("clinicPublicSyncTitle").textContent = "Sin desfase detectado.";
+      el("clinicPublicSyncDetail").textContent = "La última actualización web es igual o posterior a la última edición conocida de esta ficha. Última web pública: " +
+        (control.lastPublicSiteRebuildRequestedAt ? date(control.lastPublicSiteRebuildRequestedAt) : "sin actualización registrada") + ".";
     }
 
     function pill(status) {
@@ -3963,6 +4034,7 @@
           '<strong>' + html(item.label) + '</strong>' +
           '</div>';
       }).join("");
+      renderClinicPublicSync();
       renderUnsavedChanges();
     }
 
@@ -4755,6 +4827,18 @@
       el("clinicProposalMeta").textContent = "Revisa estos cambios antes de guardar.";
     }
 
+    function unsavedClinicFieldKeys() {
+      if (!activeClinic) return [];
+      var fields = clinicFormFields();
+      return Object.keys(fields).filter(function (key) {
+        return normalizedFieldValue(currentClinicField(activeClinic, key)) !== normalizedFieldValue(fields[key]);
+      });
+    }
+
+    function hasUnsavedClinicFormChanges() {
+      return unsavedClinicFieldKeys().length > 0;
+    }
+
     function renderProposalPreview(payload) {
       var fields = proposedFields(payload);
       var rows = Object.keys(fields).filter(function (key) {
@@ -4777,9 +4861,7 @@
     function renderUnsavedChanges() {
       if (!activeClinic) return;
       var fields = clinicFormFields();
-      var rows = Object.keys(fields).filter(function (key) {
-        return normalizedFieldValue(currentClinicField(activeClinic, key)) !== normalizedFieldValue(fields[key]);
-      }).map(function (key) {
+      var rows = unsavedClinicFieldKeys().map(function (key) {
         return diffItemHtml(key, currentClinicField(activeClinic, key), fields[key], "Guardado", "Formulario");
       });
       if (!rows.length) {
@@ -5458,6 +5540,7 @@
         var profileCompleteness = await loadProfileCompleteness(reviewCache);
         var publicHealth = await loadPublicHealth();
         var publicationControl = await loadPublicationControl();
+        publicationControlCache = publicationControl;
         renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
         renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
         renderReviews();
@@ -5475,6 +5558,7 @@
           clinicCache = clinicRows.data;
           renderClinics();
         }
+        if (activeClinic) renderClinicPublicSync();
         updateControlNav(
           summary,
           reviewCache,
@@ -5647,9 +5731,13 @@
 
     function setPublicRebuildLoading(loading) {
       var button = el("requestPublicRebuildBtn");
+      var clinicButton = el("clinicPublicRebuildBtn");
       button.disabled = loading;
       button.textContent = loading ? "Actualizando web..." : "Actualizar web ahora";
       button.setAttribute("aria-busy", loading ? "true" : "false");
+      clinicButton.disabled = loading;
+      clinicButton.textContent = loading ? "Actualizando web..." : "Actualizar web ahora";
+      clinicButton.setAttribute("aria-busy", loading ? "true" : "false");
     }
 
     async function requestPublicSiteRebuildNow() {
@@ -5803,6 +5891,7 @@
       el("openSpecialistTargetBtn").addEventListener("click", openSpecialistTarget);
       el("globalPlanOpenNextBtn").addEventListener("click", openGlobalPlanNext);
       el("requestPublicRebuildBtn").addEventListener("click", requestPublicSiteRebuildNow);
+      el("clinicPublicRebuildBtn").addEventListener("click", requestPublicSiteRebuildNow);
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
         if (button) openReviewEditor(button.getAttribute("data-review-id"));
