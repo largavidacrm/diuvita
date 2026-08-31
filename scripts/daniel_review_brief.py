@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from typing import Any
 
@@ -132,10 +133,19 @@ def review_name(item: dict[str, Any] | None, fallback_filter: str = "correspondi
     if not item:
         return f"abre el filtro {fallback_filter} en el panel"
     clinic = str(item.get("clinic_name") or item.get("clinic_slug") or "").strip()
-    title = str(item.get("title") or "").strip()
+    title = review_display_title(item)
     if clinic and title and clinic.lower() not in title.lower():
         return f"{clinic}: {title}"
     return title or clinic or f"abre el filtro {fallback_filter} en el panel"
+
+
+def review_display_title(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    title = str(item.get("title") or "").strip()
+    if normalized_review_type(item) == "clinic_quality_audit":
+        return re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
+    return title
 
 
 def source_status(digest: dict[str, Any]) -> str:
@@ -212,7 +222,7 @@ def review_backlog_status(digest: dict[str, Any]) -> str:
 
 def profile_queue_signal(digest: dict[str, Any]) -> str:
     next_action = next_action_label(digest)
-    if next_action in {"Mejorar fichas existentes", "Completar fichas"}:
+    if next_action in {"Mejorar fichas existentes", "Revisión manual de fichas"}:
         action_review = first_action_review(digest)
         target = digest.get("profile_next_target") if isinstance(digest.get("profile_next_target"), dict) else {}
         action_key = review_clinic_key(action_review)
@@ -277,7 +287,7 @@ def review_first_step_copy(item: dict[str, Any]) -> list[str]:
         ]
     if review_type == "clinic_quality_audit":
         return [
-            "Primero completa fichas incompletas.",
+            "Primero abre revisión manual de fichas incompletas.",
             review_case_line(item, "Auditorías"),
         ]
     return [
@@ -304,7 +314,7 @@ def priority_review_click(digest: dict[str, Any]) -> str:
     label = review_name(item, "Prioridad")
     note = review_professionals_note(item)
     if review_type == "clinic_quality_audit":
-        return f"Pulsa Abrir prioridad: {label}; si falta un dato, usa Revisión manual en ese campo."
+        return f"Pulsa Abrir prioridad: {label}; corrige solo ese campo con Revisión manual."
     return f"Pulsa Abrir prioridad: {label}.{note}"
 
 
@@ -418,7 +428,7 @@ def first_step(digest: dict[str, Any]) -> list[str]:
         ]
     if counts.get("clinic_quality_audit"):
         return [
-            "Primero completa fichas incompletas.",
+            "Primero abre revisión manual de fichas incompletas.",
             review_case_line(first_review(digest, "clinic_quality_audit"), "Auditorías"),
         ]
     return ["No hay una acción urgente.", "Puedes revisar el panel o dejar que el sistema siga en modo sombra."]

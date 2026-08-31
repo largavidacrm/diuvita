@@ -320,11 +320,11 @@ def main():
     }
     audit_priority_output = format_brief(audit_priority_digest)
     check(
-        first_step(audit_priority_digest)[1] == "Caso visible: Completar ficha: Clínica Benzaquén.",
+        first_step(audit_priority_digest)[1] == "Caso visible: Revisión manual: Clínica Benzaquén.",
         "quality audit should open the concrete higher-priority ficha",
     )
     check(
-        "Pulsa Abrir prioridad: Completar ficha: Clínica Benzaquén; si falta un dato, usa Revisión manual en ese campo."
+        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; corrige solo ese campo con Revisión manual."
         in audit_priority_output,
         "quality audit next click should point to manual review",
     )

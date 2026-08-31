@@ -1482,7 +1482,7 @@ def action_label_for_review_type(review_type: str) -> str:
     if review_type == "clinic_profile_enrichment":
         return "Mejorar fichas existentes"
     if review_type == "clinic_quality_audit":
-        return "Completar fichas"
+        return "Revisión manual de fichas"
     return ""
 
 
@@ -1557,7 +1557,7 @@ def next_action_label(digest: dict[str, Any]) -> str:
     if reviews_by_type.get("clinic_profile_enrichment"):
         return "Mejorar fichas existentes"
     if reviews_by_type.get("clinic_quality_audit"):
-        return "Completar fichas"
+        return "Revisión manual de fichas"
     return "Sin accion urgente"
 
 

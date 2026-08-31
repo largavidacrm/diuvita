@@ -105,7 +105,7 @@ def main() -> None:
         "Validar candidatas",
         "Revisar cambios de fuente",
         "Mejorar fichas existentes",
-        "Completar fichas",
+        "Revisión manual de fichas",
         "Sin acción urgente",
         "renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);",
         "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache, publicationReadiness);",

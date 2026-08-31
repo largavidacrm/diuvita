@@ -662,9 +662,9 @@ def main():
     })
     compact_priority_clicks = cycle_next_clicks(compact_priority_digest)
     compact_priority_click_text = " ".join(compact_priority_clicks)
-    check(compact_priority_brief["next_action"] == "Completar fichas", "compact cycle should prefer sampled higher-priority audits")
+    check(compact_priority_brief["next_action"] == "Revisión manual de fichas", "compact cycle should prefer sampled higher-priority audits")
     check(
-        compact_priority_clicks[0].startswith("Pulsa Abrir prioridad: Completar ficha: Clínica Benzaquén"),
+        compact_priority_clicks[0].startswith("Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén"),
         "compact cycle should open the sampled priority card before group context",
     )
     check("Sensabell" in compact_priority_click_text, "compact cycle should keep the lower-priority group as context")

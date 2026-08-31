@@ -242,11 +242,11 @@ def main():
     }
     audit_output = format_global_plan_status(audit_priority, "main · audit")
     check(
-        daniel_now_status(audit_priority) == "Abrir prioridad: Completar ficha: Clínica Benzaquén",
+        daniel_now_status(audit_priority) == "Abrir prioridad: Revisión manual: Clínica Benzaquén",
         "Daniel should see the concrete higher-priority audit before the group",
     )
     check(
-        "Pulsa Abrir prioridad: Completar ficha: Clínica Benzaquén; si falta un dato, usa Revisión manual en ese campo."
+        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; corrige solo ese campo con Revisión manual."
         in audit_output,
         "global status should send Daniel to manual review for quality-audit fields",
     )

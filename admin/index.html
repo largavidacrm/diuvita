@@ -1492,7 +1492,7 @@
       if (target.pendingCount) {
         return name + " · " + target.pendingCount + (target.pendingCount === 1 ? " campo" : " campos");
       }
-      return name + " · completar ficha";
+      return name + " · revisión manual";
     }
 
     function emptyPublicHealth() {
@@ -2478,7 +2478,7 @@
         if (actionReview.review_type === "candidate_clinic") return "Validar candidatas";
         if (actionReview.review_type === "source_change_detected") return "Revisar cambios de fuente";
         if (actionReview.review_type === "clinic_profile_enrichment") return "Mejorar fichas existentes";
-        if (actionReview.review_type === "clinic_quality_audit") return "Completar fichas";
+        if (actionReview.review_type === "clinic_quality_audit") return "Revisión manual de fichas";
       }
       if (rows.some(isBlockingClaimReview)) return "Revisar claim bloqueante";
       if (rows.some(isClinicClaimRequestReview)) return "Revisar reclamación";
@@ -2487,7 +2487,7 @@
       }
       if (rows.some(function (row) { return row.review_type === "source_change_detected"; })) return "Revisar cambios de fuente";
       if (rows.some(function (row) { return row.review_type === "clinic_profile_enrichment"; })) return "Mejorar fichas existentes";
-      if (rows.some(function (row) { return row.review_type === "clinic_quality_audit"; })) return "Completar fichas";
+      if (rows.some(function (row) { return row.review_type === "clinic_quality_audit"; })) return "Revisión manual de fichas";
       return "Sin acción urgente";
     }
 

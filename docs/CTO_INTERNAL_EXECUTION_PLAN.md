@@ -836,6 +836,12 @@ Next 10 technical steps:
      admin target, issue label, operator route and no-invention boundary. This
      preserves future LLM assistance without allowing writes or invented field
      changes.
+159. Align review briefs with manual-review wording. Done locally in `/admin/`,
+     `scripts/admin_digest.py`, `scripts/daniel_review_brief.py` and
+     `scripts/global_plan_status.py`: quality-audit priorities now read as
+     **Revisión manual de fichas** and legacy stored titles are displayed as
+     **Revisión manual:** in Daniel-facing outputs, without rewriting Supabase
+     review records.
 
 ## Daniel decision checkpoints
 
