@@ -235,6 +235,26 @@ def main():
     check(compact_health["checks_count"] == 1, "production health check count should be kept")
     check("checks" not in compact_health, "full production health checks should be removed")
     check("body" not in compact_health["sample_checks"][0], "production response bodies should be omitted")
+    compact_freshness = compact_summary("check_public_site_freshness", {
+        "base_url": "https://www.vitalarga.com",
+        "ok": False,
+        "stale_count": 1,
+        "checks": [
+            {
+                "slug": "monarka-clinic",
+                "name": "Monarka Clinic",
+                "url": "https://www.vitalarga.com/clinica/monarka-clinic/",
+                "fresh": False,
+                "missing_markers": 18,
+                "missing_examples": ["+34 930 490 300", "Dra. Estela Arnal"],
+                "page_excerpt": "large",
+            }
+        ],
+    })
+    check(compact_freshness["checks_count"] == 1, "public freshness check count should be kept")
+    check("checks" not in compact_freshness, "full public freshness checks should be removed")
+    check("missing_examples" not in compact_freshness["sample_checks"][0], "public freshness examples should stay out of cycle output")
+    check("page_excerpt" not in compact_freshness["sample_checks"][0], "public freshness page excerpts should be omitted")
     compact_source_shadow = compact_summary("submit_source_shadow_reviews", {
         "items": [
             {
@@ -338,6 +358,15 @@ def main():
     })
     check(failed_cycle_brief["status"] == "needs_daniel", "strict limit failures should ask Daniel")
     check("limites operativos" in failed_cycle_brief["attention"], "strict limit attention should be clear")
+    stale_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": False,
+        "steps": [{"name": "check_public_site_freshness", "ok": False, "summary": {"ok": False, "stale_count": 1}}],
+    })
+    check(stale_cycle_brief["status"] == "attention", "public freshness gaps should be attention items")
+    check(stale_cycle_brief["public_freshness"] == "1 con desfase", "public freshness stale count should be readable")
+    check("frescura de la web publica" in stale_cycle_brief["headline"], "freshness failure should name the stopped step")
+    check("datos guardados" in stale_cycle_brief["attention"], "freshness attention should explain the cause")
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -370,6 +399,9 @@ def main():
         production_health=False,
         production_base_url="https://www.vitalarga.com",
         production_timeout=7,
+        public_freshness=False,
+        public_freshness_slug="",
+        public_freshness_missing_limit=8,
     ))
     names = [step[0] for step in steps]
     check("seed_visible_clinic_sources" in names, "official source seeding step missing")
@@ -379,6 +411,7 @@ def main():
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
     check("check_production_health" not in names, "production health should be off by default")
+    check("check_public_site_freshness" not in names, "public freshness should be off by default")
     check("submit_blocking_claim_reviews" in names, "blocking-claim review step missing")
     check("measure_source_snapshot_retention" in names, "source snapshot retention step missing")
     check("evaluate_claim_rules" in names, "claim rule evaluation step missing")
@@ -432,6 +465,9 @@ def main():
         production_health=False,
         production_base_url="https://www.vitalarga.com",
         production_timeout=7,
+        public_freshness=False,
+        public_freshness_slug="",
+        public_freshness_missing_limit=8,
     ))
     google_step = [step for step in google_steps if step[0] == "discover_clinic_google_links"][0]
     check("--apply" in google_step[1], "Google-link discovery should honor safe apply")
@@ -478,6 +514,9 @@ def main():
         production_health=True,
         production_base_url="https://www.vitalarga.com",
         production_timeout=7,
+        public_freshness=True,
+        public_freshness_slug="monarka-clinic",
+        public_freshness_missing_limit=5,
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
@@ -498,6 +537,11 @@ def main():
     check("--json" in health_step[1], "production health should be machine readable")
     check("https://www.vitalarga.com" in health_step[1], "production health base URL should pass through")
     check("7" in health_step[1], "production health timeout should pass through")
+    freshness_step = [step for step in optional_steps if step[0] == "check_public_site_freshness"][0]
+    check(optional_steps.index(health_step) < optional_steps.index(freshness_step), "public freshness should run after production health")
+    check("--json" in freshness_step[1], "public freshness should be machine readable")
+    check("monarka-clinic" in freshness_step[1], "public freshness clinic slug should pass through")
+    check("5" in freshness_step[1], "public freshness missing limit should pass through")
     print("OK cycle: CTO shadow orchestration")
 
 

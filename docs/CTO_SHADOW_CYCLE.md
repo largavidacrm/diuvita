@@ -24,6 +24,8 @@ for Daniel instead of implementing, softening or silently discarding the change.
 15. evaluate stored claims against publication rules.
 16. optionally run strict editorial limit checks;
 17. optionally check public production URLs without logging in or writing data.
+18. optionally compare saved public data with deployed clinic pages to detect
+    stale pages.
 
 Default mode is dry-run:
 
@@ -133,6 +135,19 @@ python3 scripts/run_cto_shadow_cycle.py --production-health
 
 This step only verifies public pages and expected interface markers. It does not
 log in, change Supabase, publish clinics or resolve review cards.
+
+The public freshness check is also off by default. It compares what is saved in
+the public Supabase feed with what is currently visible on deployed clinic
+pages, which is the clearest diagnostic when Daniel has just validated a clinic
+and does not yet see the change online:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --public-freshness --public-freshness-slug monarka-clinic --plain-brief
+```
+
+If this step reports a desfase, the data is saved but the static website needs
+the next batched rebuild. It still does not trigger Netlify or publish anything
+by itself.
 
 Strict editorial mode is also off by default. To include the more sensitive scan
 for rankings, awards or comparison language:

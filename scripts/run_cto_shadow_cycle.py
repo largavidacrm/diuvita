@@ -132,6 +132,7 @@ STEP_ITEM_KEYS = {
         "created_review",
     ),
     "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
+    "check_public_site_freshness": ("slug", "name", "url", "fresh", "missing_markers", "error"),
 }
 
 
@@ -153,6 +154,7 @@ STEP_LABELS = {
     "evaluate_claim_rules": "reglas de publicacion",
     "check_operational_limits_strict": "limites operativos",
     "check_production_health": "salud de la web publica",
+    "check_public_site_freshness": "frescura de la web publica",
 }
 
 REVIEW_CARD_CREATING_STEPS = {
@@ -382,6 +384,9 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         elif failed_name == "check_production_health":
             status = "attention"
             attention = "La web publica no paso una comprobacion de salud; conviene revisarla antes de aceptar cambios nuevos."
+        elif failed_name == "check_public_site_freshness":
+            status = "attention"
+            attention = "Hay datos guardados que no parecen estar todavia en la web publica; conviene actualizar la web al final del lote."
         else:
             status = "attention"
             attention = "Hay un fallo tecnico en el ciclo; revisar el paso detenido antes de aceptar nuevas fichas."
@@ -406,6 +411,16 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         production_health = "OK"
     else:
         production_health = "revisar"
+
+    freshness_step = find_step(steps, "check_public_site_freshness")
+    freshness_summary = safe_step_summary(freshness_step)
+    if not freshness_step:
+        public_freshness = "no comprobada en este ciclo"
+    elif freshness_step.get("ok") and freshness_summary.get("ok"):
+        public_freshness = "OK"
+    else:
+        stale_count = as_int(freshness_summary.get("stale_count"))
+        public_freshness = f"{stale_count} con desfase" if stale_count else "revisar"
 
     if admin_digest:
         next_action = next_action_label(admin_digest)
@@ -454,6 +469,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "publication_guard": publication_guard,
         "shadow_mode": "activo" if shadow_mode else "inactivo",
         "production_health": production_health,
+        "public_freshness": public_freshness,
         "attention": attention,
     }
 
@@ -474,6 +490,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Publicacion: {brief.get('publication_guard')}",
         f"- Modo sombra: {brief.get('shadow_mode')}.",
         f"- Web publica: {brief.get('production_health')}.",
+        f"- Frescura web: {brief.get('public_freshness')}.",
     ]
     if as_int(brief.get("skipped_steps")):
         lines.append(f"- Pasos omitidos: {brief.get('skipped_steps')}")
@@ -666,6 +683,26 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
                 max(45, args.production_timeout * 6),
             )
         )
+    if args.public_freshness:
+        command = [
+            "check_public_site_freshness.py",
+            "--base-url",
+            args.production_base_url,
+            "--timeout",
+            str(args.production_timeout),
+            "--missing-limit",
+            str(args.public_freshness_missing_limit),
+            "--json",
+        ]
+        if args.public_freshness_slug:
+            command += ["--slug", args.public_freshness_slug]
+        steps.append(
+            (
+                "check_public_site_freshness",
+                command,
+                max(45, args.production_timeout * 8),
+            )
+        )
     return steps
 
 
@@ -707,6 +744,13 @@ def parse_args() -> argparse.Namespace:
         help="Optionally check public production URLs; read-only and network-dependent.",
     )
     parser.add_argument(
+        "--public-freshness",
+        action="store_true",
+        help="Optionally compare Supabase public feed with deployed clinic pages; read-only and network-dependent.",
+    )
+    parser.add_argument("--public-freshness-slug", default="", help="Limit public freshness to one clinic slug.")
+    parser.add_argument("--public-freshness-missing-limit", type=int, default=8)
+    parser.add_argument(
         "--strict-editorial",
         action="store_true",
         help="Optionally fail on sensitive ranking/prize/comparison language that needs Daniel.",
@@ -744,7 +788,9 @@ def main() -> int:
         args.snapshot_retention_days,
         args.snapshot_keep_latest,
         args.snapshot_retention_limit,
+        args.source_coverage_limit,
         args.profile_completeness_limit,
+        args.public_freshness_missing_limit,
         args.max_open_reviews_for_safe_writes,
     ) < 0:
         raise SystemExit("limits must be zero or greater.")
@@ -762,6 +808,7 @@ def main() -> int:
         args.snapshot_retention_days,
         args.snapshot_keep_latest,
         args.snapshot_retention_limit,
+        args.source_coverage_limit,
         args.profile_completeness_limit,
     ) < 1:
         raise SystemExit("limits must be at least 1.")
@@ -769,6 +816,8 @@ def main() -> int:
         raise SystemExit("--fetch-timeout must be between 3 and 60 seconds.")
     if args.production_timeout < 3 or args.production_timeout > 60:
         raise SystemExit("--production-timeout must be between 3 and 60 seconds.")
+    if args.public_freshness_missing_limit < 1 or args.public_freshness_missing_limit > 30:
+        raise SystemExit("--public-freshness-missing-limit must be between 1 and 30.")
 
     steps = []
     review_card_writes_allowed = True

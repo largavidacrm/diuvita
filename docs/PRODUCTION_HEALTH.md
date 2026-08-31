@@ -66,3 +66,13 @@ python3 scripts/run_cto_shadow_cycle.py --production-health
 ```
 
 It remains read-only in both dry-run and safe-apply mode.
+
+The cycle can also include the freshness check when the question is whether
+saved clinic data has reached the deployed static page:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --public-freshness --public-freshness-slug monarka-clinic --plain-brief
+```
+
+That freshness step is diagnostic only. A stale page should be resolved through
+the admin's batched public rebuild action once the edit batch is finished.

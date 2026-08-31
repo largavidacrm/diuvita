@@ -426,6 +426,10 @@ Next 10 technical steps:
     clinic feed with the currently deployed clinic pages so stale production
     pages like a not-yet-rebuilt Monarka profile can be identified without
     editing data or triggering Netlify.
+77. Wire public freshness into the CTO cycle. Done locally in
+    `scripts/run_cto_shadow_cycle.py`: unattended or manual CTO runs can now
+    include a read-only "saved data vs public page" check and report a clear
+    desfase before Daniel reviews more clinics.
 
 ## Daniel decision checkpoints
 
