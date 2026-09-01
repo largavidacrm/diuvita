@@ -146,7 +146,9 @@ python3 scripts/prepare_review_decision_llm_prompt.py \
 ```
 
 El preparador devuelve mensajes, esquema esperado y referencia al validador.
-Por defecto limpia valores crudos aunque el paquete de entrada los trajera.
+Por defecto limpia valores crudos aunque el paquete de entrada los trajera, pero
+mantiene el resumen seguro del campo que Daniel pidió revisar y la barrera LLM
+del trabajo de fuente.
 Para una preparación local deliberada con valores completos:
 
 ```bash

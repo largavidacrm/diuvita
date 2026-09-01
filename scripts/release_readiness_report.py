@@ -48,6 +48,7 @@ SOURCE_MARKERS = [
     ("LLM Google reviews suggestion guard", "scripts/validate_review_decision_suggestion.py", "google_reviews_dependency_errors"),
     ("LLM source origin status", "scripts/review_proposal_decision_packets.py", "source_origin_status"),
     ("LLM prompt source origin status", "scripts/prepare_review_decision_llm_prompt.py", '"source_origin_status"'),
+    ("LLM prompt bounded source intent", "scripts/prepare_review_decision_llm_prompt.py", "operator_requested_field_summary"),
     ("LLM bounded source intent", "scripts/review_proposal_decision_packets.py", "operator_requested_field_summary"),
     ("source worker LLM boundary", "scripts/process_extract_clinic_profile_jobs.py", "llm_boundary"),
     ("LLM source-origin digest status", "scripts/admin_digest.py", "source_origin_audit_status"),

@@ -29,9 +29,13 @@ def sample_packet(include_values=False):
             "requested_field_labels": ["Especialistas publicados", "Teléfono principal"],
             "primary_requested_fields": ["profesionales"],
             "primary_requested_field_labels": ["Especialistas publicados"],
+            "operator_requested_field_keys": ["profesionales", "telefono"],
+            "operator_requested_field_labels": ["Especialistas publicados", "Teléfono principal"],
+            "operator_requested_field_summary": "especialistas publicados, teléfono principal",
             "target_scope": "primary_target_first",
             "ui_route": "manual_review_banner_source_handoff",
             "allowed_output": "review_queue_proposal_only",
+            "llm_boundary": "respect_source_job_context_scope",
             "proposed_fields": {
                 "maps_url": "https://www.google.com/maps/search/Unidad+de+Longevidad+IMDA",
                 "telefono": "916 000 000",
@@ -107,6 +111,14 @@ def main():
     check(source_context["ui_route"] == "manual_review_banner_source_handoff", "prompt digest should keep source UI route")
     check(source_context["target_scope"] == "primary_target_first", "prompt digest should keep source scope")
     check(source_context["primary_requested_fields"] == ["profesionales"], "prompt digest should keep primary requested source fields")
+    check(source_context["requested_field_labels"] == ["Especialistas publicados", "Teléfono principal"], "prompt digest should keep source field labels")
+    check(source_context["primary_requested_field_labels"] == ["Especialistas publicados"], "prompt digest should keep primary source field labels")
+    check(source_context["operator_requested_field_keys"] == ["profesionales", "telefono"], "prompt digest should keep operator-requested fields")
+    check(
+        source_context["operator_requested_field_summary"] == "especialistas publicados, teléfono principal",
+        "prompt digest should keep operator field summary",
+    )
+    check(source_context["llm_boundary"] == "respect_source_job_context_scope", "prompt digest should keep LLM boundary")
     source_origin = prompt["packet_digest"]["source_origin_status"]
     check(source_origin["status"] == "context_ready", "prompt digest should keep source origin status")
     check(source_origin["source_host"] == "imda.example", "prompt digest should keep source origin host")

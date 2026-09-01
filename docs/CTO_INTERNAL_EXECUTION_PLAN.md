@@ -1085,6 +1085,10 @@ Next 10 technical steps:
      metadata. Done locally in `/admin/` and `scripts/serve_local_dashboard.py`:
      the local server injects a small **Local · branch · commit** badge into
      the admin header, while the production/static file keeps the marker hidden.
+209. Carry bounded source intent into the LLM prompt digest. Done locally in
+     `scripts/prepare_review_decision_llm_prompt.py`: future LLM prompts now
+     keep Daniel's requested field labels, primary field and LLM boundary from
+     source-backed reviews without exposing raw values by default.
 
 ## Daniel decision checkpoints
 
