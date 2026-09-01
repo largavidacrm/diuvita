@@ -2,6 +2,7 @@
 """Checks for Daniel's plain-Spanish review brief."""
 
 from daniel_review_brief import (
+    action_review_sort_key,
     format_brief,
     first_step,
     next_clicks,
@@ -205,6 +206,15 @@ def sample_digest():
 
 
 def main():
+    tied_reviews = [
+        {"id": "b", "review_type": "clinic_quality_audit", "priority": 85, "title": "Revisión manual: MB Wellness Clinic"},
+        {"id": "a", "review_type": "clinic_quality_audit", "priority": 85, "title": "Revisión manual: Clínica Benzaquén"},
+    ]
+    check(
+        sorted(tied_reviews, key=action_review_sort_key)[0]["id"] == "a",
+        "Daniel brief sort should have a stable title/id tie-break",
+    )
+
     digest = sample_digest()
     output = format_brief(digest)
     counts = review_counts(digest)

@@ -908,10 +908,10 @@ with review_rows as (
   from public.review_queue rq
   left join public.clinics c on c.id = rq.clinic_id
   where {where_sql}
-  order by rq.priority desc, rq.created_at asc
+  order by rq.priority desc, rq.created_at asc, rq.title asc, rq.id asc
   limit {capped_limit}
 )
-select coalesce(jsonb_agg(to_jsonb(review_rows) order by priority desc, created_at asc), '[]'::jsonb)
+select coalesce(jsonb_agg(to_jsonb(review_rows) order by priority desc, created_at asc, title asc, id asc), '[]'::jsonb)
 from review_rows;
 """
     return json.loads(run_psql(sql, local_env))

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from admin_digest import (
+    action_review_sort_key,
     first_clinic_workgroup,
     first_backlog_bottleneck,
     format_digest,
@@ -34,6 +35,15 @@ def check(condition, message):
 
 
 def main():
+    tied_reviews = [
+        {"id": "b", "review_type": "clinic_quality_audit", "priority": 85, "title": "Revisión manual: MB Wellness Clinic"},
+        {"id": "a", "review_type": "clinic_quality_audit", "priority": 85, "title": "Revisión manual: Clínica Benzaquén"},
+    ]
+    check(
+        sorted(tied_reviews, key=action_review_sort_key)[0]["id"] == "a",
+        "action review sort should have a stable title/id tie-break",
+    )
+
     digest = {
         "generated_at": "2026-08-30T10:20:00+00:00",
         "summary": {
@@ -453,6 +463,8 @@ def main():
     check("'publication_readiness', (select data from publication_readiness)" in source, "digest should expose publication readiness")
     check("review_source_origin_audit as (" in source, "digest should calculate source-origin audit")
     check("'review_source_origin_audit', (select data from review_source_origin_audit)" in source, "digest should expose source-origin audit")
+    check("items.title asc, items.id asc" in source, "digest open-review aggregation should have a stable tie-break")
+    check("rq.title asc, rq.id asc" in source, "digest open-review queries should have a stable tie-break")
     check("Especialistas pendientes: 2 tarjetas; 17 especialistas propuestos" in output, "specialist pending line missing")
     check("Grupo por clinica: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")

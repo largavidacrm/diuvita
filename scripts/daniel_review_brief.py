@@ -102,7 +102,7 @@ def first_review(digest: dict[str, Any], review_type: str) -> dict[str, Any] | N
     return None
 
 
-def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int]:
+def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int, str, str]:
     review_type = normalized_review_type(item)
     priority = as_int(item.get("priority"))
     if review_type in {"blocking_claim_review", "clinic_claim_request"}:
@@ -111,7 +111,9 @@ def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int]:
         priority_bucket = 900 + priority
     else:
         priority_bucket = priority
-    return (-priority_bucket, ACTION_TYPE_ORDER.get(review_type, 9))
+    title = str(item.get("title") or item.get("clinic_name") or item.get("clinic_slug") or "").lower()
+    review_id = str(item.get("id") or "")
+    return (-priority_bucket, ACTION_TYPE_ORDER.get(review_type, 9), title, review_id)
 
 
 def first_action_review(digest: dict[str, Any]) -> dict[str, Any] | None:

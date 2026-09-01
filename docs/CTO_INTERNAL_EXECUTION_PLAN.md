@@ -108,6 +108,8 @@ Already built:
 - Duplicated review pressure has a read-only brief with concrete clinics to start from, and the safe CTO cycle includes that measurement.
 - Blocking-claim briefs now show a plain recommended next step per affected clinic without resolving the claim.
 - Global plan status can be generated as a read-only executive snapshot from real Supabase state.
+- Manual review routes can be summarized read-only, including direct field
+  targets and bounded source-URL handoffs for future LLM assistance.
 
 Not yet mature:
 
@@ -1115,6 +1117,18 @@ Next 10 technical steps:
      `scripts/global_plan_status.py`: the quick-read blocker now says
      **propuestas con fuente** when it refers only to source-backed proposal
      cards, so it no longer conflicts with manual-field navigation readiness.
+216. Add a read-only manual review route brief. Done locally in
+     `scripts/manual_review_route_brief.py`: operators and future LLM
+     preparation can now separate cards that should open a concrete admin
+     field, cards that can accept an official source URL for a bounded agent
+     job, source-only cards without enough context, and direct one-change
+     proposals. The brief never calls an LLM, writes data or resolves cards.
+217. Make next-review ordering stable across the dashboard and reports. Done
+     locally in `/admin/`, `scripts/admin_digest.py`,
+     `scripts/daniel_review_brief.py` and
+     `scripts/review_proposal_decision_packets.py`: when review cards share
+     priority and timestamp, the system now breaks ties by title and id so
+     Daniel does not see different "next" cards in different views.
 
 ## Daniel decision checkpoints
 

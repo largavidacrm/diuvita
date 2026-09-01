@@ -97,7 +97,7 @@ reviews_by_type as (
   ) grouped
 ),
 open_reviews as (
-  select coalesce(jsonb_agg(to_jsonb(items) order by items.priority desc, items.created_at asc), '[]'::jsonb) as data
+  select coalesce(jsonb_agg(to_jsonb(items) order by items.priority desc, items.created_at asc, items.title asc, items.id asc), '[]'::jsonb) as data
   from (
     select
       rq.id,
@@ -138,7 +138,7 @@ open_reviews as (
     from public.review_queue rq
     left join public.clinics c on c.id = rq.clinic_id
     where rq.status = 'open'
-    order by rq.priority desc, rq.created_at asc
+    order by rq.priority desc, rq.created_at asc, rq.title asc, rq.id asc
     limit {int(limit)}
   ) items
 ),
@@ -318,7 +318,7 @@ google_link_reviews as (
             clinic_slug,
             clinic_name
           from google_link_review_rows
-          order by priority desc, created_at asc
+          order by priority desc, created_at asc, title asc, id asc
           limit 1
         ) items
       ),
@@ -578,7 +578,7 @@ review_examples_by_type as (
               then 'blocking_claim_review'
             else rq.review_type
           end
-          order by rq.priority desc, rq.created_at asc
+          order by rq.priority desc, rq.created_at asc, rq.title asc, rq.id asc
         ) as review_rank
       from public.review_queue rq
       left join public.clinics c on c.id = rq.clinic_id
@@ -1563,7 +1563,7 @@ def normalized_action_review_type(item: dict[str, Any] | None) -> str:
     return review_type
 
 
-def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int]:
+def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int, str, str]:
     review_type = normalized_action_review_type(item)
     priority = as_int(item.get("priority"))
     if review_type in {"blocking_claim_review", "clinic_claim_request"}:
@@ -1572,7 +1572,9 @@ def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int]:
         priority_bucket = 900 + priority
     else:
         priority_bucket = priority
-    return (-priority_bucket, ACTION_REVIEW_TYPE_ORDER.get(review_type, 9))
+    title = str(item.get("title") or item.get("clinic_name") or item.get("clinic_slug") or "").lower()
+    review_id = str(item.get("id") or "")
+    return (-priority_bucket, ACTION_REVIEW_TYPE_ORDER.get(review_type, 9), title, review_id)
 
 
 def first_action_review_type(digest: dict[str, Any]) -> str:

@@ -217,6 +217,11 @@ Required behavior:
   `satisfied` is false, the LLM must not suggest approving or modifying the
   Google reviews field until the clinic has a confirmed Google Maps profile or
   the same packet also proposes one for Daniel to confirm first.
+- `scripts/manual_review_route_brief.py` summarizes open review packets into
+  operator routes without writing data or calling an LLM. It is used to separate
+  cards that should open a manual admin field, cards that can accept an official
+  source URL for a bounded agent job, cards that are blocked by source-only
+  context, and direct one-change proposals.
 
 ## APPLY_PUBLICATION_RULES
 

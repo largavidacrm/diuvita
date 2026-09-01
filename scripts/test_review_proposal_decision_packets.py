@@ -408,6 +408,8 @@ def main():
     lowered = source.lower()
     check("from public.review_queue rq" in source, "script should read review_queue")
     check("left join public.clinics c" in source, "script should attach current clinic data")
+    check("rq.title asc, rq.id asc" in source, "review packet query should have a stable tie-break")
+    check("title asc, id asc" in source, "review packet JSON aggregation should have a stable tie-break")
     for forbidden in ["insert into", " update ", " delete from", "admin_update_clinic", "admin_resolve_review_item"]:
         check(forbidden not in lowered, f"packet builder should not write data: {forbidden}")
 

@@ -20,6 +20,7 @@ def main() -> None:
         "function renderGlobalPlanStatus",
         "function reviewPrimarySubject",
         "function firstActionReview",
+        "function reviewStableTieBreak",
         "function firstClinicClaimRequestReview",
         "function syncReviewFiltersFromInputs",
         "function filteredReviewRows",
@@ -115,6 +116,8 @@ def main() -> None:
         "renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache, publicationReadiness);",
         "var nextReview = firstActionReview(rows, 0);",
         "var nextReview = firstActionReview(filteredReviewRows(), 0);",
+        '.order("title", { ascending: true })',
+        '.order("id", { ascending: true })',
         'el("openGoogleLinksBtn").addEventListener("click", openGoogleLinksTarget);',
     ]:
         check(marker in index, f"missing next-action marker: {marker}")

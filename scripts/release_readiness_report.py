@@ -54,6 +54,7 @@ SOURCE_MARKERS = [
     ("LLM prompt bounded source intent", "scripts/prepare_review_decision_llm_prompt.py", "operator_requested_field_summary"),
     ("LLM prompt strict readiness gate", "scripts/prepare_review_decision_llm_prompt.py", "--require-llm-ready"),
     ("LLM batch preflight", "scripts/review_llm_batch_preflight.py", "review_llm_batch_preflight.v1"),
+    ("manual review route brief", "scripts/manual_review_route_brief.py", "manual_review_route_brief.v1"),
     ("LLM bounded source intent", "scripts/review_proposal_decision_packets.py", "operator_requested_field_summary"),
     ("source worker LLM boundary", "scripts/process_extract_clinic_profile_jobs.py", "llm_boundary"),
     ("LLM source-origin digest status", "scripts/admin_digest.py", "source_origin_audit_status"),

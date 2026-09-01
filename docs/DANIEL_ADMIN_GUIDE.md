@@ -136,6 +136,10 @@ filtros, tabla y botón **Revisar**. El sistema puede usar señales internas par
 ordenar trabajo o para futura ayuda con LLM, pero no mezcla esas prioridades
 con la decisión que tienes delante.
 
+Si varias tarjetas tienen la misma prioridad y fecha, el panel desempata de
+forma estable por título e identificador interno. Así el listado, el plan global
+y los informes de Codex señalan la misma siguiente tarjeta.
+
 El filtro **Reclamaciones** muestra solicitudes de clínicas sobre una ficha.
 Úsalo para revisar quién reclama la ficha y decidir si hace falta pedir prueba,
 conceder acceso o rechazar la solicitud. El sistema no concede acceso ni edita
@@ -235,6 +239,12 @@ agente dónde mirar** y pulsa **Enviar URL al agente**. Por ejemplo, si faltan
 especialistas, pega la página oficial de equipo o especialistas. Eso crea
 trabajo interno para propuestas revisables, limitado a los campos pendientes de
 esa tarjeta; no guarda ni publica datos.
+
+Codex también puede generar una lectura interna de rutas de revisión manual.
+Sirve para saber qué tarjetas deben abrir un campo concreto, cuáles permiten
+pegar una URL oficial para el agente y cuáles siguen siendo solo revisión
+humana. Esa lectura no llama a ningún LLM, no cambia datos y no resuelve
+tarjetas.
 
 En el editor de clínica, **Modalidad de atención** describe si la clínica es
 presencial, online o mixta. No decide la publicación. La publicación se decide
