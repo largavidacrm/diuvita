@@ -194,12 +194,13 @@ a esa misma ficha, no a otra sede, búsqueda o página genérica. El panel bloqu
 la aprobación directa de valoraciones si la ficha no tiene todavía un Google
 Maps real confirmado.
 
-En las revisiones manuales de calidad, al pulsar **Revisar** se abre
-directamente la ficha en el campo pendiente. Al guardar, esa revisión queda
-cerrada solo para ese campo. Si la misma tarjeta tenía más faltantes, el panel
-vuelve a abrir el siguiente campo pendiente; no los da por resueltos en bloque.
-En la propia lista verás una línea **Abrirá:** para saber antes de entrar qué
-campo se va a editar.
+En las revisiones manuales de calidad, al pulsar **Revisar** primero se abre la
+vista en columnas: ficha de la clínica y revisión concreta. Desde ahí,
+**Modificar** o **Revisión manual** abre la ficha en el campo pendiente. Al
+guardar, esa revisión queda cerrada solo para ese campo. Si la misma tarjeta
+tenía más faltantes, el panel vuelve a abrir el siguiente campo pendiente; no
+los da por resueltos en bloque. En la propia lista verás una línea **Abrirá:**
+para saber antes de entrar qué campo se va a editar.
 
 Al entrar en la ficha desde **Revisión manual**, arriba verás una banda con el
 campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en
@@ -275,10 +276,10 @@ tarjetas antes de cerrar las que ya existen.
 
 La pantalla de revisión tiene dos momentos. Primero ves la bandeja con sus
 filtros y una columna lateral de selección. Al pulsar **Revisar** en una
-propuesta normal, la bandeja se oculta y se abre la ficha de la clínica en el
-centro, con la decisión concreta de esa propuesta a la derecha. Si la tarjeta es
-una revisión manual de un campo pendiente, **Revisar** abre directamente ese
-campo en la ficha.
+propuesta, la bandeja se oculta y se abre la ficha de la clínica en el centro,
+con la decisión concreta de esa propuesta a la derecha. Si la tarjeta es una
+revisión manual de un campo pendiente, usa **Modificar** o **Revisión manual**
+dentro de esa vista para abrir el campo exacto.
 
 La tabla de revisión está pensada para escanear, no para leer fichas completas:
 los títulos largos se recortan visualmente, las columnas mantienen anchuras
@@ -297,7 +298,8 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
 5. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
 6. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
    confirma con **Guardar modificación**.
-   En revisiones manuales, **Revisar** te lleva directamente al campo que falta.
+   En revisiones manuales, **Modificar** o **Revisión manual** te lleva al campo
+   que falta.
 7. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
    pendiente. Si no queda ninguna, vuelve a la lista.
 

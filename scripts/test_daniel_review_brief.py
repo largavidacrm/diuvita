@@ -334,9 +334,13 @@ def main():
         "quality audit should open the concrete higher-priority ficha",
     )
     check(
-        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; se abrirá directamente el campo pendiente en la ficha."
+        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; veras la ficha y la revision en columnas"
         in audit_priority_output,
         "quality audit next click should point to manual review",
+    )
+    check(
+        "se abrirá directamente el campo pendiente en la ficha" not in audit_priority_output,
+        "quality audit next click should not bypass the proposal columns",
     )
     check(
         "Contexto de grupo: Abrir Sensabell: 4 tarjetas" in audit_priority_output,

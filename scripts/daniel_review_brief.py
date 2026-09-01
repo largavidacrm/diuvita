@@ -316,7 +316,10 @@ def priority_review_click(digest: dict[str, Any]) -> str:
     label = review_name(item, "Prioridad")
     note = review_professionals_note(item)
     if review_type == "clinic_quality_audit":
-        return f"Pulsa Abrir prioridad: {label}; se abrirá directamente el campo pendiente en la ficha."
+        return (
+            f"Pulsa Abrir prioridad: {label}; veras la ficha y la revision en columnas, "
+            "y desde Modificar/Revisión manual se abre el campo pendiente."
+        )
     return f"Pulsa Abrir prioridad: {label}.{note}"
 
 

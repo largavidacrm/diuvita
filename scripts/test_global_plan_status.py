@@ -288,7 +288,7 @@ def main():
         "Daniel should see the concrete higher-priority audit before the group",
     )
     check(
-        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; se abrirá directamente el campo pendiente en la ficha."
+        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; veras la ficha y la revision en columnas"
         in audit_output,
         "global status should send Daniel to manual review for quality-audit fields",
     )
