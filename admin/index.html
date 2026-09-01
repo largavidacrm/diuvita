@@ -915,6 +915,7 @@
     var activeClinicClaimSources = {};
     var activeClinicClaimCount = 0;
     var activeClinicBlockingClaimCount = null;
+    var activeClinicClaimLoadState = "idle";
     var activeClinicSourceCount = 0;
     var dashboardLoading = false;
     var dashboardAutomation = {};
@@ -1147,6 +1148,10 @@
     }
 
     function publishMissingTargetId(label) {
+      var cleanLabel = text(label).toLowerCase();
+      if (cleanLabel.indexOf("claim bloqueante") >= 0 || cleanLabel.indexOf("claims bloqueantes") >= 0) {
+        return "clinicEvidencePanel";
+      }
       var map = {
         "Nombre": "clinicName",
         "Ciudad": "clinicCity",
@@ -1159,8 +1164,7 @@
         "Dirección o sede": "clinicAddress",
         "Google Maps de clínica": "clinicMapsUrl",
         "Google Maps de clínica, no dirección suelta": "clinicMapsUrl",
-        "Servicios principales": "clinicServices",
-        "Claims bloqueantes": "clinicEvidencePanel"
+        "Servicios principales": "clinicServices"
       };
       return map[label] || "";
     }
@@ -1449,11 +1453,12 @@
       var label = visible
         ? "Visible con pendientes"
         : "Falta para publicar";
-      var rest = missing.slice(1, 3).join(" · ");
+      var primaryMissing = publicationMissingActionLabel(missing[0]);
+      var rest = missing.slice(1, 3).map(publicationMissingActionLabel).join(" · ");
       if (missing.length > 3) rest += " · +" + (missing.length - 3);
       var detail = rest || "Abre la ficha y completa ese campo.";
       return '<div class="publish-cell"><span class="pill warning">' + html(label) +
-        '</span><strong>' + html(missing[0]) + '</strong><small>' + html(detail) + '</small>' + webPendingNote + '</div>';
+        '</span><strong>' + html(primaryMissing) + '</strong><small>' + html(detail) + '</small>' + webPendingNote + '</div>';
     }
 
     function clinicRowActions(row) {
@@ -5123,6 +5128,7 @@
         : "Sin claims internos guardados para esta clínica.";
       if (!count) {
         activeClinicBlockingClaimCount = 0;
+        activeClinicClaimLoadState = "ready";
         renderPendingLocationsForClinic();
         renderPendingSpecialistsForClinic();
         el("clinicClaimsList").innerHTML = '<p class="empty">No hay evidencias internas para esta ficha todavía.</p>';
@@ -5145,6 +5151,7 @@
           '</article>';
       }).join("");
       activeClinicBlockingClaimCount = blockingCount;
+      activeClinicClaimLoadState = "ready";
       renderPendingLocationsForClinic();
       renderPendingSpecialistsForClinic();
       updateFinalValidation();
@@ -5153,6 +5160,7 @@
     async function loadClinicClaims(clinicId) {
       var requestId = ++activeClinicClaimRequest;
       activeClinicBlockingClaimCount = null;
+      activeClinicClaimLoadState = "loading";
       el("clinicEvidenceCount").textContent = "Cargando";
       el("clinicEvidenceMeta").textContent = "Consultando claims internos.";
       el("clinicClaimsList").innerHTML = '<p class="empty">Cargando evidencias...</p>';
@@ -5167,6 +5175,7 @@
       if (claimsResult.error) {
         activeClinicClaims = [];
         activeClinicClaimSources = {};
+        activeClinicClaimLoadState = "error";
         el("clinicEvidenceCount").textContent = "No disponible";
         el("clinicEvidenceMeta").textContent = "No se pudieron cargar las evidencias.";
         el("clinicClaimsList").innerHTML = '<p class="empty">No se pudieron leer los claims de esta clínica.</p>';
@@ -5307,13 +5316,44 @@
       renderClinicSources(sources, snapshots);
     }
 
-    function validationItem(label, ok, required, targetId) {
+    function validationItem(label, ok, required, targetId, missingLabel) {
       return {
         label: label,
         ok: Boolean(ok),
         required: required !== false,
-        targetId: targetId || ""
+        targetId: targetId || "",
+        missingLabel: missingLabel || ""
       };
+    }
+
+    function validationDisplayLabel(item) {
+      if (!item) return "";
+      return !item.ok && item.missingLabel ? item.missingLabel : item.label;
+    }
+
+    function publicationMissingActionLabel(label) {
+      var clean = text(label).trim();
+      var lower = clean.toLowerCase();
+      if (lower.indexOf("claim bloqueante") >= 0 || lower.indexOf("claims bloqueantes") >= 0) {
+        return "Resolver claims bloqueantes pendientes";
+      }
+      return clean;
+    }
+
+    function publicationMissingSentence(label) {
+      var clean = text(label).trim();
+      if (!clean) return "revisar el punto pendiente";
+      var lower = clean.toLowerCase();
+      if (lower.indexOf("resolver ") === 0 || lower.indexOf("esperar ") === 0 || lower.indexOf("reintentar ") === 0) return clean;
+      return "falta " + clean;
+    }
+
+    function blockingClaimsMissingLabel() {
+      if (activeClinicClaimLoadState === "error") return "Reintentar carga de claims bloqueantes";
+      if (activeClinicBlockingClaimCount === null) return "Esperar a que se comprueben los claims bloqueantes";
+      var count = Number(activeClinicBlockingClaimCount || 0);
+      if (count === 1) return "Resolver 1 claim bloqueante pendiente";
+      return "Resolver " + count + " claims bloqueantes pendientes";
     }
 
     function publicVisibilityText(status) {
@@ -5360,7 +5400,7 @@
         validationItem("Sede física u online completa", hasLocation, true, "clinicAddress"),
         validationItem("Resumen suficiente", trimmed("clinicSummary").length >= 120, true, "clinicSummary"),
         validationItem("Servicios principales añadidos", linesToArray(el("clinicServices").value).length > 0, true, "clinicServices"),
-        validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget, "clinicEvidencePanel"),
+        validationItem("Sin claims bloqueantes pendientes", noBlockingClaims, publicTarget, "clinicEvidencePanel", blockingClaimsMissingLabel()),
         validationItem("Fuentes o claims internos guardados", activeClinicSourceCount > 0 || activeClinicClaimCount > 0, false, "clinicSourcePanel"),
         validationItem("Google Maps de clínica, no dirección suelta", !hasPhysicalLocation || (hasClinicMapsProfile && !hasGenericMapsCandidate), (publicTarget && hasPhysicalLocation) || hasGenericMapsCandidate, "clinicMapsUrl"),
         validationItem("Teléfonos reales, no identificadores", !weakPhoneTarget, Boolean(weakPhoneTarget), weakPhoneTarget || "clinicPhone"),
@@ -5388,7 +5428,7 @@
       el("clinicPublishReadinessMeta").textContent = "Completa estos puntos o guarda la ficha como borrador/revisión interna.";
       el("clinicPublishMissingList").innerHTML = requiredMissing.map(function (item) {
         return '<button class="publish-missing-chip" type="button" data-publish-field="' + html(item.targetId || "") + '">' +
-          html(item.label) + '</button>';
+          html(validationDisplayLabel(item)) + '</button>';
       }).join("");
     }
 
@@ -5419,7 +5459,7 @@
         var tone = item.ok ? "" : item.required ? " warning" : "";
         return '<div class="validation-item">' +
           '<span class="pill' + tone + '">' + html(label) + '</span>' +
-          '<strong>' + html(item.label) + '</strong>' +
+          '<strong>' + html(validationDisplayLabel(item)) + '</strong>' +
           '</div>';
       }).join("");
       renderClinicPublicSync();
@@ -5431,7 +5471,7 @@
       var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
       return finalValidationItems(publicTarget)
         .filter(function (item) { return item.required && !item.ok; })
-        .map(function (item) { return item.label; });
+        .map(validationDisplayLabel);
     }
 
     function publicStatus(status) {
@@ -5494,7 +5534,7 @@
       if (missing.length) {
         updateFinalValidation();
         focusPublishField(publishMissingTargetId(missing[0]));
-        toast("Antes de publicar falta: " + missing[0] + ".");
+        toast("Antes de publicar: " + publicationMissingSentence(missing[0]) + ".");
         return;
       }
       var confirmed = window.confirm(
@@ -5513,7 +5553,7 @@
       openClinicEditor(clinicId);
       var missing = clinicPublicationMissingLabels(row);
       if (missing.length) {
-        toast("Abro la ficha: falta " + missing[0] + " antes de publicar.");
+        toast("Abro la ficha: " + publicationMissingSentence(publicationMissingActionLabel(missing[0])) + " antes de publicar.");
         window.setTimeout(function () {
           focusPublishField(publishMissingTargetId(missing[0]));
         }, 0);
@@ -8556,6 +8596,7 @@
       activeClinicClaimSources = {};
       activeClinicClaimCount = 0;
       activeClinicBlockingClaimCount = null;
+      activeClinicClaimLoadState = "idle";
       activeClinicSourceCount = 0;
       resetProposalPreview();
       renderClinicManualReviewContext();
@@ -8650,6 +8691,7 @@
       activeClinicClaimSources = {};
       activeClinicClaimCount = 0;
       activeClinicBlockingClaimCount = null;
+      activeClinicClaimLoadState = "idle";
       activeClinicSourceCount = 0;
       clearManualReviewFieldMarkers();
       setLockInputsDisabled(false);
