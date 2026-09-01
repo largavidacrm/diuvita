@@ -6,6 +6,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -128,11 +129,32 @@ GOOGLE_MAPS_STATUS_LABELS = {
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", flags=re.I)
 URL_RE = re.compile(r"https?://[^\s)>\]]+", flags=re.I)
 PHONE_TEXT_RE = re.compile(r"(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}")
+SPECIALIST_NOISE_RE = re.compile(
+    r"\b(?:"
+    r"aviso\s+legal|calorimetry|colaboradores|collaborators|cookie|copyright|"
+    r"european\s+society|legal\s+notice|privacy\s+policy|respirometry|sociedad|"
+    r"society|terms?\s+(?:and\s+)?conditions?|escar"
+    r")\b",
+    re.I,
+)
+SPECIALIST_ROLE_PREFIX_RE = re.compile(
+    r"^(?:(?:infantil\s+)?psiquiatria|cardiologia|dermatologia|endocrinologia|"
+    r"fisioterapia|ginecologia|medicina|neurologia|nutricion|oncologia|psicologia)\b",
+    re.I,
+)
+SPECIALIST_TITLE_RE = re.compile(r"^(?:dr\.?|dra\.?|doctor|doctora|lic\.?|d\.o\.)\s+", re.I)
 
 
 def canonical_field(key: Any) -> str:
     clean = str(key or "").strip()
     return FIELD_ALIASES.get(clean, clean)
+
+
+def folded_text(value: Any) -> str:
+    clean = str(value or "").strip()
+    clean = unicodedata.normalize("NFD", clean)
+    clean = "".join(char for char in clean if unicodedata.category(char) != "Mn")
+    return clean.lower()
 
 
 def review_type_label(value: Any) -> str:
@@ -256,6 +278,76 @@ def clean_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item).strip() for item in value if str(item or "").strip()]
+
+
+def specialist_proposal_values(value: Any) -> list[str]:
+    values: list[str] = []
+    for item in field_values(value):
+        for part in re.split(r"[\n;•]+", str(item or "")):
+            clean = part.strip()
+            if clean:
+                values.append(clean)
+    return values
+
+
+def specialist_noise_reason(value: Any) -> str:
+    clean = str(value or "").strip()
+    folded = folded_text(clean)
+    if not clean:
+        return ""
+    if "http://" in folded or "https://" in folded or "@" in clean or re.search(r"\d", clean):
+        return "contains_url_email_or_digits"
+    if SPECIALIST_NOISE_RE.search(folded):
+        return "navigation_legal_or_society_text"
+    if SPECIALIST_ROLE_PREFIX_RE.search(folded):
+        return "role_or_category_before_name"
+    name_only = SPECIALIST_TITLE_RE.sub("", folded)
+    words = [word for word in name_only.split() if word]
+    if len(words) < 2 or len(words) > 6:
+        return "not_a_clear_full_name"
+    return ""
+
+
+def suspicious_specialist_values(value: Any) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    for item in specialist_proposal_values(value):
+        reason = specialist_noise_reason(item)
+        if reason:
+            issues.append({"value": item, "reason": reason})
+    return issues
+
+
+def specialist_quality_warning(value: Any, include_values: bool = False) -> str:
+    issues = suspicious_specialist_values(value)
+    if not issues:
+        return ""
+    if include_values:
+        examples = ", ".join(redacted_text(item["value"], include_values) for item in issues[:2])
+        return (
+            "Especialistas contiene entradas sospechosas. Usa Modificar y deja solo nombres "
+            f"de profesionales publicados. Ejemplos: {examples}."
+        )
+    return "Especialistas contiene entradas sospechosas. Usa Modificar y deja solo nombres de profesionales publicados."
+
+
+def specialist_review_context(key: str, value: Any, include_values: bool = False) -> dict[str, Any]:
+    if canonical_field(key) != "profesionales":
+        return {}
+    issues = suspicious_specialist_values(value)
+    if not issues:
+        return {}
+    context: dict[str, Any] = {
+        "kind": "specialist_list_quality",
+        "overall_status": "needs_manual_correction_before_approval",
+        "issue_count": len(issues),
+        "reasons": sorted({item["reason"] for item in issues}),
+        "human_label": "Corregir antes de aprobar",
+        "next_step": "modify_and_keep_only_clear_public_professional_names",
+        "safe_to_auto_publish": False,
+    }
+    if include_values:
+        context["examples"] = [item["value"] for item in issues[:3]]
+    return context
 
 
 def current_field_value(clinic: dict[str, Any], key: str) -> Any:
@@ -781,6 +873,8 @@ def warning_items(row: dict[str, Any], proposed_items: list[dict[str, Any]], inc
             dependency = google_maps_profile_dependency(clinic if isinstance(clinic, dict) else {}, fields)
             if not dependency["satisfied"]:
                 add("Valoraciones Google requiere confirmar primero el perfil real de Google Maps de la clínica.")
+        if canonical_field(key) == "profesionales":
+            add(specialist_quality_warning(value, include_values=include_values))
         if key in {"status", "profile_confidence", "verification_status"}:
             add(f"{field_label(key)} no se cambia desde aprobación directa.")
         if key in SENSITIVE_FIELDS:
@@ -835,6 +929,9 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
         reviews_context = google_reviews_review_context(key, item["value"], clinic=clinic, fields=fields)
         if reviews_context:
             field_packet["google_reviews_review"] = reviews_context
+        specialists_context = specialist_review_context(key, item["value"], include_values=include_values)
+        if specialists_context:
+            field_packet["specialist_quality_review"] = specialists_context
         targets = manual_review_targets(row, item)
         if targets:
             field_packet["manual_review_targets"] = targets

@@ -170,6 +170,12 @@ cuidado: primero abre la web oficial y confirma que esos profesionales aparecen
 publicados por la clínica. **Fuente visible** solo significa que el panel tiene
 un enlace para revisar, no que el dato esté aprobado.
 
+Si una propuesta de especialistas trae nombres mezclados con textos como
+**Aviso Legal**, **COLABORADORES**, sociedades profesionales, menús o categorías
+médicas, el panel la marcará como algo que hay que corregir antes de aprobar.
+Usa **Modificar** y deja solo nombres claros publicados por la clínica, o
+rechaza la propuesta.
+
 Si sabes dónde está la fuente oficial, por ejemplo una página de equipo o
 especialistas de la propia clínica, puedes pegarla en **Dile al agente dónde
 mirar** dentro de esa revisión. El agente usará esa URL solo para preparar una

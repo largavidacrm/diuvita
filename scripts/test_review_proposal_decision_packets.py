@@ -114,6 +114,36 @@ def sample_unsourced_specialist_row():
     }
 
 
+def sample_dirty_specialist_row():
+    return {
+        "id": "dirty-specialist-1",
+        "title": "Revisar especialistas: Eternal Group",
+        "review_type": "clinic_profile_enrichment",
+        "priority": 85,
+        "created_at": "2026-09-01T10:47:16+00:00",
+        "payload": {
+            "source_url": "https://eternal.example/equipo",
+            "proposed_fields": {
+                "profesionales": [
+                    "Dr. Ibáñez European Society Calorimetry Respirometry ESCAR",
+                    "Infantil Psiquiatría CARLA BUIXEDA",
+                    "Dra. Laura Muntaner",
+                    "Dr. Miguel Ángel Palos COLABORADORES Aviso Legal",
+                ],
+            },
+        },
+        "clinic": {
+            "id": "clinic-eternal",
+            "slug": "eternal-group",
+            "display_name": "Eternal Group",
+            "city": "Madrid",
+            "country": "España",
+            "status": "draft",
+            "current_data": {"profesionales": []},
+        },
+    }
+
+
 def main():
     safe_packet = decision_packet(sample_enrichment_row())
     check(safe_packet["schema_version"] == "review_decision_packet.v1", "schema version missing")
@@ -403,6 +433,30 @@ def main():
         source_request["requested_fields"] == ["profesionales"]
         and source_request["allowed_output"] == "review_queue_proposal_only",
         "specialist source handoff should stay bounded and review-only",
+    )
+    dirty_specialist_packet = decision_packet(sample_dirty_specialist_row())
+    dirty_warnings = " ".join(dirty_specialist_packet["warnings"])
+    check(
+        "Especialistas contiene entradas sospechosas. Usa Modificar" in dirty_warnings,
+        "dirty specialist proposals should warn Daniel before approval",
+    )
+    dirty_specialist_item = next(
+        item for item in dirty_specialist_packet["proposed_change"] if item["key"] == "profesionales"
+    )
+    quality_review = dirty_specialist_item["specialist_quality_review"]
+    check(
+        quality_review["overall_status"] == "needs_manual_correction_before_approval"
+        and quality_review["safe_to_auto_publish"] is False,
+        "dirty specialist proposals should be marked unsafe for automation",
+    )
+    check("examples" not in quality_review, "safe packet should omit dirty specialist raw examples")
+    valued_dirty_packet = decision_packet(sample_dirty_specialist_row(), include_values=True)
+    valued_quality_review = next(
+        item for item in valued_dirty_packet["proposed_change"] if item["key"] == "profesionales"
+    )["specialist_quality_review"]
+    check(
+        "Aviso Legal" in " ".join(valued_quality_review["examples"]),
+        "explicit value mode should include dirty specialist examples for debugging",
     )
 
     claim_packet = decision_packet({

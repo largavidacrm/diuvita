@@ -8090,6 +8090,9 @@
       if (item.key === "claim_request") {
         return "Aprobar registra este interlocutor como contacto interno. No cambia la web ni concede acceso.";
       }
+      if (item.key === "profesionales" && suspiciousSpecialistValues(item.value).length) {
+        return "Hay texto mezclado con navegación, legal, sociedades o categorías. Usa Modificar y deja solo nombres claros publicados por la clínica.";
+      }
       if (item.key === "locations") {
         var locations = normalizedLocations(item.value);
         var mapWarning = locations.map(function (location) {
@@ -8159,6 +8162,90 @@
       };
     }
 
+    function foldedReviewText(value) {
+      var clean = text(value).trim();
+      if (!clean) return "";
+      if (clean.normalize) clean = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return clean.toLowerCase();
+    }
+
+    function specialistProposalTextValues(value) {
+      if (Array.isArray(value)) {
+        return value.map(function (item) { return text(item).trim(); }).filter(Boolean);
+      }
+      var clean = text(value).trim();
+      if (!clean) return [];
+      return clean.split(/[\n;•]+/).map(function (item) {
+        return text(item).trim();
+      }).filter(Boolean);
+    }
+
+    function specialistNoiseReason(value) {
+      var clean = text(value).trim();
+      var folded = foldedReviewText(clean);
+      if (!clean) return "";
+      if (/https?:\/\//i.test(clean) || /@/.test(clean) || /\d/.test(clean)) {
+        return "contiene URL, email o cifras";
+      }
+      if (/\b(?:aviso\s+legal|calorimetry|colaboradores|collaborators|cookie|copyright|european\s+society|legal\s+notice|privacy\s+policy|respirometry|sociedad|society|terms?\s+(?:and\s+)?conditions?|escar)\b/.test(folded)) {
+        return "mezcla navegación, legal o sociedades profesionales";
+      }
+      if (/^(?:infantil\s+)?psiquiatria\b/.test(folded) || /^(?:cardiologia|dermatologia|endocrinologia|fisioterapia|ginecologia|medicina|neurologia|nutricion|oncologia|psicologia)\b/.test(folded)) {
+        return "parece una especialidad o categoría antes que un nombre";
+      }
+      var nameOnly = folded.replace(/^(?:dr\.?|dra\.?|doctor|doctora|lic\.?|d\.o\.)\s+/, "");
+      var words = nameOnly.split(/\s+/).filter(Boolean);
+      if (words.length < 2 || words.length > 6) return "no parece un nombre completo claro";
+      return "";
+    }
+
+    function suspiciousSpecialistValues(value) {
+      return specialistProposalTextValues(value).map(function (item) {
+        return { value: item, reason: specialistNoiseReason(item) };
+      }).filter(function (item) {
+        return Boolean(item.reason);
+      });
+    }
+
+    function proposalSpecialistsStatus(value) {
+      var suspicious = suspiciousSpecialistValues(value);
+      if (!suspicious.length) return null;
+      return {
+        tone: "warning",
+        label: "Corregir antes de aprobar",
+        detail: "La lista contiene texto que no parece un especialista limpio."
+      };
+    }
+
+    function reviewNoisySpecialistItems(proposalItems) {
+      return (proposalItems || []).filter(function (item) {
+        return canonicalProposalField(item.key) === "profesionales" && suspiciousSpecialistValues(item.value).length;
+      });
+    }
+
+    function reviewNoisySpecialistItemsFromFields(fields) {
+      return Object.keys(fields || {}).filter(function (rawKey) {
+        return canonicalProposalField(rawKey) === "profesionales" && suspiciousSpecialistValues(fields[rawKey]).length;
+      }).map(function (rawKey) {
+        return { key: rawKey, value: fields[rawKey] };
+      });
+    }
+
+    function reviewHasNoisySpecialistProposal(row) {
+      return reviewNoisySpecialistItemsFromFields(reviewOriginalDecisionFields(row)).length > 0;
+    }
+
+    function reviewApprovalBlockReason(row) {
+      if (!row) return "";
+      if (Number(((row.payload || {}).duplicate_probability) || 0) >= 0.9) {
+        return "Duplicado probable: rechaza o modifica tras revisar.";
+      }
+      if (reviewHasNoisySpecialistProposal(row)) {
+        return "Especialistas con texto dudoso: usa Modificar y deja solo nombres claros.";
+      }
+      return "";
+    }
+
     function reviewMapsExpectedClinicLabel(row) {
       var identity = reviewCandidateIdentity(row);
       return [identity.name, identity.place && identity.place !== "Ubicación pendiente" ? identity.place : ""]
@@ -8189,6 +8276,7 @@
       var status = null;
       if (item.key === "maps_url") status = proposalGoogleMapsStatus(item.value);
       if (item.key === "google_reviews_url") status = proposalGoogleReviewsStatus(item.value);
+      if (item.key === "profesionales") status = proposalSpecialistsStatus(item.value);
       if (!status) return "";
       return '<div class="review-link-status ' + html("review-link-status-" + status.tone) + '">' +
         '<strong>' + html(status.label) + '</strong>' +
@@ -8333,6 +8421,12 @@
       if (Array.isArray(payload.warnings)) payload.warnings.forEach(add);
       var duplicateProbability = Number(payload.duplicate_probability || 0);
       if (duplicateProbability >= 0.9) add("Duplicado probable: revisa antes de crear una ficha nueva.");
+      reviewNoisySpecialistItems(proposalItems).forEach(function (item) {
+        var examples = suspiciousSpecialistValues(item.value).map(function (entry) {
+          return compactText(entry.value, 70);
+        }).slice(0, 2).join(" · ");
+        add("Especialistas: hay texto mezclado con navegación, legal, sociedades o categorías. Usa Modificar y deja solo nombres claros" + (examples ? ": " + examples : "") + ".");
+      });
       proposalLinkItems(payload).forEach(function (item) {
         var warning = proposalLinkWarning(item);
         if (warning) add(item.label + ": " + warning);
@@ -8537,6 +8631,9 @@
               add("Antes de guardar Valoraciones Google de una sede, confirma y guarda el perfil real de Google Maps de esa clínica.");
             }
           });
+        }
+        if (key === "profesionales" && suspiciousSpecialistValues(value).length) {
+          add("Especialistas contiene entradas sospechosas. Usa Modificar y deja solo nombres de profesionales publicados.");
         }
         var phoneWarning = proposalPhoneWarning(key, value);
         if (phoneWarning) add(phoneWarning);
@@ -8778,7 +8875,7 @@
     }
 
     function setReviewDecisionLoading(loading) {
-      var approveBlocked = !loading && activeReview && Number(((activeReview.payload || {}).duplicate_probability) || 0) >= 0.9;
+      var approveBlocked = !loading && Boolean(reviewApprovalBlockReason(activeReview));
       var sourceJobPaused = !loading && isReviewBacklogPausedForWrites(dashboardOpenReviewCount);
       el("reviewApproveBtn").disabled = loading || approveBlocked;
       el("reviewRejectBtn").disabled = loading;
@@ -9865,14 +9962,13 @@
       if (!activeReview) return;
 
       var payload = activeReview.payload || {};
-      var duplicateProbability = Number(payload.duplicate_probability || 0);
-      var blocksDraft = duplicateProbability >= 0.9;
+      var approvalBlock = reviewApprovalBlockReason(activeReview);
 
       el("reviewEditorTitle").textContent = reviewDisplayTitle(activeReview);
       el("reviewEditorMeta").textContent = reviewVisibleLabel(activeReview) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
       renderReviewValidationView(activeReview);
-      el("reviewApproveBtn").disabled = blocksDraft;
-      el("reviewApproveBtn").title = blocksDraft ? "Duplicado probable: rechaza o modifica tras revisar." : "";
+      el("reviewApproveBtn").disabled = Boolean(approvalBlock);
+      el("reviewApproveBtn").title = approvalBlock;
       el("reviewRejectBtn").disabled = false;
       el("reviewModifyBtn").disabled = false;
       setInput("reviewResolutionNote", "");

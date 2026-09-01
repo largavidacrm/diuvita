@@ -279,6 +279,10 @@ Required behavior:
   `satisfied` is false, the LLM must not suggest approving or modifying the
   Google reviews field until the clinic has a confirmed Google Maps profile or
   the same packet also proposes one for Daniel to confirm first.
+- If a packet contains `specialist_quality_review`, the specialist list has
+  likely captured navigation, legal text, professional-society labels or field
+  categories. The LLM must not suggest approving it as-is; it may only suggest
+  rejecting it or modifying it down to clear public professional names.
 - `scripts/manual_review_route_brief.py` summarizes open review packets into
   operator routes without writing data or calling an LLM. It is used to separate
   cards that should open a manual admin field, cards that can accept an official

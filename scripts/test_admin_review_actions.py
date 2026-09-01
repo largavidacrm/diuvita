@@ -338,6 +338,18 @@ def main() -> None:
         "quality audit fields should offer direct manual review into the matching clinic field",
     )
     check(
+        "function specialistNoiseReason" in index
+        and "function suspiciousSpecialistValues" in index
+        and "function proposalSpecialistsStatus" in index
+        and "function reviewApprovalBlockReason" in index
+        and "Especialistas contiene entradas sospechosas" in index
+        and "Corregir antes de aprobar" in index
+        and "Usa Modificar y deja solo nombres claros" in index
+        and "Boolean(reviewApprovalBlockReason(activeReview))" in index
+        and "var approvalBlock = reviewApprovalBlockReason(activeReview);" in index,
+        "dirty specialist proposals should warn and block direct approval until modified",
+    )
+    check(
         "function resetReviewWorkAreaForNav" in index
         and 'if (targetId === "reviewWorkArea") resetReviewWorkAreaForNav();' in index
         and "show(el(\"reviewListPanel\"), true);" in index

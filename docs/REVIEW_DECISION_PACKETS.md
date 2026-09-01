@@ -35,6 +35,11 @@ El contrato principal es:
   conserva `source_job_context`: origen aportado por Daniel, campo pedido,
   resumen humano del campo solicitado, alcance, ruta del admin, barrera LLM y
   política de salida. Sin `--include-values`, las URLs completas siguen ocultas.
+- Si una propuesta trae especialistas con señales de navegación, legal,
+  sociedades profesionales, categorías o texto mezclado, el paquete añade
+  `specialist_quality_review`. Esa propuesta no debe aprobarse tal cual: Daniel
+  debe usar `modify` para dejar solo nombres claros publicados por la clínica o
+  rechazarla.
 - Si una propuesta ya trae campos editables pero solo conserva una fuente sin
   contexto, el paquete expone `source_origin_status: "source_without_context"`
   con `prompt_policy: "bounded_legacy_source_only"`. Daniel puede aprobar,
@@ -108,6 +113,9 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
   indica si ya existe un perfil Google Maps directo en la ficha o en la misma
   propuesta; si no existe, una sugerencia LLM de aprobar o modificar
   Valoraciones Google debe rechazarse en validación.
+- estado estructurado de calidad de especialistas cuando una lista parece
+  contaminada por menús, textos legales, sociedades o categorías. En ese caso
+  el LLM solo puede sugerir `modify` o `reject`, nunca aprobar tal cual.
 
 El LLM no debe:
 
