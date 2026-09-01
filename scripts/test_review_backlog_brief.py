@@ -158,7 +158,12 @@ def main():
         == "  - Revisar extracción shadow: Unidad de Longevidad IMDA: mejora · P60 · creada 2026-08-31 12:47 · campos: Sedes, Teléfono principal, Teléfono fijo, Especialistas, Servicios +1 · revisar: 1 sede, 2 teléfonos, 2 especialistas",
         "workgroup card proposal summary missing",
     )
-    check(backlog_guard(report["summary"]) == "cerca del freno: 48/50 abiertas", "guard label missing")
+    check(backlog_guard(report["summary"]) == "pausa preventiva: 48/50 abiertas; baja de 45", "guard label missing")
+    check(
+        backlog_guard({"open_reviews": 43, "safe_write_limit": 50, "safe_write_pause_margin": 5})
+        == "margen corto: 43/50 abiertas; quedan 2 propuestas antes de la pausa preventiva",
+        "short-margin guard label missing",
+    )
     check(
         first_backlog_action(report) == "Revisar Sensabell: 5 tarjetas, empezando por claims bloqueantes",
         "first action should prefer blocking clinic workgroups",
@@ -219,7 +224,7 @@ def main():
     check("cambios de fuente: 1 abierta; máxima prioridad P70" in output, "singular open label missing")
     check("Clínicas con varias mejoras abiertas: 2" in output, "duplicate clinic count missing")
     check("Tarjetas en grupos duplicados: 5" in output, "duplicate card count missing")
-    check("Freno de bandeja: cerca del freno: 48/50 abiertas" in output, "guard line missing")
+    check("Freno de bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "guard line missing")
     check("Writes data: no" in output, "read-only signal missing")
     check("## Filtrar por clínica" in output, "clinic workgroup section missing")
     check("Sensabell · Valencia · publicada · 5 tarjetas" in output, "clinic workgroup missing")

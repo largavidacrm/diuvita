@@ -6,7 +6,8 @@ Vitalarga review inbox.
 It answers:
 
 - how many review cards are open;
-- whether the inbox is close to the safe-write backlog guard;
+- whether the inbox is close to the safe-write backlog guard and how many
+  proposals remain before the preventive pause;
 - how many profile-enrichment cards are open;
 - which clinics concentrate several open review cards across review types;
 - the recommended order inside each clinic group, including human-only clinic
@@ -32,8 +33,8 @@ Machine-readable output:
 python3 scripts/review_backlog_brief.py --json
 ```
 
-This is most useful when `Freno bandeja` is close to active or when `/admin/`
-shows duplicated profile-enrichment pressure.
+This is most useful when `Freno bandeja` or the preventive pause is close to
+active, or when `/admin/` shows duplicated profile-enrichment pressure.
 
 Clinic claim requests remain review-only signals. The brief can tell Daniel
 where they are, but it does not verify identity, grant access, edit clinic data

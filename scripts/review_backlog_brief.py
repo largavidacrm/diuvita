@@ -9,7 +9,13 @@ import sys
 import unicodedata
 from typing import Any
 
-from admin_digest import SAFE_WRITE_REVIEW_BACKLOG_LIMIT, as_int, parse_timestamp, plural
+from admin_digest import (
+    SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
+    SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN,
+    as_int,
+    parse_timestamp,
+    plural,
+)
 from submit_discovery_candidates import load_env_file, run_psql, sql_literal
 
 
@@ -360,7 +366,9 @@ summary as (
     'open_enrichment_reviews', count(*) filter (where review_type = 'clinic_profile_enrichment'),
     'duplicate_enrichment_clinics', (select count(*) from duplicate_enrichment_groups),
     'duplicate_enrichment_reviews', coalesce((select sum(card_count) from duplicate_enrichment_groups), 0),
-    'safe_write_limit', {SAFE_WRITE_REVIEW_BACKLOG_LIMIT}
+    'safe_write_limit', {SAFE_WRITE_REVIEW_BACKLOG_LIMIT},
+    'safe_write_pause_margin', {SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN},
+    'safe_write_pause_at', {max(0, SAFE_WRITE_REVIEW_BACKLOG_LIMIT - SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN)}
   ) as data
   from open_reviews
 )
@@ -379,11 +387,17 @@ select jsonb_build_object(
 def backlog_guard(summary: dict[str, Any]) -> str:
     open_reviews = as_int(summary.get("open_reviews"))
     limit = as_int(summary.get("safe_write_limit")) or SAFE_WRITE_REVIEW_BACKLOG_LIMIT
+    pause_margin = as_int(summary.get("safe_write_pause_margin")) or SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN
     if open_reviews >= limit:
         return f"freno activo: {open_reviews}/{limit} revisiones abiertas"
-    if limit - open_reviews <= 5:
-        return f"cerca del freno: {open_reviews}/{limit} abiertas"
-    return f"normal: {open_reviews}/{limit} abiertas"
+    pause_at = as_int(summary.get("safe_write_pause_at")) or max(0, limit - max(0, pause_margin))
+    remaining_to_pause = max(0, pause_at - open_reviews)
+    slot_label = "queda 1 propuesta" if remaining_to_pause == 1 else f"quedan {remaining_to_pause} propuestas"
+    if open_reviews >= pause_at:
+        return f"pausa preventiva: {open_reviews}/{limit} abiertas; baja de {pause_at}"
+    if remaining_to_pause <= 3:
+        return f"margen corto: {open_reviews}/{limit} abiertas; {slot_label} antes de la pausa preventiva"
+    return f"normal: {open_reviews}/{limit} abiertas; {slot_label} antes de la pausa preventiva"
 
 
 def status_label(status: Any) -> str:

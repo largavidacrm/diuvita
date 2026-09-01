@@ -1072,6 +1072,10 @@ Next 10 technical steps:
      boundary through to the resulting review packet, so a pasted URL such as a
      team page can help only the requested field and still returns as a
      proposal for Daniel.
+206. Align backlog briefs with the preventive pause. Done locally in
+     `scripts/review_backlog_brief.py`: the read-only inbox bottleneck brief now
+     uses the same safe-write pause threshold as `/admin`, including how many
+     proposals remain before new source/jobs should stop.
 
 ## Daniel decision checkpoints
 
