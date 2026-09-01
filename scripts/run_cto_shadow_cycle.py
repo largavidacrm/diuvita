@@ -664,6 +664,7 @@ def manual_review_route_status(step: dict[str, Any] | None) -> str:
         return "sin tarjetas medidas"
     manual = as_int(counts.get("manual_field_routes"))
     handoff = as_int(counts.get("source_handoff_available"))
+    source_only_reviewable = as_int(counts.get("source_only_reviewable"))
     blocked = as_int(counts.get("blocked_without_operator_context"))
     direct = as_int(counts.get("direct_change_reviews"))
     parts: list[str] = []
@@ -671,8 +672,10 @@ def manual_review_route_status(step: dict[str, Any] | None) -> str:
         parts.append(f"{manual} abren campo directo")
     if handoff:
         parts.append(f"{handoff} permiten URL oficial")
+    if source_only_reviewable:
+        parts.append(f"{source_only_reviewable} revisables manualmente aunque no listas para LLM")
     if blocked:
-        parts.append(f"{blocked} bloqueadas por fuente sin contexto")
+        parts.append(f"{blocked} no listas para LLM por fuente sin contexto")
     if direct and not parts:
         parts.append(f"{direct} listas para decision directa")
     return "; ".join(parts) if parts else f"{total} tarjetas sin ruta especial"

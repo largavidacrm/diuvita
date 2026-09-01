@@ -1754,6 +1754,14 @@ td small {
   background: rgba(247, 244, 238, 0.72);
 }
 
+.review-proposal-focus .review-source-job-panel {
+  padding: 0.75rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
 .review-warning-panel {
   border-color: rgba(166, 129, 62, 0.42);
   background: #f8ecd8;

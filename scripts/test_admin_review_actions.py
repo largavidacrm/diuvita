@@ -89,8 +89,9 @@ def main() -> None:
         "Campo a corregir: ",
         "Dato pendiente: ",
         "Guarda la ficha para cerrar esta revisión y pasar a la siguiente.",
-        "Dile al agente dónde mirar",
+        "URL oficial para el agente",
         "Enviar URL al agente",
+        "Editar en ficha",
         "Confirmar misma ficha",
         "review-proposal-title",
         "review-proposal-hint",
@@ -100,6 +101,7 @@ def main() -> None:
         "Cambio propuesto",
         "Fuente o evidencia",
         "URL aportada por Daniel",
+        "Puedes decidir o modificar esta propuesta manualmente.",
         "Advertencias imprescindibles",
         "Observación breve",
     ]:
@@ -275,9 +277,25 @@ def main() -> None:
     )
     check(
         'item.action !== "Revisión manual"' in index
+        and ">Editar en ficha</button>" in index
         and "openClinicEditorForReview(activeReview, targetId || firstReviewMissingFieldTargetId(activeReview))" in index
         and 'el("reviewProposalFocusList").addEventListener("click"' in index,
         "quality audit fields should offer direct manual review into the matching clinic field",
+    )
+    check(
+        "function resetReviewWorkAreaForNav" in index
+        and 'if (targetId === "reviewWorkArea") resetReviewWorkAreaForNav();' in index
+        and "show(el(\"reviewListPanel\"), true);" in index
+        and "setReviewWorkMode(\"queue\");" in index,
+        "sidebar review navigation should restore the review inbox when a subview is open",
+    )
+    check(
+        index.index('id="reviewProposalFocusList"')
+        < index.index('id="reviewSourceJobPanel"')
+        < index.index('id="reviewEvidencePanel"')
+        and 'show(el("reviewEvidencePanel"), Boolean(items.length || origin.text));' in index
+        and 'target ? target.label : "Campo pendiente"' in index,
+        "manual source help should live inside the active proposal and empty evidence should stay hidden",
     )
     check(
         "function openReviewEntry" in index

@@ -736,6 +736,23 @@
                 <span class="pill" id="reviewProposalFocusCount">0 datos</span>
               </div>
               <div class="review-proposal-list" id="reviewProposalFocusList"></div>
+              <section class="review-source-job-panel hidden" id="reviewSourceJobPanel">
+                <div class="review-section-head">
+                  <div>
+                    <h3>URL oficial para el agente</h3>
+                    <p id="reviewSourceJobMeta">Pega una URL oficial donde esté este dato.</p>
+                  </div>
+                  <span class="pill">Opcional</span>
+                </div>
+                <div class="review-source-job-form">
+                  <div class="field">
+                    <label for="reviewSourceJobUrl">URL oficial</label>
+                    <input id="reviewSourceJobUrl" type="url" placeholder="https://">
+                  </div>
+                  <button class="btn secondary" id="reviewSourceJobBtn" type="button">Enviar al agente</button>
+                </div>
+                <p class="field-note" id="reviewSourceJobHint">El agente/LLM creará propuestas revisables; no publica ni guarda datos en la ficha.</p>
+              </section>
             </section>
             <section class="review-evidence-panel" id="reviewEvidencePanel">
               <div class="review-section-head">
@@ -758,23 +775,6 @@
                 <span class="pill">Solo estos campos</span>
               </div>
               <div class="review-modify-fields" id="reviewModifyFields"></div>
-            </section>
-            <section class="review-source-job-panel hidden" id="reviewSourceJobPanel">
-              <div class="review-section-head">
-                <div>
-                  <h3>Dile al agente dónde mirar</h3>
-                  <p id="reviewSourceJobMeta">Pega una URL oficial donde esté el dato pendiente.</p>
-                </div>
-                <span class="pill">Propuesta interna</span>
-              </div>
-              <div class="review-source-job-form">
-                <div class="field">
-                  <label for="reviewSourceJobUrl">URL oficial</label>
-                  <input id="reviewSourceJobUrl" type="url" placeholder="https://">
-                </div>
-                <button class="btn secondary" id="reviewSourceJobBtn" type="button">Enviar URL al agente</button>
-              </div>
-              <p class="field-note" id="reviewSourceJobHint">El agente/LLM creará propuestas revisables; no publica ni guarda datos en la ficha.</p>
             </section>
             <div class="field review-note-field">
               <label for="reviewResolutionNote">Observación breve</label>
@@ -1060,6 +1060,7 @@
 
     function jumpToControlSection(targetId) {
       if (!targetId) return;
+      if (targetId === "reviewWorkArea") resetReviewWorkAreaForNav();
       activeControlSection = targetId;
       setControlNavActive(targetId);
       setControlSectionVisible(targetId);
@@ -7015,7 +7016,8 @@
         var auditIssues = issueLabels(payload.issues);
         var visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1);
         visibleAuditIssues.forEach(function (item, index) {
-          pushProposalFocusItem(items, seen, row, "quality_issue_" + index, item, "Campo pendiente", "Revisión manual");
+          var target = reviewMissingFieldTargetsForText(item)[0];
+          pushProposalFocusItem(items, seen, row, "quality_issue_" + index, item, target ? target.label : "Campo pendiente", "Revisión manual");
         });
       }
       if (!items.length && row.review_type === "clinic_claim_request") {
@@ -7072,7 +7074,7 @@
       if (target) {
         return '<button class="link-btn review-manual-btn" type="button" data-review-manual-field="' +
           html(target.inputId) + '" title="Abrir ' + html(target.label) +
-          ' en la ficha">Revisión manual</button>';
+          ' en la ficha">Editar en ficha</button>';
       }
       return '<span class="pill">' + html(item.action) + '</span>';
     }
@@ -7216,7 +7218,7 @@
       if (payload.target_scope === "primary_target_first") originParts.push("Alcance: primero el campo activo");
       if (payload.target_scope === "specialist_source_only") originParts.push("Alcance: solo especialistas");
       if (!originParts.length && (items || []).length && !payloadHasReviewSourceContext(payload)) {
-        originParts.push("Fuente sin contexto de tarea: úsala solo como evidencia revisable, no como orden al LLM.");
+        originParts.push("Fuente sin contexto de tarea: úsala solo como evidencia revisable, no como orden al LLM. Puedes decidir o modificar esta propuesta manualmente.");
         return { tone: "source-only", text: originParts.join(" · ") };
       }
       return { tone: "scoped", text: originParts.join(" · ") };
@@ -7225,6 +7227,7 @@
     function renderReviewEvidence(row) {
       var items = reviewEvidenceItems(row);
       var origin = reviewSourceOriginDetails(row, items);
+      show(el("reviewEvidencePanel"), Boolean(items.length || origin.text));
       el("reviewSourceOrigin").className = "review-source-origin hidden" + (origin.tone ? " review-source-origin-" + origin.tone : "");
       el("reviewSourceOrigin").innerHTML = origin.text
         ? '<span>' + html(origin.text) + '</span>'
@@ -7332,11 +7335,11 @@
         setInput("reviewSourceJobUrl", "");
         return;
       }
-      el("reviewSourceJobMeta").textContent = "Pega " + sourceJob.example.source + " para revisar: " + sourceJob.labels + ".";
+      el("reviewSourceJobMeta").textContent = "Opcional: pega " + sourceJob.example.source + " para que revise " + sourceJob.labels + ".";
       el("reviewSourceJobUrl").placeholder = sourceJob.example.placeholder;
       el("reviewSourceJobHint").textContent = sourceJob.paused
         ? "Pausa preventiva activa: primero limpia revisiones antes de enviar más fuentes al agente."
-        : "El agente/LLM mirará solo esos campos y dejará otra propuesta revisable. " +
+        : "Mirará solo este alcance y dejará otra propuesta revisable. " +
           safeWriteSlotLabel(dashboardOpenReviewCount) + ". No publica ni guarda datos en la ficha.";
       el("reviewSourceJobBtn").disabled = sourceJob.paused;
       setInput("reviewSourceJobUrl", "");
@@ -7375,6 +7378,24 @@
       renderReviewSourceJobPanel(row);
       el("reviewModifyFields").innerHTML = "";
       setReviewModifyMode(false);
+    }
+
+    function resetReviewWorkAreaForNav() {
+      if (activeClinicReview) {
+        closeClinicEditor();
+        return;
+      }
+      if (activeReview) {
+        closeReviewEditor();
+        return;
+      }
+      show(el("jobCreatePanel"), true);
+      show(el("reviewListPanel"), true);
+      show(el("reviewSelectionPanel"), true);
+      show(el("reviewClinicPanel"), false);
+      show(el("reviewEditor"), false);
+      setReviewWorkMode("queue");
+      renderReviews();
     }
 
     function cloneJson(value) {

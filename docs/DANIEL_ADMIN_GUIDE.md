@@ -326,6 +326,9 @@ sin leer información técnica cruda.
 Si ves **Fuente sin contexto de tarea**, significa que el enlace sirve como
 evidencia para revisar, pero no sabemos qué quería pedir exactamente el trabajo
 original. No se usa como orden para el LLM ni para completar otros campos.
+Si la tarjeta ya trae campos propuestos, puedes aprobarlos, rechazarlos o
+modificarlos manualmente; lo único bloqueado es pedirle al LLM que amplíe la
+ficha desde esa fuente sin contexto.
 
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
 Puedes usar el filtro **Especialistas** para ver solo tarjetas que mencionan

@@ -1139,6 +1139,12 @@ Next 10 technical steps:
      URL for a bounded agent job, and how many remain blocked by source-only
      context. This preserves the future LLM automation path without calling an
      LLM, writing clinic data or resolving cards.
+220. Split source-only reviewability from LLM readiness. Done locally in
+     `scripts/manual_review_route_brief.py`, `scripts/run_cto_shadow_cycle.py`
+     and `/admin/`: cards like Tiara Health that already contain editable
+     proposed fields are marked as manually reviewable even when their source is
+     not ready to be used as an LLM instruction. Only the LLM handoff stays
+     blocked until the source carries Daniel's requested field/context.
 
 ## Daniel decision checkpoints
 

@@ -80,13 +80,16 @@ def route_item(packet: dict[str, Any]) -> dict[str, Any]:
 
     if primary_target:
         operator_action = "open_manual_field"
-        human_next_step = f"Abrir la ficha y editar {primary_target.get('label') or primary_target.get('key')}."
+        human_next_step = f"Desde la propuesta, abrir la ficha y editar {primary_target.get('label') or primary_target.get('key')}."
     elif source_request and source_request.get("source_requirement"):
         operator_action = "request_official_source"
         human_next_step = "Pedir o pegar una URL oficial para que el agente prepare una propuesta revisable."
+    elif source_origin == "source_without_context" and editable_fields:
+        operator_action = "review_proposed_change_source_only"
+        human_next_step = "Validar o modificar solo el cambio propuesto; la fuente no trae contexto suficiente para LLM."
     elif source_origin == "source_without_context":
         operator_action = "manual_review_source_without_context"
-        human_next_step = "Revisar manualmente; no inferir la intención original solo por el enlace."
+        human_next_step = "Revisar manualmente; no hay propuesta editable ni contexto suficiente para LLM."
     elif editable_fields:
         operator_action = "review_proposed_change"
         human_next_step = "Validar solo el cambio propuesto en esta tarjeta."
@@ -133,9 +136,10 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         "manual_field_routes": sum(1 for item in items if item["operator_action"] == "open_manual_field"),
         "source_handoff_available": sum(1 for item in items if item.get("source_handoff")),
         "source_without_context": sum(1 for item in items if item.get("source_origin_status") == "source_without_context"),
+        "source_only_reviewable": sum(1 for item in items if item["operator_action"] == "review_proposed_change_source_only"),
         "manual_navigation_llm_ready": sum(1 for item in items if item.get("llm_help_scope") == "manual_navigation_only"),
         "blocked_without_operator_context": sum(1 for item in items if item.get("llm_help_scope") == "blocked_without_operator_context"),
-        "direct_change_reviews": sum(1 for item in items if item["operator_action"] == "review_proposed_change"),
+        "direct_change_reviews": sum(1 for item in items if item["operator_action"] in {"review_proposed_change", "review_proposed_change_source_only"}),
     }
 
 
@@ -147,9 +151,10 @@ def route_report(rows: list[dict[str, Any]], manual_first: bool = True) -> dict[
         order = {
             "open_manual_field": 0,
             "request_official_source": 1,
-            "manual_review_source_without_context": 2,
-            "review_proposed_change": 3,
-            "manual_review_required": 4,
+            "review_proposed_change_source_only": 2,
+            "manual_review_source_without_context": 3,
+            "review_proposed_change": 4,
+            "manual_review_required": 5,
         }
         items = sorted(items, key=lambda item: (order.get(item["operator_action"], 9), -int(item.get("priority") or 0)))
     return {
@@ -169,14 +174,16 @@ def compact_item_line(item: dict[str, Any]) -> str:
     if action == "open_manual_field":
         target = _clean_dict(item.get("manual_primary_target"))
         label = target.get("label") or "campo pendiente"
-        return f"- {title}: abrir {label} directamente en ficha."
+        return f"- {title}: desde la propuesta, abrir {label} en ficha."
     if action == "request_official_source":
         source = _clean_dict(item.get("source_handoff"))
         labels = source.get("primary_field_labels") or []
         label_text = ", ".join(labels) if labels else "el campo pendiente"
         return f"- {title}: pegar URL oficial para {label_text}; solo creará propuesta revisable."
     if action == "manual_review_source_without_context":
-        return f"- {title}: revisar manualmente; fuente sin contexto suficiente para LLM."
+        return f"- {title}: revisar manualmente; sin propuesta editable ni contexto suficiente para LLM."
+    if action == "review_proposed_change_source_only":
+        return f"- {title}: revisar/modificar campos propuestos manualmente; LLM bloqueado por fuente sin contexto."
     if action == "review_proposed_change":
         return f"- {title}: decidir solo el cambio propuesto."
     return f"- {title}: revisión humana requerida."
@@ -195,7 +202,8 @@ def format_route_report(report: dict[str, Any], limit: int = 10) -> str:
         f"- Abren campo directo: {summary.get('manual_field_routes', 0)}",
         f"- Permiten pasar URL oficial al agente: {summary.get('source_handoff_available', 0)}",
         f"- Listas para ayuda LLM de navegación: {summary.get('manual_navigation_llm_ready', 0)}",
-        f"- Bloqueadas por fuente sin contexto: {summary.get('blocked_without_operator_context', 0)}",
+        f"- Revisables manualmente aunque no listas para LLM: {summary.get('source_only_reviewable', 0)}",
+        f"- Bloqueadas para LLM por fuente sin contexto: {summary.get('blocked_without_operator_context', 0)}",
     ]
     if items:
         lines.extend([

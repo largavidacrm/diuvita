@@ -220,8 +220,10 @@ Required behavior:
 - `scripts/manual_review_route_brief.py` summarizes open review packets into
   operator routes without writing data or calling an LLM. It is used to separate
   cards that should open a manual admin field, cards that can accept an official
-  source URL for a bounded agent job, cards that are blocked by source-only
-  context, and direct one-change proposals.
+  source URL for a bounded agent job, source-only cards that are still
+  reviewable by Daniel because they already contain editable proposed fields,
+  cards that are blocked for LLM help by missing source context, and direct
+  one-change proposals.
 - `scripts/run_cto_shadow_cycle.py` includes that route brief as a read-only
   step, so unattended CTO summaries preserve the manual/LLM handoff path
   without creating cards or changing clinic data.

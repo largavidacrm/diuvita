@@ -61,6 +61,7 @@ def main():
             "reported_packets": 3,
             "manual_field_routes": 2,
             "source_handoff_available": 1,
+            "source_only_reviewable": 1,
             "blocked_without_operator_context": 1,
         },
         "items": [
@@ -391,6 +392,7 @@ def main():
                 "reported_packets": 6,
                 "manual_field_routes": 3,
                 "source_handoff_available": 2,
+                "source_only_reviewable": 1,
                 "blocked_without_operator_context": 1,
                 "direct_change_reviews": 1,
             },
@@ -399,7 +401,7 @@ def main():
     }
     check(
         manual_review_route_status(manual_route_step)
-        == "3 abren campo directo; 2 permiten URL oficial; 1 bloqueadas por fuente sin contexto",
+        == "3 abren campo directo; 2 permiten URL oficial; 1 revisables manualmente aunque no listas para LLM; 1 no listas para LLM por fuente sin contexto",
         "manual review route status should summarize operator routes",
     )
     check(
@@ -855,11 +857,11 @@ def main():
     })
     check(
         manual_route_cycle_brief["manual_review_routes"]
-        == "3 abren campo directo; 2 permiten URL oficial; 1 bloqueadas por fuente sin contexto",
+        == "3 abren campo directo; 2 permiten URL oficial; 1 revisables manualmente aunque no listas para LLM; 1 no listas para LLM por fuente sin contexto",
         "manual route status should enter cycle brief",
     )
     check(
-        "Rutas revision manual: 3 abren campo directo; 2 permiten URL oficial; 1 bloqueadas por fuente sin contexto"
+        "Rutas revision manual: 3 abren campo directo; 2 permiten URL oficial; 1 revisables manualmente aunque no listas para LLM; 1 no listas para LLM por fuente sin contexto"
         in format_cycle_brief(manual_route_cycle_brief),
         "plain brief should show manual route result",
     )

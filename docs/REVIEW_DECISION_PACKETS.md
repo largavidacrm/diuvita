@@ -31,6 +31,10 @@ El contrato principal es:
   conserva `source_job_context`: origen aportado por Daniel, campo pedido,
   resumen humano del campo solicitado, alcance, ruta del admin, barrera LLM y
   política de salida. Sin `--include-values`, las URLs completas siguen ocultas.
+- Si una propuesta ya trae campos editables pero solo conserva una fuente sin
+  contexto, Daniel puede aprobar, rechazar o modificar esos campos manualmente.
+  Lo que permanece bloqueado es usar esa fuente como instrucción nueva para el
+  LLM hasta recuperar el campo solicitado y el alcance del trabajo.
 - Si una propuesta antigua solo trae una fuente pero no conserva contexto de
   trabajo, el paquete expone `source_origin_status:
   "source_without_context"` con el host y el límite LLM: no inferir intención
