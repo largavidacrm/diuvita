@@ -492,12 +492,17 @@ def main() -> None:
         and "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica." in index
         and "Valoraciones Google: confirma primero el perfil real de Google Maps" in index
         and "Antes de guardar Valoraciones Google, confirma y guarda el perfil real de Google Maps de la clínica." in index
-        and "Alguna sede trae Google Maps dudoso" in index,
+        and "Alguna sede trae Google Maps dudoso" in index
+        and "Comprobación manual" in index
+        and "El nombre visible en Google debe coincidir con:" in index
+        and "No apruebes valoraciones aisladas sin esa coincidencia." in index,
         "Google Maps proposals should show actionable in-card review hints",
     )
     check(
         "function proposalGoogleMapsStatus" in index
         and "function proposalReviewStatusHtml" in index
+        and "function reviewMapsChecklistHtml" in index
+        and "function reviewMapsExpectedClinicLabel" in index
         and "Parece perfil directo" in index
         and "No guardar tal cual" in index
         and "review-link-status" in index,
@@ -581,6 +586,7 @@ def main() -> None:
     check(".work-grid.review-work-queue .review-list-panel" in css, "review queue side panel should stay explicit in CSS")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
     check(".review-link-status" in css and ".review-link-status-warning" in css, "proposal link status should be styled")
+    check(".review-link-checklist" in css and ".review-link-checklist li" in css, "Google Maps checklist should be styled")
     check(
         "function payloadHasReviewSourceContext" in index
         and "function reviewSourceOriginDetails" in index

@@ -2003,6 +2003,37 @@ td small.job-next-step {
   background: #fff7e8;
 }
 
+.review-link-checklist {
+  display: grid;
+  gap: 0.28rem;
+  margin-top: 0.45rem;
+  padding: 0.48rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(247, 244, 238, 0.6);
+}
+
+.review-link-checklist span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-link-checklist ul {
+  display: grid;
+  gap: 0.22rem;
+  margin: 0;
+  padding-left: 1.05rem;
+}
+
+.review-link-checklist li {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
 .review-proposal-hint {
   margin: 0.42rem 0 0;
   color: var(--muted);

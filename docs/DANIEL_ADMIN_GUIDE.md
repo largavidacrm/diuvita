@@ -190,8 +190,9 @@ que es la clínica correcta.
 En las propuestas de Google Maps también verás un estado compacto del enlace.
 **Parece perfil directo** significa que el formato encaja con una ficha de
 Google Maps, pero sigue siendo obligatorio abrirlo y confirmar que corresponde
-a esa clínica. **No guardar tal cual** significa que parece búsqueda, ruta,
-dirección suelta o enlace insuficiente.
+a esa clínica. La tarjeta muestra una **Comprobación manual** con el nombre de
+la ficha que debe coincidir en Google. **No guardar tal cual** significa que
+parece búsqueda, ruta, dirección suelta o enlace insuficiente.
 
 Si la propuesta trae **Valoraciones Google**, confirma primero el perfil real
 de Google Maps de la clínica. Después valida que el enlace de reseñas pertenece

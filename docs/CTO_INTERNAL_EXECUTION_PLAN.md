@@ -1264,6 +1264,12 @@ Next 10 technical steps:
      labels such as **Sin claims bloqueantes pendientes** are no longer shown as
      something missing before publication. Claims still block publication when
      they are conflictive, rejected or not yet checked.
+239. Make Google Maps review decisions more explicit. Done locally in
+     `/admin/`: Maps and Google review proposals now show a compact manual
+     checklist next to the proposed link, including the clinic name/location
+     Daniel must match in Google. This does not approve URLs automatically and
+     keeps the existing rule that only real clinic Google Business/Profile URLs
+     can be saved.
 
 ## Daniel decision checkpoints
 
