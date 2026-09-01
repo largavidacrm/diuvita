@@ -3352,9 +3352,12 @@
             detail: reviewPrimarySubject(nextReview) + " · solicitud de clínica; no confirma identidad ni cambia datos."
           };
         }
+        var googleDetail = reviewHasGoogleLinkProposal(nextReview)
+          ? " · " + reviewGoogleMapsRowTriageLabel(nextReview)
+          : "";
         return {
           title: "Abrir prioridad",
-          detail: reviewPrimarySubject(nextReview) + " · " + reviewVisibleLabel(nextReview) + " · prioridad " + priorityLabel(nextReview.priority).toLowerCase()
+          detail: reviewPrimarySubject(nextReview) + " · " + reviewVisibleLabel(nextReview) + " · prioridad " + priorityLabel(nextReview.priority).toLowerCase() + googleDetail
         };
       }
       if (clinicGroup) {
@@ -3790,6 +3793,90 @@
       })[0];
     }
 
+    function googleLinkCountLabel(count, singular, plural) {
+      return count + " " + (count === 1 ? singular : plural);
+    }
+
+    function reviewGoogleMapItems(row) {
+      return proposalLinkItems((row && row.payload) || {}).filter(function (item) {
+        return item.kind === "maps_url" && Boolean(proposalLinkUrl(item.url));
+      });
+    }
+
+    function reviewGoogleReviewItems(row) {
+      return proposalLinkItems((row && row.payload) || {}).filter(function (item) {
+        return item.kind === "google_reviews_url" && Boolean(proposalLinkUrl(item.url));
+      });
+    }
+
+    function reviewGoogleMapsRowTriage(row) {
+      var mapItems = reviewGoogleMapItems(row);
+      var reviewItems = reviewGoogleReviewItems(row);
+      var direct = mapItems.some(function (item) {
+        var status = proposalGoogleMapsStatus(item.url);
+        return status && status.tone === "ready";
+      });
+      var weak = mapItems.some(function (item) {
+        var status = proposalGoogleMapsStatus(item.url);
+        return status && status.tone !== "ready";
+      });
+      var clinic = reviewClinicForRow(row);
+      var currentHasMaps = Boolean(clinic && currentDataHasReviewedMaps(clinic.current_data || {}));
+      return {
+        hasGoogle: Boolean(mapItems.length || reviewItems.length),
+        directMaps: direct ? 1 : 0,
+        weakMaps: weak ? 1 : 0,
+        reviewsWithoutMaps: reviewItems.length && !direct && !currentHasMaps ? 1 : 0,
+        reviewLinks: reviewItems.length
+      };
+    }
+
+    function reviewGoogleMapsRowTriageLabel(row) {
+      var triage = reviewGoogleMapsRowTriage(row);
+      var parts = [];
+      if (triage.directMaps) parts.push("Parece perfil directo");
+      if (triage.weakMaps) parts.push("Maps dudoso");
+      if (triage.reviewsWithoutMaps) parts.push("Valoración sin Maps confirmado");
+      if (!parts.length && triage.reviewLinks) parts.push("Valoraciones: confirma la misma ficha de Maps");
+      return parts.join(" · ") || "Revisión manual de Google";
+    }
+
+    function reviewGoogleMapsTriage(rows) {
+      var summary = {
+        total: 0,
+        directMaps: 0,
+        weakMaps: 0,
+        reviewsWithoutMaps: 0
+      };
+      googleLinkReviewRows(rows || []).forEach(function (row) {
+        var triage = reviewGoogleMapsRowTriage(row);
+        if (!triage.hasGoogle) return;
+        summary.total += 1;
+        summary.directMaps += triage.directMaps;
+        summary.weakMaps += triage.weakMaps;
+        summary.reviewsWithoutMaps += triage.reviewsWithoutMaps;
+      });
+      return summary;
+    }
+
+    function reviewGoogleMapsTriageLabel(rows) {
+      var summary = reviewGoogleMapsTriage(rows || []);
+      var parts = [];
+      if (!summary.total) return "Sin propuestas de Google";
+      parts.push(googleLinkCountLabel(summary.total, "tarjeta", "tarjetas"));
+      if (summary.directMaps) {
+        parts.push(summary.directMaps === 1 ? "1 parece perfil directo" : summary.directMaps + " parecen perfil directo");
+      }
+      if (summary.weakMaps) {
+        parts.push(googleLinkCountLabel(summary.weakMaps, "dudosa", "dudosas"));
+      }
+      if (summary.reviewsWithoutMaps) {
+        parts.push(googleLinkCountLabel(summary.reviewsWithoutMaps, "valoración sin Maps confirmado", "valoraciones sin Maps confirmado"));
+      }
+      if (parts.length === 1) parts.push("revisión manual");
+      return parts.join(" · ");
+    }
+
     function openGoogleLinksTarget() {
       var match = firstGoogleLinkReview(reviewCache);
       if (!match) return;
@@ -4076,7 +4163,7 @@
         return "Especialistas propuestos: " + specialistCount + ". " + sourceDetail + " No se publican solos.";
       }
       if (reviewHasGoogleLinkProposal(row)) {
-        return "Google Maps propuesto. Acepta solo el perfil real de la clínica.";
+        return "Google Maps propuesto. Acepta solo el perfil real de la clínica. Estado: " + reviewGoogleMapsRowTriageLabel(row) + ".";
       }
       if (isBlockingClaimReview(row)) {
         return "Hay datos dudosos o sin fuente suficiente; primero corregir o dejar fuera.";
@@ -9480,7 +9567,7 @@
         ? "Google Maps"
         : "Abrir Google Maps";
       el("openGoogleLinksBtn").title = googleLinkReview
-        ? "Abrir Google Maps: " + reviewPrimarySubject(googleLinkReview)
+        ? "Abrir Google Maps: " + reviewGoogleMapsTriageLabel(reviewCache) + ". Primera: " + reviewPrimarySubject(googleLinkReview)
         : "";
       show(el("openSpecialistTargetBtn"), Boolean(specialistTarget));
       el("openSpecialistTargetBtn").textContent = specialistTarget

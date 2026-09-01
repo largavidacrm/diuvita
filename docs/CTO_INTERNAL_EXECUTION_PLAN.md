@@ -1328,6 +1328,12 @@ Next 10 technical steps:
      and pauses on interaction. Tiara Health remains in the guide, but its
      current logo URL is disabled until it provides a valid logo asset, so it
      does not appear as a broken logo.
+249. Surface Google Maps review readiness in the admin UI. Done locally in
+     `/admin/`: Google-link rows and the compact Google Maps action now say
+     whether open cards look like direct clinic profiles, weak/doubtful Maps
+     links or Google review links without a confirmed Maps profile. This is a
+     human triage signal only; it does not approve links, edit clinic data or
+     change the publication gate.
 
 ## Daniel decision checkpoints
 
