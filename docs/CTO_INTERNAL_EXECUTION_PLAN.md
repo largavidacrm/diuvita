@@ -1129,6 +1129,10 @@ Next 10 technical steps:
      `scripts/review_proposal_decision_packets.py`: when review cards share
      priority and timestamp, the system now breaks ties by title and id so
      Daniel does not see different "next" cards in different views.
+218. Show manual-review field intent in the inbox row. Done locally in
+     `/admin/`: quality-audit rows now state **Abrirá: [campo]** with the first
+     pending issue, so Daniel sees what the review asks before opening the
+     ficha.
 
 ## Daniel decision checkpoints
 

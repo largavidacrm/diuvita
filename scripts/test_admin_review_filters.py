@@ -50,6 +50,8 @@ def main() -> None:
         "function reviewSpecialistSourceUrls",
         "function reviewRowDetail",
         "function reviewSubjectCell",
+        "Abrirá: ",
+        "No se publica solo.",
         "Fuente visible para revisar.",
         "Fuente pendiente: revisa la web oficial antes de cargar nombres.",
         "fuente visible",

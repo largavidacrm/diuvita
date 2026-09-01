@@ -198,6 +198,8 @@ En las revisiones manuales de calidad, al pulsar **Revisar** se abre
 directamente la ficha en el campo pendiente. Al guardar, esa revisión queda
 cerrada solo para ese campo. Si la misma tarjeta tenía más faltantes, el panel
 vuelve a abrir el siguiente campo pendiente; no los da por resueltos en bloque.
+En la propia lista verás una línea **Abrirá:** para saber antes de entrar qué
+campo se va a editar.
 
 Al entrar en la ficha desde **Revisión manual**, arriba verás una banda con el
 campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en

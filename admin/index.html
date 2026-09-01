@@ -3450,6 +3450,18 @@
 
     function reviewRowDetail(row) {
       var specialistCount = reviewProfessionalsCount(row);
+      if (row && row.review_type === "clinic_quality_audit" && !isBlockingClaimReview(row)) {
+        var targets = reviewMissingFieldTargets(row);
+        var target = targets[0];
+        if (target) {
+          var issues = issueLabels(((row.payload || {}).issues) || []);
+          var issue = issues[0] ? " Motivo: " + issues[0] + "." : "";
+          var extraTargets = targets.length - 1;
+          var more = extraTargets > 0 ? " +" + extraTargets + (extraTargets === 1 ? " campo más." : " campos más.") : "";
+          return "Abrirá: " + target.label + "." + more + issue + " No se publica solo.";
+        }
+        return "Revisión manual: abre la ficha y decide el campo pendiente. No se publica solo.";
+      }
       if (specialistCount) {
         var sourceDetail = reviewSpecialistSourceUrls(row).length
           ? "Fuente visible para revisar."
