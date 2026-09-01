@@ -6,7 +6,8 @@ It is the quickest way to confirm that a change is ready to save and push.
 The full pass currently covers:
 
 1. Python syntax across local scripts.
-2. Source snapshot, durable evidence, retention-report and production-health helpers.
+2. Source snapshot, durable evidence, retention-report, production-health and
+   SEO-readiness helpers.
 3. Netlify deploy guard rules, to avoid paid production builds for internal-only changes.
 4. Operational-limit red flags in source content and generated public pages.
 5. Publication rules and stored-claim rule evaluation.

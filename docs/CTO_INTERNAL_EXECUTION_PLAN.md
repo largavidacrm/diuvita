@@ -1365,6 +1365,13 @@ Next 10 technical steps:
      paste free text or a link as scope. The resulting job preserves
      `clinic_id`, requested fields and operator intent so the audit/LLM cycle
      can create bounded review cards instead of guessing from free text.
+255. Add an internal SEO readiness gate. Done locally in
+     `docs/SEO_READINESS.md` and `scripts/test_seo_readiness_doc.py`: the
+     pre-SEO state now separates technical SEO that can continue locally from
+     programmatic SEO that must wait for review backlog, traceability and base
+     clinic fields. The check protects the canonical domain, no-ranking/no
+     recommendation boundary, Google Maps profile rule, comparable-field plan
+     and read-only verification limits.
 
 ## Daniel decision checkpoints
 

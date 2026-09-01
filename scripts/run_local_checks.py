@@ -18,6 +18,7 @@ TEST_STEPS = [
     ("test: source snapshot retention", "scripts/test_measure_source_snapshot_retention.py"),
     ("test: production health formatter", "scripts/test_check_production_health.py"),
     ("test: release readiness report", "scripts/test_release_readiness_report.py"),
+    ("test: SEO readiness doc", "scripts/test_seo_readiness_doc.py"),
     ("test: public-site freshness formatter", "scripts/test_check_public_site_freshness.py"),
     ("test: local dashboard server", "scripts/test_serve_local_dashboard.py"),
     ("test: clinic public visibility report", "scripts/test_clinic_public_visibility_report.py"),
