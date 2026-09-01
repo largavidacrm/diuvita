@@ -1641,9 +1641,9 @@ def location_coverage_status(digest: dict[str, Any]) -> str:
         f"{multi} {plural(multi, 'clínica multisede', 'clínicas multisede')}",
         f"{proposals} {plural(proposals, 'propuesta en bandeja', 'propuestas en bandeja')}",
         f"{internal} {plural(internal, 'interna detectada', 'internas detectadas')}",
-        f"{missing_maps} sin Maps de clínica",
-        f"{missing_reviews} sin valoraciones",
-        f"{missing_address} sin dirección",
+        f"{missing_maps} sedes explícitas sin Maps de clínica",
+        f"{missing_reviews} sedes explícitas sin valoraciones",
+        f"{missing_address} sedes explícitas sin dirección",
     ])
     return "; ".join(parts)
 

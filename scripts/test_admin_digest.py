@@ -372,7 +372,7 @@ def main():
     )
     check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending profile field missing")
     check(
-        location_coverage_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sin Maps de clínica; 3 sin valoraciones; 0 sin dirección",
+        location_coverage_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sedes explícitas sin Maps de clínica; 3 sedes explícitas sin valoraciones; 0 sedes explícitas sin dirección",
         "location coverage status missing",
     )
     check(

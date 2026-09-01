@@ -1286,6 +1286,11 @@ Next 10 technical steps:
      that it is already pending instead of adding another job. Review-source
      handoffs still close the current card because the existing job can return
      the replacement proposal.
+243. Clarify location metrics versus publication blockers. Done locally in
+     `/admin/` and the CTO digest: location coverage now says **sedes
+     explícitas sin Maps/valoraciones**, making clear that it measures only
+     structured location rows, while publication readiness still measures
+     every ficha that needs Google Maps before publication.
 
 ## Daniel decision checkpoints
 

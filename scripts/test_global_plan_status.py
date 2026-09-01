@@ -167,7 +167,7 @@ def main():
     check(visible_clinic_status(digest) == "11 publicadas y 8 preliminares", "visible clinic status missing")
     check(automation_status(digest) == "modo sombra activo; auto-publicación apagada", "automation status missing")
     check(specialist_status(digest) == "2/19 fichas con especialistas; 17 pendientes", "specialist status missing")
-    check(location_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sin Maps de clínica; 3 sin valoraciones; 0 sin dirección", "location status missing")
+    check(location_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sedes explícitas sin Maps de clínica; 3 sedes explícitas sin valoraciones; 0 sedes explícitas sin dirección", "location status missing")
     check(source_monitoring_status(digest) == "todo reciente; próxima revisión 2026-09-29 09:58", "source monitoring missing")
     check(
         daniel_now_status(digest) == "Abrir prioridad: abre el filtro Claims bloqueantes en el panel",
