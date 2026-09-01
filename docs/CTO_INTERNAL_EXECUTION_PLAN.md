@@ -1043,6 +1043,11 @@ Next 10 technical steps:
      snapshots now show how many source-backed review cards are ready for LLM
      assistance, recoverable from their source job, or only safe for manual
      review because they carry a URL without operator context.
+200. Make manual-review queue entries open the field directly. Done locally in
+     `/admin/`: any queue/priority/auto-advance action that opens a
+     field-level manual review now routes straight to the clinic editor with
+     that exact field focused, while normal proposals still open the
+     approve/reject/modify decision view.
 
 ## Daniel decision checkpoints
 

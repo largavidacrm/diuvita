@@ -2851,11 +2851,11 @@
         renderReviews();
       }
       if (globalPlanNextReviewId) {
-        openReviewEditor(globalPlanNextReviewId);
+        openReviewEntry(globalPlanNextReviewId);
         return;
       }
       var nextReview = firstActionReview(filteredReviewRows(), 0);
-      if (nextReview) openReviewEditor(nextReview.id);
+      if (nextReview) openReviewEntry(nextReview.id);
     }
 
     function reviewPrimarySubject(row) {
@@ -3155,7 +3155,7 @@
         return;
       }
       var row = firstReviewInWorkgroup(group);
-      if (row) openReviewEditor(row.id);
+      if (row) openReviewEntry(row.id);
     }
 
     function clearClinicWorkgroup() {
@@ -3192,7 +3192,7 @@
       if (!target) return;
       var match = firstSourceTargetReview(reviewCache);
       if (match) {
-        openReviewEditor(match.id);
+        openReviewEntry(match.id);
         return;
       }
       var query = sourceTargetSubject(target);
@@ -3254,7 +3254,7 @@
       reviewGoogleLinksFilter = true;
       reviewSpecialistsFilter = false;
       renderReviews();
-      openReviewEditor(match.id);
+      openReviewEntry(match.id);
     }
 
     function openSpecialistTarget() {
@@ -3262,7 +3262,7 @@
       if (!target) return;
       var match = firstSpecialistTargetReview(reviewCache);
       if (match) {
-        openReviewEditor(match.id);
+        openReviewEntry(match.id);
         return;
       }
       var query = specialistTargetSubject(target);
@@ -7489,7 +7489,7 @@
       var nextReview = nextReviewAfterCurrent(currentId);
       if (nextReview) {
         toast(message + " Paso a la siguiente propuesta.");
-        openReviewEditor(nextReview.id);
+        openReviewEntry(nextReview.id);
         return;
       }
       el("reviewSelectionMessage").textContent = "Cola terminada. No quedan propuestas pendientes.";
@@ -8568,6 +8568,16 @@
       el("reviewClinicPanel").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
+    function openReviewEntry(id) {
+      var row = reviewCache.find(function (item) { return item.id === id; });
+      if (!row) return false;
+      if (reviewHasManualFieldRoute(row) && openClinicEditorForReview(row, firstReviewMissingFieldTargetId(row))) {
+        return true;
+      }
+      openReviewEditor(id);
+      return true;
+    }
+
     function closeReviewEditor() {
       activeReview = null;
       renderReviewValidationView(null);
@@ -8806,7 +8816,7 @@
             toast(resolveWarning
               ? "Ficha guardada, pero no pude actualizar toda la revisión."
               : "Campo guardado. Paso al siguiente campo pendiente.");
-            openReviewEditor(sameReview.id);
+            openReviewEntry(sameReview.id);
             return;
           }
         }
@@ -8815,7 +8825,7 @@
           toast(resolveWarning
             ? "Clínica guardada, pero alguna tarjeta no se cerró automáticamente."
             : "Clínica guardada. Paso a la siguiente propuesta.");
-          openReviewEditor(nextReview.id);
+          openReviewEntry(nextReview.id);
           return;
         }
         el("reviewSelectionMessage").textContent = "Cola terminada. No quedan propuestas pendientes.";
@@ -9340,7 +9350,7 @@
           return;
         }
         var button = event.target.closest("[data-review-id]");
-        if (button) openReviewEditor(button.getAttribute("data-review-id"));
+        if (button) openReviewEntry(button.getAttribute("data-review-id"));
       });
       el("clinicProfessionals").addEventListener("input", renderPendingSpecialistsForClinic);
       el("clinicPendingSpecialistsPanel").addEventListener("click", function (event) {
@@ -9350,7 +9360,7 @@
           return;
         }
         var button = event.target.closest("[data-review-id]");
-        if (button) openReviewEditor(button.getAttribute("data-review-id"));
+        if (button) openReviewEntry(button.getAttribute("data-review-id"));
       });
       el("clinicCancelBtn").addEventListener("click", closeClinicEditor);
       el("clinicCancelTop").addEventListener("click", closeClinicEditor);
@@ -9389,7 +9399,7 @@
       el("reviewClearFilters").addEventListener("click", clearReviewFilters);
       el("reviewSelectionOpenBtn").addEventListener("click", function () {
         var id = el("reviewSelectionOpenBtn").getAttribute("data-review-id");
-        if (id) openReviewEditor(id);
+        if (id) openReviewEntry(id);
       });
       el("reviewFilterChips").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group],[data-review-group-clear]");
@@ -9420,7 +9430,7 @@
       el("openPriorityReviewBtn").addEventListener("click", function () {
         syncReviewFiltersFromInputs();
         var nextReview = firstActionReview(filteredReviewRows(), 0);
-        if (nextReview) openReviewEditor(nextReview.id);
+        if (nextReview) openReviewEntry(nextReview.id);
       });
       el("openClinicGroupBtn").addEventListener("click", function () {
         openClinicWorkgroup();
@@ -9429,7 +9439,7 @@
       el("clearCaseGroupBtn").addEventListener("click", clearClinicWorkgroup);
       el("openDuplicateReviewBtn").addEventListener("click", function () {
         var duplicateReview = firstDuplicateReview(reviewCache);
-        if (duplicateReview) openReviewEditor(duplicateReview.id);
+        if (duplicateReview) openReviewEntry(duplicateReview.id);
       });
       el("openSourceTargetBtn").addEventListener("click", openSourceTarget);
       el("openGoogleLinksBtn").addEventListener("click", openGoogleLinksTarget);
@@ -9439,7 +9449,7 @@
       el("clinicPublicRebuildBtn").addEventListener("click", requestPublicSiteRebuildNow);
       el("reviewsBody").addEventListener("click", function (event) {
         var button = event.target.closest("[data-review-id]");
-        if (button) openReviewEditor(button.getAttribute("data-review-id"));
+        if (button) openReviewEntry(button.getAttribute("data-review-id"));
       });
       el("signOutBtn").addEventListener("click", signOut);
       el("refreshBtn").addEventListener("click", function () {

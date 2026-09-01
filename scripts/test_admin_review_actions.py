@@ -266,7 +266,7 @@ def main() -> None:
         and "function reviewClinicProfileValue" in index
         and 'await finishReviewDecision(modified ? "Modificación guardada." : "Propuesta aprobada.", currentId)' in index
         and 'await finishReviewDecision("Propuesta rechazada.", currentId)' in index
-        and "openReviewEditor(nextReview.id)" in index
+        and "openReviewEntry(nextReview.id)" in index
         and "Cola terminada. No quedan propuestas pendientes." in index
         and "admin_update_clinic" in index
         and "admin_create_draft_clinic_from_review_v2" in index
@@ -280,11 +280,14 @@ def main() -> None:
         "quality audit fields should offer direct manual review into the matching clinic field",
     )
     check(
-        "if (reviewHasManualFieldRoute(activeReview))" not in index
+        "function openReviewEntry" in index
+        and "reviewHasManualFieldRoute(row) && openClinicEditorForReview(row, firstReviewMissingFieldTargetId(row))" in index
+        and 'if (button) openReviewEntry(button.getAttribute("data-review-id"))' in index
+        and "if (id) openReviewEntry(id)" in index
         and "visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1)" in index
         and "focusManualReviewFieldTarget(manualTarget);" in index
         and "activeClinicReviewFocusTarget = manualTarget;" in index,
-        "manual review cards should first open the two-column decision view and expose one field at a time",
+        "manual review queue entries should open the focused field directly and still expose one field at a time",
     )
     check(
         '"Completar en ficha"' not in index
