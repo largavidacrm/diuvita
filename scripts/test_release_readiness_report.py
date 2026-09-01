@@ -44,6 +44,7 @@ def main():
     check(any(item["name"] == "LLM prompt source origin status" for item in local_checks), "LLM prompt source origin status marker missing")
     check(any(item["name"] == "LLM prompt bounded source intent" for item in local_checks), "LLM prompt bounded source intent marker missing")
     check(any(item["name"] == "LLM prompt strict readiness gate" for item in local_checks), "LLM prompt strict readiness gate marker missing")
+    check(any(item["name"] == "LLM batch preflight" for item in local_checks), "LLM batch preflight marker missing")
     check(any(item["name"] == "LLM bounded source intent" for item in local_checks), "LLM bounded source intent marker missing")
     check(any(item["name"] == "source worker LLM boundary" for item in local_checks), "source worker LLM boundary marker missing")
     check(any(item["name"] == "LLM source-origin digest status" for item in local_checks), "LLM source-origin digest marker missing")

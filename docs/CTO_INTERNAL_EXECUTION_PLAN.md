@@ -1102,6 +1102,10 @@ Next 10 technical steps:
      locally in `scripts/global_plan_status.py`: **No activar todavía** now
      combines the human sample blocker with source-context readiness, so Daniel
      can see when review-assistance LLM batches remain unsafe.
+213. Add a read-only LLM batch preflight before any assisted review run. Done
+     locally in `scripts/review_llm_batch_preflight.py`: it checks one-card
+     decision packets against strict prompt readiness, reports source-only
+     blockers, and never calls an LLM or writes Supabase.
 
 ## Daniel decision checkpoints
 

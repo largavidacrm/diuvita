@@ -159,6 +159,22 @@ del trabajo de fuente.
 Para usos automatizados, añade `--require-llm-ready`: si la tarjeta es solo
 fuente sin contexto de tarea, el preparador se detiene y pide revisión manual
 en vez de generar un prompt ambiguo.
+
+Antes de preparar un lote asistido, usa el preflight:
+
+```bash
+python3 scripts/review_llm_batch_preflight.py --limit 20
+```
+
+Este informe no llama a ningún LLM y no escribe datos. Solo indica qué tarjetas
+pasarían el modo estricto, cuáles quedan bloqueadas por **fuente sin contexto**
+y qué revisiones manuales tienen un campo concreto para abrir en el admin.
+Para quedarse solo con tarjetas estrictamente preparables:
+
+```bash
+python3 scripts/review_llm_batch_preflight.py --llm-ready-only --limit 20
+```
+
 Para una preparación local deliberada con valores completos:
 
 ```bash
