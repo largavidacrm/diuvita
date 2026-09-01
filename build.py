@@ -833,7 +833,7 @@ def legal_owner_summary_html():
         f'<a href="mailto:{h(email)}">{h(email)}</a></p>'
     )
 
-FOOTER = f"""<footer><div class="footer-inner"><p><strong>Vitalarga</strong> — {TAGLINE}. Guía informativa e independiente: no emitimos recomendaciones médicas, no hacemos rankings y ninguna clínica paga por aparecer. Cada ficha se elabora a partir de información pública y se revisa manualmente.</p>{legal_owner_summary_html()}<nav class="legal-links" aria-label="Información legal"><a href="/aviso-legal/">Aviso legal</a><a href="/privacidad/">Privacidad</a><a href="/cookies/">Cookies</a></nav></div></footer></body></html>"""
+FOOTER = f"""<footer><div class="footer-inner"><p><strong>Vitalarga</strong> — {TAGLINE}. Guía informativa e independiente: no emitimos recomendaciones médicas, no hacemos rankings y ninguna clínica paga por aparecer. Cada ficha se elabora a partir de información pública y se revisa manualmente.</p><nav class="legal-links" aria-label="Información legal"><a href="/aviso-legal/">Aviso legal</a><a href="/privacidad/">Privacidad</a><a href="/cookies/">Cookies</a></nav></div></footer></body></html>"""
 
 def attrs(c):
     extra = c.get("cities_extra", [])

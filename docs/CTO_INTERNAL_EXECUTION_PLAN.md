@@ -1399,6 +1399,11 @@ Next 10 technical steps:
      instead of disabling the approve action. Confirmed approvals continue
      through the existing guarded review flow and remain traceable as manual
      decisions.
+260. Remove full legal-owner details from the common public footer. Done locally
+     in `build.py`: the homepage and ordinary public pages keep legal links but
+     no longer display the full Neurotrans SLU/NIF/address/email line in the
+     footer. The legal-owner block remains available on the dedicated legal
+     pages, where it belongs.
 
 ## Daniel decision checkpoints
 

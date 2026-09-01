@@ -30,6 +30,12 @@ def main() -> None:
     ]:
         check(marker in source, f"missing public legal marker: {marker}")
 
+    footer_start = source.index("FOOTER =")
+    footer_end = source.index("def attrs", footer_start)
+    footer_source = source[footer_start:footer_end]
+    check("legal_owner_summary_html()" not in footer_source, "footer should not expose the full legal owner")
+    check("Titular:" not in footer_source, "footer should not show the legal-owner label")
+
     for marker in [
         "Titular legal",
         "Neurotrans SLU",
