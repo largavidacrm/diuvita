@@ -7,7 +7,9 @@ from daniel_review_brief import (
     first_step,
     next_clicks,
     production_health_status,
+    review_display_title,
     review_counts,
+    review_name,
     safe_json_digest,
 )
 
@@ -213,6 +215,19 @@ def main():
     check(
         sorted(tied_reviews, key=action_review_sort_key)[0]["id"] == "a",
         "Daniel brief sort should have a stable title/id tie-break",
+    )
+    candidate_url = {
+        "review_type": "candidate_clinic",
+        "priority": 90,
+        "title": "https://eternalgroup.es/",
+    }
+    check(
+        review_display_title(candidate_url) == "Recomendar clínica: eternalgroup.es",
+        "candidate URL titles should be converted into review labels",
+    )
+    check(
+        review_name(candidate_url, "Candidatas") == "Recomendar clínica: eternalgroup.es",
+        "candidate URL review names should avoid bare URLs",
     )
 
     digest = sample_digest()

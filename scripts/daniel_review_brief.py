@@ -7,6 +7,7 @@ import json
 import re
 import sys
 from typing import Any
+from urllib.parse import urlparse
 
 from admin_digest import (
     as_int,
@@ -141,11 +142,47 @@ def review_name(item: dict[str, Any] | None, fallback_filter: str = "correspondi
     return title or clinic or f"abre el filtro {fallback_filter} en el panel"
 
 
+def short_review_url_label(value: Any) -> str:
+    clean = str(value or "").strip()
+    if not re.match(r"^https?://", clean, flags=re.I):
+        return ""
+    try:
+        parsed = urlparse(clean)
+    except ValueError:
+        return ""
+    host = (parsed.netloc or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+def candidate_review_url_label(item: dict[str, Any]) -> str:
+    payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+    candidate = payload.get("candidate") if isinstance(payload.get("candidate"), dict) else {}
+    for value in (
+        item.get("title"),
+        payload.get("source_url"),
+        payload.get("website"),
+        payload.get("web"),
+        candidate.get("website"),
+        candidate.get("web"),
+    ):
+        label = short_review_url_label(value)
+        if label:
+            return label
+    return ""
+
+
 def review_display_title(item: dict[str, Any] | None) -> str:
     if not item:
         return ""
     title = str(item.get("title") or "").strip()
-    if normalized_review_type(item) == "clinic_quality_audit":
+    review_type = normalized_review_type(item)
+    if review_type == "candidate_clinic":
+        url_label = candidate_review_url_label(item)
+        if url_label:
+            return f"Recomendar clínica: {url_label}"
+    if review_type == "clinic_quality_audit":
         title = re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
         payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
         issues = payload.get("issues")

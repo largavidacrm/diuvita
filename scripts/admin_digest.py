@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from google_maps_url_rules import (
     coalesced_jsonb_text_sql,
@@ -1563,6 +1565,48 @@ def normalized_action_review_type(item: dict[str, Any] | None) -> str:
     return review_type
 
 
+def short_review_url_label(value: Any) -> str:
+    clean = str(value or "").strip()
+    if not re.match(r"^https?://", clean, flags=re.I):
+        return ""
+    try:
+        parsed = urlparse(clean)
+    except ValueError:
+        return ""
+    host = (parsed.netloc or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+def candidate_review_url_label(item: dict[str, Any]) -> str:
+    payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+    candidate = payload.get("candidate") if isinstance(payload.get("candidate"), dict) else {}
+    for value in (
+        item.get("title"),
+        payload.get("source_url"),
+        payload.get("website"),
+        payload.get("web"),
+        candidate.get("website"),
+        candidate.get("web"),
+    ):
+        label = short_review_url_label(value)
+        if label:
+            return label
+    return ""
+
+
+def display_review_title(item: dict[str, Any] | None) -> str:
+    if not item:
+        return ""
+    title = str(item.get("title") or "").strip()
+    if normalized_action_review_type(item) == "candidate_clinic":
+        url_label = candidate_review_url_label(item)
+        if url_label:
+            return f"Recomendar clínica: {url_label}"
+    return title
+
+
 def action_review_sort_key(item: dict[str, Any]) -> tuple[int, int, str, str]:
     review_type = normalized_action_review_type(item)
     priority = as_int(item.get("priority"))
@@ -1774,7 +1818,7 @@ def google_link_review_status(digest: dict[str, Any]) -> str:
         return "sin tarjetas con Google Maps"
     first = status.get("first_review") or {}
     name = str((first or {}).get("clinic_name") or (first or {}).get("clinic_slug") or "").strip()
-    title = str((first or {}).get("title") or "").strip()
+    title = display_review_title(first).strip()
     if name and title and name.lower() not in title.lower():
         first_label = f"{name}: {title}"
     else:
@@ -1792,7 +1836,7 @@ def specialist_review_status(digest: dict[str, Any]) -> str:
     professionals = as_int(status.get("professionals_count"))
     first = status.get("first_review") or {}
     name = str((first or {}).get("clinic_name") or (first or {}).get("clinic_slug") or "").strip()
-    title = str((first or {}).get("title") or "").strip()
+    title = display_review_title(first).strip()
     first_count = as_int((first or {}).get("professionals_count"))
     if name and title and name.lower() not in title.lower():
         first_label = f"{name}: {title}"
@@ -1987,9 +2031,10 @@ def format_digest(digest: dict[str, Any]) -> str:
     if open_reviews:
         for item in open_reviews:
             clinic = item.get("clinic_name") or item.get("clinic_slug") or "sin clinica"
+            title = display_review_title(item) or "-"
             output.append(
                 f"- P{as_int(item.get('priority'))} | {format_review_type(str(item.get('review_type') or ''))} | "
-                f"{clinic}: {item.get('title') or '-'}{review_professionals_note(item)}"
+                f"{clinic}: {title}{review_professionals_note(item)}"
             )
     else:
         output.append("- No hay tarjetas abiertas.")

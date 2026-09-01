@@ -4,6 +4,7 @@ from pathlib import Path
 
 from admin_digest import (
     action_review_sort_key,
+    display_review_title,
     first_clinic_workgroup,
     first_backlog_bottleneck,
     format_digest,
@@ -392,6 +393,23 @@ def main():
     check(
         source_origin_audit_status(digest) == "19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos",
         "source origin audit status missing",
+    )
+    candidate_url_review = {
+        "review_type": "candidate_clinic",
+        "priority": 90,
+        "clinic_name": "",
+        "title": "https://eternalgroup.es/",
+    }
+    check(
+        display_review_title(candidate_url_review) == "Recomendar clínica: eternalgroup.es",
+        "candidate URL review titles should become recommendation labels",
+    )
+    candidate_url_digest = dict(digest)
+    candidate_url_digest["reviews_by_type"] = [{"review_type": "candidate_clinic", "open_count": 1}]
+    candidate_url_digest["open_reviews"] = [candidate_url_review]
+    check(
+        "sin clinica: Recomendar clínica: eternalgroup.es" in format_digest(candidate_url_digest),
+        "candidate URL review should be readable in formatted digest",
     )
     limited_digest = dict(digest)
     limited_digest["open_reviews"] = [

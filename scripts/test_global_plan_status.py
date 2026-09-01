@@ -224,6 +224,20 @@ def main():
     check("muestra humana insuficiente: 2/200 candidatas" in output, "maturity blocker missing")
     check("no publica, no edita clínicas" in output, "read-only note missing")
 
+    candidate_url_digest = sample_digest()
+    candidate_url_digest["reviews_by_type"] = [{"review_type": "candidate_clinic", "open_count": 1}]
+    candidate_url_digest["open_reviews"] = [
+        {
+            "review_type": "candidate_clinic",
+            "priority": 90,
+            "title": "https://eternalgroup.es/",
+        }
+    ]
+    check(
+        daniel_now_status(candidate_url_digest) == "Abrir prioridad: Recomendar clínica: eternalgroup.es",
+        "candidate URL next action should avoid bare URLs",
+    )
+
     failed = sample_digest()
     failed["summary"]["jobs"] = {"failed": 1, "dead_letter": 0}
     check(plan_phase(failed) == "estabilización técnica", "failed jobs should change phase")

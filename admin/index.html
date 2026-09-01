@@ -2915,8 +2915,41 @@
       return reviewTypeLabel(row && row.review_type);
     }
 
+    function reviewShortUrlLabel(value) {
+      var clean = cleanHttpUrl(value);
+      if (!clean) return "";
+      try {
+        var parsed = new URL(clean);
+        return parsed.hostname.replace(/^www\./i, "").toLowerCase();
+      } catch (_error) {
+        return "";
+      }
+    }
+
+    function reviewCandidateUrlLabel(row) {
+      var payload = (row && row.payload) || {};
+      var candidate = candidateFromReview(row || {});
+      var values = [
+        row && row.title,
+        payload.source_url,
+        payload.website,
+        payload.web,
+        candidate.website,
+        candidate.web
+      ];
+      for (var i = 0; i < values.length; i += 1) {
+        var label = reviewShortUrlLabel(values[i]);
+        if (label) return label;
+      }
+      return "";
+    }
+
     function reviewDisplayTitle(row) {
       var title = text(row && row.title).trim() || "Revisión abierta";
+      if (row && row.review_type === "candidate_clinic") {
+        var urlLabel = reviewCandidateUrlLabel(row);
+        if (urlLabel) return "Recomendar clínica: " + urlLabel;
+      }
       if (row && row.review_type === "clinic_quality_audit") {
         var display = title.replace(/^Completar ficha:/i, "Revisión manual:");
         var issue = issueLabels(((row.payload || {}).issues) || [])[0] || "";
@@ -3261,7 +3294,7 @@
       return payload.clinic_name ||
         candidate.name ||
         candidate.clinic_name ||
-        row.title ||
+        reviewDisplayTitle(row) ||
         "Revisión abierta";
     }
 
