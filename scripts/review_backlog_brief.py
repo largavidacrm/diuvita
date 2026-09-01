@@ -13,6 +13,7 @@ from admin_digest import (
     SAFE_WRITE_REVIEW_BACKLOG_LIMIT,
     SAFE_WRITE_REVIEW_BACKLOG_PAUSE_MARGIN,
     as_int,
+    display_review_title,
     parse_timestamp,
     plural,
 )
@@ -514,7 +515,7 @@ def format_card_proposal_summary(card: dict[str, Any]) -> str:
 
 
 def format_workgroup_card(card: dict[str, Any]) -> str:
-    title = card.get("title") or "Revisión abierta"
+    title = display_review_title(card) or "Revisión abierta"
     review_type = review_type_label(card.get("review_type"))
     priority = as_int(card.get("priority"))
     created = parse_timestamp(card.get("created_at"))

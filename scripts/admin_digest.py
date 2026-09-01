@@ -1600,10 +1600,13 @@ def display_review_title(item: dict[str, Any] | None) -> str:
     if not item:
         return ""
     title = str(item.get("title") or "").strip()
-    if normalized_action_review_type(item) == "candidate_clinic":
+    review_type = normalized_action_review_type(item)
+    if review_type == "candidate_clinic":
         url_label = candidate_review_url_label(item)
         if url_label:
             return f"Recomendar clínica: {url_label}"
+    if review_type == "clinic_quality_audit":
+        return re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
     return title
 
 

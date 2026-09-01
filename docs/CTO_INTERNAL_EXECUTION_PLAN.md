@@ -1308,6 +1308,13 @@ Next 10 technical steps:
      read-only, may not infer Daniel's original intent from the URL, may not
      expand beyond those fields, and must still return a suggestion for human
      approval, rejection or modification.
+246. Normalize review labels across operator reports. Done locally in
+     `/admin/`, `scripts/admin_digest.py`, `scripts/daniel_review_brief.py` and
+     `scripts/review_backlog_brief.py`: URL-only candidate cards now read as
+     **Recomendar clínica: dominio** and older quality-audit titles that say
+     **Completar ficha** are presented as **Revisión manual**. This keeps the
+     visible workflow centered on a clear review decision without changing the
+     underlying review rows or LLM packet scope.
 
 ## Daniel decision checkpoints
 

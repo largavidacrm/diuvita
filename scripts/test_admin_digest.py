@@ -404,6 +404,13 @@ def main():
         display_review_title(candidate_url_review) == "Recomendar clínica: eternalgroup.es",
         "candidate URL review titles should become recommendation labels",
     )
+    check(
+        display_review_title({
+            "review_type": "clinic_quality_audit",
+            "title": "Completar ficha: Clínica Benzaquén",
+        }) == "Revisión manual: Clínica Benzaquén",
+        "quality audit titles should use manual review wording",
+    )
     candidate_url_digest = dict(digest)
     candidate_url_digest["reviews_by_type"] = [{"review_type": "candidate_clinic", "open_count": 1}]
     candidate_url_digest["open_reviews"] = [candidate_url_review]

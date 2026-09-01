@@ -54,7 +54,7 @@ def main():
                 "oldest_created_at": "2026-08-30T08:30:00+00:00",
                 "cards": [
                     {
-                        "title": "Revisar Sensabell",
+                        "title": "Completar ficha: Sensabell",
                         "review_type": "clinic_quality_audit",
                         "priority": 85,
                         "created_at": "2026-08-30T08:30:00+00:00",
@@ -113,7 +113,7 @@ def main():
     check(review_type_label("clinic_claim_request") == "reclamación de ficha", "claim-request label missing")
     check(
         format_workgroup_card(report["clinic_workgroups"][0]["cards"][0])
-        == "  - Revisar Sensabell: revisión manual · P85 · creada 2026-08-30 08:30",
+        == "  - Revisión manual: Sensabell: revisión manual · P85 · creada 2026-08-30 08:30",
         "workgroup card formatting missing",
     )
     check(
@@ -234,7 +234,7 @@ def main():
     check("Sensabell · Valencia · publicada · 3 tarjetas · P80" in output, "duplicate group missing")
     check("Consulta: Sensabell" in clinic_output, "clinic query should be shown")
     check("## Tarjetas del caso" in clinic_output, "clinic-specific card section missing")
-    check("Revisar Sensabell: revisión manual · P85" in clinic_output, "first case card missing")
+    check("Revisión manual: Sensabell: revisión manual · P85" in clinic_output, "first case card missing")
     check("Ampliar ficha: Sensabell: mejora · P80" in clinic_output, "second case card missing")
     check("No hay grupos duplicados" not in output, "should not show empty duplicate state")
     check("no descarta ni resuelve tarjetas" in output, "safety note missing")
