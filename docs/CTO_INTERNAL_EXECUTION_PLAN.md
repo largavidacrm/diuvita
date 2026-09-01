@@ -1169,6 +1169,12 @@ Next 10 technical steps:
      summary with before/after snippets. This keeps the review decision simple
      while making it obvious which manual corrections will be saved if Daniel
      approves or modifies the proposal.
+223. Harden publication blocker wording. Done locally in `/admin/`: publication
+     toasts now normalize claim-related readiness labels into action text, so a
+     positive requirement such as **Sin claims bloqueantes pendientes** cannot
+     appear as the thing that is "missing". The rule remains unchanged:
+     publication still waits for claims to load and for blocking claims to be
+     resolved.
 
 ## Daniel decision checkpoints
 

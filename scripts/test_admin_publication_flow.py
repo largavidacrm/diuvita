@@ -76,6 +76,8 @@ def main() -> None:
         "function blockingClaimsMissingLabel",
         "function validationDisplayLabel",
         "function publicationMissingActionLabel",
+        'lower.indexOf("sin claims bloqueantes")',
+        "var clean = publicationMissingActionLabel(label);",
         "Resolver claims bloqueantes pendientes",
         "Esperar a que se comprueben los claims bloqueantes",
         "Reintentar carga de claims bloqueantes",

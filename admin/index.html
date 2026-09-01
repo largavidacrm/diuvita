@@ -5444,6 +5444,9 @@
     function publicationMissingActionLabel(label) {
       var clean = text(label).trim();
       var lower = clean.toLowerCase();
+      if (lower.indexOf("sin claims bloqueantes") >= 0 || lower.indexOf("sin claim bloqueante") >= 0) {
+        return blockingClaimsMissingLabel();
+      }
       if (lower.indexOf("claim bloqueante") >= 0 || lower.indexOf("claims bloqueantes") >= 0) {
         return "Resolver claims bloqueantes pendientes";
       }
@@ -5451,7 +5454,7 @@
     }
 
     function publicationMissingSentence(label) {
-      var clean = text(label).trim();
+      var clean = publicationMissingActionLabel(label);
       if (!clean) return "revisar el punto pendiente";
       var lower = clean.toLowerCase();
       if (lower.indexOf("resolver ") === 0 || lower.indexOf("esperar ") === 0 || lower.indexOf("reintentar ") === 0) return clean;

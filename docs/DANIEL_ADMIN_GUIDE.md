@@ -414,6 +414,9 @@ público.
 Si eliges **Preliminar** o **Publicada** y todavía hay claims bloqueantes,
 **Validación final** lo marcará como pendiente y el aviso de guardado te lo
 recordará antes de mandar la ficha a la web.
+Si el sistema aún está comprobando claims, el botón de publicar puede pedirte
+esperar o reintentar la carga; no debería mostrar como faltante la frase
+positiva **Sin claims bloqueantes pendientes**.
 
 Si una clínica tiene varias ubicaciones, usa **Sedes**. La **Dirección** sigue
 sirviendo como sede principal para fichas simples. En la web pública,
