@@ -1093,6 +1093,11 @@ Next 10 technical steps:
      `scripts/review_proposal_decision_packets.py`: operators can now request
      `--llm-ready-only` so source-only cards without operator/job context are
      excluded from assisted LLM batches instead of being silently mixed in.
+211. Add a strict readiness gate for single LLM prompts. Done locally in
+     `scripts/prepare_review_decision_llm_prompt.py`: automated prompt
+     preparation can now use `--require-llm-ready`, which refuses source-only
+     packets without operator/job context instead of generating ambiguous LLM
+     work.
 
 ## Daniel decision checkpoints
 

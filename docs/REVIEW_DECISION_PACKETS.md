@@ -155,6 +155,10 @@ El preparador devuelve mensajes, esquema esperado y referencia al validador.
 Por defecto limpia valores crudos aunque el paquete de entrada los trajera, pero
 mantiene el resumen seguro del campo que Daniel pidió revisar y la barrera LLM
 del trabajo de fuente.
+
+Para usos automatizados, añade `--require-llm-ready`: si la tarjeta es solo
+fuente sin contexto de tarea, el preparador se detiene y pide revisión manual
+en vez de generar un prompt ambiguo.
 Para una preparación local deliberada con valores completos:
 
 ```bash

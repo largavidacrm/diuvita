@@ -2,7 +2,7 @@
 """Checks that future LLM prompts preserve the one-decision safety contract."""
 from pathlib import Path
 
-from prepare_review_decision_llm_prompt import build_prompt
+from prepare_review_decision_llm_prompt import build_prompt, require_llm_ready
 from review_proposal_decision_packets import decision_packet
 
 
@@ -12,6 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 def check(condition, message):
     if not condition:
         raise AssertionError(message)
+
+
+def exits_with_message(func, *args):
+    try:
+        func(*args)
+    except SystemExit as exc:
+        return str(exc)
+    return ""
 
 
 def sample_packet(include_values=False):
@@ -188,6 +196,9 @@ def main():
     )
     reviews_dumped = str(reviews_prompt)
     check("https://clinic.example/contacto" not in reviews_dumped, "safe reviews prompt should redact source URLs")
+    require_llm_ready(full_packet)
+    blocked_message = exits_with_message(require_llm_ready, sample_reviews_packet())
+    check("not LLM-ready" in blocked_message, "strict prompt mode should block source-only packets")
 
     full_prompt = build_prompt(full_packet, allow_full_values=True)
     full_dumped = str(full_prompt)
@@ -196,6 +207,7 @@ def main():
     check('"value":' in full_prompt["messages"][1]["content"], "explicit full prompt should include value keys")
 
     source = (ROOT / "scripts" / "prepare_review_decision_llm_prompt.py").read_text(encoding="utf-8")
+    check("--require-llm-ready" in source, "strict LLM-ready CLI flag missing")
     check("run_psql" not in source, "prompt builder should not connect to Supabase")
     check("load_env_file" not in source, "prompt builder should not read credentials")
     check("admin_update_clinic" not in source, "prompt builder should not contain write hooks")

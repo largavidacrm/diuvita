@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from review_proposal_decision_packets import DECISION_ACTIONS, PACKET_SCHEMA_VERSION, redacted_text
+from review_proposal_decision_packets import DECISION_ACTIONS, PACKET_SCHEMA_VERSION, packet_is_llm_ready, redacted_text
 from validate_review_decision_suggestion import select_packet
 
 
@@ -185,6 +185,15 @@ def build_prompt(packet: dict[str, Any], allow_full_values: bool = False) -> dic
     }
 
 
+def require_llm_ready(packet: dict[str, Any]) -> None:
+    if packet_is_llm_ready(packet):
+        return
+    raise SystemExit(
+        "Packet is not LLM-ready: source-only review lacks operator/job context. "
+        "Review manually or use review_proposal_decision_packets.py --llm-ready-only for batches."
+    )
+
+
 def load_json(path: Path | None) -> Any:
     if path is None or str(path) == "-":
         return json.loads(sys.stdin.read())
@@ -195,6 +204,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--packet-file", type=Path, required=True, help="Decision packet JSON file or packet report.")
     parser.add_argument("--review-id", default="", help="Packet review_id to select when packet-file is a report.")
+    parser.add_argument("--require-llm-ready", action="store_true", help="Exit if the selected packet is source-only without operator/job context.")
     parser.add_argument("--allow-full-values", action="store_true", help="Keep raw packet values for deliberate local LLM preparation.")
     return parser.parse_args()
 
@@ -202,6 +212,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     packet = select_packet(load_json(args.packet_file), review_id=args.review_id)
+    if args.require_llm_ready:
+        require_llm_ready(packet)
     print(json.dumps(build_prompt(packet, allow_full_values=args.allow_full_values), ensure_ascii=False, indent=2))
     return 0
 
