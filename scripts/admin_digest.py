@@ -1817,11 +1817,14 @@ def source_origin_audit_status(digest: dict[str, Any]) -> str:
     recoverable = as_int(status.get("recoverable_from_job"))
     source_only = as_int(status.get("source_without_context"))
     no_source = as_int(status.get("no_source_context"))
-    parts = [f"{ready}/{cards} con contexto explícito"]
+    preparable = min(cards, ready + source_only)
+    parts = [f"{preparable}/{cards} preparables para ayuda IA"]
+    if ready:
+        parts.append(f"{ready} con contexto completo")
     if recoverable:
         parts.append(f"{recoverable} recuperables desde trabajo")
     if source_only:
-        parts.append(f"{source_only} fuente heredada acotada")
+        parts.append(f"{source_only} acotadas a campos propuestos")
     if no_source:
         parts.append(f"{no_source} sin fuente utilizable")
     return "; ".join(parts)
@@ -1921,7 +1924,7 @@ def format_digest(digest: dict[str, Any]) -> str:
         output.append(line("Especialistas pendientes", specialist_reviews))
     source_origin = source_origin_audit_status(digest)
     if source_origin != "sin mejoras con fuente para preparar":
-        output.append(line("Contexto LLM revisiones", source_origin))
+        output.append(line("Ayuda IA revisiones", source_origin))
     clinic_group = first_clinic_workgroup(digest)
     if clinic_group != "sin grupo por clínica medido":
         output.append(line("Grupo por clinica", clinic_group))

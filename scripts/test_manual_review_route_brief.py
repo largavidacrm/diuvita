@@ -167,7 +167,7 @@ def main():
     check("Revisiones con fuente heredada: 1" in compact, "compact source-only reviewable count missing")
     check("Bloqueadas para LLM por fuente sin contexto: 0" in compact, "compact LLM block count missing")
     check("desde la propuesta, abrir Especialistas publicados en ficha" in compact, "compact manual field line missing")
-    check("fuente heredada acotada para ayuda LLM" in compact, "compact source-only review line missing")
+    check("fuente heredada acotada para ayuda IA" in compact, "compact source-only review line missing")
     check("solo creará propuesta revisable" in compact, "compact source safety line missing")
     check("... 1 tarjetas más" in compact, "compact overflow line missing")
     check("abrir Especialistas publicados" in compact_item_line(first), "compact item helper missing")

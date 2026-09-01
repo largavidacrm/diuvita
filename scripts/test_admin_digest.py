@@ -390,7 +390,7 @@ def main():
         "specialist review status missing",
     )
     check(
-        source_origin_audit_status(digest) == "4/22 con contexto explícito; 3 recuperables desde trabajo; 15 fuente heredada acotada",
+        source_origin_audit_status(digest) == "19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos",
         "source origin audit status missing",
     )
     limited_digest = dict(digest)
@@ -447,7 +447,7 @@ def main():
     check("Publicacion web: con cambios pendientes de verse online" in pending_output, "pending publication line missing")
     check("Freno bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
-    check("Contexto LLM revisiones: 4/22 con contexto explícito; 3 recuperables desde trabajo; 15 fuente heredada acotada" in output, "source origin audit line missing")
+    check("Ayuda IA revisiones: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos" in output, "source origin audit line missing")
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
     check(
         'proposed_google_maps_check = "btrim(proposed.value) ~* \'^https?://\'"' in source,

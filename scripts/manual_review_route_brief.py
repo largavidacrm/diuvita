@@ -186,7 +186,7 @@ def compact_item_line(item: dict[str, Any]) -> str:
     if action == "manual_review_source_without_context":
         return f"- {title}: revisar manualmente; sin propuesta editable ni contexto suficiente para LLM."
     if action == "review_proposed_change_source_only":
-        return f"- {title}: revisar/modificar solo campos propuestos; fuente heredada acotada para ayuda LLM."
+        return f"- {title}: revisar/modificar solo campos propuestos; fuente heredada acotada para ayuda IA."
     if action == "review_proposed_change":
         return f"- {title}: decidir solo el cambio propuesto."
     return f"- {title}: revisión humana requerida."

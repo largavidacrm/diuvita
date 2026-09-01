@@ -176,22 +176,22 @@ def main():
     check(codex_can_continue_status(digest) == "mejorar panel, extractores y checks sin crear tarjetas nuevas", "Codex safe next step missing")
     check(
         llm_review_readiness_blocker(digest)
-        == "preparación LLM de propuestas con fuente incompleta: 4/22 con contexto explícito; 3 recuperables desde trabajo; 15 fuente heredada acotada",
+        == "ayuda IA de propuestas con fuente incompleta: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos",
         "LLM readiness blocker missing",
     )
     check(
         not_ready_status(digest)
-        == "muestra humana insuficiente: 2/200 candidatas; preparación LLM de propuestas con fuente incompleta: 4/22 con contexto explícito; 3 recuperables desde trabajo; 15 fuente heredada acotada",
+        == "muestra humana insuficiente: 2/200 candidatas; ayuda IA de propuestas con fuente incompleta: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos",
         "not-ready reason missing",
     )
-    check(source_origin_audit_status(digest) == "4/22 con contexto explícito; 3 recuperables desde trabajo; 15 fuente heredada acotada", "LLM source-origin status missing")
+    check(source_origin_audit_status(digest) == "19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos", "LLM source-origin status missing")
     check("# Vitalarga: estado del plan global" in output, "title missing")
     check("Git: main · abc123 Test commit" in output, "git label missing")
     check("## Lectura rápida" in output, "quick-read section missing")
     check("Daniel ahora: Abrir prioridad: abre el filtro Claims bloqueantes en el panel" in output, "Daniel quick action missing")
     check("Codex puede seguir con: mejorar panel, extractores y checks sin crear tarjetas nuevas" in output, "Codex safe work missing")
     check(
-        "No activar todavía: muestra humana insuficiente: 2/200 candidatas; preparación LLM de propuestas con fuente incompleta: 4/22 con contexto explícito; 3 recuperables desde trabajo; 15 fuente heredada acotada"
+        "No activar todavía: muestra humana insuficiente: 2/200 candidatas; ayuda IA de propuestas con fuente incompleta: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos"
         in output,
         "not-ready quick line missing",
     )
@@ -206,7 +206,7 @@ def main():
     check("Trazabilidad de fuentes: 11/19 fichas con fuente" in output, "source coverage line missing")
     check("Sedes y ubicaciones: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Ciclo autónomo: activo en sombra; señal automática base" in output, "shadow cycle line missing")
-    check("Preparación LLM de propuestas con fuente: 4/22 con contexto explícito; 3 recuperables desde trabajo; 15 fuente heredada acotada" in output, "LLM review preparation line missing")
+    check("Ayuda IA para revisar propuestas: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos" in output, "LLM review preparation line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
     check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "top publication blocker missing")

@@ -63,7 +63,7 @@ SOURCE_MARKERS = [
     ("LLM bounded source intent", "scripts/review_proposal_decision_packets.py", "operator_requested_field_summary"),
     ("source worker LLM boundary", "scripts/process_extract_clinic_profile_jobs.py", "llm_boundary"),
     ("LLM source-origin digest status", "scripts/admin_digest.py", "source_origin_audit_status"),
-    ("LLM source-origin global status", "scripts/global_plan_status.py", "Preparación LLM de propuestas con fuente"),
+    ("LLM source-origin global status", "scripts/global_plan_status.py", "Ayuda IA para revisar propuestas"),
     ("LLM global readiness blocker", "scripts/global_plan_status.py", "llm_review_readiness_blocker"),
     ("LLM source-context audit labels", "scripts/audit_review_source_job_context.py", "listo para LLM"),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
