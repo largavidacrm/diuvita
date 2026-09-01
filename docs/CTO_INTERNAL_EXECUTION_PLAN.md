@@ -1213,6 +1213,11 @@ Next 10 technical steps:
      refreshes a scoped review proposal for `summary` and supersedes the older
      broad quality-audit card. No clinic profile fields were saved and no public
      page was published.
+230. Make source-job supersession idempotent. Done locally in
+     `scripts/process_extract_clinic_profile_jobs.py`: when duplicate official
+     URL jobs refresh the same proposal, the worker now resolves the original
+     review only if it is still open. Already-closed origin cards become a
+     no-op instead of creating repeated resolution noise.
 
 ## Daniel decision checkpoints
 

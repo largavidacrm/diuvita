@@ -13,6 +13,7 @@ from process_extract_clinic_profile_jobs import (
     requested_targets,
     review_source_job_should_replace_existing_reviews,
     source_job_origin_review_id,
+    supersede_origin_review,
     validate_job,
 )
 
@@ -240,6 +241,27 @@ def main():
     check("cross join claims" in complete_sql, "complete job should execute admin claims CTE")
     check("current_setting('request.jwt.claims'" not in complete_sql, "complete job should not parse possibly empty claims")
     check("origin_review_superseded" in complete_sql, "complete event should record origin supersession")
+
+    captured_supersede = {}
+    original_run_psql = supersede_origin_review.__globals__["run_psql"]
+    try:
+        def fake_supersede_run_psql(sql, local_env):
+            captured_supersede["sql"] = sql
+            return "null"
+
+        supersede_origin_review.__globals__["run_psql"] = fake_supersede_run_psql
+        no_op = supersede_origin_review(
+            {"input": {"from_review_id": "00000000-0000-0000-0000-000000000001"}},
+            {"id": "review-new", "title": "New review"},
+            "admin@example.test",
+            {},
+        )
+    finally:
+        supersede_origin_review.__globals__["run_psql"] = original_run_psql
+    supersede_sql = captured_supersede.get("sql", "")
+    check(no_op is None, "already-closed origin reviews should not report another supersession")
+    check("rq.status = 'open'" in supersede_sql, "origin supersession should only target open reviews")
+    check("cross join open_origin" in supersede_sql, "closed origin reviews should no-op before resolver call")
 
     check(requested_targets(["specialists", "technology"]) == {"profesionales", "tech"}, "aliases should map to UI fields")
     check(

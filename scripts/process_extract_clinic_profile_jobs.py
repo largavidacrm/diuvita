@@ -348,13 +348,20 @@ with claims as (
     jsonb_build_object('email', {sql_literal(admin_email)})::text,
     true
   )
+),
+open_origin as (
+  select rq.id
+  from public.review_queue rq
+  where rq.id = {sql_literal(origin_review_id)}::uuid
+    and rq.status = 'open'
 )
 select to_jsonb(public.admin_resolve_review_item(
   {sql_literal(origin_review_id)}::uuid,
   'resolved',
   {sql_literal(note)}::text
 ))
-from claims;
+from claims
+cross join open_origin;
 """
     output = run_psql(sql, local_env).strip()
     return json.loads(output) if output else None
