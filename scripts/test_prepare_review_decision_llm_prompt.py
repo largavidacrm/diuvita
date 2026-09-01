@@ -47,7 +47,7 @@ def sample_packet(include_values=False):
             "proposed_fields": {
                 "maps_url": "https://www.google.com/maps/search/Unidad+de+Longevidad+IMDA",
                 "telefono": "916 000 000",
-                "profesionales": ["Dra. Example"],
+                "profesionales": ["Dra. Ana Example"],
             },
         },
         "clinic": {
@@ -111,6 +111,28 @@ def sample_source_without_editable_packet():
     }, include_values=True)
 
 
+def sample_dirty_specialist_packet(include_values=False):
+    return decision_packet({
+        "id": "dirty-specialists-1",
+        "title": "Revisar especialistas: Eternal Group",
+        "review_type": "clinic_profile_enrichment",
+        "payload": {
+            "source_url": "https://eternal.example/equipo",
+            "proposed_fields": {
+                "profesionales": [
+                    "Dr. Ibáñez European Society Calorimetry Respirometry ESCAR",
+                    "Dra. Laura Muntaner",
+                ],
+            },
+        },
+        "clinic": {
+            "id": "clinic-eternal",
+            "display_name": "Eternal Group",
+            "current_data": {"profesionales": []},
+        },
+    }, include_values=include_values)
+
+
 def main():
     full_packet = sample_packet(include_values=True)
     prompt = build_prompt(full_packet)
@@ -163,6 +185,7 @@ def main():
     check("No publicas" in prompt["messages"][0]["content"], "system safety instruction missing")
     check("manual_profile_edit_context" in prompt["messages"][0]["content"], "system prompt should bound side-panel context")
     check("bounded_legacy_source_only" in prompt["messages"][0]["content"], "system prompt should bound legacy source usage")
+    check("specialist_quality_review" in prompt["messages"][0]["content"], "system prompt should block dirty specialists")
     check("Responde solo JSON" in prompt["messages"][0]["content"], "JSON-only instruction missing")
     check("https://imda.example/contacto" not in dumped, "safe prompt should remove full evidence URLs")
     check("persona@example.com" not in dumped, "safe prompt should redact emails")
@@ -219,6 +242,18 @@ def main():
         "manual_review_targets" in quality_prompt["messages"][1]["content"],
         "safe prompt should include manual target metadata",
     )
+
+    dirty_specialist_prompt = build_prompt(sample_dirty_specialist_packet(include_values=True))
+    specialist_digest = next(
+        item for item in dirty_specialist_prompt["packet_digest"]["fields"] if item["key"] == "profesionales"
+    )["specialist_quality_review"]
+    check(
+        specialist_digest["overall_status"] == "needs_manual_correction_before_approval",
+        "prompt digest should keep dirty specialist quality status",
+    )
+    check(specialist_digest["safe_to_auto_publish"] is False, "dirty specialist prompt digest should keep human gate")
+    check("examples" not in str(dirty_specialist_prompt["packet_digest"]), "safe digest should not expose dirty examples")
+    check("ESCAR" not in str(dirty_specialist_prompt["packet_digest"]), "safe digest should not expose dirty specialist values")
 
     reviews_prompt = build_prompt(sample_reviews_packet())
     reviews_field = reviews_prompt["packet_digest"]["fields"][0]["google_reviews_review"]

@@ -87,8 +87,33 @@ def manual_quality_row():
     }
 
 
+def dirty_specialist_row():
+    return {
+        "id": "dirty-specialists-1",
+        "title": "Revisar especialistas: Eternal Group",
+        "review_type": "clinic_profile_enrichment",
+        "priority": 85,
+        "created_at": "2026-09-01T10:47:16+00:00",
+        "payload": {
+            "source_url": "https://eternal.example/equipo",
+            "proposed_fields": {
+                "profesionales": [
+                    "Dr. Ibáñez European Society Calorimetry Respirometry ESCAR",
+                    "Dra. Laura Muntaner",
+                ],
+            },
+        },
+        "clinic": {
+            "id": "clinic-eternal",
+            "slug": "eternal-group",
+            "display_name": "Eternal Group",
+            "current_data": {"profesionales": []},
+        },
+    }
+
+
 def main():
-    rows = [context_ready_row(), source_without_context_row(), manual_quality_row()]
+    rows = [context_ready_row(), source_without_context_row(), manual_quality_row(), dirty_specialist_row()]
     report = preflight_report(rows)
     items = {item["review_id"]: item for item in report["items"]}
 
@@ -96,16 +121,17 @@ def main():
     check(report["writes_data"] is False, "preflight must not write data")
     check(report["calls_llm"] is False, "preflight must not call an LLM")
     check(report["decision_scope"] == "one_card_one_decision", "decision scope missing")
-    check(report["summary"]["total_packets"] == 3, "total packet count missing")
-    check(report["summary"]["reported_packets"] == 3, "reported packet count missing")
-    check(report["summary"]["llm_ready"] == 3, "ready count missing")
+    check(report["summary"]["total_packets"] == 4, "total packet count missing")
+    check(report["summary"]["reported_packets"] == 4, "reported packet count missing")
+    check(report["summary"]["llm_ready"] == 4, "ready count missing")
     check(report["summary"]["blocked"] == 0, "blocked count missing")
-    check(report["summary"]["source_without_context"] == 1, "source-only count missing")
+    check(report["summary"]["source_without_context"] == 2, "source-only count missing")
     check(report["summary"]["blocked_source_without_context"] == 0, "blocked source-only count missing")
     check(report["summary"]["manual_target_prompt_ready"] == 1, "manual target ready count missing")
-    check(report["summary"]["legacy_source_prompt_ready"] == 1, "legacy source ready count missing")
+    check(report["summary"]["legacy_source_prompt_ready"] == 2, "legacy source ready count missing")
     check(report["summary"]["manual_review_target_packets"] == 1, "manual target count missing")
-    check(report["summary"]["manual_profile_edit_available"] == 3, "manual profile edit count missing")
+    check(report["summary"]["manual_profile_edit_available"] == 4, "manual profile edit count missing")
+    check(report["summary"]["specialist_quality_issue_packets"] == 1, "specialist quality count missing")
 
     ready = items["ready-1"]
     check(ready["strict_prompt_status"] == "ready", "context-ready packet should pass strict prompt preflight")
@@ -130,22 +156,28 @@ def main():
     check(manual["manual_profile_edit_available"] is True, "manual packet should expose side-panel edit availability")
     check(manual["clinic_name"] == "Tiara Health", "manual clinic name missing")
 
+    dirty = items["dirty-specialists-1"]
+    check(dirty["specialist_quality_fields"] == ["profesionales"], "dirty specialist field marker missing")
+    check(dirty["llm_ready"] is True, "dirty specialists can be prepared for modify/reject suggestions")
+
     ready_only = preflight_report(rows, llm_ready_only=True)
-    check(ready_only["summary"]["total_packets"] == 3, "ready-only should keep original total")
-    check(ready_only["summary"]["reported_packets"] == 3, "ready-only should report bounded-ready packets")
+    check(ready_only["summary"]["total_packets"] == 4, "ready-only should keep original total")
+    check(ready_only["summary"]["reported_packets"] == 4, "ready-only should report bounded-ready packets")
     check(all(item["llm_ready"] for item in ready_only["items"]), "ready-only report should not include blocked items")
 
-    compact = format_preflight_report(report, limit=3)
+    compact = format_preflight_report(report, limit=4)
     check("# Preflight LLM de revisiones" in compact, "compact title missing")
-    check("Preparables para LLM estricto: 3/3" in compact, "compact ready count missing")
+    check("Preparables para LLM estricto: 4/4" in compact, "compact ready count missing")
     check("Rutas manuales listas: 1" in compact, "compact manual route count missing")
-    check("Fuentes heredadas acotadas: 1" in compact, "compact legacy source count missing")
+    check("Fuentes heredadas acotadas: 2" in compact, "compact legacy source count missing")
     check("Bloqueadas por fuente sin contexto: 0" in compact, "compact source-only blocked count missing")
-    check("Con edición manual de ficha: 3" in compact, "compact manual profile edit count missing")
+    check("Con edición manual de ficha: 4" in compact, "compact manual profile edit count missing")
+    check("Con especialistas a corregir: 1" in compact, "compact specialist quality count missing")
     check("Listas para preparar sugerencia" in compact, "compact ready section missing")
     check("ruta manual lista" in compact, "compact manual route label missing")
     check("fuente heredada lista" in compact, "compact legacy source label missing")
     check("edición ficha" in compact, "compact manual profile edit label missing")
+    check("especialistas a corregir" in compact, "compact dirty specialist label missing")
 
     source = (ROOT / "scripts" / "review_llm_batch_preflight.py").read_text(encoding="utf-8")
     check("--fail-if-blocked" in source, "CLI should offer a blocking preflight mode")

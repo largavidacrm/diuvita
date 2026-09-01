@@ -116,6 +116,8 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - estado estructurado de calidad de especialistas cuando una lista parece
   contaminada por menús, textos legales, sociedades o categorías. En ese caso
   el LLM solo puede sugerir `modify` o `reject`, nunca aprobar tal cual.
+- el preflight de lote cuenta esas tarjetas como **especialistas a corregir**
+  para que el operador vea la deuda de calidad antes de preparar ayuda LLM.
 
 El LLM no debe:
 

@@ -45,6 +45,8 @@ def main():
     check(any(item["name"] == "LLM Google reviews suggestion guard" for item in local_checks), "LLM Google reviews suggestion guard marker missing")
     check(any(item["name"] == "LLM specialist quality review" for item in local_checks), "LLM specialist quality marker missing")
     check(any(item["name"] == "LLM specialist suggestion guard" for item in local_checks), "LLM specialist suggestion guard marker missing")
+    check(any(item["name"] == "LLM prompt specialist quality review" for item in local_checks), "LLM prompt specialist quality marker missing")
+    check(any(item["name"] == "LLM preflight specialist quality count" for item in local_checks), "LLM preflight specialist quality marker missing")
     check(any(item["name"] == "LLM source origin status" for item in local_checks), "LLM source origin status marker missing")
     check(any(item["name"] == "LLM prompt source origin status" for item in local_checks), "LLM prompt source origin status marker missing")
     check(any(item["name"] == "LLM prompt bounded source intent" for item in local_checks), "LLM prompt bounded source intent marker missing")

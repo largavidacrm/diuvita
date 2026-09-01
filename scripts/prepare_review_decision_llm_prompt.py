@@ -22,7 +22,7 @@ def sanitize_for_prompt(value: Any, allow_full_values: bool = False) -> Any:
     if isinstance(value, dict):
         clean: dict[str, Any] = {}
         for key, item in value.items():
-            if not allow_full_values and str(key) == "value":
+            if not allow_full_values and str(key) in {"value", "examples"}:
                 continue
             clean[str(key)] = sanitize_for_prompt(item, allow_full_values=allow_full_values)
         return clean
@@ -39,6 +39,7 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
             "label": item.get("label"),
             "google_maps_review": sanitize_for_prompt(item.get("google_maps_review") or {}),
             "google_reviews_review": sanitize_for_prompt(item.get("google_reviews_review") or {}),
+            "specialist_quality_review": sanitize_for_prompt(item.get("specialist_quality_review") or {}),
         }
         for item in packet.get("proposed_change") or []
         if isinstance(item, dict)
@@ -181,6 +182,7 @@ def system_prompt() -> str:
         "Si no hay editable_fields pero hay manual_review_targets, puedes proponer modify con manual_review_target_key.",
         "manual_profile_edit_context describe campos que solo Daniel puede corregir en el panel; no los conviertas en field_changes.",
         "Si source_origin_status contiene prompt_policy bounded_legacy_source_only, usa esa fuente solo como evidencia de los campos explícitos; no infieras intención original ni amplíes la propuesta.",
+        "Si un campo trae specialist_quality_review, no sugieras approve tal cual; sugiere modify con nombres limpios o reject.",
         "Responde solo JSON válido con el esquema indicado.",
     ])
 

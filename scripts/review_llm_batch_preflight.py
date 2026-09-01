@@ -42,6 +42,19 @@ def manual_profile_edit_available(packet: dict[str, Any]) -> bool:
     return bool(isinstance(context, dict) and context.get("available"))
 
 
+def specialist_quality_fields(packet: dict[str, Any]) -> list[str]:
+    fields: list[str] = []
+    for item in packet.get("proposed_change") or []:
+        if not isinstance(item, dict):
+            continue
+        context = item.get("specialist_quality_review")
+        if isinstance(context, dict) and context:
+            key = str(item.get("key") or "").strip()
+            if key:
+                fields.append(key)
+    return fields
+
+
 def blocked_reason(packet: dict[str, Any]) -> str:
     status = source_origin_label(packet)
     if status == "source_without_context":
@@ -62,6 +75,7 @@ def preflight_item(packet: dict[str, Any]) -> dict[str, Any]:
         "llm_readiness_status": readiness_status,
         "manual_review_targets": manual_target_keys(packet),
         "manual_profile_edit_available": manual_profile_edit_available(packet),
+        "specialist_quality_fields": specialist_quality_fields(packet),
         "field_count": len(packet.get("proposed_change") or []),
         "warning_count": len(packet.get("warnings") or []),
         "human_required": True,
@@ -130,6 +144,10 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         item for item in items
         if item.get("manual_profile_edit_available")
     ]
+    specialist_quality_issues = [
+        item for item in items
+        if item.get("specialist_quality_fields")
+    ]
     return {
         "total_packets": total_packets,
         "reported_packets": len(items),
@@ -141,6 +159,7 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         "legacy_source_prompt_ready": len(legacy_source_ready),
         "manual_review_target_packets": len(manual_targets),
         "manual_profile_edit_available": len(manual_profile_edits),
+        "specialist_quality_issue_packets": len(specialist_quality_issues),
     }
 
 
@@ -159,10 +178,11 @@ def compact_item_line(item: dict[str, Any]) -> str:
     if len(target_keys) > 4:
         target_text += f" +{len(target_keys) - 4}"
     profile_text = " · edición ficha" if item.get("manual_profile_edit_available") else ""
+    specialist_text = " · especialistas a corregir" if item.get("specialist_quality_fields") else ""
     reason = ""
     if not item.get("llm_ready") and item.get("blocked_reason"):
         reason = " · " + str(item["blocked_reason"]).split(":", 1)[0]
-    return f"- {title}: {status}{target_text}{profile_text}{reason}"
+    return f"- {title}: {status}{target_text}{profile_text}{specialist_text}{reason}"
 
 
 def format_preflight_report(report: dict[str, Any], limit: int = 8) -> str:
@@ -183,6 +203,7 @@ def format_preflight_report(report: dict[str, Any], limit: int = 8) -> str:
         f"- Bloqueadas por fuente sin contexto: {summary.get('blocked_source_without_context', 0)}",
         f"- Con campo manual detectado: {summary.get('manual_review_target_packets', 0)}",
         f"- Con edición manual de ficha: {summary.get('manual_profile_edit_available', 0)}",
+        f"- Con especialistas a corregir: {summary.get('specialist_quality_issue_packets', 0)}",
     ]
     if ready:
         lines.extend([

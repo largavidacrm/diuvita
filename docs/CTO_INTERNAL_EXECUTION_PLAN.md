@@ -1345,6 +1345,12 @@ Next 10 technical steps:
      cannot suggest approving contaminated specialist lists or modifying them
      while leaving the same noisy entries. Cleaned specialist corrections remain
      valid, and rejected cards remain rejectable.
+252. Surface specialist quality debt before LLM batches. Done locally in
+     `scripts/prepare_review_decision_llm_prompt.py`,
+     `scripts/review_llm_batch_preflight.py` and release checks: prompt digests
+     now carry `specialist_quality_review`, and the batch preflight counts
+     packets with specialists that must be corrected before approval. This is
+     read-only and keeps the future LLM role limited to suggestion preparation.
 
 ## Daniel decision checkpoints
 
