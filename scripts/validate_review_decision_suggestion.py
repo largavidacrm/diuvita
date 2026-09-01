@@ -14,6 +14,7 @@ from review_proposal_decision_packets import (
     maps_warning,
     phone_warning,
     redacted_text,
+    specialist_quality_warning,
 )
 
 
@@ -215,6 +216,10 @@ def field_safety_errors(key: str, value: Any) -> list[str]:
     for message in [phone_warning(clean_key, value), maps_warning(clean_key, value)]:
         if message:
             errors.append(f"unsafe value for {clean_key}: {message}")
+    if clean_key == "profesionales":
+        message = specialist_quality_warning(value, include_values=False)
+        if message:
+            errors.append(f"unsafe value for {clean_key}: {message}")
     if clean_key == "locations":
         locations = value if isinstance(value, list) else [value]
         for location in locations:
@@ -224,6 +229,23 @@ def field_safety_errors(key: str, value: Any) -> list[str]:
             if message:
                 errors.append(f"unsafe value for locations: {message}")
     return errors
+
+
+def specialist_quality_errors(packet: dict[str, Any], action: str, change_keys: list[str]) -> list[str]:
+    if action not in {"approve", "modify"}:
+        return []
+    dirty_specialist_fields = {
+        canonical_field(item.get("key"))
+        for item in packet.get("proposed_change") or []
+        if isinstance(item, dict) and isinstance(item.get("specialist_quality_review"), dict)
+    }
+    if "profesionales" not in dirty_specialist_fields:
+        return []
+    if action == "approve":
+        return ["Specialist proposals contain suspicious text and require modify or reject before approval."]
+    if "profesionales" not in {canonical_field(key) for key in change_keys}:
+        return ["Dirty specialist proposals require a corrected profesionales field or rejection."]
+    return []
 
 
 def google_reviews_dependency_errors(
@@ -308,6 +330,7 @@ def validate_suggestion(
             errors.append("modify action requires at least one editable field change")
     for key, value in normalized_changes.items():
         errors.extend(field_safety_errors(key, value))
+    errors.extend(specialist_quality_errors(packet, action, list(normalized_changes)))
     errors.extend(google_reviews_dependency_errors(packet, action, list(normalized_changes)))
 
     for path in forbidden_control_paths(suggestion):

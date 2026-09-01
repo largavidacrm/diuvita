@@ -26,7 +26,7 @@ def sample_packet():
             "proposed_fields": {
                 "maps_url": "https://www.google.com/maps/place/Unidad+de+Longevidad+IMDA/",
                 "telefono": "916 000 000",
-                "profesionales": ["Dra. Example"],
+                "profesionales": ["Dra. Ana Example"],
             },
         },
         "clinic": {
@@ -78,6 +78,30 @@ def sample_reviews_packet(has_maps=False):
             "id": "clinic-1",
             "display_name": "Clinic",
             "current_data": current_data,
+        },
+    })
+
+
+def sample_dirty_specialist_packet():
+    return decision_packet({
+        "id": "dirty-specialists-1",
+        "title": "Revisar especialistas: Eternal Group",
+        "review_type": "clinic_profile_enrichment",
+        "payload": {
+            "source_url": "https://eternal.example/equipo",
+            "proposed_fields": {
+                "profesionales": [
+                    "Dr. Ibáñez European Society Calorimetry Respirometry ESCAR",
+                    "Infantil Psiquiatría CARLA BUIXEDA",
+                    "Dra. Laura Muntaner",
+                    "Dr. Miguel Ángel Palos COLABORADORES Aviso Legal",
+                ],
+            },
+        },
+        "clinic": {
+            "id": "clinic-eternal",
+            "display_name": "Eternal Group",
+            "current_data": {"profesionales": []},
         },
     })
 
@@ -260,8 +284,52 @@ def main():
     })
     check(reviews_with_maps["valid"], "Google reviews should pass once the clinic has a direct Maps profile")
 
+    dirty_specialist_packet = sample_dirty_specialist_packet()
+    dirty_specialist_approve = validate_suggestion(dirty_specialist_packet, {
+        "review_id": "dirty-specialists-1",
+        "action": "approve",
+    })
+    check(not dirty_specialist_approve["valid"], "dirty specialists should not be approved as-is")
+    check(
+        any("Specialist proposals contain suspicious text" in error for error in dirty_specialist_approve["errors"]),
+        "dirty specialist approve error missing",
+    )
+
+    dirty_specialist_modify = validate_suggestion(dirty_specialist_packet, {
+        "review_id": "dirty-specialists-1",
+        "action": "modify",
+        "field_changes": {
+            "profesionales": [
+                "Dr. Ibáñez European Society Calorimetry Respirometry ESCAR",
+                "Dra. Laura Muntaner",
+            ],
+        },
+    })
+    check(not dirty_specialist_modify["valid"], "dirty specialist modifications should also be checked")
+    check(
+        any("Especialistas contiene entradas sospechosas" in error for error in dirty_specialist_modify["errors"]),
+        "dirty specialist modification error missing",
+    )
+
+    clean_specialist_modify = validate_suggestion(dirty_specialist_packet, {
+        "review_id": "dirty-specialists-1",
+        "action": "modify",
+        "field_changes": {
+            "profesionales": ["Dra. Laura Muntaner", "Dr. Miguel Ángel Palos"],
+        },
+    })
+    check(clean_specialist_modify["valid"], "clean specialist correction should be allowed")
+
+    dirty_specialist_reject = validate_suggestion(dirty_specialist_packet, {
+        "review_id": "dirty-specialists-1",
+        "action": "reject",
+        "reason": "La extracción mezcló nombres con textos legales.",
+    })
+    check(dirty_specialist_reject["valid"], "dirty specialist cards should remain rejectable")
+
     source = (ROOT / "scripts" / "validate_review_decision_suggestion.py").read_text(encoding="utf-8")
     check("admin_update_clinic" in source, "forbidden operation list should name risky admin writes")
+    check("specialist_quality_errors" in source, "specialist quality guard should be enforced")
     check("run_psql" not in source, "suggestion validator should not connect to Supabase")
     check("load_env_file" not in source, "suggestion validator should not read credentials")
     print("OK review suggestion guard: LLM output stays advisory")

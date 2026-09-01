@@ -46,7 +46,7 @@ def sample_enrichment_row():
             "proposed_fields": {
                 "maps_url": "https://www.google.com/maps/search/Unidad+de+Longevidad+IMDA",
                 "telefono": "ABC-123",
-                "profesionales": ["Dra. Example"],
+                "profesionales": ["Dra. Ana Example"],
             },
         },
         "clinic": {
@@ -99,7 +99,7 @@ def sample_unsourced_specialist_row():
         "created_at": "2026-08-31T12:47:16+00:00",
         "payload": {
             "proposed_fields": {
-                "profesionales": ["Dra. Example", "Dr. Example"],
+                "profesionales": ["Dra. Ana Example", "Dr. Luis Example"],
             },
         },
         "clinic": {
@@ -488,7 +488,7 @@ def main():
                 "website": "https://longevity.example",
                 "city": "Madrid",
                 "country": "España",
-                "professionals": ["Dra. Example"],
+                "professionals": ["Dra. Ana Example"],
             }
         },
         "clinic": {},

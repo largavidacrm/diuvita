@@ -153,6 +153,8 @@ sugerencia:
 - devuelve el objetivo manual validado con su `admin_target_id`, para que la UI
   o una futura capa LLM pueda abrir el campo correcto sin adivinar;
 - rechaza modificaciones con Google Maps débil o teléfono dudoso;
+- rechaza aprobaciones de especialistas con `specialist_quality_review` y
+  también modificaciones que sigan dejando nombres contaminados;
 - mantiene la decisión final como revisión humana.
 
 Por defecto también oculta valores crudos de la sugerencia. Para depuración
