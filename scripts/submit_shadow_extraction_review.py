@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from capture_source_snapshot import fetch_url
-from extract_clinic_profile_shadow import extract_from_fetch
+from extract_clinic_profile_shadow import clean_professional_values, extract_from_fetch
 from submit_discovery_candidates import (
     get_default_admin_email,
     load_env_file,
@@ -84,7 +84,11 @@ def proposed_fields_from_verification(verification: dict[str, Any]) -> dict[str,
         if decision.get("action") == "reject" or claim.get("verifier_verdict") == "rejected":
             continue
         value = claim.get("value")
-        if target == "tech" and isinstance(value, list):
+        if target == "profesionales":
+            professionals, _rejected = clean_professional_values(value)
+            if professionals:
+                fields[target] = professionals
+        elif target == "tech" and isinstance(value, list):
             fields[target] = ", ".join(str(item) for item in value if str(item).strip())
         else:
             fields[target] = value
@@ -109,14 +113,20 @@ def source_urls_from_verification(verification: dict[str, Any]) -> list[str]:
 
 def review_payload(clinic_slug: str, verification: dict[str, Any]) -> dict[str, Any]:
     fields = proposed_fields_from_verification(verification)
+    warnings = [
+        "Propuesta generada por extractor/verificador shadow; revisar antes de guardar."
+    ]
+    warnings.extend(
+        str(item).strip()
+        for item in verification.get("quality_warnings") or []
+        if str(item or "").strip()
+    )
     return {
         "mode": "shadow",
         "proposal_batch": today_batch(),
         "clinic_slug": clinic_slug,
         "source_urls": source_urls_from_verification(verification),
-        "warnings": [
-            "Propuesta generada por extractor/verificador shadow; revisar antes de guardar."
-        ],
+        "warnings": warnings,
         "proposed_fields": fields,
         "field_claims": verification.get("verified_claims") or [],
         "rule_decisions": verification.get("rule_decisions") or [],

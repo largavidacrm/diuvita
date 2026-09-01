@@ -73,6 +73,31 @@ def fake_fetch_summary(url, timeout=15):
     )
 
 
+def fake_fetch_noisy_specialists(url, timeout=15):
+    html = """
+<!doctype html>
+<html>
+<head><title>Eternal experts</title></head>
+<body>
+  <main>
+    <h1>Our team</h1>
+    <p>Dr. Ibáñez European Society Calorimetry Respirometry ESCAR</p>
+    <p>Infantil Psiquiatría CARLA BUIXEDA</p>
+    <p>Dra. Laura Muntaner</p>
+    <p>Dr. Miguel Ángel Palos COLABORADORES Aviso Legal</p>
+  </main>
+</body>
+</html>
+""".encode("utf-8")
+    return FetchResult(
+        source_url=url,
+        final_url=url,
+        status_code=200,
+        content_type="text/html; charset=utf-8",
+        body=html,
+    )
+
+
 def main():
     job = {
         "id": "job-1",
@@ -140,6 +165,33 @@ def main():
     summary_result = process_job(summary_job, args, "admin@example.test", {}, fetcher=fake_fetch_summary)
     check(summary_result["status"] == "ready", "summary source should produce a reviewable proposal")
     check(summary_result["proposed_fields"] == ["summary"], "summary job should only propose the requested summary")
+
+    noisy_job = {
+        **job,
+        "id": "job-noisy",
+        "input": {
+            **job["input"],
+            "clinic_slug": "eternal",
+            "clinic_name": "Eternal",
+            "source_url": "https://eternalgroup.es/team/",
+            "requested_fields": ["profesionales"],
+            "requested_field_labels": ["Especialistas publicados"],
+            "primary_requested_fields": ["profesionales"],
+            "primary_requested_field_labels": ["Especialistas publicados"],
+            "missing_fields": ["Especialistas publicados"],
+        },
+    }
+    noisy_result = process_job(noisy_job, args, "admin@example.test", {}, fetcher=fake_fetch_noisy_specialists)
+    check(noisy_result["status"] == "ready", "noisy team source should still return clean reviewable names")
+    check(noisy_result["proposed_fields"] == ["profesionales"], "noisy team source should only propose specialists")
+    check(
+        noisy_result["proposed_field_counts"]["profesionales"] == 2,
+        "noisy specialist proposal should keep only clean specialists",
+    )
+    check(
+        any("navegación/legal" in warning for warning in noisy_result.get("quality_warnings", [])),
+        "noisy specialist proposal should carry a quality warning",
+    )
 
     payload = build_payload_for_job(job, {
         "verified_claims": [],
@@ -238,6 +290,7 @@ def main():
     check(compact["origin_review_followup"]["status"] == "inserted", "compact result should keep origin followup")
     check(compact["primary_requested_fields"] == ["profesionales"], "compact result should keep primary requested fields")
     check(compact["target_scope"] == "primary_target_first", "compact result should keep source scope")
+    check(compact["quality_warnings"], "compact result should keep quality warnings")
 
     captured_complete = {}
     original_run_psql = complete_job.__globals__["run_psql"]

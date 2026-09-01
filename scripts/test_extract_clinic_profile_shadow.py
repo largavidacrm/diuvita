@@ -2,6 +2,7 @@
 """Basic checks for the shadow clinic profile extractor."""
 from capture_source_snapshot import FetchResult
 from extract_clinic_profile_shadow import (
+    clean_professional_values,
     extract_contacts,
     extract_from_fetch,
     extract_locations,
@@ -395,6 +396,28 @@ def main():
         ),
         "Kairos role/context text should not be part of extracted names",
     )
+
+    eternal_professionals = extract_professionals(
+        "Our team Dr. Ibáñez European Society Calorimetry Respirometry ESCAR "
+        "CARLA BUIXEDA Infantil Psiquiatría "
+        "Dra. Laura Muntaner "
+        "Dr. Miguel Ángel Palos COLABORADORES Aviso Legal"
+    )
+    check(
+        eternal_professionals == ["Dra. Laura Muntaner", "Dr. Miguel Ángel Palos"],
+        "Eternal-style legal/navigation fragments should not become specialists",
+    )
+    accepted_professionals, rejected_professionals = clean_professional_values([
+        "Dr. Ibáñez European Society Calorimetry Respirometry ESCAR",
+        "Infantil Psiquiatría CARLA BUIXEDA",
+        "Dra. Laura Muntaner",
+        "Dr. Miguel Ángel Palos COLABORADORES Aviso Legal",
+    ])
+    check(
+        accepted_professionals == ["Dra. Laura Muntaner", "Dr. Miguel Ángel Palos"],
+        "proposal sanitizer should keep only clean names",
+    )
+    check(len(rejected_professionals) == 2, "proposal sanitizer should report noisy specialist fragments")
 
     noisy_title_html = b"""
 <!doctype html>

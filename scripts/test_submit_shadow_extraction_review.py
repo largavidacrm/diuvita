@@ -59,6 +59,37 @@ def main():
     check(fields["public_pricing"] == "si", "public-pricing field missing")
     check("field_claims" in payload, "claims missing")
     check("rule_decisions" in payload, "rule decisions missing")
+    dirty_payload = review_payload("eternal", {
+        "source_url": "https://eternalgroup.es/team/",
+        "quality_warnings": ["La fuente de equipo contiene texto de navegación/legal."],
+        "verified_claims": [
+            {
+                "field_path": "professionals.published",
+                "value": [
+                    "Dr. Ibáñez European Society Calorimetry Respirometry ESCAR",
+                    "Infantil Psiquiatría CARLA BUIXEDA",
+                    "Dra. Laura Muntaner",
+                    "Dr. Miguel Ángel Palos COLABORADORES Aviso Legal",
+                ],
+                "confidence": 0.9,
+                "source_count": 1,
+                "verifier_verdict": "accepted",
+                "source_url": "https://eternalgroup.es/team/",
+            }
+        ],
+        "rule_decisions": [
+            {"field_path": "professionals.published", "action": "review", "risk": "medium"}
+        ],
+        "summary": {"claims": 1},
+    })
+    check(
+        dirty_payload["proposed_fields"]["profesionales"] == ["Dra. Laura Muntaner", "Dr. Miguel Ángel Palos"],
+        "dirty specialist values should be sanitized before creating a review payload",
+    )
+    check(
+        any("navegación/legal" in warning for warning in dirty_payload["warnings"]),
+        "quality warnings should stay with the review payload",
+    )
     signature = inspect.signature(create_review)
     check(signature.parameters["replace_existing"].default is False, "existing review replacement should be opt-in")
     check(

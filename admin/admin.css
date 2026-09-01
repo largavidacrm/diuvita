@@ -2331,6 +2331,7 @@ td small.job-next-step {
 
 .version-item,
 .claim-item,
+.claim-action-item,
 .source-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2339,6 +2340,30 @@ td small.job-next-step {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
+}
+
+.claim-action-item {
+  border-color: rgba(166, 67, 58, 0.28);
+  background: #fffaf7;
+}
+
+.claim-action-item .btn {
+  min-height: 2.2rem;
+}
+
+.claim-technical-evidence {
+  border-top: 1px solid var(--line);
+  padding-top: 0.7rem;
+}
+
+.claim-technical-evidence summary {
+  cursor: pointer;
+  color: var(--green-deep);
+  font-weight: 800;
+}
+
+.claim-technical-evidence .claim-list {
+  margin-top: 0.65rem;
 }
 
 .version-main {

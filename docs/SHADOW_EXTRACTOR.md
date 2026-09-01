@@ -104,6 +104,11 @@ That folder is local/ignored by Git.
 - It skips common WordPress/navigation text and appointment CTAs before
   extracting team names, so menu items such as treatment names are not proposed
   as professionals.
+- It sanitizes specialist proposals again just before creating review cards.
+  Legal/navigation fragments, professional-society names and mixed labels such
+  as `Aviso Legal`, `COLABORADORES`, `European Society` or `Calorimetry
+  Respirometry` stay out of the proposed specialist list. The source evidence
+  and warning remain internal for review and future LLM use.
 - It rejects uppercase navigation words such as treatment, benefits, blog or
   program labels before treating a name-role pair as a professional.
 - It only detects locations from clear address patterns, including compact

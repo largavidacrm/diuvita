@@ -391,6 +391,7 @@ def process_job(
         "proposed_fields": sorted(proposed_fields.keys()),
         "proposed_field_counts": proposed_field_counts(proposed_fields),
         "verification_summary": payload.get("verification_summary") or {},
+        "quality_warnings": payload.get("warnings") or [],
         "writes_data": False,
     }
     if args.apply and proposed_fields:
@@ -437,6 +438,7 @@ def compact_result(result: dict[str, Any]) -> dict[str, Any]:
         "status": result.get("status"),
         "proposed_fields": result.get("proposed_fields") or [],
         "proposed_field_counts": result.get("proposed_field_counts") or {},
+        "quality_warnings": result.get("quality_warnings") or [],
         "created_review": result.get("created_review"),
         "superseded_review": result.get("superseded_review"),
         "origin_review_followup": result.get("origin_review_followup"),

@@ -1364,6 +1364,15 @@
       return map[label] || "";
     }
 
+    function publicationMissingIsBlockingClaims(label) {
+      var clean = text(label).toLowerCase();
+      return clean.indexOf("claim bloqueante") >= 0 || clean.indexOf("claims bloqueantes") >= 0;
+    }
+
+    function publishMissingKind(label) {
+      return publicationMissingIsBlockingClaims(label) ? "blocking-claims" : "";
+    }
+
     function date(value) {
       if (!value) return "—";
       return new Intl.DateTimeFormat("es-ES", {
@@ -1771,6 +1780,52 @@
       return (reviewCache || []).some(function (row) {
         return row.clinic_id === clinicId && row.status === "open" && isBlockingClaimReview(row);
       });
+    }
+
+    function blockingClaimReviewsForClinic(clinicId) {
+      return (reviewCache || []).filter(function (row) {
+        return row.clinic_id === clinicId && row.status === "open" && isBlockingClaimReview(row);
+      }).sort(function (a, b) {
+        return Number(b.priority || 0) - Number(a.priority || 0) || String(a.created_at || "").localeCompare(String(b.created_at || ""));
+      });
+    }
+
+    function firstBlockingClaimReviewForClinic(clinicId) {
+      var rows = blockingClaimReviewsForClinic(clinicId);
+      return rows[0] || null;
+    }
+
+    function focusBlockingClaimReviewAction() {
+      focusPublishField("clinicEvidencePanel");
+      window.setTimeout(function () {
+        var button = el("clinicClaimsList").querySelector("[data-review-id]");
+        if (button) button.focus();
+      }, 120);
+    }
+
+    function openBlockingClaimReviewForClinic(clinicId) {
+      var row = firstBlockingClaimReviewForClinic(clinicId);
+      if (!row) return false;
+      if (activeClinic && activeClinic.id === clinicId && hasUnsavedClinicFormChanges()) {
+        focusBlockingClaimReviewAction();
+        toast("Hay cambios sin guardar. Te marco la revisión bloqueante; guarda o vuelve a lista antes de abrirla.");
+        return true;
+      }
+      if (activeClinic && activeClinic.id === clinicId) closeClinicEditor();
+      setInput("reviewSearch", "");
+      el("reviewTypeFilter").value = "blocking_claim_review";
+      el("reviewPriorityFilter").value = "";
+      reviewDuplicateFilter = false;
+      reviewClinicGroupFilter = clinicId;
+      reviewGoogleLinksFilter = false;
+      reviewSpecialistsFilter = false;
+      openReviewEntry(row.id);
+      toast("Abro la revisión que bloquea la publicación.");
+      return true;
+    }
+
+    function openBlockingClaimReviewForActiveClinic() {
+      return Boolean(activeClinic && openBlockingClaimReviewForClinic(activeClinic.id));
     }
 
     function clinicPublicationMissingLabels(row) {
@@ -5798,6 +5853,20 @@
         html(title) + '">Abrir fuente</a>';
     }
 
+    function claimTechnicalItemHtml(row, sources) {
+      var source = sources[row.source_record_id || ""] || null;
+      var decision = ruleDecisionForClaim(row);
+      var sourceHtml = claimSourceLinkHtml(source);
+      var locked = row.human_locked ? '<span class="pill danger">Protegido</span>' : "";
+      return '<article class="claim-item claim-item-technical">' +
+        '<div class="claim-main"><strong>' + html(fieldPathLabel(row.field_path)) + '</strong>' +
+        '<p>' + html(compactText(claimValueText(row.value), 220)) + '</p>' +
+        '<small>' + html(claimTraceText(row, source, decision)) + '</small></div>' +
+        '<div class="claim-meta">' + riskPill(decision.risk) + actionPill(decision.action) + pill(row.verification_status) +
+        '<span class="pill">' + html(pct(row.confidence)) + '</span>' + locked + sourceHtml + '</div>' +
+        '</article>';
+    }
+
     function isBlockingClinicClaim(row, decision) {
       var status = text(row.verification_status || "").toLowerCase();
       if (status === "conflict" || status === "rejected") return true;
@@ -5805,16 +5874,41 @@
       return false;
     }
 
+    function reviewFirstIssueText(row) {
+      var payload = (row && row.payload) || {};
+      var issues = Array.isArray(payload.issues) ? payload.issues : [];
+      if (!issues.length) return "";
+      var issue = issues[0];
+      if (issue && typeof issue === "object") {
+        return issue.label || issue.detail || issue.reason || issue.code || "";
+      }
+      return text(issue);
+    }
+
+    function blockingClaimReviewCardHtml(row) {
+      var issue = reviewFirstIssueText(row) || reviewVisibleLabel(row);
+      return '<article class="claim-action-item">' +
+        '<div class="claim-main"><strong>' + html(reviewDisplayTitle(row)) + '</strong>' +
+        '<p>' + html(issue || "Revisión pendiente de aprobación.") + '</p>' +
+        '<small>' + html("Pendiente de aprobación · " + date(row.created_at)) + '</small></div>' +
+        '<div class="claim-meta"><span class="pill warning">Bloquea publicación</span>' +
+        '<button class="btn secondary" type="button" data-review-id="' + html(row.id) + '">Abrir revisión</button></div>' +
+        '</article>';
+    }
+
     function renderClinicClaims(rows, sources) {
       activeClinicClaims = Array.isArray(rows) ? rows : [];
       activeClinicClaimSources = sources || {};
       var count = Array.isArray(rows) ? rows.length : 0;
       activeClinicClaimCount = count;
+      var reviewRows = activeClinic ? blockingClaimReviewsForClinic(activeClinic.id) : [];
       el("clinicEvidenceCount").textContent = count + (count === 1 ? " claim" : " claims");
-      el("clinicEvidenceMeta").textContent = count
-        ? "Últimos claims internos guardados. Vista solo lectura."
+      el("clinicEvidenceMeta").textContent = reviewRows.length
+        ? "Revisiones que requieren atención antes de publicar."
+        : count
+        ? "Evidencia técnica guardada detrás del desplegable."
         : "Sin claims internos guardados para esta clínica.";
-      if (!count) {
+      if (!count && !reviewRows.length) {
         activeClinicBlockingClaimCount = 0;
         activeClinicClaimLoadState = "ready";
         renderPendingLocationsForClinic();
@@ -5823,22 +5917,17 @@
         updateFinalValidation();
         return;
       }
-      var blockingCount = 0;
-      el("clinicClaimsList").innerHTML = rows.map(function (row) {
-        var source = sources[row.source_record_id || ""] || null;
-        var decision = ruleDecisionForClaim(row);
-        if (isBlockingClinicClaim(row, decision)) blockingCount += 1;
-        var sourceHtml = claimSourceLinkHtml(source);
-        var locked = row.human_locked ? '<span class="pill danger">Protegido</span>' : "";
-        return '<article class="claim-item">' +
-          '<div class="claim-main"><strong>' + html(fieldPathLabel(row.field_path)) + '</strong>' +
-          '<p>' + html(compactText(claimValueText(row.value), 220)) + '</p>' +
-          '<small>' + html(claimTraceText(row, source, decision)) + '</small></div>' +
-          '<div class="claim-meta">' + riskPill(decision.risk) + actionPill(decision.action) + pill(row.verification_status) +
-          '<span class="pill">' + html(pct(row.confidence)) + '</span>' + locked + sourceHtml + '</div>' +
-          '</article>';
-      }).join("");
-      activeClinicBlockingClaimCount = blockingCount;
+      var actionHtml = reviewRows.length
+        ? reviewRows.map(blockingClaimReviewCardHtml).join("")
+        : '<p class="empty">No hay claims bloqueantes pendientes de aprobación.</p>';
+      var technicalHtml = count ? '<details class="claim-technical-evidence">' +
+        '<summary>Evidencia técnica guardada (' + html(String(count)) + ')</summary>' +
+        '<div class="claim-list">' + rows.map(function (row) {
+          return claimTechnicalItemHtml(row, sources);
+        }).join("") + '</div>' +
+        '</details>' : "";
+      el("clinicClaimsList").innerHTML = actionHtml + technicalHtml;
+      activeClinicBlockingClaimCount = reviewRows.length;
       activeClinicClaimLoadState = "ready";
       renderPendingLocationsForClinic();
       renderPendingSpecialistsForClinic();
@@ -6122,8 +6211,11 @@
         (requiredMissing.length === 1 ? " punto falta para publicar." : " puntos faltan para publicar.");
       el("clinicPublishReadinessMeta").textContent = "Completa estos puntos o guarda la ficha como borrador/revisión interna.";
       el("clinicPublishMissingList").innerHTML = requiredMissing.map(function (item) {
-        return '<button class="publish-missing-chip" type="button" data-publish-field="' + html(item.targetId || "") + '">' +
-          html(validationDisplayLabel(item)) + '</button>';
+        var label = validationDisplayLabel(item);
+        var kind = publishMissingKind(label);
+        return '<button class="publish-missing-chip" type="button" data-publish-field="' + html(item.targetId || "") + '"' +
+          (kind ? ' data-publish-missing-kind="' + html(kind) + '"' : "") + '>' +
+          html(label) + '</button>';
       }).join("");
     }
 
@@ -6161,9 +6253,9 @@
       renderUnsavedChanges();
     }
 
-    function missingFinalValidationLabels() {
+    function missingFinalValidationLabels(forcePublicTarget) {
       var targetStatus = trimmed("clinicStatus");
-      var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
+      var publicTarget = forcePublicTarget === true ? true : targetStatus === "published" || targetStatus === "preliminary";
       var missing = finalValidationItems(publicTarget)
         .filter(function (item) { return item.required && !item.ok; })
         .map(validationDisplayLabel);
@@ -6225,14 +6317,17 @@
 
     async function publishActiveClinic() {
       if (!activeClinic) return;
-      if (!isPublicClinicStatus(trimmed("clinicStatus"))) setInput("clinicStatus", "preliminary");
-      var missing = missingFinalValidationLabels();
+      var missing = missingFinalValidationLabels(true);
       if (missing.length) {
         updateFinalValidation();
+        if (publicationMissingIsBlockingClaims(missing[0]) && openBlockingClaimReviewForActiveClinic()) {
+          return;
+        }
         focusPublishField(publishMissingTargetId(missing[0]));
         toast("Antes de publicar: " + publicationMissingSentence(missing[0]) + ".");
         return;
       }
+      if (!isPublicClinicStatus(trimmed("clinicStatus"))) setInput("clinicStatus", "preliminary");
       var confirmed = window.confirm(
         "La ficha pasará a estar online como preliminar. Quedará guardado en el historial y entrará en la próxima publicación agrupada.\n\n¿Publicar?"
       );
@@ -6246,15 +6341,19 @@
     async function publishClinicFromList(clinicId) {
       var row = clinicCache.find(function (item) { return item.id === clinicId; });
       if (!row) return;
-      openClinicEditor(clinicId);
       var missing = actionablePublicationMissingLabels(clinicPublicationMissingLabels(row));
       if (missing.length) {
+        if (publicationMissingIsBlockingClaims(missing[0]) && openBlockingClaimReviewForClinic(clinicId)) {
+          return;
+        }
+        openClinicEditor(clinicId);
         toast("Abro la ficha: " + publicationMissingSentence(missing[0]) + " antes de publicar.");
         window.setTimeout(function () {
           focusPublishField(publishMissingTargetId(missing[0]));
         }, 0);
         return;
       }
+      openClinicEditor(clinicId);
       window.setTimeout(publishActiveClinic, 0);
     }
 
@@ -10726,7 +10825,21 @@
       });
       el("clinicPublishReadiness").addEventListener("click", function (event) {
         var button = event.target.closest("[data-publish-field]");
-        if (button) focusPublishField(button.getAttribute("data-publish-field"));
+        if (!button) return;
+        if (button.getAttribute("data-publish-missing-kind") === "blocking-claims" && openBlockingClaimReviewForActiveClinic()) {
+          return;
+        }
+        focusPublishField(button.getAttribute("data-publish-field"));
+      });
+      el("clinicClaimsList").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-review-id]");
+        if (!button) return;
+        if (activeClinic && hasUnsavedClinicFormChanges()) {
+          toast("Guarda o descarta los cambios de la ficha antes de abrir esa revisión.");
+          return;
+        }
+        if (activeClinic) closeClinicEditor();
+        openReviewEntry(button.getAttribute("data-review-id"));
       });
       el("clinicManualReviewFocusBtn").addEventListener("click", function () {
         focusManualReviewFieldTargetDirectly(activeClinicReviewFocusTarget);

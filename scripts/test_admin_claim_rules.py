@@ -25,12 +25,19 @@ def main() -> None:
         "riskPill(decision.risk)",
         "actionPill(decision.action)",
         "function claimTraceText",
+        "function blockingClaimReviewsForClinic",
+        "function openBlockingClaimReviewForClinic",
+        "function publicationMissingIsBlockingClaims",
         "function isNoisyTitleIdentityClaim",
         "vitalarga-shadow-extractor",
         '.select("field_path, verification_status, source_record_id, confidence, agent_name")',
         "Motivo:",
         "Guardado:",
         "Abrir fuente",
+        "claim-technical-evidence",
+        "claim-action-item",
+        "data-publish-missing-kind",
+        "Evidencia técnica guardada",
         '.select("id, source_url, source_title, retrieved_at")',
         "function materialChangeItems",
         "Posible impacto",
@@ -45,6 +52,8 @@ def main() -> None:
         check(field_path in index, f"missing medium-risk admin field path: {field_path}")
 
     check(".claim-main small" in css, "claim reason style missing")
+    check(".claim-action-item" in css, "claim action style missing")
+    check(".claim-technical-evidence summary" in css, "claim technical evidence disclosure style missing")
     print("OK admin claim rules: evidence cards show rule context")
 
 

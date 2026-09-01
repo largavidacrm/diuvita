@@ -185,6 +185,7 @@ def verify_extraction(extraction: dict[str, Any]) -> dict[str, Any]:
         "source_url": (extraction.get("source") or {}).get("source_url"),
         "verified_claims": verified_claims,
         "rule_decisions": decisions,
+        "quality_warnings": extraction.get("quality_warnings") or [],
         "summary": {
             "claims": len(verified_claims),
             "verdicts": counts,

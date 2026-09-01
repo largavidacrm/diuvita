@@ -195,6 +195,8 @@ TEAM_END_MARKERS = (
     "contacto",
     "menú legal",
     "menu legal",
+    "aviso legal",
+    "legal notice",
     "©",
 )
 NAV_END_MARKERS = (
@@ -302,6 +304,12 @@ ROLE_PHRASES = (
     "Traumatologo",
     "Técnico Auxiliar",
     "Responsable RRSS",
+    "Psiquiatría",
+    "Psiquiatria",
+    "Psiquiatría Infantil",
+    "Psiquiatria Infantil",
+    "Infantil Psiquiatría",
+    "Infantil Psiquiatria",
     "Staff",
     "Higienista",
     "Auxiliar",
@@ -359,6 +367,7 @@ ROLE_START_WORDS = {
     "Experta",
     "Experto",
     "Fertilidad",
+    "Infantil",
     "Fisioterapia",
     "Fisioterapeuta",
     "Flebología",
@@ -422,6 +431,9 @@ ROLE_START_WORDS = {
     "Podoposturóloga",
     "Podoposturologa",
     "PNIE",
+    "Psiquiatría",
+    "Psiquiatria",
+    "Psiquiatra",
     "Psicología",
     "Psicologia",
     "Recepción",
@@ -455,6 +467,39 @@ ROLE_START_WORDS = {
     "Unidades",
 }
 TITLE_WORDS = {"Dr", "Dra", "Doctor", "Doctora", "Lic", "Licenciado", "Licenciada", "D", "DO"}
+PROFESSIONAL_NAME_STOP_WORDS = {
+    "Academy",
+    "Aviso",
+    "Bachelor",
+    "Board",
+    "Calorimetry",
+    "Colaboradores",
+    "Collaborators",
+    "Copyright",
+    "Department",
+    "ESCAR",
+    "European",
+    "Expert",
+    "Experts",
+    "Faculty",
+    "Hospital",
+    "Legal",
+    "Notice",
+    "Policy",
+    "Privacy",
+    "Respirometry",
+    "Sociedad",
+    "Society",
+    "University",
+}
+PROFESSIONAL_REJECT_RE = re.compile(
+    r"\b(?:"
+    r"aviso\s+legal|calorimetry|colaboradores|collaborators|cookie|copyright|"
+    r"european\s+society|legal\s+notice|privacy\s+policy|respirometry|society|"
+    r"sociedad|terms?\s+(?:and\s+)?conditions?"
+    r")\b",
+    re.I,
+)
 CLINIC_NAME_TERMS = {
     "age",
     "center",
@@ -597,6 +642,7 @@ def fold(value: str) -> str:
 
 ROLE_START_KEYS = {fold(word.rstrip(".")) for word in ROLE_START_WORDS}
 TITLE_WORD_KEYS = {fold(word.rstrip(".")) for word in TITLE_WORDS}
+PROFESSIONAL_NAME_STOP_KEYS = {fold(word.rstrip(".")) for word in PROFESSIONAL_NAME_STOP_WORDS}
 
 
 def canonical_city(value: str) -> str:
@@ -837,14 +883,14 @@ def clean_titled_name(title_raw: str, name_raw: str) -> str:
     words = []
     for word in name_words(name_raw):
         clean_key = fold(word.rstrip("."))
-        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS:
+        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS or clean_key in PROFESSIONAL_NAME_STOP_KEYS:
             break
         words.append(word)
         if len(words) >= 6:
             break
     if len(words) < 2:
         return ""
-    return f"{title} {' '.join(words)}"
+    return clean_professional_candidate(f"{title} {' '.join(words)}")
 
 
 def clean_titled_professional(match: re.Match[str]) -> str:
@@ -881,14 +927,72 @@ def clean_team_professional(raw: str) -> str:
     words = []
     for word in name_words(clean):
         clean_key = fold(word.rstrip("."))
-        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS:
+        if clean_key in ROLE_START_KEYS or clean_key in TITLE_WORD_KEYS or clean_key in PROFESSIONAL_NAME_STOP_KEYS:
             break
         words.append(word)
     if len(words) >= 3 and fold(words[0]) == fold(words[1]):
         words = words[1:]
     if len(words) < 2:
         return ""
-    return " ".join(words[:4])
+    return clean_professional_candidate(" ".join(words[:4]))
+
+
+def professional_name_words(value: str) -> list[str]:
+    clean = re.sub(rf"^(?:{TITLE_PREFIX})\s+", "", normalize_space(value), flags=re.I)
+    return name_words(clean)
+
+
+def clean_professional_candidate(value: Any) -> str:
+    clean = normalize_space(str(value or "")).strip(" -–—|:;.,")
+    if not clean or PROFESSIONAL_REJECT_RE.search(clean):
+        return ""
+    if any(marker in clean.lower() for marker in ("http://", "https://", "@")):
+        return ""
+    if re.search(r"\d", clean):
+        return ""
+    words = professional_name_words(clean)
+    if len(words) < 2 or len(words) > 6:
+        return ""
+    folded_words = [fold(word.rstrip(".")) for word in words]
+    if any(word in ROLE_START_KEYS or word in TITLE_WORD_KEYS or word in PROFESSIONAL_NAME_STOP_KEYS for word in folded_words):
+        return ""
+    return clean
+
+
+def clean_professional_values(value: Any) -> tuple[list[str], list[str]]:
+    if isinstance(value, str):
+        raw_values = [item for item in re.split(r"[\n;•]+", value) if normalize_space(item)]
+    elif isinstance(value, list):
+        raw_values = [str(item) for item in value if normalize_space(str(item or ""))]
+    else:
+        raw_values = []
+
+    accepted: list[str] = []
+    rejected: list[str] = []
+    for raw in raw_values:
+        clean = clean_professional_value(raw)
+        if clean:
+            accepted.append(clean)
+        elif normalize_space(raw):
+            rejected.append(normalize_space(raw))
+    return dedupe_professionals(unique(accepted)), unique(rejected)
+
+
+def clean_professional_list(value: Any) -> list[str]:
+    return clean_professional_values(value)[0]
+
+
+def clean_professional_value(value: Any) -> str:
+    raw = normalize_space(str(value or ""))
+    if not raw:
+        return ""
+    titled = re.match(rf"^(?P<title>{TITLE_PREFIX})\s+(?P<name>.+)$", raw)
+    if titled:
+        return clean_titled_name(titled.group("title"), title_name_segment(raw, titled.start("name")))
+    role_pair = TEAM_ROLE_PAIR_RE.match(strip_team_ctas(raw))
+    if role_pair:
+        return clean_team_professional(role_pair.group("name"))
+    return clean_professional_candidate(raw)
 
 
 def professional_key(value: str) -> str:
@@ -948,7 +1052,21 @@ def extract_professionals(text: str) -> list[str]:
         clean = clean_team_professional(match.group("name"))
         if clean:
             professionals.append((team_offset + match.start("name"), clean))
-    return dedupe_professionals(unique([name for _, name in sorted(professionals, key=lambda item: item[0])]))
+    return clean_professional_list([name for _, name in sorted(professionals, key=lambda item: item[0])])
+
+
+def professional_extraction_warnings(text: str, professionals: list[str]) -> list[str]:
+    team_text = professional_team_window(text) or text[:EXTRACTION_EXCERPT_CHARS]
+    warnings: list[str] = []
+    if PROFESSIONAL_REJECT_RE.search(team_text):
+        warnings.append(
+            "La fuente de equipo contiene texto de navegación/legal o entidades profesionales; revisar nombres antes de aprobar."
+        )
+    if professionals and len(professionals) > 20:
+        warnings.append(
+            "Lista de especialistas muy larga; confirmar que son profesionales publicados y no un directorio mezclado."
+        )
+    return warnings
 
 
 def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:
@@ -1204,6 +1322,8 @@ def claim_website(url: str) -> str | None:
 def extract_from_fetch(result: FetchResult) -> dict[str, Any]:
     snapshot = extraction_snapshot_from_fetch(result)
     claims = build_claims(snapshot)
+    text = normalize_space(str(snapshot.get("text_excerpt") or ""))
+    professionals = extract_professionals(text)
     return {
         "workflow": "EXTRACT_CLINIC_PROFILE",
         "mode": "shadow",
@@ -1212,6 +1332,7 @@ def extract_from_fetch(result: FetchResult) -> dict[str, Any]:
         "candidate_profile": build_profile(snapshot),
         "field_claims": claims,
         "rule_decisions": decide_many(claims),
+        "quality_warnings": professional_extraction_warnings(text, professionals),
     }
 
 
