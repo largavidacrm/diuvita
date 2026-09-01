@@ -189,8 +189,8 @@ def require_llm_ready(packet: dict[str, Any]) -> None:
     if packet_is_llm_ready(packet):
         return
     raise SystemExit(
-        "Packet is not LLM-ready: source-only review lacks operator/job context. "
-        "Review manually or use review_proposal_decision_packets.py --llm-ready-only for batches."
+        "Packet is not LLM-ready: source-only proposal lacks operator/job context and no manual target route is available. "
+        "Review manually or use review_llm_batch_preflight.py --compact before assisted batches."
     )
 
 

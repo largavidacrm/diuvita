@@ -804,11 +804,25 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
     return packet
 
 
-def packet_is_llm_ready(packet: dict[str, Any]) -> bool:
+def packet_has_manual_target_prompt_route(packet: dict[str, Any]) -> bool:
+    return bool(
+        packet.get("review_type") == "clinic_quality_audit"
+        and packet.get("manual_review_targets")
+        and packet.get("manual_review_context")
+    )
+
+
+def packet_llm_readiness_status(packet: dict[str, Any]) -> str:
+    if packet_has_manual_target_prompt_route(packet):
+        return "manual_target_prompt_ready"
     source_origin = packet.get("source_origin_status")
     if isinstance(source_origin, dict) and source_origin.get("status") == "source_without_context":
-        return False
-    return True
+        return "blocked_source_without_context"
+    return "strict_prompt_ready"
+
+
+def packet_is_llm_ready(packet: dict[str, Any]) -> bool:
+    return packet_llm_readiness_status(packet) != "blocked_source_without_context"
 
 
 def build_report(

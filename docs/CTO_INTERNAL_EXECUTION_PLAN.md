@@ -1106,6 +1106,11 @@ Next 10 technical steps:
      locally in `scripts/review_llm_batch_preflight.py`: it checks one-card
      decision packets against strict prompt readiness, reports source-only
      blockers, and never calls an LLM or writes Supabase.
+214. Distinguish manual-field navigation from data-changing LLM readiness.
+     Done locally in `scripts/review_proposal_decision_packets.py` and
+     `scripts/review_llm_batch_preflight.py`: quality-audit cards with a clear
+     admin field are **manual target prompt ready**, while source-only proposal
+     cards remain blocked until they have operator/job context.
 
 ## Daniel decision checkpoints
 

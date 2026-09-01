@@ -101,22 +101,27 @@ def main():
     check(report["summary"]["llm_ready"] == 2, "ready count missing")
     check(report["summary"]["blocked"] == 1, "blocked count missing")
     check(report["summary"]["source_without_context"] == 1, "source-only count missing")
+    check(report["summary"]["blocked_source_without_context"] == 1, "blocked source-only count missing")
+    check(report["summary"]["manual_target_prompt_ready"] == 1, "manual target ready count missing")
     check(report["summary"]["manual_review_target_packets"] == 1, "manual target count missing")
 
     ready = items["ready-1"]
     check(ready["strict_prompt_status"] == "ready", "context-ready packet should pass strict prompt preflight")
+    check(ready["llm_readiness_status"] == "strict_prompt_ready", "context-ready readiness status missing")
     check(ready["prompt_schema_version"] == "review_decision_llm_prompt.v1", "prompt schema marker missing")
     check(ready["prompt_write_policy"] == "no_writes", "prompt write policy missing")
     check(ready["expected_actions"] == ["approve", "reject", "modify"], "expected action contract missing")
 
     blocked = items["blocked-1"]
     check(blocked["strict_prompt_status"] == "blocked", "source-only packet should be blocked")
+    check(blocked["llm_readiness_status"] == "blocked_source_without_context", "blocked readiness status missing")
     check(blocked["llm_ready"] is False, "blocked packet should not be LLM-ready")
     check("source_without_context" in blocked["blocked_reason"], "blocked reason should explain source-only context")
     check(blocked["next_step"] == "human_review_or_source_handoff", "blocked next step missing")
 
     manual = items["quality-1"]
     check(manual["strict_prompt_status"] == "ready", "manual target packet should produce a safe prompt")
+    check(manual["llm_readiness_status"] == "manual_target_prompt_ready", "manual readiness status missing")
     check(manual["manual_review_targets"] == ["profesionales"], "manual target key missing")
     check(manual["clinic_name"] == "Tiara Health", "manual clinic name missing")
 
@@ -128,7 +133,10 @@ def main():
     compact = format_preflight_report(report, limit=2)
     check("# Preflight LLM de revisiones" in compact, "compact title missing")
     check("Preparables para LLM estricto: 2/3" in compact, "compact ready count missing")
+    check("Rutas manuales listas: 1" in compact, "compact manual route count missing")
+    check("Bloqueadas por fuente sin contexto: 1" in compact, "compact source-only blocked count missing")
     check("Mantener manuales o pasar URL oficial" in compact, "compact manual section missing")
+    check("ruta manual lista" in compact, "compact manual route label missing")
     check("source_without_context" in compact, "compact blocked reason missing")
 
     source = (ROOT / "scripts" / "review_llm_batch_preflight.py").read_text(encoding="utf-8")

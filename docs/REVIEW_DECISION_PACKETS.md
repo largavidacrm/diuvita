@@ -170,6 +170,9 @@ Este informe no llama a ningún LLM y no escribe datos. Solo indica qué tarjeta
 pasarían el modo estricto, cuáles quedan bloqueadas por **fuente sin contexto**
 y qué revisiones manuales tienen un campo concreto para abrir en el admin. Sin
 `--compact`, devuelve JSON para automatizaciones internas.
+Las revisiones manuales con campo claro pueden aparecer como **ruta manual
+lista**: eso solo permite preparar una ayuda de navegación hacia el campo, no
+rellenar valores ni publicar datos.
 Para quedarse solo con tarjetas estrictamente preparables:
 
 ```bash

@@ -15,6 +15,7 @@ from review_proposal_decision_packets import (
     load_input_file,
     load_rows,
     packet_is_llm_ready,
+    packet_llm_readiness_status,
 )
 
 
@@ -45,6 +46,7 @@ def blocked_reason(packet: dict[str, Any]) -> str:
 
 def preflight_item(packet: dict[str, Any]) -> dict[str, Any]:
     clinic = packet.get("clinic") if isinstance(packet.get("clinic"), dict) else {}
+    readiness_status = packet_llm_readiness_status(packet)
     item = {
         "review_id": packet.get("review_id"),
         "title": packet.get("display_title") or packet.get("title"),
@@ -52,6 +54,7 @@ def preflight_item(packet: dict[str, Any]) -> dict[str, Any]:
         "review_type": packet.get("review_type"),
         "proposal_type": packet.get("proposal_type"),
         "source_origin_status": source_origin_label(packet),
+        "llm_readiness_status": readiness_status,
         "manual_review_targets": manual_target_keys(packet),
         "field_count": len(packet.get("proposed_change") or []),
         "warning_count": len(packet.get("warnings") or []),
@@ -87,7 +90,9 @@ def preflight_item(packet: dict[str, Any]) -> dict[str, Any]:
         .get("properties", {})
         .get("action", {})
         .get("enum", []),
-        "next_step": "safe_to_prepare_llm_suggestion_then_validate_locally",
+        "next_step": "safe_to_prepare_manual_navigation_suggestion_then_validate_locally"
+        if readiness_status == "manual_target_prompt_ready"
+        else "safe_to_prepare_llm_suggestion_then_validate_locally",
     })
     return item
 
@@ -99,6 +104,14 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         item for item in items
         if item.get("source_origin_status") == "source_without_context"
     ]
+    blocked_source_only = [
+        item for item in blocked
+        if item.get("source_origin_status") == "source_without_context"
+    ]
+    manual_target_ready = [
+        item for item in ready
+        if item.get("llm_readiness_status") == "manual_target_prompt_ready"
+    ]
     manual_targets = [
         item for item in items
         if item.get("manual_review_targets")
@@ -109,19 +122,26 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         "llm_ready": len(ready),
         "blocked": len(blocked),
         "source_without_context": len(source_only),
+        "blocked_source_without_context": len(blocked_source_only),
+        "manual_target_prompt_ready": len(manual_target_ready),
         "manual_review_target_packets": len(manual_targets),
     }
 
 
 def compact_item_line(item: dict[str, Any]) -> str:
     title = str(item.get("title") or "Revisión sin título")
-    status = "lista para LLM" if item.get("llm_ready") else "manual"
+    if item.get("llm_readiness_status") == "manual_target_prompt_ready":
+        status = "ruta manual lista"
+    elif item.get("llm_ready"):
+        status = "lista para LLM"
+    else:
+        status = "manual"
     target_keys = item.get("manual_review_targets") or []
     target_text = f" · campos: {', '.join(target_keys[:4])}" if target_keys else ""
     if len(target_keys) > 4:
         target_text += f" +{len(target_keys) - 4}"
     reason = ""
-    if item.get("blocked_reason"):
+    if not item.get("llm_ready") and item.get("blocked_reason"):
         reason = " · " + str(item["blocked_reason"]).split(":", 1)[0]
     return f"- {title}: {status}{target_text}{reason}"
 
@@ -138,8 +158,9 @@ def format_preflight_report(report: dict[str, Any], limit: int = 8) -> str:
         "",
         "## Resumen",
         f"- Preparables para LLM estricto: {summary.get('llm_ready', 0)}/{summary.get('total_packets', 0)}",
+        f"- Rutas manuales listas: {summary.get('manual_target_prompt_ready', 0)}",
         f"- Bloqueadas: {summary.get('blocked', 0)}",
-        f"- Fuente sin contexto: {summary.get('source_without_context', 0)}",
+        f"- Bloqueadas por fuente sin contexto: {summary.get('blocked_source_without_context', 0)}",
         f"- Con campo manual detectado: {summary.get('manual_review_target_packets', 0)}",
     ]
     if ready:

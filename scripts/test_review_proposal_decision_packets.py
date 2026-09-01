@@ -3,7 +3,12 @@
 
 from pathlib import Path
 
-from review_proposal_decision_packets import build_report, decision_packet, packet_is_llm_ready
+from review_proposal_decision_packets import (
+    build_report,
+    decision_packet,
+    packet_is_llm_ready,
+    packet_llm_readiness_status,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -165,7 +170,9 @@ def main():
     check(reviews_origin["source_host"] == "clinic.example", "legacy source context should keep only the host by default")
     check("source_url" not in reviews_origin, "legacy source context should not expose full URL by default")
     check(packet_is_llm_ready(safe_packet) is True, "context-ready packets should be available for LLM help")
+    check(packet_llm_readiness_status(safe_packet) == "strict_prompt_ready", "context-ready packet status missing")
     check(packet_is_llm_ready(reviews_packet) is False, "source-only packets should be excluded from LLM-ready batches")
+    check(packet_llm_readiness_status(reviews_packet) == "blocked_source_without_context", "source-only status missing")
     reviews_with_maps_packet = decision_packet({
         "id": "reviews-2",
         "title": "Revisar valoraciones Google: Clinic",
@@ -258,6 +265,11 @@ def main():
     check(quality_packet["proposal_type"] == "Revisión manual", "quality proposal type should be manual review")
     check(quality_packet["display_title"] == "Revisión manual: Tiara Health", "quality title should be human-readable")
     check(not quality_packet["editable_fields"], "quality audit issues should not become direct LLM-editable fields")
+    check(packet_is_llm_ready(quality_packet) is True, "manual target packets should allow LLM navigation help")
+    check(
+        packet_llm_readiness_status(quality_packet) == "manual_target_prompt_ready",
+        "manual target readiness status missing",
+    )
     check(
         quality_packet["proposed_change"][0]["manual_review_target"]["key"] == "profesionales",
         "professional quality issue should point to the manual specialists field",
