@@ -1202,9 +1202,16 @@
     function renderLocalVersionPill() {
       var pill = el("localVersionPill");
       var version = text(window.VITALARGA_LOCAL_VERSION || "");
-      var hasVersion = version && version.indexOf("__VITALARGA_LOCAL_VERSION__") < 0;
-      pill.textContent = hasVersion ? "Local · " + version : "";
-      show(pill, hasVersion);
+      var isPlaceholder = !version || version.indexOf("__VITALARGA_LOCAL_VERSION__") >= 0;
+      var isLocalHost = ["127.0.0.1", "localhost", "::1"].indexOf(window.location.hostname) >= 0;
+      var hasVersion = version && !isPlaceholder;
+      var showMissingLocalVersion = isLocalHost && isPlaceholder;
+      pill.textContent = hasVersion ? "Local · " + version : "Local sin sello de versión";
+      pill.title = hasVersion
+        ? "Versión local servida por este worktree."
+        : "Esta pestaña local no confirma el commit actual. Abre el servidor local activo.";
+      pill.classList.toggle("warning", showMissingLocalVersion);
+      show(pill, hasVersion || showMissingLocalVersion);
     }
 
     function metric(label, value) {

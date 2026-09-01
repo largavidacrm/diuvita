@@ -156,6 +156,12 @@ body.sidebar-collapsed .sidebar-toggle {
   text-overflow: ellipsis;
 }
 
+.local-version-pill.warning {
+  border-color: rgba(176, 69, 58, 0.28);
+  background: rgba(255, 238, 230, 0.9);
+  color: var(--danger);
+}
+
 .btn {
   min-height: 2.5rem;
   border-radius: 8px;
