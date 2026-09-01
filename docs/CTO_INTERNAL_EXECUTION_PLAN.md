@@ -1062,6 +1062,10 @@ Next 10 technical steps:
      context now show a compact **Fuente sin contexto de tarea** line, so
      Daniel and future LLM assistance treat the URL as evidence only, not as an
      instruction to infer missing intent or broaden the review.
+204. Add readiness markers for LLM context status reports. Done locally in
+     `scripts/release_readiness_report.py`: local readiness now verifies that
+     both the CTO digest and global plan still expose source-origin readiness
+     before considering the worktree locally prepared.
 
 ## Daniel decision checkpoints
 

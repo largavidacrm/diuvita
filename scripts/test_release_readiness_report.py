@@ -39,6 +39,8 @@ def main():
     check(any(item["name"] == "LLM Google reviews suggestion guard" for item in local_checks), "LLM Google reviews suggestion guard marker missing")
     check(any(item["name"] == "LLM source origin status" for item in local_checks), "LLM source origin status marker missing")
     check(any(item["name"] == "LLM prompt source origin status" for item in local_checks), "LLM prompt source origin status marker missing")
+    check(any(item["name"] == "LLM source-origin digest status" for item in local_checks), "LLM source-origin digest marker missing")
+    check(any(item["name"] == "LLM source-origin global status" for item in local_checks), "LLM source-origin global marker missing")
     check(any(item["name"] == "built admin source-only origin warning" for item in local_checks), "built admin source-only origin marker missing")
     check(any(item["name"] == "built admin manual review context" for item in local_checks), "built admin manual review marker missing")
     check(any(item["name"] == "built admin manual review source handoff" for item in local_checks), "built admin manual source handoff marker missing")

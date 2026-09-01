@@ -46,6 +46,8 @@ SOURCE_MARKERS = [
     ("LLM Google reviews suggestion guard", "scripts/validate_review_decision_suggestion.py", "google_reviews_dependency_errors"),
     ("LLM source origin status", "scripts/review_proposal_decision_packets.py", "source_origin_status"),
     ("LLM prompt source origin status", "scripts/prepare_review_decision_llm_prompt.py", '"source_origin_status"'),
+    ("LLM source-origin digest status", "scripts/admin_digest.py", "source_origin_audit_status"),
+    ("LLM source-origin global status", "scripts/global_plan_status.py", "Preparación LLM de revisiones"),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
     ("logo download guard", "scripts/fetch_logos.py", "def looks_like_image"),
 ]
