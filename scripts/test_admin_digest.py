@@ -145,6 +145,9 @@ def main():
         },
         "google_link_reviews": {
             "open_count": 4,
+            "direct_maps_count": 2,
+            "weak_maps_count": 1,
+            "reviews_without_maps_count": 1,
             "first_review": {
                 "review_type": "clinic_profile_enrichment",
                 "priority": 60,
@@ -377,7 +380,7 @@ def main():
         "location coverage status missing",
     )
     check(
-        google_link_review_status(digest) == "4 tarjetas; primera: Completar enlaces Google: Sensabell",
+        google_link_review_status(digest) == "4 tarjetas; 2 parecen perfil directo; 1 dudosa; 1 valoración sin Maps confirmado; primera: Completar enlaces Google: Sensabell",
         "Google link review status missing",
     )
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
@@ -471,7 +474,10 @@ def main():
     )
     check("Publicacion web: con cambios pendientes de verse online" in pending_output, "pending publication line missing")
     check("Freno bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard line missing")
-    check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
+    check("Google Maps pendientes: 4 tarjetas; 2 parecen perfil directo; 1 dudosa; 1 valoración sin Maps confirmado; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
+    check("'direct_maps_count', count(*) filter (where direct_maps_proposed)" in source, "Google Maps digest should count direct-looking profiles")
+    check("'weak_maps_count', count(*) filter (where weak_maps_proposed)" in source, "Google Maps digest should count weak proposals")
+    check("'reviews_without_maps_count', count(*) filter (" in source, "Google Maps digest should count reviews without confirmed Maps")
     check("Ayuda IA revisiones: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos" in output, "source origin audit line missing")
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
     check(

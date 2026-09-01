@@ -1315,6 +1315,12 @@ Next 10 technical steps:
      **Completar ficha** are presented as **Revisión manual**. This keeps the
      visible workflow centered on a clear review decision without changing the
      underlying review rows or LLM packet scope.
+247. Add safer Google Maps review counts to the CTO digest. Done locally in
+     `scripts/admin_digest.py`: Google Maps review summaries now show how many
+     open cards look like direct profiles, how many are weak/doubtful Maps
+     links and how many Google-review links still need a confirmed Maps
+     profile. These are read-only triage signals and never approve or publish
+     a Google link.
 
 ## Daniel decision checkpoints
 

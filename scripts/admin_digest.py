@@ -55,8 +55,10 @@ def parse_timestamp(value: Any) -> str:
 def load_digest(admin_email: str, limit: int, local_env: dict[str, str]) -> dict[str, Any]:
     has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
     proposed_google_maps_check = "btrim(proposed.value) ~* '^https?://'"
+    proposed_direct_google_maps_check = google_maps_profile_url_sql("proposed.value")
     location_maps_value = coalesced_jsonb_text_sql("location.value", ("maps_url", "google_maps_url", "map_url"))
     location_maps_check = f"btrim({location_maps_value}) ~* '^https?://'"
+    location_direct_maps_check = google_maps_profile_url_sql(location_maps_value)
     sql = f"""
 with claims as (
   select set_config(
@@ -266,7 +268,68 @@ google_link_review_rows as (
     rq.created_at,
     rq.updated_at,
     c.slug as clinic_slug,
-    c.display_name as clinic_name
+    c.display_name as clinic_name,
+    ({has_google_maps}) as current_maps_present,
+    (exists (
+      select 1
+      from jsonb_each_text(
+        (case when jsonb_typeof(rq.payload -> 'proposed_fields') = 'object' then rq.payload -> 'proposed_fields' else '{{}}'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
+      ) proposed(key, value)
+      where proposed.key in ('maps_url', 'google_maps_url')
+        and {proposed_direct_google_maps_check}
+    ) or exists (
+      select 1
+      from jsonb_array_elements(
+        (case when jsonb_typeof(rq.payload #> '{{proposed_fields,locations}}') = 'array' then rq.payload #> '{{proposed_fields,locations}}' else '[]'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload #> '{{proposed_current_data,locations}}') = 'array' then rq.payload #> '{{proposed_current_data,locations}}' else '[]'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
+      ) location(value)
+      where {location_direct_maps_check}
+    )) as direct_maps_proposed,
+    (exists (
+      select 1
+      from jsonb_each_text(
+        (case when jsonb_typeof(rq.payload -> 'proposed_fields') = 'object' then rq.payload -> 'proposed_fields' else '{{}}'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
+      ) proposed(key, value)
+      where proposed.key in ('maps_url', 'google_maps_url')
+        and {proposed_google_maps_check}
+        and not {proposed_direct_google_maps_check}
+    ) or exists (
+      select 1
+      from jsonb_array_elements(
+        (case when jsonb_typeof(rq.payload #> '{{proposed_fields,locations}}') = 'array' then rq.payload #> '{{proposed_fields,locations}}' else '[]'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload #> '{{proposed_current_data,locations}}') = 'array' then rq.payload #> '{{proposed_current_data,locations}}' else '[]'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
+      ) location(value)
+      where {location_maps_check}
+        and not {location_direct_maps_check}
+    )) as weak_maps_proposed,
+    (exists (
+      select 1
+      from jsonb_each_text(
+        (case when jsonb_typeof(rq.payload -> 'proposed_fields') = 'object' then rq.payload -> 'proposed_fields' else '{{}}'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
+      ) proposed(key, value)
+      where proposed.key in ('google_reviews_url', 'reviews_url')
+        and btrim(proposed.value) ~* '^https?://'
+    ) or exists (
+      select 1
+      from jsonb_array_elements(
+        (case when jsonb_typeof(rq.payload #> '{{proposed_fields,locations}}') = 'array' then rq.payload #> '{{proposed_fields,locations}}' else '[]'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload #> '{{proposed_current_data,locations}}') = 'array' then rq.payload #> '{{proposed_current_data,locations}}' else '[]'::jsonb end) ||
+        (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
+      ) location(value)
+      where coalesce(
+        nullif(btrim(location.value ->> 'google_reviews_url'), ''),
+        nullif(btrim(location.value ->> 'reviews_url'), ''),
+        nullif(btrim(location.value ->> 'valoraciones_url'), '')
+      ) ~* '^https?://'
+    )) as reviews_proposed
   from public.review_queue rq
   left join public.clinics c on c.id = rq.clinic_id
   where rq.status = 'open'
@@ -305,6 +368,12 @@ google_link_review_rows as (
 google_link_reviews as (
   select jsonb_build_object(
     'open_count', count(*),
+    'direct_maps_count', count(*) filter (where direct_maps_proposed),
+    'weak_maps_count', count(*) filter (where weak_maps_proposed),
+    'reviews_without_maps_count', count(*) filter (
+      where reviews_proposed
+        and not (current_maps_present or direct_maps_proposed)
+    ),
     'first_review', coalesce(
       (
         select to_jsonb(items)
@@ -318,7 +387,11 @@ google_link_reviews as (
             created_at,
             updated_at,
             clinic_slug,
-            clinic_name
+            clinic_name,
+            current_maps_present,
+            direct_maps_proposed,
+            weak_maps_proposed,
+            reviews_proposed
           from google_link_review_rows
           order by priority desc, created_at asc, title asc, id asc
           limit 1
@@ -1826,7 +1899,20 @@ def google_link_review_status(digest: dict[str, Any]) -> str:
         first_label = f"{name}: {title}"
     else:
         first_label = title or name or "primera tarjeta"
-    return f"{count} {plural(count, 'tarjeta', 'tarjetas')}; primera: {first_label}"
+    status_parts = []
+    direct_maps = as_int(status.get("direct_maps_count"))
+    weak_maps = as_int(status.get("weak_maps_count"))
+    reviews_without_maps = as_int(status.get("reviews_without_maps_count"))
+    if direct_maps:
+        status_parts.append(f"{direct_maps} {plural(direct_maps, 'parece perfil directo', 'parecen perfil directo')}")
+    if weak_maps:
+        status_parts.append(f"{weak_maps} {plural(weak_maps, 'dudosa', 'dudosas')}")
+    if reviews_without_maps:
+        status_parts.append(
+            f"{reviews_without_maps} {plural(reviews_without_maps, 'valoración sin Maps confirmado', 'valoraciones sin Maps confirmado')}"
+        )
+    status_detail = f"; {'; '.join(status_parts)}" if status_parts else ""
+    return f"{count} {plural(count, 'tarjeta', 'tarjetas')}{status_detail}; primera: {first_label}"
 
 
 def specialist_review_status(digest: dict[str, Any]) -> str:

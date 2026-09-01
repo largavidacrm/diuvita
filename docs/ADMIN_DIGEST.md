@@ -14,7 +14,8 @@ It answers:
 - whether Google Maps/review-link proposals are open and which review card
   should be opened first; this intentionally includes weak Maps URLs so Daniel
   can reject or correct them instead of leaving them hidden outside the Maps
-  review path;
+  review path; the digest also separates direct-looking profiles, weak Maps
+  proposals and Google-review links that still need a confirmed Maps profile;
 - whether specialist proposals are already present and which card has the
   largest batch;
 - what the next recommended internal action is;
