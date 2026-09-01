@@ -32,6 +32,17 @@ def main() -> None:
         'id="reviewClinicProfileFacts"',
         'id="reviewClinicProfileDataCount"',
         'id="reviewClinicProfileData"',
+        'id="reviewClinicInlineEditBtn"',
+        'id="reviewClinicEditPanel"',
+        'id="reviewClinicEditChangeCount"',
+        'id="reviewClinicEditName"',
+        'id="reviewClinicEditSummary"',
+        'id="reviewClinicEditWebsite"',
+        'id="reviewClinicEditLocations"',
+        'id="reviewClinicEditServices"',
+        'id="reviewClinicEditProfessionals"',
+        'id="reviewClinicEditPhone"',
+        'id="reviewClinicEditHint"',
         'id="reviewBackToListBtn"',
         'id="reviewSelectionPanel"',
         'id="reviewDecisionSummary"',
@@ -88,7 +99,8 @@ def main() -> None:
         "Campo a revisar ahora",
         "Campo a corregir: ",
         "Dato pendiente: ",
-        "Guarda la ficha para cerrar esta revisión y pasar a la siguiente.",
+        "Guarda la ficha para cerrar esta revisión y volver a la lista.",
+        "Los cambios se aplican solo si apruebas o guardas la modificación.",
         "URL oficial para el agente",
         "Enviar URL al agente",
         "Editar en ficha",
@@ -266,7 +278,9 @@ def main() -> None:
         and "function reviewClinicProfileFacts" in index
         and "function reviewClinicProfileDataItems" in index
         and "function reviewClinicProfileValue" in index
-        and 'await finishReviewDecision(modified ? "Modificación guardada." : "Propuesta aprobada.", currentId)' in index
+        and "var profileFields = reviewClinicProfileEditedFields(activeReview);" in index
+        and "var decisionModified = Boolean(modified || Object.keys(profileFields).length);" in index
+        and 'await finishReviewDecision(decisionModified ? "Modificación guardada." : "Propuesta aprobada.", currentId)' in index
         and 'await finishReviewDecision("Propuesta rechazada.", currentId)' in index
         and "Propuesta cerrada. Elige la siguiente revisión en la lista." in index
         and "Vuelvo a la lista." in index
@@ -276,6 +290,24 @@ def main() -> None:
         and "admin_create_draft_clinic_from_review_v2" in index
         and "admin_resolve_review_item" in index,
         "approve, reject and modify should resolve one proposal and return to the review list",
+    )
+    check(
+        "var activeReviewProfileEditMode = false" in index
+        and "function reviewClinicProfileEditDefinitions" in index
+        and "function reviewClinicProfileEditListDisplayValue" in index
+        and "function populateReviewClinicEditFields" in index
+        and "function reviewClinicProfileEditedFields" in index
+        and "function updateReviewClinicEditChangeCount" in index
+        and "function setReviewClinicEditMode" in index
+        and "function toggleReviewClinicInlineEdit" in index
+        and "function applyProfileEditFieldsToDraft" in index
+        and "applyProfileEditFieldsToDraft(draft, profileFields)" in index
+        and "persistModifiedCandidatePayload(activeReview, combinedFields)" in index
+        and "Object.keys(reviewClinicProfileEditedFields(activeReview)).length && !reviewEditableItems(activeReview).length" in index
+        and 'el("reviewClinicInlineEditBtn").addEventListener("click", toggleReviewClinicInlineEdit)' in index
+        and 'el("reviewClinicEditPanel").addEventListener("input", updateReviewClinicEditChangeCount)' in index
+        and 'el("reviewClinicEditPanel").addEventListener("change", updateReviewClinicEditChangeCount)' in index,
+        "selected clinic side panel should allow direct profile edits that are saved only through approve/modify",
     )
     check(
         'item.action !== "Revisión manual"' in index
@@ -497,6 +529,7 @@ def main() -> None:
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
+    check(".review-clinic-edit-panel" in css and ".review-clinic-edit-grid" in css and ".review-clinic-panel .link-btn.has-edits" in css, "review clinic direct edit panel should be styled")
     check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css and ".manual-review-section" in css, "manual review context and source handoff should be styled")
     check(".work-grid.review-work-queue .review-list-panel" in css, "review queue side panel should stay explicit in CSS")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")

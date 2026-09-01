@@ -215,7 +215,7 @@
           <div class="clinic-manual-review-copy">
             <span>Revisión manual</span>
             <strong id="clinicManualReviewField">Campo pendiente</strong>
-            <p id="clinicManualReviewIssue">Guarda la ficha para cerrar esta revisión y pasar a la siguiente.</p>
+            <p id="clinicManualReviewIssue">Guarda la ficha para cerrar esta revisión y volver a la lista.</p>
             <small id="clinicManualReviewMeta">Una ficha, una decisión.</small>
           </div>
           <div class="clinic-manual-review-actions">
@@ -667,7 +667,10 @@
               <h2>Ficha de la clínica</h2>
               <span class="muted" id="reviewClinicProfileMeta">Abre una propuesta para ver su ficha.</span>
             </div>
-            <button class="link-btn" id="reviewBackToListBtn" type="button">Volver a lista</button>
+            <div class="panel-actions">
+              <button class="link-btn hidden" id="reviewClinicInlineEditBtn" type="button">Editar ficha</button>
+              <button class="link-btn" id="reviewBackToListBtn" type="button">Volver a lista</button>
+            </div>
           </div>
           <div class="panel-body review-clinic-profile">
             <section class="review-clinic-identity">
@@ -682,6 +685,108 @@
                 <span class="pill" id="reviewClinicProfileDataCount">0 datos</span>
               </div>
               <div class="review-clinic-data" id="reviewClinicProfileData"></div>
+            </section>
+            <section class="review-clinic-edit-panel hidden" id="reviewClinicEditPanel">
+              <div class="review-section-head">
+                <h3>Editar ficha</h3>
+                <span class="pill" id="reviewClinicEditChangeCount">0 cambios</span>
+              </div>
+              <div class="review-clinic-edit-grid">
+                <div class="field field-wide">
+                  <label for="reviewClinicEditName">Nombre</label>
+                  <input id="reviewClinicEditName" type="text">
+                </div>
+                <div class="field field-wide">
+                  <label for="reviewClinicEditSummary">Descripción</label>
+                  <textarea id="reviewClinicEditSummary" rows="4"></textarea>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditWebsite">Web</label>
+                  <input id="reviewClinicEditWebsite" type="url">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditCareMode">Modalidad</label>
+                  <select id="reviewClinicEditCareMode">
+                    <option value="">Sin definir</option>
+                    <option value="presencial">Presencial</option>
+                    <option value="online">Online</option>
+                    <option value="hibrida">Mixta</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditCity">Ciudad</label>
+                  <input id="reviewClinicEditCity" type="text">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditCountry">País</label>
+                  <input id="reviewClinicEditCountry" type="text">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditRegion">Región</label>
+                  <input id="reviewClinicEditRegion" type="text">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditAddress">Dirección</label>
+                  <input id="reviewClinicEditAddress" type="text">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditMapsUrl">Google Maps</label>
+                  <input id="reviewClinicEditMapsUrl" type="url">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditGoogleReviewsUrl">Valoraciones Google</label>
+                  <input id="reviewClinicEditGoogleReviewsUrl" type="url">
+                </div>
+                <div class="field field-wide">
+                  <label for="reviewClinicEditLocations">Sedes</label>
+                  <textarea id="reviewClinicEditLocations" rows="3" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones | Tipo | Visibilidad"></textarea>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditServices">Servicios</label>
+                  <textarea id="reviewClinicEditServices" rows="5"></textarea>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditSpecialties">Especialidades</label>
+                  <textarea id="reviewClinicEditSpecialties" rows="5"></textarea>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditUnits">Unidades</label>
+                  <textarea id="reviewClinicEditUnits" rows="4"></textarea>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditProfessionals">Especialistas</label>
+                  <textarea id="reviewClinicEditProfessionals" rows="4"></textarea>
+                </div>
+                <div class="field field-wide">
+                  <label for="reviewClinicEditTech">Tecnología</label>
+                  <textarea id="reviewClinicEditTech" rows="3"></textarea>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditEmail">Email</label>
+                  <input id="reviewClinicEditEmail" type="email">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditPhone">Teléfono principal</label>
+                  <input id="reviewClinicEditPhone" type="tel">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditPhoneFixed">Teléfono fijo</label>
+                  <input id="reviewClinicEditPhoneFixed" type="tel">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditPhoneMobile">Móvil</label>
+                  <input id="reviewClinicEditPhoneMobile" type="tel">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditPhoneWhatsapp">WhatsApp</label>
+                  <input id="reviewClinicEditPhoneWhatsapp" type="tel">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditInstagram">Instagram</label>
+                  <input id="reviewClinicEditInstagram" type="text">
+                </div>
+              </div>
+              <p class="field-note" id="reviewClinicEditHint">Los cambios se aplican solo si apruebas o guardas la modificación.</p>
             </section>
           </div>
         </section>
@@ -901,6 +1006,7 @@
     var activeClinic = null;
     var activeReview = null;
     var activeReviewModifyMode = false;
+    var activeReviewProfileEditMode = false;
     var activeClinicReview = null;
     var activeClinicReviewIds = [];
     var activeClinicReviewFocusTarget = null;
@@ -5923,7 +6029,7 @@
         : "Campo pendiente";
       el("clinicManualReviewIssue").textContent = issue
         ? "Dato pendiente: " + issue
-        : "Guarda la ficha para cerrar esta revisión y pasar a la siguiente.";
+        : "Guarda la ficha para cerrar esta revisión y volver a la lista.";
       el("clinicManualReviewMeta").textContent =
         reviewDisplayTitle(activeClinicReview) + " · una ficha, una decisión.";
       el("clinicManualReviewFocusBtn").textContent = target ? "Volver al campo activo" : "Campo pendiente";
@@ -6827,12 +6933,19 @@
         city: candidate.city || payload.clinic_city || payload.city,
         region: candidate.region || payload.region,
         address: candidate.address || payload.address,
+        maps_url: candidate.maps_url || candidate.google_maps_url || candidate.map_url || payload.maps_url || payload.google_maps_url || payload.map_url,
+        google_reviews_url: candidate.google_reviews_url || candidate.reviews_url || payload.google_reviews_url || payload.reviews_url,
         summary: candidate.summary || payload.summary,
         services: candidate.services || payload.services,
         specialties: candidate.specialties || payload.specialties,
         unidades: candidate.unidades || payload.unidades,
         profesionales: candidate.profesionales || candidate.professionals || payload.profesionales || payload.professionals,
         tech: candidate.tech || payload.tech,
+        years_in_practice: candidate.years_in_practice || payload.years_in_practice,
+        specialists_count: candidate.specialists_count || payload.specialists_count,
+        team_credentialing_visible: candidate.team_credentialing_visible || payload.team_credentialing_visible,
+        public_pricing: candidate.public_pricing || payload.public_pricing,
+        pricing_url: candidate.pricing_url || payload.pricing_url,
         email: candidate.email || payload.email,
         telefono: candidate.telefono || candidate.phone || candidate.telephone || payload.telefono || payload.phone || payload.telephone,
         phone_fixed: candidate.phone_fixed || payload.phone_fixed,
@@ -6925,6 +7038,7 @@
 
     function renderReviewClinicPanel(row) {
       if (!row) {
+        activeReviewProfileEditMode = false;
         el("reviewClinicProfileMeta").textContent = "Abre una propuesta para ver su ficha.";
         el("reviewClinicProfileStatus").textContent = "Pendiente";
         el("reviewClinicProfileName").textContent = "Sin propuesta seleccionada";
@@ -6932,6 +7046,9 @@
         el("reviewClinicProfileFacts").innerHTML = "";
         el("reviewClinicProfileDataCount").textContent = "0 datos";
         el("reviewClinicProfileData").innerHTML = '<p class="empty">Sin ficha seleccionada.</p>';
+        el("reviewClinicInlineEditBtn").textContent = "Editar ficha";
+        show(el("reviewClinicInlineEditBtn"), false);
+        show(el("reviewClinicEditPanel"), false);
         return;
       }
       var identity = reviewCandidateIdentity(row);
@@ -6953,6 +7070,111 @@
       el("reviewClinicProfileData").innerHTML = dataItems.length
         ? dataItems.map(function (item) { return reviewClinicProfileItemHtml("review-clinic-field", item); }).join("")
         : '<p class="empty">No hay más datos visibles en esta ficha.</p>';
+      if (!activeReviewProfileEditMode) el("reviewClinicInlineEditBtn").textContent = "Editar ficha";
+      show(el("reviewClinicInlineEditBtn"), true);
+      if (!activeReviewProfileEditMode) populateReviewClinicEditFields(row);
+      updateReviewClinicEditChangeCount();
+    }
+
+    function reviewClinicProfileEditDefinitions() {
+      return [
+        { key: "display_name", inputId: "reviewClinicEditName", kind: "text" },
+        { key: "summary", inputId: "reviewClinicEditSummary", kind: "text" },
+        { key: "website", inputId: "reviewClinicEditWebsite", kind: "text" },
+        { key: "care_mode", inputId: "reviewClinicEditCareMode", kind: "text" },
+        { key: "city", inputId: "reviewClinicEditCity", kind: "text" },
+        { key: "country", inputId: "reviewClinicEditCountry", kind: "text" },
+        { key: "region", inputId: "reviewClinicEditRegion", kind: "text" },
+        { key: "address", inputId: "reviewClinicEditAddress", kind: "text" },
+        { key: "maps_url", inputId: "reviewClinicEditMapsUrl", kind: "text" },
+        { key: "google_reviews_url", inputId: "reviewClinicEditGoogleReviewsUrl", kind: "text" },
+        { key: "locations", inputId: "reviewClinicEditLocations", kind: "locations" },
+        { key: "services", inputId: "reviewClinicEditServices", kind: "array" },
+        { key: "specialties", inputId: "reviewClinicEditSpecialties", kind: "array" },
+        { key: "unidades", inputId: "reviewClinicEditUnits", kind: "array" },
+        { key: "profesionales", inputId: "reviewClinicEditProfessionals", kind: "array" },
+        { key: "tech", inputId: "reviewClinicEditTech", kind: "text" },
+        { key: "email", inputId: "reviewClinicEditEmail", kind: "text" },
+        { key: "telefono", inputId: "reviewClinicEditPhone", kind: "text" },
+        { key: "phone_fixed", inputId: "reviewClinicEditPhoneFixed", kind: "text" },
+        { key: "phone_mobile", inputId: "reviewClinicEditPhoneMobile", kind: "text" },
+        { key: "phone_whatsapp", inputId: "reviewClinicEditPhoneWhatsapp", kind: "text" },
+        { key: "instagram", inputId: "reviewClinicEditInstagram", kind: "text" }
+      ];
+    }
+
+    function reviewClinicProfileEditBaseValue(row, definition) {
+      var value = reviewClinicProfileValue(row, definition.key);
+      if (definition.key === "care_mode") return clinicCareModeValue({ care_mode: value });
+      if (definition.kind === "locations") return normalizedLocations(value);
+      if (definition.kind === "array") return Array.isArray(value) ? value : linesToArray(value);
+      return text(value).trim();
+    }
+
+    function reviewClinicProfileEditListDisplayValue(value) {
+      if (!Array.isArray(value)) return text(value);
+      return value.map(function (item) {
+        if (item && typeof item === "object") {
+          return text(item.name || item.nombre || item.display_name || item.title || compactText(JSON.stringify(item), 220)).trim();
+        }
+        return text(item).trim();
+      }).filter(Boolean).join("\n");
+    }
+
+    function reviewClinicProfileEditDisplayValue(row, definition) {
+      var value = reviewClinicProfileEditBaseValue(row, definition);
+      if (definition.kind === "locations") return locationsToLines(value);
+      if (definition.kind === "array") return reviewClinicProfileEditListDisplayValue(value);
+      return text(value).trim();
+    }
+
+    function populateReviewClinicEditFields(row) {
+      reviewClinicProfileEditDefinitions().forEach(function (definition) {
+        setInput(definition.inputId, reviewClinicProfileEditDisplayValue(row, definition));
+      });
+    }
+
+    function reviewClinicProfileInputValue(definition) {
+      if (definition.kind === "locations") return linesToLocations(el(definition.inputId).value);
+      if (definition.kind === "array") return linesToArray(el(definition.inputId).value);
+      return trimmed(definition.inputId);
+    }
+
+    function reviewClinicProfileCompareValue(value) {
+      return normalizedFieldValue(value);
+    }
+
+    function reviewClinicProfileEditedFields(row) {
+      var fields = {};
+      if (!activeReviewProfileEditMode || !row) return fields;
+      reviewClinicProfileEditDefinitions().forEach(function (definition) {
+        var baseValue = reviewClinicProfileEditBaseValue(row, definition);
+        var inputValue = reviewClinicProfileInputValue(definition);
+        if (reviewClinicProfileCompareValue(baseValue) !== reviewClinicProfileCompareValue(inputValue)) {
+          fields[definition.key] = inputValue;
+        }
+      });
+      return fields;
+    }
+
+    function updateReviewClinicEditChangeCount() {
+      var changes = Object.keys(reviewClinicProfileEditedFields(activeReview)).length;
+      el("reviewClinicEditChangeCount").textContent = changes + (changes === 1 ? " cambio" : " cambios");
+      el("reviewClinicEditPanel").classList.toggle("has-edits", changes > 0);
+      el("reviewClinicInlineEditBtn").classList.toggle("has-edits", changes > 0);
+    }
+
+    function setReviewClinicEditMode(enabled) {
+      activeReviewProfileEditMode = Boolean(enabled && activeReview);
+      if (activeReviewProfileEditMode) populateReviewClinicEditFields(activeReview);
+      show(el("reviewClinicEditPanel"), activeReviewProfileEditMode);
+      el("reviewClinicInlineEditBtn").textContent = activeReviewProfileEditMode ? "Cancelar edición" : "Editar ficha";
+      updateReviewClinicEditChangeCount();
+      if (activeReviewProfileEditMode) el("reviewClinicEditName").focus();
+    }
+
+    function toggleReviewClinicInlineEdit() {
+      setReviewClinicEditMode(!activeReviewProfileEditMode);
     }
 
     function proposalFieldOrder() {
@@ -7574,6 +7796,87 @@
       setJsonText(draft.currentData, canonicalKey, clean);
     }
 
+    function profileEditListValue(value) {
+      if (Array.isArray(value)) {
+        return value.map(function (item) { return text(item).trim(); }).filter(Boolean);
+      }
+      return linesToArray(value);
+    }
+
+    function applyProfileEditFieldToDraft(draft, key, value) {
+      var canonicalKey = canonicalProposalField(key);
+      if (canonicalKey !== key) return applyProfileEditFieldToDraft(draft, canonicalKey, value);
+      var clean = proposalListValue(value);
+      if (canonicalKey === "display_name") {
+        draft.displayName = clean;
+        setJsonText(draft.currentData, "name", clean);
+        return;
+      }
+      if (canonicalKey === "website") {
+        draft.website = clean;
+        setJsonText(draft.currentData, "web", clean);
+        return;
+      }
+      if (canonicalKey === "country") {
+        draft.country = clean;
+        setJsonText(draft.currentData, "country", clean);
+        return;
+      }
+      if (canonicalKey === "city") {
+        draft.city = clean;
+        setJsonText(draft.currentData, "city", clean);
+        return;
+      }
+      if (canonicalKey === "region") {
+        draft.region = clean;
+        setJsonText(draft.currentData, "region", clean);
+        return;
+      }
+      if (canonicalKey === "address") {
+        draft.address = clean;
+        setJsonText(draft.currentData, "address", clean);
+        return;
+      }
+      if (canonicalKey === "summary") {
+        draft.summary = clean;
+        setJsonText(draft.currentData, "summary", clean);
+        return;
+      }
+      if (canonicalKey === "maps_url") {
+        setJsonText(draft.currentData, "maps_url", reviewedMapsProfileValue(clean));
+        return;
+      }
+      if (canonicalKey === "google_reviews_url") {
+        setJsonText(draft.currentData, "google_reviews_url", clean);
+        return;
+      }
+      if (canonicalKey === "locations") {
+        setJsonLocations(draft.currentData, "locations", sanitizedLocationsForSave(value));
+        return;
+      }
+      if (["services", "specialties", "unidades", "profesionales"].indexOf(canonicalKey) >= 0) {
+        var items = profileEditListValue(value);
+        if (items.length) draft.currentData[canonicalKey] = items;
+        else delete draft.currentData[canonicalKey];
+        return;
+      }
+      if (canonicalKey === "specialists_count") {
+        setJsonInteger(draft.currentData, "specialists_count", clean);
+        return;
+      }
+      setJsonText(draft.currentData, canonicalKey, clean);
+    }
+
+    function applyProfileEditFieldsToDraft(draft, fields) {
+      Object.keys(fields || {}).forEach(function (key) {
+        applyProfileEditFieldToDraft(draft, key, fields[key]);
+      });
+      if (!draft.displayName || !draft.country || !draft.city) {
+        return "Nombre, ciudad y país son obligatorios para guardar la ficha.";
+      }
+      return "";
+    }
+
     function buildApprovedClinicDraft(clinic, fields) {
       var data = clinic.current_data || {};
       var status = clinic.status || "review";
@@ -7668,7 +7971,8 @@
       el("reviewSourceJobBtn").disabled = loading || sourceJobPaused;
     }
 
-    async function approveClinicClaimRequestReview(fields, modified) {
+    async function approveClinicClaimRequestReview(fields, modified, profileFields) {
+      profileFields = profileFields || {};
       var clinic = reviewClinicForRow(activeReview);
       if (!clinic) {
         toast("Esta reclamación no tiene ficha enlazada para guardar el contacto.");
@@ -7679,18 +7983,28 @@
         toast("Esta reclamación no trae contacto que registrar.");
         return false;
       }
+      var safetyWarnings = approvalSafetyWarnings(profileFields);
+      if (safetyWarnings.length) {
+        toast(safetyWarnings[0]);
+        return false;
+      }
       var built = buildApprovedClinicDraft(clinic, {});
       if (built.error) {
         toast(built.error);
         return false;
       }
       var draft = built.draft;
+      var profileError = applyProfileEditFieldsToDraft(draft, profileFields);
+      if (profileError) {
+        toast(profileError);
+        return false;
+      }
       draft.currentData.internal_contact = mergeClinicInternalContact(
         draft.currentData.internal_contact,
         Object.assign({}, contact, { updated_at: new Date().toISOString() })
       );
       var note = trimmed("reviewResolutionNote") || (modified
-        ? "Contacto interno de reclamación corregido y registrado. No cambia datos públicos ni concede acceso."
+        ? "Contacto interno de reclamación corregido y registrado. Correcciones manuales guardadas si las había; no concede acceso."
         : "Contacto interno registrado desde reclamación de ficha. No cambia datos públicos ni concede acceso.");
       var updateResult = await client.rpc("admin_update_clinic", {
         p_clinic_id: clinic.id,
@@ -7719,18 +8033,19 @@
       return true;
     }
 
-    async function approveExistingClinicReview(fields, modified) {
+    async function approveExistingClinicReview(fields, modified, profileFields) {
+      profileFields = profileFields || {};
       var clinic = reviewClinicForRow(activeReview);
       if (!clinic) {
         toast("No encuentro la ficha enlazada para aprobar esta propuesta.");
         return false;
       }
-      var safetyWarnings = approvalSafetyWarnings(fields);
+      var safetyWarnings = approvalSafetyWarnings(Object.assign({}, fields || {}, profileFields));
       if (safetyWarnings.length) {
         toast(safetyWarnings[0]);
         return false;
       }
-      if (!Object.keys(fields || {}).length) {
+      if (!Object.keys(fields || {}).length && !Object.keys(profileFields).length) {
         var resolvedOnly = await resolveReviewItem(
           activeReview.id,
           "resolved",
@@ -7748,6 +8063,11 @@
         return false;
       }
       var draft = built.draft;
+      var profileError = applyProfileEditFieldsToDraft(draft, profileFields);
+      if (profileError) {
+        toast(profileError);
+        return false;
+      }
       var note = trimmed("reviewResolutionNote") || (modified
         ? "Propuesta aprobada con modificación manual."
         : "Propuesta aprobada y aplicada.");
@@ -7778,18 +8098,20 @@
       return true;
     }
 
-    async function approveCandidateReview(fields, modified) {
+    async function approveCandidateReview(fields, modified, profileFields) {
+      profileFields = profileFields || {};
       if (Number(((activeReview.payload || {}).duplicate_probability) || 0) >= 0.9) {
         toast("Duplicado probable: no apruebo una ficha nueva desde esta tarjeta.");
         return false;
       }
-      var safetyWarnings = approvalSafetyWarnings(fields);
+      var combinedFields = Object.assign({}, fields || {}, profileFields);
+      var safetyWarnings = approvalSafetyWarnings(combinedFields);
       if (safetyWarnings.length) {
         toast(safetyWarnings[0]);
         return false;
       }
-      if (modified) {
-        var savedPayload = await persistModifiedCandidatePayload(activeReview, fields);
+      if (modified || Object.keys(profileFields).length) {
+        var savedPayload = await persistModifiedCandidatePayload(activeReview, combinedFields);
         if (!savedPayload) {
           toast("No se pudo guardar la modificación de la propuesta.");
           return false;
@@ -7812,14 +8134,16 @@
       if (!activeReview) return;
       var currentId = activeReview.id;
       var fields = modified ? reviewModifiedDecisionFields(activeReview) : reviewOriginalDecisionFields(activeReview);
+      var profileFields = reviewClinicProfileEditedFields(activeReview);
+      var decisionModified = Boolean(modified || Object.keys(profileFields).length);
       setReviewDecisionLoading(true);
       var ok = false;
       if (activeReview.review_type === "candidate_clinic") {
-        ok = await approveCandidateReview(fields, modified);
+        ok = await approveCandidateReview(fields, decisionModified, profileFields);
       } else if (isClinicClaimRequestReview(activeReview)) {
-        ok = await approveClinicClaimRequestReview(fields, modified);
+        ok = await approveClinicClaimRequestReview(fields, decisionModified, profileFields);
       } else if (activeReview.clinic_id) {
-        ok = await approveExistingClinicReview(fields, modified);
+        ok = await approveExistingClinicReview(fields, decisionModified, profileFields);
       } else {
         var result = await resolveReviewItem(
           activeReview.id,
@@ -7830,7 +8154,7 @@
         if (!ok) toast("No se pudo resolver la propuesta.");
       }
       setReviewDecisionLoading(false);
-      if (ok) await finishReviewDecision(modified ? "Modificación guardada." : "Propuesta aprobada.", currentId);
+      if (ok) await finishReviewDecision(decisionModified ? "Modificación guardada." : "Propuesta aprobada.", currentId);
     }
 
     async function rejectReview() {
@@ -7854,6 +8178,10 @@
     function modifyReview() {
       if (!activeReview) return;
       if (!activeReviewModifyMode) {
+        if (Object.keys(reviewClinicProfileEditedFields(activeReview)).length && !reviewEditableItems(activeReview).length) {
+          approveReview(true);
+          return;
+        }
         if (reviewCanEditClinicFields(activeReview) && !reviewEditableItems(activeReview).length) {
           openClinicEditorForReview(activeReview);
           return;
@@ -9561,6 +9889,9 @@
         if (!button) return;
         openReviewManualField(button.getAttribute("data-review-manual-field"));
       });
+      el("reviewClinicInlineEditBtn").addEventListener("click", toggleReviewClinicInlineEdit);
+      el("reviewClinicEditPanel").addEventListener("input", updateReviewClinicEditChangeCount);
+      el("reviewClinicEditPanel").addEventListener("change", updateReviewClinicEditChangeCount);
       el("reviewBackToListBtn").addEventListener("click", closeReviewEditor);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);

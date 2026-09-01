@@ -887,6 +887,14 @@ body.sidebar-collapsed .control-sidebar {
   line-height: var(--line-tight);
 }
 
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .muted {
   display: block;
   margin-top: 0.15rem;
@@ -1677,6 +1685,38 @@ td small {
 .review-clinic-field a {
   color: var(--green-deep);
   font-weight: 700;
+}
+
+.review-clinic-edit-panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.82rem;
+  border: 1px solid rgba(14, 79, 74, 0.22);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.review-clinic-edit-panel.has-edits {
+  border-color: rgba(14, 79, 74, 0.42);
+  background: rgba(222, 238, 234, 0.36);
+}
+
+.review-clinic-panel .link-btn.has-edits {
+  background: var(--wash);
+}
+
+.review-clinic-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.review-clinic-edit-grid .field-wide {
+  grid-column: 1 / -1;
+}
+
+.review-clinic-edit-grid textarea {
+  min-height: 5.4rem;
 }
 
 .review-editor-panel {
@@ -3096,6 +3136,7 @@ td small {
   .diff-cols,
   .review-proposal-item,
   .review-clinic-facts,
+  .review-clinic-edit-grid,
   .review-snapshot-section dl,
   .review-decision-summary,
   .review-decision-actions,

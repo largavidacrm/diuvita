@@ -1157,6 +1157,13 @@ Next 10 technical steps:
      proposed fields are marked as manually reviewable even when their source is
      not ready to be used as an LLM instruction. Only the LLM handoff stays
      blocked until the source carries Daniel's requested field/context.
+221. Add direct clinic editing inside proposal review. Done locally in
+     `/admin/`: when Daniel opens a review, the clinic panel has **Editar
+     ficha** for safe inline corrections to name, summary, location, services,
+     specialists and contact fields. Those edits are only persisted through
+     **Aprobar** or **Modificar**, never through **Rechazar**, so the single
+     review decision remains traceable and future LLM automation still sees a
+     bounded proposal lifecycle.
 
 ## Daniel decision checkpoints
 

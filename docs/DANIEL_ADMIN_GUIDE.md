@@ -197,14 +197,21 @@ Maps real confirmado.
 En las revisiones manuales de calidad, al pulsar **Revisar** primero se abre la
 vista en columnas: ficha de la clínica y revisión concreta. Desde ahí,
 **Modificar** o **Revisión manual** abre la ficha en el campo pendiente. Al
-guardar, esa revisión queda cerrada solo para ese campo. Si la misma tarjeta
-tenía más faltantes, el panel vuelve a abrir el siguiente campo pendiente; no
-los da por resueltos en bloque. En la propia lista verás una línea **Abrirá:**
+guardar, esa revisión queda cerrada solo para ese campo y vuelves a la lista.
+Si la misma tarjeta tenía más faltantes, seguirán apareciendo como revisiones
+pendientes; no los da por resueltos en bloque. En la propia lista verás una línea **Abrirá:**
 para saber antes de entrar qué campo se va a editar.
+
+En la vista en columnas puedes pulsar **Editar ficha** en el panel izquierdo
+para corregir directamente datos generales de la clínica, como nombre,
+descripción, web, ubicación, sedes, servicios, especialistas o contacto. Esos
+cambios no se guardan al escribirlos: solo se aplican si apruebas la propuesta
+o guardas una modificación. Si rechazas la propuesta, esas correcciones no se
+aplican.
 
 Al entrar en la ficha desde **Revisión manual**, arriba verás una banda con el
 campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en
-una página oficial de la clínica, puedes pegar esa URL en **Pasar URL al
+una página oficial de la clínica, puedes pegar esa URL en **Enviar al
 agente**; el agente/LLM la usará para el campo que estás revisando. Siempre crea
 propuestas revisables, sin publicar ni guardar datos automáticamente.
 El editor abre el bloque correspondiente y marca visualmente el campo activo
@@ -239,7 +246,7 @@ Si una revisión manual dice que faltan datos pero la fuente está clara, abre l
 tarjeta: primero verás la ficha y la revisión en columnas. Desde ahí, pulsa
 **Modificar** o **Revisión manual** para abrir directamente el campo que toca en
 la ficha. Si conoces una URL oficial donde el agente debe mirar, pégala en
-**Dile al agente dónde mirar** y pulsa **Enviar URL al agente**. Por ejemplo, si
+**URL oficial para el agente** y pulsa **Enviar al agente**. Por ejemplo, si
 faltan especialistas, pega la página oficial de equipo o especialistas. Eso
 crea trabajo interno para propuestas revisables, limitado a los campos
 pendientes de esa tarjeta; no guarda ni publica datos.
