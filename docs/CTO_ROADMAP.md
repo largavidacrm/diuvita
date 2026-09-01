@@ -13,6 +13,8 @@ Vitalarga is currently a small static Netlify site:
 - Git is connected to the existing GitHub repository; renaming that repository
   is a separate external step.
 - Supabase project exists at `https://twxhcmvzbpnrneywdece.supabase.co`.
+- Google Search Console has been set up externally for the Vitalarga site. The
+  repo does not manage Search Console ownership, DNS or verification tokens.
 
 This is a good starting point. The next technical goal is not to rebuild the site. The next goal is to make Vitalarga agent-ready while keeping the public site stable.
 

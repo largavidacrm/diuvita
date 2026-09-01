@@ -1189,6 +1189,10 @@ Next 10 technical steps:
      `current_data.internal_contact` path. These values remain non-public and
      are saved only through **Aprobar** or **Modificar**, never through
      **Rechazar**.
+226. Record external Google Search Console setup. Done as project state:
+     Daniel has configured Google Search Console for Vitalarga in another
+     thread. This repo records the status only; it does not manage Search
+     Console ownership, DNS, Netlify, SSL or verification tokens.
 
 ## Daniel decision checkpoints
 
