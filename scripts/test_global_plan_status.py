@@ -176,12 +176,12 @@ def main():
     check(codex_can_continue_status(digest) == "mejorar panel, extractores y checks sin crear tarjetas nuevas", "Codex safe next step missing")
     check(
         llm_review_readiness_blocker(digest)
-        == "preparación LLM incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual",
+        == "preparación LLM de propuestas con fuente incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual",
         "LLM readiness blocker missing",
     )
     check(
         not_ready_status(digest)
-        == "muestra humana insuficiente: 2/200 candidatas; preparación LLM incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual",
+        == "muestra humana insuficiente: 2/200 candidatas; preparación LLM de propuestas con fuente incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual",
         "not-ready reason missing",
     )
     check(source_origin_audit_status(digest) == "4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual", "LLM source-origin status missing")
@@ -191,7 +191,7 @@ def main():
     check("Daniel ahora: Abrir prioridad: abre el filtro Claims bloqueantes en el panel" in output, "Daniel quick action missing")
     check("Codex puede seguir con: mejorar panel, extractores y checks sin crear tarjetas nuevas" in output, "Codex safe work missing")
     check(
-        "No activar todavía: muestra humana insuficiente: 2/200 candidatas; preparación LLM incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual"
+        "No activar todavía: muestra humana insuficiente: 2/200 candidatas; preparación LLM de propuestas con fuente incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual"
         in output,
         "not-ready quick line missing",
     )
@@ -206,7 +206,7 @@ def main():
     check("Trazabilidad de fuentes: 11/19 fichas con fuente" in output, "source coverage line missing")
     check("Sedes y ubicaciones: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Ciclo autónomo: activo en sombra; señal automática base" in output, "shadow cycle line missing")
-    check("Preparación LLM de revisiones: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual" in output, "LLM review preparation line missing")
+    check("Preparación LLM de propuestas con fuente: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual" in output, "LLM review preparation line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
     check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "top publication blocker missing")

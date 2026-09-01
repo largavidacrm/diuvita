@@ -176,7 +176,7 @@ def llm_review_readiness_blocker(digest: dict[str, Any]) -> str:
     if ready >= cards:
         return ""
     if source_only or recoverable:
-        return f"preparación LLM incompleta: {source_origin_audit_status(digest)}"
+        return f"preparación LLM de propuestas con fuente incompleta: {source_origin_audit_status(digest)}"
     return ""
 
 
@@ -223,7 +223,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Sedes y ubicaciones: {location_status(digest)}.",
         f"- Ciclo autónomo: activo en sombra; señal automática base: {next_action_label(digest)}.",
         f"- Monitorización: {source_monitoring_status(digest)}.",
-        f"- Preparación LLM de revisiones: {source_origin_audit_status(digest)}.",
+        f"- Preparación LLM de propuestas con fuente: {source_origin_audit_status(digest)}.",
         f"- Coste Netlify: publicación {publication_control_status(digest)}.",
         f"- Preparación para publicación: {publication_readiness_status(digest)}.",
         f"- Principal faltante para publicar: {top_publication_missing_field(digest)}.",

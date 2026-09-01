@@ -1111,6 +1111,10 @@ Next 10 technical steps:
      `scripts/review_llm_batch_preflight.py`: quality-audit cards with a clear
      admin field are **manual target prompt ready**, while source-only proposal
      cards remain blocked until they have operator/job context.
+215. Clarify the global LLM readiness label. Done locally in
+     `scripts/global_plan_status.py`: the quick-read blocker now says
+     **propuestas con fuente** when it refers only to source-backed proposal
+     cards, so it no longer conflicts with manual-field navigation readiness.
 
 ## Daniel decision checkpoints
 
