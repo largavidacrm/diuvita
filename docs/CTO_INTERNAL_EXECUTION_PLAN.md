@@ -1384,6 +1384,14 @@ Next 10 technical steps:
      toast now include the first concrete review/issue so Daniel can see what
      must be approved or rejected instead of only seeing a generic "claims
      pendientes" message.
+258. Add a read-only pre-SEO closure report. Done locally in
+     `scripts/pre_seo_readiness_report.py`: the report measures the real
+     review queue target, duplicate proposal groups, publication base fields,
+     source traceability, LLM-preparation context and auto-publication safety
+     as explicit gates. It confirms when the queue is below the 25-card
+     pre-SEO target while keeping SEO programmatic blocked until fields and
+     traceability are ready. The report does not publish, edit clinics, resolve
+     review cards, push or deploy.
 
 ## Daniel decision checkpoints
 

@@ -20,7 +20,8 @@ The full pass currently covers:
 8. Public clinic profile UX, neutral public ordering, built clinic-page UX and
    basic site asset checks.
 9. Admin digest, publication readiness, Daniel review brief,
-   blocking-claim brief, review-backlog brief, review-maturity,
+   global-plan status, pre-SEO readiness, blocking-claim brief,
+   review-backlog brief, review-maturity,
    specialist-coverage, profile-completeness and source-coverage checks.
 10. Enrichment, candidate promotion, source hydration and source monitoring.
 11. Changed-source processing, blocking-claim review routing and the safe CTO

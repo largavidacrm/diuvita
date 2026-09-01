@@ -113,12 +113,18 @@ Checks relevantes:
 
 ```bash
 python3 scripts/run_local_checks.py
+python3 scripts/pre_seo_readiness_report.py
 python3 scripts/check_operational_limits.py
 python3 scripts/check_operational_limits.py --built-site
 python3 scripts/release_readiness_report.py
 python3 scripts/check_production_health.py
 python3 scripts/check_public_site_freshness.py
 ```
+
+`scripts/pre_seo_readiness_report.py` lee el estado real de Supabase de forma
+read-only y resume los gates de cierre pre-SEO: bandeja, duplicados, campos
+base, trazabilidad y auto-publicacion. No publica, no edita clinicas, no
+resuelve tarjetas y no cambia Netlify.
 
 Los dos ultimos miran la web publica de forma read-only cuando se ejecutan con
 red disponible. No hacen push, no despliegan, no escriben en Supabase y no

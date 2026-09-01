@@ -71,6 +71,7 @@ TEST_STEPS = [
     ("test: clinic publication readiness", "scripts/test_clinic_publication_readiness.py"),
     ("test: Daniel review brief", "scripts/test_daniel_review_brief.py"),
     ("test: global plan status", "scripts/test_global_plan_status.py"),
+    ("test: pre-SEO readiness report", "scripts/test_pre_seo_readiness_report.py"),
     ("test: blocking claim brief", "scripts/test_blocking_claim_brief.py"),
     ("test: review backlog brief", "scripts/test_review_backlog_brief.py"),
     ("test: review proposal packets", "scripts/test_review_proposal_decision_packets.py"),
