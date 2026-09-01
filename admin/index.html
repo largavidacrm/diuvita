@@ -618,8 +618,8 @@
             <table class="review-table">
               <thead>
                 <tr>
-                  <th>Asunto</th>
-                  <th>Tipo</th>
+                  <th>Ficha</th>
+                  <th>Pendiente</th>
                   <th>Prioridad</th>
                   <th>Fecha</th>
                   <th></th>
@@ -650,7 +650,7 @@
             <div class="review-clinic-facts" id="reviewClinicProfileFacts"></div>
             <section class="review-clinic-pending-panel hidden" id="reviewClinicPendingPanel">
               <div class="review-section-head">
-                <h3>Mejoras pendientes de esta clínica</h3>
+                <h3>Mejoras acumuladas en esta ficha</h3>
                 <span class="pill" id="reviewClinicPendingCount">0 pendientes</span>
               </div>
               <div class="review-clinic-pending-list" id="reviewClinicPendingList"></div>
@@ -3512,15 +3512,20 @@
         return '<span class="pill">' + html(label) + '</span>';
       });
       if (labels.length > 4) shown.push('<span class="pill">+' + html(labels.length - 4) + ' más</span>');
+      var pendingText = group.count === 1
+        ? "1 decisión pendiente"
+        : group.count + " decisiones pendientes acumuladas";
       return '<div class="review-subject-cell review-clinic-group-cell"><strong>' + html(group.label) +
-        '</strong><small>' + html(group.count === 1 ? "1 propuesta pendiente" : group.count + " propuestas pendientes") +
+        '</strong><small>' + html(pendingText) +
         '</small>' + (shown.length ? '<div class="related-review-fields">' + shown.join("") + '</div>' : "") + '</div>';
     }
 
     function reviewQueueGroupTypeCell(group) {
       var primary = reviewQueueGroupPrimaryRow(group);
-      var extra = group.count > 1 ? ' <span class="pill">' + html(group.count + " mejoras") + '</span>' : "";
-      return html(reviewVisibleLabel(primary)) + extra + reviewProfessionalsBadge(primary);
+      var summary = reviewQueueGroupTypeSummary(group);
+      var extra = group.count > 1 ? ' <span class="pill">Ficha agrupada</span>' : "";
+      return '<div class="review-queue-type-cell"><strong>' + html(summary || reviewVisibleLabel(primary)) +
+        '</strong>' + extra + reviewProfessionalsBadge(primary) + '</div>';
     }
 
     function clinicWorkgroupSubject(group) {
@@ -7470,7 +7475,7 @@
         '<span>' + html(reviewVisibleLabel(row)) + " · " + html(priorityLabel(row.priority)) + " · " + html(date(row.created_at)) + '</span></div>' +
         relatedReviewFieldsHtml(row) +
         '<button class="link-btn" type="button" data-review-id="' + html(row.id) + '">' +
-        html(isActive ? "Abierta" : "Revisar") + '</button>' +
+        html(isActive ? "Decidiendo" : "Revisar") + '</button>' +
         '</article>';
     }
 
@@ -7486,7 +7491,7 @@
         count.textContent = "0 pendientes";
         return;
       }
-      count.textContent = rows.length + (rows.length === 1 ? " pendiente" : " pendientes");
+      count.textContent = rows.length + (rows.length === 1 ? " decisión" : " decisiones");
       list.innerHTML = rows.map(function (item) {
         return reviewClinicPendingItemHtml(item, row && row.id);
       }).join("");
@@ -9311,9 +9316,9 @@
       title.textContent = entry.label || reviewPrimarySubject(row);
       message.textContent = reviewQueueGroupTypeSummary(entry) + " · prioridad " + (row.priority || entry.maxPriority || 0) + " · " +
         date(entry.oldestCreatedAt || row.created_at) +
-        ". Abre la ficha una vez y revisa sus mejoras pendientes sin perder la trazabilidad de cada propuesta.";
+        ". Abre la ficha una vez; dentro verás las mejoras acumuladas y decidirás una propuesta cada vez.";
       button.setAttribute("data-review-id", row.id);
-      button.textContent = "Revisar ficha";
+      button.textContent = "Revisar";
       show(button, true);
     }
 
@@ -9392,7 +9397,7 @@
         return "<tr><td>" + reviewQueueGroupSubjectCell(group) + "</td><td>" + reviewQueueGroupTypeCell(group) + "</td><td>" +
           priorityPill(row ? row.priority : group.maxPriority) + "</td><td>" +
           date(group.oldestCreatedAt || (row && row.created_at)) + '</td><td><button class="link-btn" type="button" data-review-id="' +
-          html(row && row.id) + '">Revisar ficha</button></td></tr>';
+          html(row && row.id) + '">Revisar</button></td></tr>';
       }).join("");
     }
 

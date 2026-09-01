@@ -136,6 +136,11 @@ filtros, tabla y botón **Revisar**. El sistema puede usar señales internas par
 ordenar trabajo o para futura ayuda con LLM, pero no mezcla esas prioridades
 con la decisión que tienes delante.
 
+La bandeja agrupa visualmente por ficha cuando una clínica acumula varias
+mejoras. Por debajo siguen existiendo decisiones separadas para que la IA, las
+fuentes y el historial no mezclen cambios. En la práctica, ves una ficha de
+clínica en la lista y, al abrirla, decides una propuesta concreta cada vez.
+
 Si varias tarjetas tienen la misma prioridad y fecha, el panel desempata de
 forma estable por título e identificador interno. Así el listado, el plan global
 y los informes de Codex señalan la misma siguiente tarjeta.
@@ -318,14 +323,14 @@ revisión humana.
 
 La pantalla de revisión tiene dos momentos. Primero ves la bandeja con sus
 filtros y una columna lateral de selección. Al pulsar **Revisar** en una
-propuesta, la bandeja se oculta y se abre la ficha de la clínica en el centro,
+ficha, la bandeja se oculta y se abre la ficha de la clínica en el centro,
 con la decisión concreta de esa propuesta a la derecha. Si la tarjeta es una
 revisión manual de un campo pendiente, usa **Modificar** o **Revisión manual**
 dentro de esa vista para abrir el campo exacto.
 
 La tabla de revisión está pensada para escanear, no para leer fichas completas:
 los títulos largos se recortan visualmente, las columnas mantienen anchuras
-estables y el botón **Revisar** abre el detalle completo de una sola propuesta.
+estables y el botón **Revisar** abre la ficha con una sola decisión activa.
 
 ## Revisar mejoras de una ficha existente
 

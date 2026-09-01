@@ -103,7 +103,7 @@ def main() -> None:
         "data-review-manual-field",
         "Modificar contacto",
         "Ficha de la clínica",
-        "Mejoras pendientes de esta clínica",
+        "Mejoras acumuladas en esta ficha",
         "Datos visibles en la ficha",
         "Contacto interno",
         "Campo a revisar ahora",
@@ -512,9 +512,10 @@ def main() -> None:
     check(
         'reviewQueueGroups(rows)' in index
         and "reviewQueueGroupTypeSummary(entry)" in index
-        and "Revisar ficha" in index
-        and "propuestas pendientes" in index
-        and "Abre la ficha una vez" in index,
+        and ">Revisar</button>" in index
+        and "decisiones pendientes acumuladas" in index
+        and "Ficha agrupada" in index
+        and "decidirás una propuesta cada vez" in index,
         "review inbox should present one visible ficha per clinic with accumulated pending improvements",
     )
     check(

@@ -247,6 +247,10 @@ Required behavior:
 - Never approve, reject, resolve, edit clinics or publish pages.
 - LLM output may suggest or organize the decision, but the card remains
   reviewable and Daniel's action is still `approve`, `reject` or `modify`.
+- The admin UI may group open cards by clinic so Daniel sees one visible ficha
+  with accumulated work. That grouping is a presentation layer only: each LLM
+  packet, validation result and stored decision must stay scoped to one review
+  card and one proposed change.
 - `modify` may only change fields listed in that packet's `editable_fields`.
 - `manual_profile_edit_context` can be used to explain that Daniel has manual
   profile-edit controls in the side panel; it is not a source of automatic

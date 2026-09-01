@@ -1255,6 +1255,11 @@ Next 10 technical steps:
      example buttons such as IMDA or Regenera. Pending jobs now explain the
      next step: source-backed work can be processed by the supervised CTO cycle,
      while text-only work waits for a real search provider or an official URL.
+237. Clarify one-ficha review grouping. Done locally in `/admin/` and docs:
+     the review inbox presents clinic groups as one visible ficha with
+     accumulated decisions, while the underlying review cards remain atomic for
+     LLM packets, local validation and audit history. The list still keeps the
+     familiar **Revisar** action.
 
 ## Daniel decision checkpoints
 

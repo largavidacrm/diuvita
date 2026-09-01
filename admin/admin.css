@@ -1354,6 +1354,17 @@ td small.job-next-step {
   white-space: nowrap;
 }
 
+.review-queue-type-cell {
+  display: grid;
+  gap: 0.28rem;
+  justify-items: start;
+}
+
+.review-queue-type-cell strong {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
 .empty {
   color: var(--muted);
   padding: 1rem;
