@@ -723,7 +723,11 @@ def main():
         compact_priority_clicks[0].startswith("Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén"),
         "compact cycle should open the sampled priority card before group context",
     )
-    check("Sensabell" in compact_priority_click_text, "compact cycle should keep the lower-priority group as context")
+    check("Sensabell" not in compact_priority_click_text, "compact cycle should keep clinic groups out of next clicks when priority exists")
+    check(
+        compact_priority_digest["review_first_clinic_workgroup"]["clinic_name"] == "Sensabell",
+        "compact digest should keep lower-priority clinic group as secondary context",
+    )
     guarded_brief = build_cycle_brief({
         "mode": "apply_safe",
         "ok": True,

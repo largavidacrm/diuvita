@@ -374,10 +374,13 @@ def next_clicks(digest: dict[str, Any]) -> list[str]:
         priority_review_click(digest),
         specialists_click(digest),
         google_maps_click(digest),
-        clinic_workgroup_click(digest),
     ):
         if candidate and candidate not in clicks:
             clicks.append(candidate)
+    if not clicks:
+        workgroup = clinic_workgroup_click(digest)
+        if workgroup:
+            clicks.append(workgroup)
     if not clicks:
         clicks.append("Abre el panel y usa Abrir prioridad.")
     return clicks[:4]

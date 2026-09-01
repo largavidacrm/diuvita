@@ -490,9 +490,10 @@ def cycle_next_clicks(digest: dict[str, Any]) -> list[str]:
     google_links = google_link_review_status(digest)
     if not google_links.startswith("sin tarjetas"):
         clicks.append(f"Abrir Google Maps: {google_links}.")
-    workgroup = clinic_workgroup_click_from_digest(digest)
-    if workgroup:
-        clicks.append(workgroup)
+    if not clicks:
+        workgroup = clinic_workgroup_click_from_digest(digest)
+        if workgroup:
+            clicks.append(workgroup)
     return clicks[:4] or ["Abrir el panel y usar Abrir prioridad."]
 
 

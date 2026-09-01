@@ -1218,6 +1218,12 @@ Next 10 technical steps:
      URL jobs refresh the same proposal, the worker now resolves the original
      review only if it is still open. Already-closed origin cards become a
      no-op instead of creating repeated resolution noise.
+231. Demote repeated clinic workgroups from next-click briefs. Done locally in
+     `scripts/daniel_review_brief.py` and `scripts/run_cto_shadow_cycle.py`:
+     clinic groups such as Sensabell remain in secondary context for traceability
+     and future LLM planning, but they no longer appear as a competing next
+     click when the panel already has a priority, specialist or Google Maps
+     action.
 
 ## Daniel decision checkpoints
 
