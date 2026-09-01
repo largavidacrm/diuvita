@@ -37,6 +37,7 @@ def main() -> None:
         "_looks_like_logo_asset(os.path.join(dirpath, fn))",
         ".logo-fallback",
         ".logo-failed img{display:none}",
+        ".logo-carousel .mini-logo.logo-failed{display:none}",
         "this.closest(\\'.logobox\\').classList.add(\\'logo-failed\\')",
         "this.closest(\\'.mini-logo\\').classList.add(\\'logo-failed\\')",
     ]:

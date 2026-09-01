@@ -651,10 +651,18 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .chip{font:inherit;font-size:.84rem;line-height:1.2;min-height:2.1rem;padding:.34rem .62rem;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap}
 .chip:hover{border-color:var(--green);color:var(--green-deep)}
 .chip.on{background:var(--green);border-color:var(--green);color:#fff}
-.logo-strip{display:flex;gap:.6rem;overflow-x:auto;max-width:1180px;margin:.25rem auto 0;padding:.5rem 5vw 1.05rem;scrollbar-width:thin}
+.logo-carousel{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;align-items:center;gap:.45rem;max-width:1180px;margin:.25rem auto 0;padding:.5rem 5vw 1.05rem;box-sizing:border-box}
+.logo-strip{min-width:0;display:flex;gap:.6rem;overflow-x:auto;margin:0;padding:.1rem;scroll-behavior:smooth;scroll-snap-type:x proximity;scrollbar-width:none}
+.logo-strip::-webkit-scrollbar{display:none}
+.logo-nav{width:42px;height:42px;display:inline-grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font:inherit;font-size:1.45rem;font-weight:800;line-height:1;cursor:pointer}
+.logo-nav:hover{border-color:#C7DBD5;background:var(--surface-strong)}
+.logo-nav:focus-visible{outline:3px solid rgba(14,79,74,.25);outline-offset:3px}
+.logo-nav:disabled{opacity:.35;cursor:not-allowed}
 .mini-logo{flex:0 0 auto;height:42px;display:flex;align-items:center;padding:.35rem .7rem;border:1px solid var(--line);border-radius:8px;background:rgba(247,244,238,.82)}
 .mini-logo:hover{text-decoration:none;background:#fff;border-color:#C7DBD5}
 .mini-logo:focus-visible{outline:3px solid rgba(14,79,74,.25);outline-offset:3px}
+.mini-logo{scroll-snap-align:center}
+.logo-carousel .mini-logo.logo-failed{display:none}
 .mini-logo img{max-width:126px;max-height:26px;object-fit:contain;display:block}
 .logo-fallback{display:none;color:var(--green-deep);font-size:.82rem;font-weight:800;line-height:1.1;overflow-wrap:anywhere}
 .logo-failed img{display:none}
@@ -778,7 +786,7 @@ footer p{margin:0}
 .legal-copy h2{margin-top:.4rem}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 @media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro,.recommend-form{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}.recommend-head{align-items:flex-start;flex-direction:column}.recommend-toggle{width:100%}}
-@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}.recommend-actions{display:grid;grid-template-columns:1fr}.recommend-submit{width:100%}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-carousel{grid-template-columns:38px minmax(0,1fr) 38px}.logo-nav{width:38px;height:38px;font-size:1.3rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}.recommend-actions{display:grid;grid-template-columns:1fr}.recommend-submit{width:100%}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -973,6 +981,58 @@ JS = """<script>
     document.querySelectorAll(".chip").forEach(function(ch){ch.classList.remove("on")});
     apply();
   });
+  function setupLogoCarousel(){
+    document.querySelectorAll("[data-logo-carousel]").forEach(function(root){
+      var track=root.querySelector(".logo-strip");
+      var prev=root.querySelector('[data-logo-nav="prev"]');
+      var next=root.querySelector('[data-logo-nav="next"]');
+      var timer=null;
+      if(!track) return;
+      function maxScroll(){return Math.max(0,track.scrollWidth-track.clientWidth);}
+      function step(){
+        var item=track.querySelector(".mini-logo:not(.logo-failed)");
+        return item?Math.max(120,item.getBoundingClientRect().width+12):160;
+      }
+      function update(){
+        var max=maxScroll();
+        if(prev) prev.disabled=max<=2||track.scrollLeft<=2;
+        if(next) next.disabled=max<=2||track.scrollLeft>=max-2;
+      }
+      function move(dir){
+        var max=maxScroll();
+        if(max<=2) return;
+        if(dir>0&&track.scrollLeft>=max-2){
+          track.scrollTo({left:0,behavior:"smooth"});
+        }else if(dir<0&&track.scrollLeft<=2){
+          track.scrollTo({left:max,behavior:"smooth"});
+        }else{
+          track.scrollBy({left:step()*dir,behavior:"smooth"});
+        }
+        window.setTimeout(update,260);
+      }
+      function pause(){
+        if(timer){
+          window.clearInterval(timer);
+          timer=null;
+        }
+      }
+      function play(){
+        if(timer) return;
+        if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        timer=window.setInterval(function(){move(1);},3200);
+      }
+      if(prev) prev.addEventListener("click",function(){pause();move(-1);});
+      if(next) next.addEventListener("click",function(){pause();move(1);});
+      track.addEventListener("scroll",function(){window.requestAnimationFrame(update);});
+      root.addEventListener("pointerenter",pause);
+      root.addEventListener("pointerleave",play);
+      root.addEventListener("focusin",pause);
+      root.addEventListener("focusout",play);
+      window.addEventListener("resize",update);
+      update();
+      play();
+    });
+  }
   function clean(value){return (value||"").trim();}
   function cleanUrl(value){
     var url=clean(value);
@@ -1062,6 +1122,7 @@ JS = """<script>
       });
     });
   }
+  setupLogoCarousel();
   apply();
 })();
 </script>"""
@@ -1143,7 +1204,11 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </div>
 </div>
 </section>
-<section class="logo-strip" aria-label="Logos de clínicas en la guía">{featured_logos}</section>
+<section class="logo-carousel" data-logo-carousel aria-label="Clínicas con logo en Vitalarga">
+<button class="logo-nav" data-logo-nav="prev" type="button" aria-label="Logo anterior">&lsaquo;</button>
+<div class="logo-strip" tabindex="0" aria-label="Logos de clínicas en la guía">{featured_logos}</div>
+<button class="logo-nav" data-logo-nav="next" type="button" aria-label="Logo siguiente">&rsaquo;</button>
+</section>
 {RECOMMEND_SECTION}
 <section class="results-section">
 <div class="resbar"><p class="rescount" id="count"></p><button class="clear-btn" id="clearFilters" type="button">Limpiar filtros</button></div>

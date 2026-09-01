@@ -938,6 +938,10 @@ Next 10 technical steps:
      `scripts/audit_review_source_job_context.py`: open enrichment proposals can
      now be checked for LLM-source provenance, including whether missing context
      is recoverable from `agent_jobs` or must stay as purely manual review.
+179. Turn the public logo row into a carousel. Done locally in `build.py`: the
+     homepage logo strip now has previous/next controls, gentle automatic
+     scrolling that pauses on interaction, and hides failed logo chips in the
+     carousel so broken assets such as Tiara do not appear as malformed logos.
 179. Include weak Maps proposals in the Google quick filter. Done locally in
      `/admin/`: the **Google Maps** filter now catches any proposed Maps or
      review-link URL, including links that later need rejection or correction,
