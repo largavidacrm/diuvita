@@ -46,6 +46,8 @@ def main() -> None:
         'class="profile-nav"',
         'aria-label="{h(label)}"',
         'id="sedes"',
+        'profile-block profile-location-block',
+        'profile-location-multiple',
         'class="location-list"',
         'class="location-actions"',
         'location_display_name(loc, c, multiple)',
@@ -66,6 +68,9 @@ def main() -> None:
         ".clinic-side .profile-block{margin-top:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}",
         ".profile-list li::before",
         ".location-list{display:grid;gap:.72rem}",
+        ".profile-location-multiple{grid-column:1/-1}",
+        ".profile-location-multiple .location-list{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem}",
+        ".profile-location-multiple .location-item{border:1px solid var(--line);border-radius:8px;padding:.85rem;background:#fff}",
         ".mini-action{display:inline-flex;align-items:center;justify-content:center;min-height:1.9rem",
         ".transparency-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}",
         ".card-signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.85rem}",
@@ -110,6 +115,23 @@ def main() -> None:
     check("location_address" not in maps_body, "Google Maps fallback should use clinic name, not street address")
     check("location_search_name" not in maps_body, "Google Maps fallback should not use location labels")
     check('return direct if is_google_maps_profile_url(direct) else ""' in maps_body, "public Google Maps buttons should disappear unless a direct profile link exists")
+
+    profile_body = source[source.index("def ficha(c):"):source.index("def ciudad_page(city):")]
+    check(
+        profile_body.index("{servicios}")
+        < profile_body.index("{unidades}")
+        < profile_body.index("{tech}")
+        < profile_body.index("{equipo}")
+        < profile_body.index("{sedes}"),
+        "public clinic ficha should keep medical content before location/access",
+    )
+    nav_body = source[source.index("def profile_nav("):source.index("def ficha(c):")]
+    check(
+        nav_body.index('profile_nav_item("Servicios", "#servicios")')
+        < nav_body.index('profile_nav_item("Unidades", "#unidades")')
+        < nav_body.index('profile_nav_item("Sedes", "#sedes")'),
+        "profile navigation should list Sedes after medical sections",
+    )
 
     print("OK public profile UX: navigation and richer search wired")
 

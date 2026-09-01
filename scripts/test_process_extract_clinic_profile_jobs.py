@@ -9,10 +9,14 @@ from process_extract_clinic_profile_jobs import (
     complete_job,
     created_review_replaces_origin,
     filter_proposed_fields_for_request,
+    merge_quality_issues,
     process_job,
+    quality_issue_matches_fields,
     requested_targets,
     review_source_job_should_replace_existing_reviews,
     source_job_origin_review_id,
+    source_job_handled_fields,
+    split_quality_issues_for_source_job,
     supersede_origin_review,
     validate_job,
 )
@@ -168,6 +172,7 @@ def main():
 
     calls = []
     superseded = []
+    followups = []
 
     def fake_create_review(
         clinic_slug,
@@ -192,6 +197,10 @@ def main():
         superseded.append((job["id"], created_review["id"], admin_email))
         return {"id": "review-1", "status": "resolved"}
 
+    def fake_origin_followup(job, created_review, result, admin_email, local_env):
+        followups.append((job["id"], created_review["id"], result["status"], admin_email))
+        return {"status": "inserted", "remaining_issue_count": 1}
+
     apply_args = Namespace(
         timeout=15,
         apply=True,
@@ -206,6 +215,7 @@ def main():
         fetcher=fake_fetch,
         review_creator=fake_create_review,
         origin_review_resolver=fake_supersede_origin,
+        origin_review_followup=fake_origin_followup,
     )
     check(applied["created_review"]["status"] == "inserted", "apply mode should create a review")
     check(applied["writes_data"] is True, "apply mode should report a write")
@@ -217,12 +227,15 @@ def main():
     check(calls and calls[0][1]["target_scope"] == "primary_target_first", "created review should keep source scope")
     check(applied["superseded_review"]["status"] == "resolved", "origin manual review should be superseded")
     check(superseded and superseded[0][0] == "job-1", "origin resolver should receive the source job")
+    check(applied["origin_review_followup"]["remaining_issue_count"] == 1, "origin followup should preserve remaining issues")
+    check(followups and followups[0][2] == "ready", "origin followup should receive ready result")
 
     compact = compact_result(applied)
     check("verification_summary" not in compact, "compact result should omit verification details")
     check(compact["writes_data"] is True, "compact result should keep write signal")
     check(compact["created_review"]["id"] == "review-new", "compact result should keep created review id")
     check(compact["superseded_review"]["id"] == "review-1", "compact result should keep superseded origin id")
+    check(compact["origin_review_followup"]["status"] == "inserted", "compact result should keep origin followup")
     check(compact["primary_requested_fields"] == ["profesionales"], "compact result should keep primary requested fields")
     check(compact["target_scope"] == "primary_target_first", "compact result should keep source scope")
 
@@ -271,6 +284,62 @@ def main():
         ) == {"profesionales": ["A"]},
         "requested fields should bound proposals",
     )
+    origin_review = {
+        "id": "review-1",
+        "review_type": "clinic_quality_audit",
+        "payload": {
+            "issues": [
+                {"code": "missing_professionals", "label": "Faltan especialistas publicados"},
+                {"code": "missing_contact", "label": "Falta email o teléfono"},
+                {"code": "missing_units", "label": "Faltan unidades clínicas"},
+            ],
+        },
+    }
+    handled_issues, remaining_issues = split_quality_issues_for_source_job(origin_review, job)
+    check([issue["code"] for issue in handled_issues] == ["missing_professionals"], "source handoff should handle only the active field")
+    check(
+        [issue["code"] for issue in remaining_issues] == ["missing_contact", "missing_units"],
+        "source handoff should preserve unrelated manual issues",
+    )
+    check(source_job_handled_fields(job, ["profesionales", "unidades"]) == ["profesionales"], "primary scope should handle only primary fields")
+    check(quality_issue_matches_fields({"code": "missing_contact"}, ["telefono"]) is True, "contact issue should match phone handoff")
+    check(quality_issue_matches_fields({"code": "missing_contact"}, ["summary"]) is False, "contact issue should not match summary handoff")
+    check(
+        [issue["code"] for issue in merge_quality_issues(
+            [{"code": "missing_contact"}, {"code": "missing_units"}],
+            [{"code": "missing_contact"}, {"code": "missing_technology"}],
+        )] == ["missing_contact", "missing_units", "missing_technology"],
+        "remaining manual issues should merge without duplicates",
+    )
+
+    empty_followups = []
+
+    def fake_empty_fetch(url, timeout=15):
+        html = b"<!doctype html><html><body><p>Solo texto legal sin datos utiles.</p></body></html>"
+        return FetchResult(
+            source_url=url,
+            final_url=url,
+            status_code=200,
+            content_type="text/html; charset=utf-8",
+            body=html,
+        )
+
+    def fake_empty_followup(job, created_review, result, admin_email, local_env):
+        empty_followups.append((job["id"], created_review, result["status"], admin_email))
+        return {"status": "reopened", "id": "review-1"}
+
+    empty_applied = process_job(
+        {**job, "id": "job-empty"},
+        apply_args,
+        "admin@example.test",
+        {},
+        fetcher=fake_empty_fetch,
+        review_creator=fake_create_review,
+        origin_review_followup=fake_empty_followup,
+    )
+    check(empty_applied["status"] == "empty", "empty source jobs should report no proposal")
+    check(empty_applied["origin_review_followup"]["status"] == "reopened", "empty source jobs should reopen the origin review")
+    check(empty_followups and empty_followups[0][1] is None, "empty source followup should not pretend a new review exists")
 
     invalid = dict(job, input={})
     try:

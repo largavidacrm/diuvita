@@ -34,13 +34,23 @@ def clinic_pages() -> list[Path]:
 
 
 def check_location_section(path: Path, source: str) -> None:
-    blocks = re.findall(r'<section class="profile-block" id="sedes">([\s\S]*?)</section>', source)
+    blocks = re.findall(r'<section class="[^"]*\bprofile-location-block\b[^"]*" id="sedes">([\s\S]*?)</section>', source)
     for block in blocks:
         if re.search(r"<span\b[^>]*>\s*\d+\s*</span>", block):
             fail(f"{path.relative_to(ROOT)}: location section should not show decorative number badges")
         for marker in ("Sede 1", "Sede 2", "Sede 3", "location-index", "section-count", "profile-nav-count"):
             if marker in block:
                 fail(f"{path.relative_to(ROOT)}: location section still contains {marker!r}")
+
+
+def check_location_order(path: Path, source: str) -> None:
+    sedes = source.find('id="sedes"')
+    if sedes < 0:
+        return
+    for marker in ('id="servicios"', 'id="unidades"'):
+        index = source.find(marker)
+        if index >= 0 and index > sedes:
+            fail(f"{path.relative_to(ROOT)}: Sedes y acceso should appear after medical profile sections")
 
 
 def check_google_maps_links(path: Path, source: str) -> None:
@@ -58,6 +68,7 @@ def main() -> None:
     for path in pages:
         source = path.read_text(encoding="utf-8")
         check_location_section(path, source)
+        check_location_order(path, source)
         check_google_maps_links(path, source)
     print(f"OK built public profile UX: {len(pages)} clinic pages checked")
 

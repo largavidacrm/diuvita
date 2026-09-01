@@ -724,6 +724,11 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .facts dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
 .info-list{display:grid;gap:.38rem}
 .location-list{display:grid;gap:.72rem}
+.profile-location-block{align-self:start}
+.profile-location-multiple{grid-column:1/-1}
+.profile-location-multiple .location-list{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem}
+.profile-location-multiple .location-item{border:1px solid var(--line);border-radius:8px;padding:.85rem;background:#fff}
+.profile-location-multiple .location-item:first-child{border-top:1px solid var(--line);padding-top:.85rem}
 .location-item{border-top:1px solid var(--line);padding-top:.72rem}
 .location-item:first-child{border-top:0;padding-top:0}
 .location-item h3{font-family:'Archivo',system-ui,sans-serif;font-size:1rem;line-height:1.2;margin:0 0 .15rem;font-weight:800;color:var(--ink)}
@@ -1058,7 +1063,10 @@ def locations_block(c):
             f'{actions_html}'
             '</article>'
         )
-    return '<section class="profile-block" id="sedes">' + section_heading("Sedes y acceso") + '<div class="location-list">' + "".join(rows) + "</div></section>"
+    block_class = "profile-block profile-location-block"
+    if multiple:
+        block_class += " profile-location-multiple"
+    return f'<section class="{block_class}" id="sedes">' + section_heading("Sedes y acceso") + '<div class="location-list">' + "".join(rows) + "</div></section>"
 
 def transparency_block(c):
     items = transparency_items(c)
@@ -1109,14 +1117,14 @@ def profile_nav(c, has_contact, has_tech, has_locations, has_transparency):
         items.append(profile_nav_item("Especialidades", "#especialidades"))
     if services:
         items.append(profile_nav_item("Servicios", "#servicios"))
-    if has_locations:
-        items.append(profile_nav_item("Sedes", "#sedes"))
     if units:
         items.append(profile_nav_item("Unidades", "#unidades"))
     if has_tech:
         items.append(profile_nav_item("Tecnología", "#tecnologia"))
     if professionals:
         items.append(profile_nav_item("Especialistas", "#especialistas"))
+    if has_locations:
+        items.append(profile_nav_item("Sedes", "#sedes"))
     if has_transparency:
         items.append(profile_nav_item("Transparencia", "#transparencia"))
     if has_contact:
@@ -1174,10 +1182,10 @@ def ficha(c):
 <div class="profile-sections">
 {areas}
 {servicios}
-{sedes}
 {unidades}
 {tech}
 {equipo}
+{sedes}
 {transparencia}
 </div>
 {prelim}</main>""" + FOOTER

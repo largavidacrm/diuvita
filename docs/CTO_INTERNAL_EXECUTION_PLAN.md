@@ -1224,6 +1224,18 @@ Next 10 technical steps:
      and future LLM planning, but they no longer appear as a competing next
      click when the panel already has a priority, specialist or Google Maps
      action.
+232. Preserve manual review leftovers after URL handoff. Done locally in
+     `scripts/process_extract_clinic_profile_jobs.py`: when Daniel sends an
+     official URL for a focused manual-review field, the original card can close
+     from the UI, but the worker records the handoff, creates the scoped
+     proposal when data is found, reopens the original card if no useful data is
+     extracted, and preserves unrelated pending fields as a follow-up manual
+     review. No clinic data is saved or published by this worker.
+233. Separate location access from medical profile content. Done locally in the
+     public build: clinic pages now render `Áreas`, `Servicios`, `Unidades`,
+     `Tecnología` and `Especialistas` before `Sedes y acceso`; multi-location
+     profiles display the access block full-width with one compact card per
+     sede. Google Maps buttons still require a direct clinic profile URL.
 
 ## Daniel decision checkpoints
 

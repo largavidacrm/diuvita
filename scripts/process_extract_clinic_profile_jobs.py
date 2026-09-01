@@ -33,6 +33,7 @@ BATCH_VERSION = "2026-08-31"
 FetchFn = Callable[..., FetchResult]
 CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool, bool], dict[str, Any]]
 ResolveOriginReviewFn = Callable[[dict[str, Any], dict[str, Any], str, dict[str, str]], dict[str, Any] | None]
+OriginReviewFollowupFn = Callable[[dict[str, Any], dict[str, Any] | None, dict[str, Any], str, dict[str, str]], dict[str, Any] | None]
 
 
 REQUESTED_FIELD_TARGETS = {
@@ -81,6 +82,17 @@ SOURCE_JOB_REVIEW_HANDOFF_SCOPES = {
     "specialist_source_only",
 }
 REVIEW_REPLACED_STATUSES = {"inserted", "updated", "updated_clinic"}
+QUALITY_ISSUE_TARGETS = {
+    "missing_website": {"website"},
+    "weak_summary": {"summary"},
+    "missing_services": {"services"},
+    "missing_specialties": {"specialties"},
+    "missing_units": {"unidades"},
+    "missing_professionals": {"profesionales"},
+    "missing_technology": {"tech"},
+    "missing_address": {"address", "locations"},
+    "missing_contact": {"email", "telefono", "phone_fixed", "phone_mobile", "phone_whatsapp", "instagram"},
+}
 
 
 class JobProcessingError(RuntimeError):
@@ -144,6 +156,103 @@ def requested_targets(fields: list[str]) -> set[str]:
     for field in fields:
         targets.update(REQUESTED_FIELD_TARGETS.get(field, {field}))
     return targets
+
+
+def source_job_handled_fields(job: dict[str, Any], fields: list[str]) -> list[str]:
+    input_data = as_dict(job.get("input"))
+    primary_fields = primary_requested_fields(input_data, fields)
+    if clean_str(input_data.get("target_scope")) == "primary_target_first" and primary_fields:
+        return primary_fields
+    return fields
+
+
+def quality_issue_code(issue: Any) -> str:
+    if isinstance(issue, dict):
+        return clean_str(issue.get("code")).lower()
+    return ""
+
+
+def quality_issue_text(issue: Any) -> str:
+    if isinstance(issue, dict):
+        return " ".join(
+            clean_str(issue.get(key)).lower()
+            for key in ("code", "label", "detail", "reason")
+            if clean_str(issue.get(key))
+        )
+    return clean_str(issue).lower()
+
+
+def quality_issue_targets(issue: Any) -> set[str]:
+    code = quality_issue_code(issue)
+    if code in QUALITY_ISSUE_TARGETS:
+        return set(QUALITY_ISSUE_TARGETS[code])
+    text = quality_issue_text(issue)
+    targets: set[str] = set()
+    if "summary" in text or "resumen" in text:
+        targets.add("summary")
+    if "website" in text or "web" in text:
+        targets.add("website")
+    if "address" in text or "direcci" in text or "sede" in text:
+        targets.update({"address", "locations"})
+    if "contact" in text or "contacto" in text or "tel" in text or "email" in text:
+        targets.update(QUALITY_ISSUE_TARGETS["missing_contact"])
+    if "service" in text or "servicio" in text:
+        targets.add("services")
+    if "specialt" in text or "especialidad" in text:
+        targets.add("specialties")
+    if "unit" in text or "unidad" in text:
+        targets.add("unidades")
+    if "professional" in text or "profesional" in text or "specialist" in text or "especialista" in text:
+        targets.add("profesionales")
+    if "technology" in text or "tecnolog" in text:
+        targets.add("tech")
+    return targets
+
+
+def quality_issue_matches_fields(issue: Any, fields: list[str]) -> bool:
+    target_fields = requested_targets(fields)
+    return bool(target_fields and quality_issue_targets(issue).intersection(target_fields))
+
+
+def split_quality_issues_for_source_job(
+    origin_review: dict[str, Any],
+    job: dict[str, Any],
+) -> tuple[list[Any], list[Any]]:
+    payload = as_dict(origin_review.get("payload"))
+    issues = as_list(payload.get("issues"))
+    if len(issues) <= 1:
+        return issues, []
+    handled_fields = source_job_handled_fields(job, requested_fields(as_dict(job.get("input"))))
+    handled: list[Any] = []
+    remaining: list[Any] = []
+    for issue in issues:
+        if quality_issue_matches_fields(issue, handled_fields):
+            handled.append(issue)
+        else:
+            remaining.append(issue)
+    if not handled:
+        return [], issues
+    return handled, remaining
+
+
+def issue_identity(issue: Any) -> str:
+    if isinstance(issue, dict):
+        code = clean_str(issue.get("code")).lower()
+        if code:
+            return "code:" + code
+    return "text:" + quality_issue_text(issue)
+
+
+def merge_quality_issues(existing: list[Any], additional: list[Any]) -> list[Any]:
+    merged: list[Any] = []
+    seen: set[str] = set()
+    for issue in existing + additional:
+        identity = issue_identity(issue)
+        if not identity or identity in seen:
+            continue
+        seen.add(identity)
+        merged.append(issue)
+    return merged
 
 
 def source_job_origin_review_id(job: dict[str, Any]) -> str:
@@ -260,6 +369,7 @@ def process_job(
     fetcher: FetchFn = fetch_url,
     review_creator: CreateReviewFn = create_review,
     origin_review_resolver: ResolveOriginReviewFn | None = None,
+    origin_review_followup: OriginReviewFollowupFn | None = None,
 ) -> dict[str, Any]:
     clinic_slug, source_url, fields = validate_job(job)
     extraction = extract_from_fetch(fetcher(source_url, timeout=args.timeout))
@@ -295,9 +405,21 @@ def process_job(
             source_replaces_review,
         )
         if source_replaces_review and created_review_replaces_origin(result.get("created_review")):
+            followup = origin_review_followup or handle_origin_review_after_source_job
+            result["origin_review_followup"] = followup(
+                job,
+                result.get("created_review"),
+                result,
+                admin_email,
+                local_env,
+            )
             resolver = origin_review_resolver or supersede_origin_review
             result["superseded_review"] = resolver(job, result["created_review"], admin_email, local_env)
         result["writes_data"] = True
+    elif args.apply and review_source_job_should_replace_existing_reviews(job):
+        followup = origin_review_followup or handle_origin_review_after_source_job
+        result["origin_review_followup"] = followup(job, None, result, admin_email, local_env)
+        result["writes_data"] = bool(result.get("origin_review_followup"))
     return result
 
 
@@ -317,6 +439,7 @@ def compact_result(result: dict[str, Any]) -> dict[str, Any]:
         "proposed_field_counts": result.get("proposed_field_counts") or {},
         "created_review": result.get("created_review"),
         "superseded_review": result.get("superseded_review"),
+        "origin_review_followup": result.get("origin_review_followup"),
         "writes_data": bool(result.get("writes_data")),
     }
 
@@ -365,6 +488,362 @@ cross join open_origin;
 """
     output = run_psql(sql, local_env).strip()
     return json.loads(output) if output else None
+
+
+def sql_uuid(value: Any) -> str:
+    clean = clean_str(value)
+    return f"{sql_literal(clean)}::uuid" if clean else "null"
+
+
+def run_json_sql(sql: str, local_env: dict[str, str]) -> Any:
+    output = run_psql(sql, local_env).strip()
+    if not output or output == "null":
+        return None
+    return json.loads(output)
+
+
+def load_review_by_id(review_id: str, local_env: dict[str, str]) -> dict[str, Any] | None:
+    if not review_id:
+        return None
+    sql = f"""
+select to_jsonb(rq)
+from public.review_queue rq
+where rq.id = {sql_literal(review_id)}::uuid;
+"""
+    row = run_json_sql(sql, local_env)
+    return row if isinstance(row, dict) else None
+
+
+def load_open_quality_followup_review(
+    clinic_id: str,
+    origin_review_id: str,
+    local_env: dict[str, str],
+) -> dict[str, Any] | None:
+    if not clinic_id:
+        return None
+    sql = f"""
+select to_jsonb(rq)
+from public.review_queue rq
+where rq.clinic_id = {sql_literal(clinic_id)}::uuid
+  and rq.id <> {sql_literal(origin_review_id)}::uuid
+  and rq.status = 'open'
+  and rq.review_type = 'clinic_quality_audit'
+  and coalesce(rq.payload ->> 'quality_context', '') <> 'blocking_claims'
+order by rq.created_at asc
+limit 1;
+"""
+    row = run_json_sql(sql, local_env)
+    return row if isinstance(row, dict) else None
+
+
+def source_handoff_field_labels(job: dict[str, Any], fields: list[str]) -> list[str]:
+    input_data = as_dict(job.get("input"))
+    primary_fields = primary_requested_fields(input_data, requested_fields(input_data))
+    if clean_str(input_data.get("target_scope")) == "primary_target_first" and primary_fields:
+        labels = primary_requested_field_labels(input_data, primary_fields)
+        return labels or primary_fields
+    labels = clean_string_list(input_data.get("requested_field_labels"))
+    return labels[: len(fields)] if labels else fields
+
+
+def source_handoff_progress(
+    job: dict[str, Any],
+    created_review: dict[str, Any] | None,
+    result: dict[str, Any],
+    status: str,
+    handled_issues: list[Any] | None = None,
+    remaining_issues: list[Any] | None = None,
+) -> dict[str, Any]:
+    input_data = as_dict(job.get("input"))
+    fields = source_job_handled_fields(job, requested_fields(input_data))
+    return {
+        "status": status,
+        "job_id": job.get("id"),
+        "source_url": first_url(input_data),
+        "handled_fields": fields,
+        "handled_field_labels": source_handoff_field_labels(job, fields),
+        "requested_fields": requested_fields(input_data),
+        "requested_field_labels": clean_string_list(input_data.get("requested_field_labels")),
+        "target_scope": clean_str(input_data.get("target_scope")),
+        "ui_route": clean_str(input_data.get("ui_route")),
+        "created_review_id": clean_str(as_dict(created_review).get("id")),
+        "created_review_title": clean_str(as_dict(created_review).get("title")),
+        "proposed_fields": result.get("proposed_fields") or [],
+        "handled_issues": [clean_str(as_dict(issue).get("label")) or clean_str(issue) for issue in handled_issues or []],
+        "remaining_issue_count": len(remaining_issues or []),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def followup_quality_title(origin_review: dict[str, Any]) -> str:
+    title = clean_str(origin_review.get("title"))
+    if title.lower().startswith("completar ficha:"):
+        return "Revisión manual:" + title.split(":", 1)[1]
+    if title:
+        return title
+    payload = as_dict(origin_review.get("payload"))
+    clinic_name = clean_str(payload.get("clinic_name"))
+    return f"Revisión manual: {clinic_name}" if clinic_name else "Revisión manual de ficha"
+
+
+def quality_review_payload_with_handoff(
+    base_payload: dict[str, Any],
+    issues: list[Any],
+    progress: dict[str, Any],
+) -> dict[str, Any]:
+    payload = dict(base_payload)
+    payload["issues"] = issues
+    manual_progress = as_dict(payload.get("manual_review_progress"))
+    manual_progress["source_handoff"] = progress
+    payload["manual_review_progress"] = manual_progress
+    return payload
+
+
+def write_json_change_event(
+    event_name: str,
+    entity_type: str,
+    entity_id: str,
+    clinic_id: str,
+    payload: dict[str, Any],
+    admin_email: str,
+    local_env: dict[str, str],
+) -> None:
+    payload_json = json.dumps(payload, ensure_ascii=False)
+    sql = f"""
+with claims as (
+  select set_config(
+    'request.jwt.claims',
+    jsonb_build_object('email', {sql_literal(admin_email)})::text,
+    true
+  )
+)
+insert into public.change_events (
+  event_name,
+  actor_type,
+  actor_id,
+  entity_type,
+  entity_id,
+  clinic_id,
+  payload
+)
+select
+  {sql_literal(event_name)},
+  'admin',
+  lower({sql_literal(admin_email)}),
+  {sql_literal(entity_type)},
+  {sql_uuid(entity_id)},
+  {sql_uuid(clinic_id)},
+  {sql_literal(payload_json)}::jsonb
+from claims;
+"""
+    run_psql(sql, local_env)
+
+
+def upsert_remaining_quality_review(
+    origin_review: dict[str, Any],
+    job: dict[str, Any],
+    created_review: dict[str, Any],
+    result: dict[str, Any],
+    handled_issues: list[Any],
+    remaining_issues: list[Any],
+    admin_email: str,
+    local_env: dict[str, str],
+) -> dict[str, Any] | None:
+    clinic_id = clean_str(origin_review.get("clinic_id")) or clean_str(as_dict(origin_review.get("payload")).get("clinic_id"))
+    origin_review_id = clean_str(origin_review.get("id"))
+    if not clinic_id or clean_str(origin_review.get("status")) == "dismissed":
+        return None
+    existing = load_open_quality_followup_review(clinic_id, origin_review_id, local_env)
+    progress = source_handoff_progress(
+        job,
+        created_review,
+        result,
+        "remaining_manual_review_preserved",
+        handled_issues,
+        remaining_issues,
+    )
+    if existing:
+        existing_payload = as_dict(existing.get("payload"))
+        merged_issues = merge_quality_issues(as_list(existing_payload.get("issues")), remaining_issues)
+        payload = quality_review_payload_with_handoff(existing_payload, merged_issues, progress)
+        payload_json = json.dumps(payload, ensure_ascii=False)
+        sql = f"""
+with claims as (
+  select set_config(
+    'request.jwt.claims',
+    jsonb_build_object('email', {sql_literal(admin_email)})::text,
+    true
+  )
+),
+updated as (
+  update public.review_queue rq
+  set
+    payload = {sql_literal(payload_json)}::jsonb,
+    priority = greatest(rq.priority, {int(origin_review.get("priority") or 0)})
+  where rq.id = {sql_literal(clean_str(existing.get("id")))}::uuid
+    and exists (select 1 from claims)
+  returning *
+)
+select to_jsonb(updated) from updated;
+"""
+        row = run_json_sql(sql, local_env)
+        status = "updated" if row else "missing"
+        followup_id = clean_str(as_dict(row).get("id"))
+    else:
+        payload = quality_review_payload_with_handoff(as_dict(origin_review.get("payload")), remaining_issues, progress)
+        payload_json = json.dumps(payload, ensure_ascii=False)
+        sql = f"""
+with claims as (
+  select set_config(
+    'request.jwt.claims',
+    jsonb_build_object('email', {sql_literal(admin_email)})::text,
+    true
+  )
+),
+inserted as (
+  insert into public.review_queue (
+    job_id,
+    clinic_id,
+    review_type,
+    title,
+    priority,
+    status,
+    payload
+  )
+  select
+    {sql_uuid(origin_review.get("job_id"))},
+    {sql_uuid(clinic_id)},
+    'clinic_quality_audit',
+    {sql_literal(followup_quality_title(origin_review))},
+    {int(origin_review.get("priority") or 85)},
+    'open',
+    {sql_literal(payload_json)}::jsonb
+  from claims
+  returning *
+)
+select to_jsonb(inserted) from inserted;
+"""
+        row = run_json_sql(sql, local_env)
+        status = "inserted" if row else "missing"
+        followup_id = clean_str(as_dict(row).get("id"))
+    if followup_id:
+        write_json_change_event(
+            "manual_quality_review_preserved_after_source_handoff",
+            "review_queue",
+            followup_id,
+            clinic_id,
+            {
+                "origin_review_id": origin_review_id,
+                "source_job_id": job.get("id"),
+                "created_review_id": clean_str(as_dict(created_review).get("id")),
+                "remaining_issue_count": len(remaining_issues),
+                "handled_issue_count": len(handled_issues),
+            },
+            admin_email,
+            local_env,
+        )
+    return {
+        "status": status,
+        "id": followup_id,
+        "origin_review_id": origin_review_id,
+        "remaining_issue_count": len(remaining_issues),
+        "handled_issue_count": len(handled_issues),
+    }
+
+
+def reopen_origin_review_after_empty_source_job(
+    origin_review: dict[str, Any],
+    job: dict[str, Any],
+    result: dict[str, Any],
+    admin_email: str,
+    local_env: dict[str, str],
+) -> dict[str, Any] | None:
+    origin_review_id = clean_str(origin_review.get("id"))
+    clinic_id = clean_str(origin_review.get("clinic_id")) or clean_str(as_dict(origin_review.get("payload")).get("clinic_id"))
+    if not origin_review_id or clean_str(origin_review.get("status")) == "dismissed":
+        return None
+    progress = source_handoff_progress(job, None, result, "no_proposal_returned")
+    payload = dict(as_dict(origin_review.get("payload")))
+    payload["source_handoff_progress"] = progress
+    payload_json = json.dumps(payload, ensure_ascii=False)
+    resolution = dict(as_dict(origin_review.get("resolution")))
+    resolution["source_handoff_result"] = progress
+    resolution_json = json.dumps(resolution, ensure_ascii=False)
+    sql = f"""
+with claims as (
+  select set_config(
+    'request.jwt.claims',
+    jsonb_build_object('email', {sql_literal(admin_email)})::text,
+    true
+  )
+),
+updated as (
+  update public.review_queue rq
+  set
+    status = 'open',
+    payload = {sql_literal(payload_json)}::jsonb,
+    resolution = {sql_literal(resolution_json)}::jsonb,
+    resolved_by = null,
+    resolved_at = null
+  where rq.id = {sql_literal(origin_review_id)}::uuid
+    and rq.status <> 'dismissed'
+    and exists (select 1 from claims)
+  returning *
+)
+select to_jsonb(updated) from updated;
+"""
+    row = run_json_sql(sql, local_env)
+    if not row:
+        return None
+    write_json_change_event(
+        "manual_review_reopened_after_empty_source_job",
+        "review_queue",
+        origin_review_id,
+        clinic_id,
+        {
+            "source_job_id": job.get("id"),
+            "source_url": progress.get("source_url"),
+            "handled_fields": progress.get("handled_fields"),
+        },
+        admin_email,
+        local_env,
+    )
+    return {
+        "status": "reopened",
+        "id": clean_str(as_dict(row).get("id")),
+        "origin_review_id": origin_review_id,
+    }
+
+
+def handle_origin_review_after_source_job(
+    job: dict[str, Any],
+    created_review: dict[str, Any] | None,
+    result: dict[str, Any],
+    admin_email: str,
+    local_env: dict[str, str],
+) -> dict[str, Any] | None:
+    origin_review = load_review_by_id(source_job_origin_review_id(job), local_env)
+    if not origin_review:
+        return None
+    if clean_str(result.get("status")) == "empty":
+        return reopen_origin_review_after_empty_source_job(origin_review, job, result, admin_email, local_env)
+    if clean_str(origin_review.get("review_type")) != "clinic_quality_audit":
+        return None
+    if as_dict(origin_review.get("payload")).get("quality_context") == "blocking_claims":
+        return None
+    handled_issues, remaining_issues = split_quality_issues_for_source_job(origin_review, job)
+    if not remaining_issues:
+        return None
+    return upsert_remaining_quality_review(
+        origin_review,
+        job,
+        as_dict(created_review),
+        result,
+        handled_issues,
+        remaining_issues,
+        admin_email,
+        local_env,
+    )
 
 
 def pick_next_job(admin_email: str, worker: str, local_env: dict[str, str]) -> dict[str, Any] | None:
