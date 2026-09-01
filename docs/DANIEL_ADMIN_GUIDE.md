@@ -15,7 +15,9 @@ http://127.0.0.1:PUERTO/admin/
 Usa siempre el enlace local concreto que te dé Codex en ese momento. Si hay
 varias pestañas con puertos distintos, normalmente vale el más reciente. El
 acceso local sirve solo la web generada en `dist/`. No publica producción, no
-toca Netlify y no expone el archivo `.env`.
+toca Netlify y no expone el archivo `.env`. En local, la cabecera puede mostrar
+un distintivo **Local · rama · commit** para confirmar que estás mirando la
+versión que Codex acaba de preparar.
 
 El botón de menú de la cabecera permite reducir o mostrar la barra lateral
 izquierda. Sirve para ganar anchura cuando estés revisando fichas largas.

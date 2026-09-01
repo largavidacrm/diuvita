@@ -6,6 +6,7 @@ import argparse
 import errno
 import functools
 import http.server
+import json
 import socketserver
 import subprocess
 import sys
@@ -24,6 +25,46 @@ class ReusableTCPServer(socketserver.TCPServer):
     allow_reuse_address = True
 
 
+def inject_local_version(html_text: str, version: str) -> str:
+    if not version:
+        return html_text
+    return html_text.replace(
+        '"__VITALARGA_LOCAL_VERSION__"',
+        json.dumps(version, ensure_ascii=False),
+    )
+
+
+class LocalDashboardHandler(http.server.SimpleHTTPRequestHandler):
+    local_version = ""
+
+    def is_admin_index_request(self) -> bool:
+        path = self.path.split("?", 1)[0].split("#", 1)[0]
+        return path in {"/admin/", "/admin/index.html"}
+
+    def send_admin_index(self, include_body: bool) -> None:
+        html_path = Path(self.directory) / "admin" / "index.html"
+        html_text = inject_local_version(html_path.read_text(encoding="utf-8"), self.local_version)
+        body = html_text.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if include_body:
+            self.wfile.write(body)
+
+    def do_GET(self) -> None:
+        if self.is_admin_index_request():
+            self.send_admin_index(include_body=True)
+            return
+        super().do_GET()
+
+    def do_HEAD(self) -> None:
+        if self.is_admin_index_request():
+            self.send_admin_index(include_body=False)
+            return
+        super().do_HEAD()
+
+
 def dashboard_root(root: Path = ROOT) -> Path:
     return root / "dist"
 
@@ -38,8 +79,12 @@ def ensure_loopback_host(host: str) -> None:
         raise SystemExit("Servidor local bloqueado: usa 127.0.0.1, localhost o ::1.")
 
 
-def make_handler(dist: Path = DIST) -> Any:
-    return functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(dist))
+def make_handler(dist: Path = DIST, local_version: str = "") -> Any:
+    class Handler(LocalDashboardHandler):
+        pass
+
+    Handler.local_version = local_version
+    return functools.partial(Handler, directory=str(dist))
 
 
 def local_version_label(root: Path = ROOT) -> str:
@@ -96,12 +141,13 @@ def main() -> int:
         raise SystemExit("--port debe estar entre 1024 y 65535.")
     dist = dashboard_root()
     ensure_dist_ready(dist)
-    handler = make_handler(dist)
+    version = local_version_label()
+    handler = make_handler(dist, version)
     try:
         with ReusableTCPServer((args.host, args.port), handler) as httpd:
             print(f"Dashboard local: http://{args.host}:{args.port}/admin/")
             print("Si tienes varias pestañas locales, usa esta URL.")
-            print(f"Version local: {local_version_label()}")
+            print(f"Version local: {version}")
             print(f"Sirviendo solo: {dist}")
             httpd.serve_forever()
     except OSError as error:

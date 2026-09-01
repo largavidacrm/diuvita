@@ -1081,6 +1081,10 @@ Next 10 technical steps:
      preserves the bounded source intent fields and renders statuses as
      **listo para LLM**, **recuperable desde trabajo** or **solo revisión
      manual**.
+208. Make local dashboard versions visible without exposing production
+     metadata. Done locally in `/admin/` and `scripts/serve_local_dashboard.py`:
+     the local server injects a small **Local · branch · commit** badge into
+     the admin header, while the production/static file keeps the marker hidden.
 
 ## Daniel decision checkpoints
 

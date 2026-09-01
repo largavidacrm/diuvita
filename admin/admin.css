@@ -142,6 +142,20 @@ body.sidebar-collapsed .sidebar-toggle {
   gap: 0.55rem;
 }
 
+.local-version-pill {
+  max-width: min(34rem, 42vw);
+  padding: 0.42rem 0.58rem;
+  border: 1px solid rgba(14, 79, 74, 0.18);
+  border-radius: 8px;
+  background: rgba(220, 234, 230, 0.72);
+  color: var(--green-deep);
+  font-size: var(--text-small);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .btn {
   min-height: 2.5rem;
   border-radius: 8px;
@@ -3137,6 +3151,11 @@ td small {
   .top-actions {
     width: 100%;
     margin-left: 0;
+  }
+
+  .local-version-pill {
+    width: 100%;
+    max-width: none;
   }
 
   .top-actions .btn {

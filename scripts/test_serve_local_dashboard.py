@@ -11,6 +11,7 @@ from serve_local_dashboard import (
     dashboard_root,
     ensure_dist_ready,
     ensure_loopback_host,
+    inject_local_version,
     local_version_label,
     make_handler,
 )
@@ -39,6 +40,14 @@ def main():
     check(dashboard_root(root) == dist, "server should use dist/ only")
     check(handler.keywords["directory"] == str(dist), "handler should serve the generated dist directory")
     check(str(root) != handler.keywords["directory"], "handler must not serve the worktree root")
+    injected = inject_local_version(
+        'window.VITALARGA_LOCAL_VERSION = "__VITALARGA_LOCAL_VERSION__";',
+        "codex/test · abc1234 Example",
+    )
+    check(
+        'window.VITALARGA_LOCAL_VERSION = "codex/test · abc1234 Example";' == injected,
+        "local server should inject the current worktree version safely",
+    )
     busy_message = bind_error_message(DEFAULT_HOST, DEFAULT_PORT, OSError(errno.EADDRINUSE, "busy"))
     permission_message = bind_error_message(DEFAULT_HOST, DEFAULT_PORT, OSError(errno.EPERM, "blocked"))
     check("Prueba primero http://127.0.0.1:8765/admin/" in busy_message, "busy port message should point Daniel to the dashboard URL")

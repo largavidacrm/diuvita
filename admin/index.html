@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/admin/admin.css">
   <script>
     window.VITALARGA_ADMIN_CONFIG = __VITALARGA_ADMIN_CONFIG__;
+    window.VITALARGA_LOCAL_VERSION = "__VITALARGA_LOCAL_VERSION__";
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -23,6 +24,7 @@
       <span>Control</span>
     </div>
     <div class="top-actions">
+      <span class="local-version-pill hidden" id="localVersionPill"></span>
       <button class="btn secondary hidden" id="refreshBtn" type="button">Actualizar</button>
       <button class="btn danger hidden" id="signOutBtn" type="button">Salir</button>
     </div>
@@ -1180,6 +1182,14 @@
       button.disabled = loading;
       button.textContent = loading ? "Actualizando..." : "Actualizar";
       button.setAttribute("aria-busy", loading ? "true" : "false");
+    }
+
+    function renderLocalVersionPill() {
+      var pill = el("localVersionPill");
+      var version = text(window.VITALARGA_LOCAL_VERSION || "");
+      var hasVersion = version && version.indexOf("__VITALARGA_LOCAL_VERSION__") < 0;
+      pill.textContent = hasVersion ? "Local · " + version : "";
+      show(pill, hasVersion);
     }
 
     function metric(label, value) {
@@ -9315,6 +9325,7 @@
     }
 
     async function init() {
+      renderLocalVersionPill();
       setSidebarCollapsed(storedSidebarCollapsed());
       el("sidebarToggleBtn").addEventListener("click", toggleSidebar);
       if (!config.supabaseUrl || !config.supabasePublishableKey || !window.supabase) {
