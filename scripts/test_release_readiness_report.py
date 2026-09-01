@@ -36,6 +36,7 @@ def main():
     check(any(item["name"] == "admin visual scale tokens" for item in local_checks), "admin visual scale marker missing")
     check(any(item["name"] == "admin non-flat review columns" for item in local_checks), "admin non-flat column marker missing")
     check(any(item["name"] == "LLM manual review context" for item in local_checks), "LLM manual review marker missing")
+    check(any(item["name"] == "LLM-ready source-only exclusion" for item in local_checks), "LLM-ready source-only exclusion marker missing")
     check(any(item["name"] == "LLM manual source scope" for item in local_checks), "LLM manual source scope marker missing")
     check(any(item["name"] == "LLM Google reviews dependency" for item in local_checks), "LLM Google reviews dependency marker missing")
     check(any(item["name"] == "LLM Google reviews suggestion guard" for item in local_checks), "LLM Google reviews suggestion guard marker missing")

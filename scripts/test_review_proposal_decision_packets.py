@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from review_proposal_decision_packets import build_report, decision_packet
+from review_proposal_decision_packets import build_report, decision_packet, packet_is_llm_ready
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -164,6 +164,8 @@ def main():
     check(reviews_origin["status"] == "source_without_context", "legacy source-only cards should expose missing source context")
     check(reviews_origin["source_host"] == "clinic.example", "legacy source context should keep only the host by default")
     check("source_url" not in reviews_origin, "legacy source context should not expose full URL by default")
+    check(packet_is_llm_ready(safe_packet) is True, "context-ready packets should be available for LLM help")
+    check(packet_is_llm_ready(reviews_packet) is False, "source-only packets should be excluded from LLM-ready batches")
     reviews_with_maps_packet = decision_packet({
         "id": "reviews-2",
         "title": "Revisar valoraciones Google: Clinic",
@@ -320,6 +322,23 @@ def main():
         manual_context["llm_boundary"] == "do_not_invent_values_or_write_field_changes",
         "manual context should keep the LLM boundary explicit",
     )
+    filtered_report = build_report([
+        sample_enrichment_row(),
+        sample_quality_audit_row(),
+        {
+            "id": "source-only-1",
+            "title": "Revisar valoraciones Google: Clinic",
+            "review_type": "clinic_profile_enrichment",
+            "payload": {
+                "source_url": "https://clinic.example/contacto",
+                "proposed_fields": {"google_reviews_url": "https://www.google.com/maps/place/Clinic/reviews"},
+            },
+            "clinic": {"display_name": "Clinic", "current_data": {}},
+        },
+    ], llm_ready_only=True)
+    check(filtered_report["llm_ready_only"] is True, "LLM-ready report flag missing")
+    check(filtered_report["packet_count"] == 2, "LLM-ready batches should exclude source-only packets")
+    check(filtered_report["excluded_source_without_context"] == 1, "LLM-ready report should count excluded source-only packets")
 
     unsourced_specialist_packet = decision_packet(sample_unsourced_specialist_row())
     source_request = unsourced_specialist_packet["source_job_request"]

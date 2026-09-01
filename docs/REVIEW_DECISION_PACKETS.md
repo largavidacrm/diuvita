@@ -53,6 +53,12 @@ Para centrarlo en una clínica o fragmento de título:
 python3 scripts/review_proposal_decision_packets.py --clinic IMDA --limit 5
 ```
 
+Para preparar solo tarjetas que no estén marcadas como **fuente sin contexto**:
+
+```bash
+python3 scripts/review_proposal_decision_packets.py --llm-ready-only --limit 10
+```
+
 Para preparar una decisión local con valores completos:
 
 ```bash

@@ -804,12 +804,34 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
     return packet
 
 
-def build_report(rows: list[dict[str, Any]], include_values: bool = False) -> dict[str, Any]:
+def packet_is_llm_ready(packet: dict[str, Any]) -> bool:
+    source_origin = packet.get("source_origin_status")
+    if isinstance(source_origin, dict) and source_origin.get("status") == "source_without_context":
+        return False
+    return True
+
+
+def build_report(
+    rows: list[dict[str, Any]],
+    include_values: bool = False,
+    llm_ready_only: bool = False,
+) -> dict[str, Any]:
     packets = [decision_packet(row, include_values=include_values) for row in rows if isinstance(row, dict)]
+    excluded_source_without_context = 0
+    if llm_ready_only:
+        filtered_packets = []
+        for packet in packets:
+            if packet_is_llm_ready(packet):
+                filtered_packets.append(packet)
+            else:
+                excluded_source_without_context += 1
+        packets = filtered_packets
     return {
         "schema_version": PACKET_SCHEMA_VERSION,
         "writes_data": False,
         "include_values": include_values,
+        "llm_ready_only": llm_ready_only,
+        "excluded_source_without_context": excluded_source_without_context,
         "decision_scope": "one_card_one_decision",
         "packet_count": len(packets),
         "packets": packets,
@@ -898,6 +920,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clinic", default="", help="Clinic name, slug or review-title fragment.")
     parser.add_argument("--review-id", default="", help="Open review_queue id.")
     parser.add_argument("--input-file", type=Path, help="Read review rows from a local JSON file instead of Supabase.")
+    parser.add_argument("--llm-ready-only", action="store_true", help="Exclude source-only cards that lack operator/job context.")
     parser.add_argument("--include-values", action="store_true", help="Include proposed/current values and full evidence URLs for local LLM preparation.")
     return parser.parse_args()
 
@@ -908,7 +931,11 @@ def main() -> int:
         rows = load_input_file(args.input_file)
     else:
         rows = load_rows(args.limit, load_env_file(), clinic=args.clinic, review_id=args.review_id)
-    print(json.dumps(build_report(rows, include_values=args.include_values), ensure_ascii=False, indent=2))
+    print(json.dumps(
+        build_report(rows, include_values=args.include_values, llm_ready_only=args.llm_ready_only),
+        ensure_ascii=False,
+        indent=2,
+    ))
     return 0
 
 

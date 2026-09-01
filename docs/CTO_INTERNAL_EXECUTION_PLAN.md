@@ -1089,6 +1089,10 @@ Next 10 technical steps:
      `scripts/prepare_review_decision_llm_prompt.py`: future LLM prompts now
      keep Daniel's requested field labels, primary field and LLM boundary from
      source-backed reviews without exposing raw values by default.
+210. Add an explicit LLM-ready packet filter. Done locally in
+     `scripts/review_proposal_decision_packets.py`: operators can now request
+     `--llm-ready-only` so source-only cards without operator/job context are
+     excluded from assisted LLM batches instead of being silently mixed in.
 
 ## Daniel decision checkpoints
 

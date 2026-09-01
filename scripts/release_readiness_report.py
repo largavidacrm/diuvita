@@ -43,6 +43,7 @@ SOURCE_MARKERS = [
     ("admin visual scale tokens", "admin/admin.css", "--text-ui"),
     ("admin non-flat review columns", "admin/admin.css", "minmax(0, 1fr) minmax(260px, 320px)"),
     ("LLM manual review context", "scripts/review_proposal_decision_packets.py", "manual_review_context"),
+    ("LLM-ready source-only exclusion", "scripts/review_proposal_decision_packets.py", "llm_ready_only"),
     ("LLM manual source scope", "scripts/review_proposal_decision_packets.py", "primary_target_first"),
     ("LLM Google reviews dependency", "scripts/review_proposal_decision_packets.py", '"approval_dependency"'),
     ("LLM Google reviews suggestion guard", "scripts/validate_review_decision_suggestion.py", "google_reviews_dependency_errors"),
