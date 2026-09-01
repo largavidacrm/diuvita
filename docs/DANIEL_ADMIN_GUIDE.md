@@ -279,10 +279,29 @@ Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. S
 
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
 
-En el lateral, debajo del menú, tienes **Crear trabajo**. El panel avisa cuando
-la bandeja está casi llena. Si el freno está cerca del límite, pausa crear más
-trabajos hasta limpiar revisiones. Así evitamos llenar la bandeja con más
-tarjetas antes de cerrar las que ya existen.
+En el menú lateral tienes **Recomendar clínica**. Ahí puedes crear trabajo
+para el agente sin tocar la web: recomendar una clínica nueva, completar una
+clínica existente con una URL oficial o lanzar una auditoría interna. El panel
+avisa cuando la bandeja está casi llena. Si el freno está cerca del límite,
+pausa crear más trabajos hasta limpiar revisiones. Así evitamos llenar la
+bandeja con más propuestas antes de cerrar las que ya existen.
+
+Para completar una clínica existente, elige **Completar clínica existente**,
+selecciona la ficha, pega una URL oficial y, si quieres, indica qué información
+buscas: especialistas, servicios, sedes, contacto, Google Maps u otro campo. El
+trabajo queda en **Trabajos pendientes** hasta que lo procese el ciclo CTO
+supervisado. Cuando haya datos revisables, volverá como propuesta; no se guarda
+ni publica automáticamente.
+
+En **Trabajos** verás primero **Trabajos pendientes** y después **Trabajos
+recientes**. Pendiente significa que el agente todavía tiene que procesarlo o
+lo está procesando; completado significa que ya terminó y, si encontró datos
+útiles, dejó una propuesta para revisar.
+
+En la web pública hay un botón **Recomendar Clínica**. Cualquier visitante puede
+enviar una clínica o una fuente oficial. Eso entra aquí como trabajo pendiente:
+no crea ficha pública, no cambia una clínica existente y no aprueba nada sin
+revisión humana.
 
 La pantalla de revisión tiene dos momentos. Primero ves la bandeja con sus
 filtros y una columna lateral de selección. Al pulsar **Revisar** en una
@@ -456,7 +475,7 @@ En **Historial de cambios**, cada versión antigua indica qué campos cambiaría
 
 ## Auditar fichas
 
-En **Crear trabajo**, puedes elegir **Auditar fichas**.
+En **Recomendar clínica**, puedes elegir **Auditar fichas existentes**.
 
 Eso revisa las fichas visibles y crea tareas si falta algo importante, por ejemplo especialistas, servicios, especialidades, dirección, resumen o contacto.
 

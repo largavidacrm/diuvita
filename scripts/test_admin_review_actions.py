@@ -32,6 +32,9 @@ def main() -> None:
         'id="reviewClinicProfileFacts"',
         'id="reviewClinicProfileDataCount"',
         'id="reviewClinicProfileData"',
+        'id="reviewClinicPendingPanel"',
+        'id="reviewClinicPendingCount"',
+        'id="reviewClinicPendingList"',
         'id="reviewClinicInlineEditBtn"',
         'id="reviewClinicEditPanel"',
         'id="reviewClinicEditChangeCount"',
@@ -100,6 +103,7 @@ def main() -> None:
         "data-review-manual-field",
         "Modificar contacto",
         "Ficha de la clínica",
+        "Mejoras pendientes de esta clínica",
         "Datos visibles en la ficha",
         "Contacto interno",
         "Campo a revisar ahora",
@@ -144,7 +148,7 @@ def main() -> None:
     check('class="review-flow-step"' not in index, "old oversized step cards should be removed")
 
     editor_start = index.index('id="reviewEditor"')
-    editor_end = index.index('<section class="panel" id="jobsPanel"', editor_start)
+    editor_end = index.index('<section class="panel job-create-panel"', editor_start)
     review_editor = index[editor_start:editor_end]
     for forbidden in [
         "Camino de publicación",
@@ -220,9 +224,14 @@ def main() -> None:
         and "function loadRelatedEnrichmentProposals()" in index
         and "function relatedOpenReviews" in index
         and "function clinicReviewBundle" in index
+        and "function reviewQueueGroups" in index
+        and "function reviewQueueGroupPrimaryRow" in index
+        and "function reviewQueueGroupSubjectCell" in index
+        and "function renderReviewClinicPendingPanel" in index
+        and "function reviewClinicPendingRows" in index
         and "function reviewWorkgroupRecommendation" in index
         and "activeClinicReviewIds" in index,
-        "group analysis helpers should remain available for future automation",
+        "clinic grouping helpers should keep one ficha per clinic while preserving atomic review rows",
     )
     check(
         "Ficha actualizada desde revisión manual." in index
@@ -411,9 +420,14 @@ def main() -> None:
     )
     check(
         "function jobDetailText" in index
+        and "function jobTitleText" in index
         and "function jobDateText" in index
         and '.select("job_type, status, confidence, cost_cents, created_at, scheduled_for, input")' in index
+        and '.in("status", ["queued", "running"])' in index
+        and 'id="pendingJobsBody"' in index
+        and "Trabajos pendientes" in index
         and "URL desde revisión · " in index
+        and "URL recomendada · " in index
         and "ciclo CTO supervisado · vuelve como propuesta revisable" in index
         and "En cola para ciclo CTO supervisado" in index
         and "jobDateText(row)" in index,
@@ -496,6 +510,14 @@ def main() -> None:
         "closing a review should restore the queue view",
     )
     check(
+        'reviewQueueGroups(rows)' in index
+        and "reviewQueueGroupTypeSummary(entry)" in index
+        and "Revisar ficha" in index
+        and "propuestas pendientes" in index
+        and "Abre la ficha una vez" in index,
+        "review inbox should present one visible ficha per clinic with accumulated pending improvements",
+    )
+    check(
         'class="review-decision-summary hidden"' in index
         and 'class="review-current-relevant hidden"' in index,
         "current clinic context should move out of the visible decision column",
@@ -552,6 +574,7 @@ def main() -> None:
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
+    check(".review-clinic-pending-panel" in css and ".review-clinic-pending-item" in css, "accumulated clinic review items should be styled")
     check(".review-clinic-edit-panel" in css and ".review-clinic-edit-grid" in css and ".review-clinic-edit-changes" in css and ".review-clinic-panel .link-btn.has-edits" in css, "review clinic direct edit panel should be styled")
     check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css and ".manual-review-section" in css, "manual review context and source handoff should be styled")
     check(".work-grid.review-work-queue .review-list-panel" in css, "review queue side panel should stay explicit in CSS")

@@ -58,6 +58,7 @@ TEST_STEPS = [
     ("test: admin review backlog quality", "scripts/test_admin_review_backlog_quality.py"),
     ("test: admin next action", "scripts/test_admin_next_action.py"),
     ("test: public home simplified", "scripts/test_public_home_simplified.py"),
+    ("test: public clinic recommendations", "scripts/test_public_clinic_recommendations.py"),
     ("test: public profile UX", "scripts/test_public_profile_ux.py"),
     ("test: public site assets", "scripts/test_public_site_assets.py"),
     ("test: public legal identity", "scripts/test_public_legal_identity.py"),

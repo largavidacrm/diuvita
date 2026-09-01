@@ -750,6 +750,24 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .visit:hover{text-decoration:none;background:var(--green-deep)}
 .clinic-side .visit{width:100%}
 .note{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:1rem 1.1rem;font-size:.93rem;color:var(--muted);margin-top:1.4rem}
+.recommend{max-width:1180px;margin:.25rem auto 1rem;padding:0 5vw}
+.recommend-inner{display:grid;gap:.75rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
+.recommend-head{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.recommend-head h2{font-family:'Newsreader',Georgia,serif;font-weight:500;font-size:1.35rem;line-height:1.1}
+.recommend-head p{margin:.25rem 0 0;color:var(--muted);max-width:58ch}
+.recommend-toggle,.recommend-submit{font:inherit;display:inline-flex;align-items:center;justify-content:center;min-height:2.55rem;padding:.55rem .85rem;border:1px solid var(--green);border-radius:8px;background:var(--green);color:#fff;font-weight:800;cursor:pointer;white-space:nowrap}
+.recommend-toggle:hover,.recommend-submit:hover{background:var(--green-deep);text-decoration:none}
+.recommend-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;padding-top:.75rem;border-top:1px solid var(--line)}
+.recommend-form label{display:block;margin-bottom:.28rem;color:var(--muted);font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0}
+.recommend-form input,.recommend-form select,.recommend-form textarea{width:100%;min-height:2.65rem;font:inherit;font-size:.96rem;padding:.58rem .72rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.recommend-form textarea{min-height:5rem;resize:vertical}
+.recommend-form input:focus,.recommend-form select:focus,.recommend-form textarea:focus{outline:3px solid rgba(14,79,74,.22);border-color:var(--green)}
+.recommend-wide{grid-column:1/-1}
+.recommend-actions{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.recommend-status{margin:0;color:var(--muted);font-weight:700}
+.recommend-status.ok{color:var(--green-deep)}
+.recommend-status.error{color:#B63B2E}
+.recommend-trap{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
 footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.9rem;background:rgba(247,244,238,.56)}
 .footer-inner{max-width:1120px;margin:0 auto;display:grid;gap:.72rem}
 footer p{margin:0}
@@ -759,8 +777,8 @@ footer p{margin:0}
 .legal-copy{display:grid;gap:1rem;margin-top:1.2rem;color:var(--muted)}
 .legal-copy h2{margin-top:.4rem}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
-@media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}}
-@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}}
+@media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro,.recommend-form{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}.recommend-head{align-items:flex-start;flex-direction:column}.recommend-toggle{width:100%}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}.recommend-actions{display:grid;grid-template-columns:1fr}.recommend-submit{width:100%}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -779,7 +797,7 @@ HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <script data-goatcounter="https://vitalarga.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 {jsonld}</head><body>
 <header class="site"><a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
-<nav><a href="/#buscar">Buscar clínica</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
+<nav><a href="/#buscar">Buscar clínica</a><a href="/#recomendar-clinica">Recomendar Clínica</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
 """
 
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -910,6 +928,12 @@ featured_logos = "".join(
     for c in featured_logo_clinics
 )
 
+PUBLIC_SITE_CONFIG_JSON = json.dumps({
+    "supabaseUrl": public_env("SUPABASE_URL"),
+    "supabasePublishableKey": public_env("SUPABASE_PUBLISHABLE_KEY"),
+}, ensure_ascii=False).replace("<", "\\u003c")
+PUBLIC_SITE_CONFIG = f'<script>window.VITALARGA_PUBLIC_CONFIG={PUBLIC_SITE_CONFIG_JSON};</script>'
+
 JS = """<script>
 (function(){
   var state={city:null,country:null,spec:null,q:"",qDigits:""};
@@ -949,6 +973,91 @@ JS = """<script>
     document.querySelectorAll(".chip").forEach(function(ch){ch.classList.remove("on")});
     apply();
   });
+  function clean(value){return (value||"").trim();}
+  function cleanUrl(value){
+    var url=clean(value);
+    if(url && !/^https?:\\/\\//i.test(url)) url="https://"+url;
+    return url;
+  }
+  function setRecommendationStatus(message,tone){
+    var node=document.getElementById("recommendStatus");
+    if(!node) return;
+    node.textContent=message||"";
+    node.className="recommend-status"+(tone?" "+tone:"");
+  }
+  function setRecommendationBusy(form,busy){
+    if(!form) return;
+    [].slice.call(form.querySelectorAll("input,select,textarea,button")).forEach(function(node){
+      if(node.id==="recommendTrap") return;
+      node.disabled=busy;
+    });
+  }
+  var recommendToggle=document.getElementById("recommendToggle");
+  var recommendWrap=document.getElementById("recommendFormWrap");
+  if(recommendToggle&&recommendWrap){
+    recommendToggle.addEventListener("click",function(){
+      var isHidden=recommendWrap.classList.toggle("hidden");
+      recommendToggle.setAttribute("aria-expanded",isHidden?"false":"true");
+      if(!isHidden){
+        var first=document.getElementById("recommendClinicName");
+        if(first) first.focus();
+      }
+    });
+  }
+  var recommendForm=document.getElementById("recommendClinicForm");
+  if(recommendForm){
+    recommendForm.addEventListener("submit",function(event){
+      event.preventDefault();
+      var config=window.VITALARGA_PUBLIC_CONFIG||{};
+      var url=(config.supabaseUrl||"").replace(/\\/$/,"");
+      var key=config.supabasePublishableKey||"";
+      var name=clean(document.getElementById("recommendClinicName").value);
+      var website=cleanUrl(document.getElementById("recommendClinicWebsite").value);
+      var city=clean(document.getElementById("recommendClinicCity").value);
+      var country=clean(document.getElementById("recommendClinicCountry").value)||"España";
+      var requested=clean(document.getElementById("recommendClinicRequest").value)||"new_clinic";
+      var note=clean(document.getElementById("recommendClinicNote").value);
+      var trap=clean(document.getElementById("recommendTrap").value);
+      if(!name){
+        setRecommendationStatus("Indica el nombre de la clínica.", "error");
+        return;
+      }
+      if(!website&&!city){
+        setRecommendationStatus("Añade la web oficial o la ciudad para poder revisarla.", "error");
+        return;
+      }
+      if(!url||!key){
+        setRecommendationStatus("No se puede enviar ahora. Inténtalo más tarde.", "error");
+        return;
+      }
+      setRecommendationBusy(recommendForm,true);
+      setRecommendationStatus("Enviando recomendación...", "");
+      fetch(url+"/rest/v1/rpc/public_recommend_clinic",{
+        method:"POST",
+        headers:{apikey:key,Authorization:"Bearer "+key,"Content-Type":"application/json"},
+        body:JSON.stringify({
+          p_clinic_name:name,
+          p_website:website,
+          p_city:city,
+          p_country:country,
+          p_requested_info:requested,
+          p_note:note,
+          p_honeypot:trap
+        })
+      }).then(function(response){
+        if(!response.ok) throw new Error("No se pudo enviar");
+        return response.json();
+      }).then(function(){
+        recommendForm.reset();
+        document.getElementById("recommendClinicCountry").value="España";
+        setRecommendationStatus("Recibido. Queda como trabajo pendiente para revisión interna.", "ok");
+      }).catch(function(){
+        setRecommendationStatus("No se pudo enviar la recomendación. Prueba de nuevo más tarde.", "error");
+      }).then(function(){
+        setRecommendationBusy(recommendForm,false);
+      });
+    });
+  }
   apply();
 })();
 </script>"""
@@ -957,6 +1066,64 @@ INDEX_LD = '<script type="application/ld+json">' + json.dumps({
     "@context": "https://schema.org", "@type": "WebSite", "name": SITE,
     "url": BASE, "description": TAGLINE, "inLanguage": "es",
 }, ensure_ascii=False) + "</script>"
+
+RECOMMEND_SECTION = """
+<section class="recommend" id="recomendar-clinica">
+  <div class="recommend-inner">
+    <div class="recommend-head">
+      <div>
+        <p class="kicker">Ayuda a completar la guía</p>
+        <h2>Recomendar Clínica</h2>
+        <p>Envía una clínica o una fuente oficial. La revisaremos internamente antes de añadir o cambiar cualquier ficha.</p>
+      </div>
+      <button class="recommend-toggle" id="recommendToggle" type="button" aria-expanded="false" aria-controls="recommendFormWrap">Recomendar Clínica</button>
+    </div>
+    <div class="recommend-form-wrap hidden" id="recommendFormWrap">
+      <form class="recommend-form" id="recommendClinicForm">
+        <div>
+          <label for="recommendClinicName">Clínica</label>
+          <input id="recommendClinicName" name="clinic_name" autocomplete="organization" required placeholder="Nombre de la clínica">
+        </div>
+        <div>
+          <label for="recommendClinicWebsite">Web oficial</label>
+          <input id="recommendClinicWebsite" name="website" inputmode="url" placeholder="https://clinicaneleva.com">
+        </div>
+        <div>
+          <label for="recommendClinicCity">Ciudad</label>
+          <input id="recommendClinicCity" name="city" autocomplete="address-level2" placeholder="Madrid, Barcelona, Marbella...">
+        </div>
+        <div>
+          <label for="recommendClinicCountry">País</label>
+          <input id="recommendClinicCountry" name="country" autocomplete="country-name" value="España">
+        </div>
+        <div class="recommend-wide">
+          <label for="recommendClinicRequest">Qué revisar</label>
+          <select id="recommendClinicRequest" name="requested_info">
+            <option value="new_clinic">Añadir clínica nueva</option>
+            <option value="specialists">Completar especialistas publicados</option>
+            <option value="contact">Completar contacto público</option>
+            <option value="locations">Completar sedes y acceso</option>
+            <option value="services">Completar servicios</option>
+            <option value="other">Otro dato claro</option>
+          </select>
+        </div>
+        <div class="recommend-wide">
+          <label for="recommendClinicNote">Nota breve</label>
+          <textarea id="recommendClinicNote" name="note" maxlength="500" placeholder="Opcional: qué dato viste o qué falta. No envíes datos médicos personales."></textarea>
+        </div>
+        <div class="recommend-trap" aria-hidden="true">
+          <label for="recommendTrap">No rellenar</label>
+          <input id="recommendTrap" name="company" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="recommend-actions">
+          <p class="recommend-status" id="recommendStatus">Nada se publica automáticamente.</p>
+          <button class="recommend-submit" type="submit">Enviar recomendación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+"""
 
 index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud. Vitalarga te ayuda a encontrar clínica de medicina de longevidad por ciudad, país y especialidad.", "/", INDEX_LD) + f"""
 <section class="hero">
@@ -973,12 +1140,13 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </div>
 </section>
 <section class="logo-strip" aria-label="Logos de clínicas en la guía">{featured_logos}</section>
+{RECOMMEND_SECTION}
 <section class="results-section">
 <div class="resbar"><p class="rescount" id="count"></p><button class="clear-btn" id="clearFilters" type="button">Limpiar filtros</button></div>
 <div class="grid">{allcards}</div>
 <p class="empty-state hidden" id="emptyState">No hay clínicas con esos filtros.</p>
-<div class="note">¿Diriges una clínica de longevidad que no aparece aquí? Escríbenos y la evaluaremos según nuestros <a href="/sobre/">criterios de inclusión</a>. Aparecer en Vitalarga es gratuito — y no se puede pagar.</div>
-</section>{JS}""" + FOOTER
+<div class="note">¿Conoces una clínica de longevidad que no aparece aquí? Usa <a href="/#recomendar-clinica">Recomendar Clínica</a> y la evaluaremos según nuestros <a href="/sobre/">criterios de inclusión</a>. Aparecer en Vitalarga es gratuito — y no se puede pagar.</div>
+</section>{PUBLIC_SITE_CONFIG}{JS}""" + FOOTER
 
 # --- fichas ---
 def status_label(c):
@@ -1275,6 +1443,10 @@ LEGAL_PAGES = {
             (
                 "Contacto por email",
                 "Si escribes al email administrativo, los datos incluidos en tu mensaje se usarán para atender y gestionar tu solicitud. Evita enviar datos de salud o documentación médica por este canal salvo que sea imprescindible.",
+            ),
+            (
+                "Recomendar Clínica",
+                "Si usas el formulario público para recomendar una clínica, guardaremos la información enviada como trabajo interno de revisión. No pedimos datos de salud ni publicamos automáticamente lo recibido.",
             ),
             (
                 "Contenido público",

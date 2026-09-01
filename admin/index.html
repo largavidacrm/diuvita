@@ -77,6 +77,10 @@
               <span>Clínicas</span>
               <strong id="navClinicMeta">0 fichas</strong>
             </button>
+            <button class="control-nav-item" type="button" data-control-jump="jobCreatePanel">
+              <span>Recomendar clínica</span>
+              <strong id="navRecommendMeta">Añadir</strong>
+            </button>
             <button class="control-nav-item" type="button" data-control-jump="jobsPanel">
               <span>Trabajos</span>
               <strong id="navJobMeta">0 activos</strong>
@@ -86,41 +90,6 @@
               <strong id="navEventMeta">0 movs.</strong>
             </button>
           </nav>
-          <section class="panel job-side-panel" id="jobCreatePanel">
-            <div class="panel-head">
-              <h2>Crear trabajo</h2>
-            </div>
-            <div class="panel-body">
-              <form class="job-form" id="jobForm">
-                <div class="job-help" id="jobHelp">
-                  <strong>Qué hace este trabajo</strong>
-                  <p>Busca información y la deja como propuesta interna. Nada se publica solo.</p>
-                </div>
-                <div class="field">
-                  <label for="jobType">Tipo</label>
-                  <select id="jobType" name="jobType">
-                    <option value="DISCOVER_CLINIC">Buscar clínicas nuevas</option>
-                    <option value="QUALITY_AUDIT">Auditar fichas existentes</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label for="jobQuery">Búsqueda</label>
-                  <input id="jobQuery" name="jobQuery" value="longevity clinic Spain" placeholder="Nombre de clínica, ciudad o dato que falta">
-                </div>
-                <div class="field">
-                  <label for="jobCountry">País</label>
-                  <input id="jobCountry" name="jobCountry" value="España">
-                </div>
-                <div class="job-examples" aria-label="Ejemplos de búsqueda">
-                  <button class="link-btn" type="button" data-job-query="Unidad de Longevidad IMDA dirección teléfono especialistas">IMDA: dirección y contacto</button>
-                  <button class="link-btn" type="button" data-job-query="Regenera Clinic especialistas equipo médico">Regenera: especialistas</button>
-                  <button class="link-btn" type="button" data-job-query="RoseBar Longevity Club dirección Google Maps teléfono">RoseBar: ubicación</button>
-                </div>
-                <p class="job-backlog-hint" id="jobBacklogHint">El freno de bandeja se calculará al cargar el panel.</p>
-                <button class="btn" id="jobBtn" type="submit">Buscar y proponer</button>
-              </form>
-            </div>
-          </section>
         </aside>
         <div class="control-content">
       <div class="hero-row">
@@ -679,6 +648,13 @@
               <p id="reviewClinicProfileSummary">La ficha aparecerá aquí al abrir una revisión.</p>
             </section>
             <div class="review-clinic-facts" id="reviewClinicProfileFacts"></div>
+            <section class="review-clinic-pending-panel hidden" id="reviewClinicPendingPanel">
+              <div class="review-section-head">
+                <h3>Mejoras pendientes de esta clínica</h3>
+                <span class="pill" id="reviewClinicPendingCount">0 pendientes</span>
+              </div>
+              <div class="review-clinic-pending-list" id="reviewClinicPendingList"></div>
+            </section>
             <section class="review-clinic-data-panel">
               <div class="review-section-head">
                 <h3>Datos visibles en la ficha</h3>
@@ -918,10 +894,98 @@
         </section>
       </section>
 
+      <section class="panel job-create-panel" id="jobCreatePanel">
+        <div class="panel-head">
+          <div>
+            <h2>Recomendar clínica</h2>
+            <span class="muted">Añade una recomendación o una mejora a Trabajos. Nada se publica solo.</span>
+          </div>
+        </div>
+        <div class="panel-body">
+          <form class="job-form" id="jobForm">
+            <div class="job-help" id="jobHelp">
+              <strong>Qué hace este trabajo</strong>
+              <p>Busca información y la deja como propuesta interna. Nada se publica solo.</p>
+            </div>
+            <div class="job-form-grid">
+              <div class="field">
+                <label for="jobType">Tipo</label>
+                <select id="jobType" name="jobType">
+                  <option value="DISCOVER_CLINIC">Clínica nueva</option>
+                  <option value="EXTRACT_CLINIC_PROFILE">Completar clínica existente</option>
+                  <option value="QUALITY_AUDIT">Auditar fichas existentes</option>
+                </select>
+              </div>
+              <div class="field" id="jobQueryField">
+                <label for="jobQuery">Clínica o búsqueda</label>
+                <input id="jobQuery" name="jobQuery" value="longevity clinic Spain" placeholder="Nombre, web, ciudad o pista">
+              </div>
+              <div class="field" id="jobCountryField">
+                <label for="jobCountry">País</label>
+                <input id="jobCountry" name="jobCountry" value="España">
+              </div>
+              <div class="field hidden" id="jobExistingClinicField">
+                <label for="jobExistingClinic">Clínica existente</label>
+                <input id="jobExistingClinic" list="jobExistingClinicOptions" placeholder="Neleva">
+                <datalist id="jobExistingClinicOptions"></datalist>
+              </div>
+              <div class="field hidden" id="jobSourceUrlField">
+                <label for="jobSourceUrl">URL oficial</label>
+                <input id="jobSourceUrl" type="url" placeholder="https://clinicaneleva.com/equipo/">
+              </div>
+              <div class="field hidden" id="jobRequestedFieldWrap">
+                <label for="jobRequestedField">Información a completar</label>
+                <select id="jobRequestedField">
+                  <option value="">No especificar: extraer datos claros de esa URL</option>
+                  <option value="profesionales">Especialistas publicados</option>
+                  <option value="summary">Resumen</option>
+                  <option value="services">Servicios</option>
+                  <option value="specialties">Especialidades</option>
+                  <option value="unidades">Unidades clínicas</option>
+                  <option value="tech">Tecnología destacada</option>
+                  <option value="locations">Sedes y acceso</option>
+                  <option value="contact">Contacto público</option>
+                  <option value="maps_url">Google Maps</option>
+                </select>
+              </div>
+            </div>
+            <div class="job-examples" aria-label="Ejemplos de trabajo">
+              <button class="link-btn" type="button" data-job-query="Unidad de Longevidad IMDA dirección teléfono especialistas">IMDA: dirección y contacto</button>
+              <button class="link-btn" type="button" data-job-query="Regenera Clinic especialistas equipo médico">Regenera: especialistas</button>
+              <button class="link-btn" type="button" data-job-query="RoseBar Longevity Club dirección Google Maps teléfono">RoseBar: ubicación</button>
+              <button class="link-btn" type="button" data-job-clinic="Neleva" data-job-url="https://clinicaneleva.com/equipo/" data-job-field="profesionales">Neleva: especialistas</button>
+            </div>
+            <p class="job-backlog-hint" id="jobBacklogHint">El freno de bandeja se calculará al cargar el panel.</p>
+            <button class="btn" id="jobBtn" type="submit">Recomendar clínica</button>
+          </form>
+        </div>
+      </section>
+
       <section class="panel" id="jobsPanel">
         <div class="panel-head">
-          <h2>Trabajos recientes</h2>
+          <h2>Trabajos</h2>
           <span class="pill" id="jobCount">0 en cola</span>
+        </div>
+        <div class="panel-subhead">
+          <h3>Trabajos pendientes</h3>
+          <span class="pill" id="pendingJobCount">0 pendientes</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Trabajo</th>
+                <th>Estado</th>
+                <th>Confianza</th>
+                <th>Coste</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="pendingJobsBody"></tbody>
+          </table>
+        </div>
+        <div class="panel-subhead">
+          <h3>Trabajos recientes</h3>
         </div>
         <div class="table-wrap">
           <table>
@@ -1111,6 +1175,7 @@
       "globalPlanPanel",
       "systemPanel",
       "reviewWorkArea",
+      "jobCreatePanel",
       "jobsPanel",
       "eventsPanel",
       "clinicsPanel"
@@ -1205,8 +1270,12 @@
       var activeJobs = Number(jobs.queued || 0) + Number(jobs.running || 0);
       el("navPlanMeta").textContent = phase || "Ahora";
       el("navSystemMeta").textContent = Number(failedJobs || 0) ? "Atención" : "Sano";
-      el("navReviewMeta").textContent = (openReviews || []).length + " abiertas";
+      var reviewGroupCount = reviewQueueGroups(openReviews || []).length;
+      el("navReviewMeta").textContent = reviewGroupCount
+        ? reviewGroupCount + (reviewGroupCount === 1 ? " ficha" : " fichas")
+        : "0 abiertas";
       el("navClinicMeta").textContent = (clinicRows || []).length + " fichas";
+      el("navRecommendMeta").textContent = "Añadir";
       el("navJobMeta").textContent = activeJobs + " activos";
       el("navEventMeta").textContent = (eventRows || []).length + " movs.";
     }
@@ -1338,8 +1407,28 @@
       return values.slice(0, 3).join(", ") + (values.length > 3 ? " +" + (values.length - 3) : "");
     }
 
+    function jobTitleText(row) {
+      var input = jobInput(row);
+      if (row && row.job_type === "DISCOVER_CLINIC" && input.source === "public_site_recommend_clinic") {
+        return "Recomendar clínica: " + (input.clinic_name || input.query || "recomendación pública");
+      }
+      if (row && row.job_type === "DISCOVER_CLINIC") return "Recomendar clínica";
+      if (row && row.job_type === "QUALITY_AUDIT") return "Auditar fichas existentes";
+      if (row && row.job_type === "EXTRACT_CLINIC_PROFILE") {
+        return "Completar clínica: " + (input.clinic_name || input.clinic_slug || "ficha existente");
+      }
+      return row && row.job_type ? row.job_type : "Trabajo";
+    }
+
     function jobDetailText(row) {
       var input = jobInput(row);
+      if (row && row.job_type === "DISCOVER_CLINIC" && input.source === "public_site_recommend_clinic") {
+        return "Recomendación pública · " + (input.requested_info_label || "Añadir clínica nueva") + " · queda en revisión interna";
+      }
+      if (row && row.job_type === "EXTRACT_CLINIC_PROFILE" && input.ui_route === "sidebar_existing_clinic_source_job") {
+        var label = jobRequestedFieldsLabel(input) || "datos claros de la URL";
+        return "URL recomendada · " + label + " · vuelve como propuesta revisable";
+      }
       if (row && row.job_type === "EXTRACT_CLINIC_PROFILE" && input.from_review_id) {
         var fieldText = jobRequestedFieldsLabel(input) || "campo indicado";
         return "URL desde revisión · " + fieldText + " · ciclo CTO supervisado · vuelve como propuesta revisable";
@@ -2915,7 +3004,7 @@
       if (group) {
         var enrichmentCount = countOpenReviewsByType(group.rows || [], "clinic_profile_enrichment");
         if (enrichmentCount > 1) {
-          return "Ruta: Filtrar grupo · Abrir una propuesta · Aprobar, rechazar o modificar · Siguiente automática.";
+          return "Ruta: Filtrar ficha · revisar sus mejoras pendientes · aprobar, rechazar o modificar · volver a lista.";
         }
         return "Ruta: Filtrar grupo · Abrir tarjeta · Revisar ficha · Guardar o cerrar.";
       }
@@ -3278,6 +3367,105 @@
       }) || null;
     }
 
+    function reviewQueueGroupKey(row) {
+      if (row && row.clinic_id) return "clinic:" + row.clinic_id;
+      return "review:" + text(row && row.id);
+    }
+
+    function reviewQueueGroups(rows) {
+      var grouped = {};
+      (rows || []).forEach(function (row) {
+        var key = reviewQueueGroupKey(row);
+        if (!grouped[key]) {
+          grouped[key] = {
+            key: key,
+            clinicId: row.clinic_id || "",
+            label: reviewPrimarySubject(row),
+            count: 0,
+            maxPriority: 0,
+            oldestCreatedAt: row.created_at || null,
+            latestCreatedAt: row.created_at || null,
+            rows: []
+          };
+        }
+        grouped[key].count += 1;
+        grouped[key].rows.push(row);
+        grouped[key].maxPriority = Math.max(grouped[key].maxPriority, Number(row.priority || 0));
+        var currentOldest = parseDateValue(grouped[key].oldestCreatedAt);
+        var rowDate = parseDateValue(row.created_at);
+        if (rowDate && (!currentOldest || rowDate < currentOldest)) grouped[key].oldestCreatedAt = row.created_at;
+        var currentLatest = parseDateValue(grouped[key].latestCreatedAt);
+        if (rowDate && (!currentLatest || rowDate > currentLatest)) grouped[key].latestCreatedAt = row.created_at;
+      });
+      return Object.keys(grouped).map(function (key) {
+        grouped[key].rows = sortReviewWorkgroup(grouped[key].rows);
+        return grouped[key];
+      }).sort(function (a, b) {
+        var primaryA = reviewQueueGroupPrimaryRow(a);
+        var primaryB = reviewQueueGroupPrimaryRow(b);
+        return reviewActionBucket(primaryB) - reviewActionBucket(primaryA) ||
+          reviewActionTypeOrder(primaryA) - reviewActionTypeOrder(primaryB) ||
+          Number(b.count || 0) - Number(a.count || 0) ||
+          Number(b.maxPriority || 0) - Number(a.maxPriority || 0) ||
+          (parseDateValue(a.oldestCreatedAt) || new Date(8640000000000000)) -
+          (parseDateValue(b.oldestCreatedAt) || new Date(8640000000000000)) ||
+          text(a.label).localeCompare(text(b.label));
+      });
+    }
+
+    function reviewQueueGroupPrimaryRow(group) {
+      var rows = group && Array.isArray(group.rows) ? group.rows : [];
+      return firstActionReview(rows, 0) || sortReviewWorkgroup(rows)[0] || null;
+    }
+
+    function reviewQueueGroupTypeSummary(group) {
+      var counts = reviewWorkgroupTypeCounts(group || {});
+      var parts = [
+        ["claim bloqueante", "claims bloqueantes", counts.blocking],
+        ["reclamación", "reclamaciones", counts.claimRequests],
+        ["cambio de fuente", "cambios de fuente", counts.sources],
+        ["mejora", "mejoras", counts.improvements],
+        ["revisión manual", "revisiones manuales", counts.audits],
+        ["candidata", "candidatas", counts.candidates]
+      ].filter(function (item) { return Number(item[2] || 0) > 0; }).map(function (item) {
+        return item[2] + " " + (item[2] === 1 ? item[0] : item[1]);
+      });
+      return parts.join(" · ") || "1 propuesta";
+    }
+
+    function reviewQueueGroupFieldLabels(group) {
+      var labels = [];
+      var seen = {};
+      (group && group.rows || []).forEach(function (row) {
+        relatedReviewSummaryItems(row).forEach(function (item) {
+          var clean = text(item).trim();
+          var key = clean.toLowerCase();
+          if (clean && !seen[key]) {
+            seen[key] = true;
+            labels.push(clean);
+          }
+        });
+      });
+      return labels;
+    }
+
+    function reviewQueueGroupSubjectCell(group) {
+      var labels = reviewQueueGroupFieldLabels(group);
+      var shown = labels.slice(0, 4).map(function (label) {
+        return '<span class="pill">' + html(label) + '</span>';
+      });
+      if (labels.length > 4) shown.push('<span class="pill">+' + html(labels.length - 4) + ' más</span>');
+      return '<div class="review-subject-cell review-clinic-group-cell"><strong>' + html(group.label) +
+        '</strong><small>' + html(group.count === 1 ? "1 propuesta pendiente" : group.count + " propuestas pendientes") +
+        '</small>' + (shown.length ? '<div class="related-review-fields">' + shown.join("") + '</div>' : "") + '</div>';
+    }
+
+    function reviewQueueGroupTypeCell(group) {
+      var primary = reviewQueueGroupPrimaryRow(group);
+      var extra = group.count > 1 ? ' <span class="pill">' + html(group.count + " mejoras") + '</span>' : "";
+      return html(reviewVisibleLabel(primary)) + extra + reviewProfessionalsBadge(primary);
+    }
+
     function clinicWorkgroupSubject(group) {
       return group && group.label ? group.label : "clínica";
     }
@@ -3559,15 +3747,109 @@
       el("jobBtn").disabled = full || paused;
     }
 
+    function existingClinicJobTargetDefinitions() {
+      return {
+        summary: [{ inputId: "clinicSummary", label: "Resumen", key: "summary" }],
+        services: [{ inputId: "clinicServices", label: "Servicios", key: "services" }],
+        specialties: [{ inputId: "clinicSpecialties", label: "Especialidades", key: "specialties" }],
+        unidades: [{ inputId: "clinicUnits", label: "Unidades clínicas", key: "unidades" }],
+        profesionales: [{ inputId: "clinicProfessionals", label: "Especialistas publicados", key: "profesionales" }],
+        tech: [{ inputId: "clinicTech", label: "Tecnología destacada", key: "tech" }],
+        locations: [{ inputId: "clinicLocations", label: "Sedes y acceso", key: "locations" }],
+        contact: [
+          { inputId: "clinicEmail", label: "Email", key: "email" },
+          { inputId: "clinicPhone", label: "Teléfono principal", key: "telefono" },
+          { inputId: "clinicPhoneFixed", label: "Teléfono fijo", key: "phone_fixed" },
+          { inputId: "clinicPhoneMobile", label: "Móvil", key: "phone_mobile" },
+          { inputId: "clinicPhoneWhatsapp", label: "WhatsApp", key: "phone_whatsapp" },
+          { inputId: "clinicInstagram", label: "Instagram", key: "instagram" }
+        ],
+        maps_url: [
+          { inputId: "clinicMapsUrl", label: "Google Maps", key: "maps_url" },
+          { inputId: "clinicGoogleReviewsUrl", label: "Valoraciones Google", key: "google_reviews_url" }
+        ]
+      };
+    }
+
+    function defaultExistingClinicJobTargets() {
+      return [
+        { inputId: "clinicSummary", label: "Resumen", key: "summary" },
+        { inputId: "clinicServices", label: "Servicios", key: "services" },
+        { inputId: "clinicSpecialties", label: "Especialidades", key: "specialties" },
+        { inputId: "clinicUnits", label: "Unidades clínicas", key: "unidades" },
+        { inputId: "clinicProfessionals", label: "Especialistas publicados", key: "profesionales" },
+        { inputId: "clinicTech", label: "Tecnología destacada", key: "tech" },
+        { inputId: "clinicLocations", label: "Sedes y acceso", key: "locations" },
+        { inputId: "clinicEmail", label: "Email", key: "email" },
+        { inputId: "clinicPhone", label: "Teléfono principal", key: "telefono" },
+        { inputId: "clinicPhoneFixed", label: "Teléfono fijo", key: "phone_fixed" },
+        { inputId: "clinicPhoneMobile", label: "Móvil", key: "phone_mobile" },
+        { inputId: "clinicPhoneWhatsapp", label: "WhatsApp", key: "phone_whatsapp" },
+        { inputId: "clinicInstagram", label: "Instagram", key: "instagram" }
+      ];
+    }
+
+    function selectedExistingClinicJobTargets() {
+      var value = el("jobRequestedField").value;
+      var definitions = existingClinicJobTargetDefinitions();
+      return value && definitions[value] ? definitions[value] : defaultExistingClinicJobTargets();
+    }
+
+    function compactLookup(value) {
+      var clean = text(value).trim().toLowerCase();
+      if (clean.normalize) clean = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return clean.replace(/\s+/g, " ").trim();
+    }
+
+    function jobExistingClinicLabel(row) {
+      return [row && row.display_name, row && row.city, row && row.country].filter(Boolean).join(" · ");
+    }
+
+    function renderJobExistingClinicOptions() {
+      var datalist = el("jobExistingClinicOptions");
+      if (!datalist) return;
+      datalist.innerHTML = (clinicCache || []).map(function (row) {
+        return '<option value="' + html(jobExistingClinicLabel(row)) + '"></option>';
+      }).join("");
+    }
+
+    function selectedJobExistingClinic() {
+      var query = compactLookup(trimmed("jobExistingClinic"));
+      if (!query) return null;
+      var exact = (clinicCache || []).find(function (row) {
+        return compactLookup(jobExistingClinicLabel(row)) === query ||
+          compactLookup(row.display_name) === query ||
+          compactLookup(row.slug) === query;
+      });
+      if (exact) return exact;
+      return (clinicCache || []).find(function (row) {
+        return compactLookup(jobExistingClinicLabel(row)).indexOf(query) >= 0 ||
+          compactLookup(row.display_name).indexOf(query) >= 0 ||
+          compactLookup(row.slug).indexOf(query) >= 0 ||
+          compactLookup(row.website).indexOf(query) >= 0;
+      }) || null;
+    }
+
     function updateJobHelp() {
       var type = el("jobType").value;
+      show(el("jobQueryField"), type !== "EXTRACT_CLINIC_PROFILE");
+      show(el("jobCountryField"), type !== "EXTRACT_CLINIC_PROFILE");
+      show(el("jobExistingClinicField"), type === "EXTRACT_CLINIC_PROFILE");
+      show(el("jobSourceUrlField"), type === "EXTRACT_CLINIC_PROFILE");
+      show(el("jobRequestedFieldWrap"), type === "EXTRACT_CLINIC_PROFILE");
+      el("jobForm").classList.toggle("job-form-existing-clinic", type === "EXTRACT_CLINIC_PROFILE");
       if (type === "QUALITY_AUDIT") {
         el("jobHelp").innerHTML = '<strong>Auditar fichas existentes</strong><p>Revisa las clínicas que ya están en Vitalarga y crea tareas internas si falta dirección, Google Maps, contacto, especialistas u otros campos.</p>';
         el("jobBtn").textContent = "Auditar fichas";
         return;
       }
-      el("jobHelp").innerHTML = '<strong>Buscar clínicas o datos concretos</strong><p>Escribe una búsqueda general o una clínica concreta, por ejemplo “IMDA dirección teléfono especialistas”. El resultado va a revisión; no se publica solo.</p>';
-      el("jobBtn").textContent = "Buscar y proponer";
+      if (type === "EXTRACT_CLINIC_PROFILE") {
+        el("jobHelp").innerHTML = '<strong>Completar una clínica existente</strong><p>Elige la ficha, pega una URL oficial y, si quieres, acota el dato: especialistas, servicios, sedes, contacto u otro campo. El agente solo dejará propuestas para revisión.</p>';
+        el("jobBtn").textContent = "Añadir a trabajos";
+        return;
+      }
+      el("jobHelp").innerHTML = '<strong>Recomendar clínica</strong><p>Escribe el nombre, web, ciudad o cualquier pista. El agente buscará datos y dejará una propuesta interna; no se publica solo.</p>';
+      el("jobBtn").textContent = "Recomendar clínica";
     }
 
     function duplicateEnrichmentClinicIds(rows) {
@@ -7106,6 +7388,43 @@
         snapshotValueHtml(item.key, item.value) + '</div></article>';
     }
 
+    function reviewClinicPendingRows(row) {
+      if (!row || !row.clinic_id) return [];
+      return sortReviewWorkgroup(reviewCache.filter(function (item) {
+        return item.clinic_id === row.clinic_id && item.status === "open";
+      }));
+    }
+
+    function reviewClinicPendingItemHtml(row, activeId) {
+      var isActive = row && activeId && row.id === activeId;
+      return '<article class="review-clinic-pending-item' + (isActive ? " active" : "") + '">' +
+        '<div><strong>' + html(reviewDisplayTitle(row)) + '</strong>' +
+        '<span>' + html(reviewVisibleLabel(row)) + " · " + html(priorityLabel(row.priority)) + " · " + html(date(row.created_at)) + '</span></div>' +
+        relatedReviewFieldsHtml(row) +
+        '<button class="link-btn" type="button" data-review-id="' + html(row.id) + '">' +
+        html(isActive ? "Abierta" : "Revisar") + '</button>' +
+        '</article>';
+    }
+
+    function renderReviewClinicPendingPanel(row) {
+      var panel = el("reviewClinicPendingPanel");
+      var list = el("reviewClinicPendingList");
+      var count = el("reviewClinicPendingCount");
+      if (!panel || !list || !count) return;
+      var rows = reviewClinicPendingRows(row);
+      if (!rows.length) {
+        show(panel, false);
+        list.innerHTML = "";
+        count.textContent = "0 pendientes";
+        return;
+      }
+      count.textContent = rows.length + (rows.length === 1 ? " pendiente" : " pendientes");
+      list.innerHTML = rows.map(function (item) {
+        return reviewClinicPendingItemHtml(item, row && row.id);
+      }).join("");
+      show(panel, true);
+    }
+
     function renderReviewClinicPanel(row) {
       if (!row) {
         activeReviewProfileEditMode = false;
@@ -7114,6 +7433,7 @@
         el("reviewClinicProfileName").textContent = "Sin propuesta seleccionada";
         el("reviewClinicProfileSummary").textContent = "La ficha aparecerá aquí al abrir una revisión.";
         el("reviewClinicProfileFacts").innerHTML = "";
+        renderReviewClinicPendingPanel(null);
         el("reviewClinicProfileDataCount").textContent = "0 datos";
         el("reviewClinicProfileData").innerHTML = '<p class="empty">Sin ficha seleccionada.</p>';
         el("reviewClinicInlineEditBtn").textContent = "Editar ficha";
@@ -7136,6 +7456,7 @@
       el("reviewClinicProfileFacts").innerHTML = facts.length
         ? facts.map(function (item) { return reviewClinicProfileItemHtml("review-clinic-fact", item); }).join("")
         : '<p class="empty">Sin datos básicos guardados.</p>';
+      renderReviewClinicPendingPanel(row);
       el("reviewClinicProfileDataCount").textContent = dataItems.length + (dataItems.length === 1 ? " dato" : " datos");
       el("reviewClinicProfileData").innerHTML = dataItems.length
         ? dataItems.map(function (item) { return reviewClinicProfileItemHtml("review-clinic-field", item); }).join("")
@@ -8901,27 +9222,30 @@
       }).join("");
     }
 
-    function renderReviewQueueSelection(row, visibleCount, hasFilters) {
+    function renderReviewQueueSelection(entry, visibleCount, hasFilters) {
       var state = el("reviewSelectionState");
       var title = el("reviewSelectionTitle");
       var message = el("reviewSelectionMessage");
       var button = el("reviewSelectionOpenBtn");
       if (!state || !title || !message || !button) return;
       button.removeAttribute("data-review-id");
-      if (!row) {
+      if (!entry) {
         state.textContent = hasFilters ? "Sin resultado" : "Cola vacía";
-        title.textContent = hasFilters ? "No hay propuestas con estos filtros" : "Cola terminada";
+        title.textContent = hasFilters ? "No hay fichas con esos filtros" : "Cola terminada";
         message.textContent = hasFilters
-          ? "Quita filtros para volver a ver las propuestas pendientes."
-          : "No quedan propuestas pendientes en esta cola.";
+          ? "Quita filtros para volver a ver las fichas pendientes."
+          : "No quedan fichas con propuestas pendientes en esta cola.";
         show(button, false);
         return;
       }
-      state.textContent = visibleCount === 1 ? "Única visible" : "Siguiente";
-      title.textContent = reviewPrimarySubject(row);
-      message.textContent = reviewVisibleLabel(row) + " · prioridad " + row.priority + " · " + date(row.created_at) +
-        ". Al revisarla, la lista se aparta: ficha en el centro y decisión a la derecha.";
+      var row = reviewQueueGroupPrimaryRow(entry) || entry;
+      state.textContent = visibleCount === 1 ? "Única ficha visible" : "Siguiente ficha";
+      title.textContent = entry.label || reviewPrimarySubject(row);
+      message.textContent = reviewQueueGroupTypeSummary(entry) + " · prioridad " + (row.priority || entry.maxPriority || 0) + " · " +
+        date(entry.oldestCreatedAt || row.created_at) +
+        ". Abre la ficha una vez y revisa sus mejoras pendientes sin perder la trazabilidad de cada propuesta.";
       button.setAttribute("data-review-id", row.id);
+      button.textContent = "Revisar ficha";
       show(button, true);
     }
 
@@ -8929,6 +9253,8 @@
       var reviewsBody = el("reviewsBody");
       syncReviewFiltersFromInputs();
       var rows = filteredReviewRows();
+      var queueGroups = reviewQueueGroups(rows);
+      var allQueueGroups = reviewQueueGroups(reviewCache);
       var hasFilters = activeReviewFilters();
       var nextReview = firstActionReview(rows, 0);
       var clinicGroup = firstClinicWorkgroup(reviewCache);
@@ -8946,7 +9272,7 @@
         show(el("reviewEditor"), false);
         setReviewWorkMode("queue");
       }
-      renderReviewQueueSelection(nextReview || rows[0] || null, rows.length, hasFilters);
+      renderReviewQueueSelection(queueGroups[0] || null, queueGroups.length, hasFilters);
       renderReviewFilterChips();
       renderReviewCasePanel();
       show(el("reviewActionStrip"), false);
@@ -8984,19 +9310,21 @@
         ? (specialistReview ? "Abrir especialistas: " : "Filtrar especialistas: ") + specialistTargetSubject(specialistTarget)
         : "";
       el("reviewCount").textContent = hasFilters
-        ? rows.length + " visibles"
-        : reviewCache.length + " abiertas";
+        ? queueGroups.length + (queueGroups.length === 1 ? " ficha" : " fichas")
+        : allQueueGroups.length + (allQueueGroups.length === 1 ? " ficha" : " fichas");
       el("reviewFilterMeta").textContent = hasFilters
-        ? rows.length + " de " + reviewCache.length + " abiertas · " + reviewSummary(rows)
-        : reviewSummary(reviewCache);
-      if (!rows.length) {
-        emptyRow(reviewsBody, 5, reviewCache.length ? "No hay revisiones con esos filtros" : "Sin revisiones abiertas");
+        ? queueGroups.length + " fichas · " + rows.length + " propuestas visibles · " + reviewSummary(rows)
+        : allQueueGroups.length + " fichas · " + reviewCache.length + " propuestas abiertas · " + reviewSummary(reviewCache);
+      if (!queueGroups.length) {
+        emptyRow(reviewsBody, 5, reviewCache.length ? "No hay fichas con esos filtros" : "Sin revisiones abiertas");
         return;
       }
-      reviewsBody.innerHTML = rows.map(function (row) {
-        return "<tr><td>" + reviewSubjectCell(row) + "</td><td>" + reviewTypeCell(row) + "</td><td>" + priorityPill(row.priority) + "</td><td>" +
-          date(row.created_at) + '</td><td><button class="link-btn" type="button" data-review-id="' +
-          html(row.id) + '">Revisar</button></td></tr>';
+      reviewsBody.innerHTML = queueGroups.map(function (group) {
+        var row = reviewQueueGroupPrimaryRow(group);
+        return "<tr><td>" + reviewQueueGroupSubjectCell(group) + "</td><td>" + reviewQueueGroupTypeCell(group) + "</td><td>" +
+          priorityPill(row ? row.priority : group.maxPriority) + "</td><td>" +
+          date(group.oldestCreatedAt || (row && row.created_at)) + '</td><td><button class="link-btn" type="button" data-review-id="' +
+          html(row && row.id) + '">Revisar ficha</button></td></tr>';
       }).join("");
     }
 
@@ -9503,6 +9831,29 @@
         el("jobCount").textContent = (jobs.queued || 0) + " en cola";
         el("clinicCount").textContent = (clinics.total || 0) + " fichas";
 
+        var pendingJobRows = await client
+          .from("agent_jobs")
+          .select("job_type, status, confidence, cost_cents, created_at, scheduled_for, input")
+          .in("status", ["queued", "running"])
+          .order("scheduled_for", { ascending: true, nullsFirst: false })
+          .order("created_at", { ascending: true })
+          .limit(20);
+
+        var pendingJobsBody = el("pendingJobsBody");
+        if (pendingJobRows.error || !pendingJobRows.data || pendingJobRows.data.length === 0) {
+          el("pendingJobCount").textContent = "0 pendientes";
+          emptyRow(pendingJobsBody, 5, "Sin trabajos pendientes");
+        } else {
+          el("pendingJobCount").textContent = pendingJobRows.data.length + (pendingJobRows.data.length === 1 ? " pendiente" : " pendientes");
+          pendingJobsBody.innerHTML = pendingJobRows.data.map(function (row) {
+            var detail = jobDetailText(row);
+            return "<tr><td><strong>" + html(jobTitleText(row)) + "</strong>" +
+              (detail ? "<small>" + html(detail) + "</small>" : "") +
+              "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) +
+              "</td><td>" + money(row.cost_cents) + "</td><td>" + html(jobDateText(row)) + "</td></tr>";
+          }).join("");
+        }
+
         var reviewRows = await client
           .from("review_queue")
           .select("id, job_id, clinic_id, title, review_type, priority, status, payload, created_at")
@@ -9532,7 +9883,7 @@
         } else {
           jobsBody.innerHTML = jobRows.data.map(function (row) {
             var detail = jobDetailText(row);
-            return "<tr><td><strong>" + html(row.job_type) + "</strong>" +
+            return "<tr><td><strong>" + html(jobTitleText(row)) + "</strong>" +
               (detail ? "<small>" + html(detail) + "</small>" : "") +
               "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) +
               "</td><td>" + money(row.cost_cents) + "</td><td>" + html(jobDateText(row)) + "</td></tr>";
@@ -9576,12 +9927,14 @@
 
         if (clinicRows.error || !clinicRows.data || clinicRows.data.length === 0) {
           clinicCache = [];
+          renderJobExistingClinicOptions();
           if (clinicRows.error) publicationReadiness.unavailable = true;
           emptyRow(el("clinicsBody"), 7, "Sin clínicas");
         } else {
           clinicCache = clinicRows.data;
           publicationReadiness = publicationReadinessSummary(clinicCache);
           renderClinics();
+          renderJobExistingClinicOptions();
         }
         renderGlobalPlanStatus(summary, claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache);
         renderSystemStatus(summary, jobRows.data || [], eventRows.data || [], claimQuality, sourceMonitoring, sourceCoverage, specialistCoverage, profileCompleteness, publicHealth, publicationControl, reviewCache, publicationReadiness);
@@ -9818,6 +10171,70 @@
       await createReviewSourceJobFor(activeClinicReview, "clinicManualReviewSourceUrl", "clinicManualReviewSourceBtn", activeClinicReviewFocusTarget);
     }
 
+    async function createExistingClinicSourceJob() {
+      var clinic = selectedJobExistingClinic();
+      if (!clinic) {
+        toast("Elige una clínica existente de Vitalarga.");
+        el("jobExistingClinic").focus();
+        return false;
+      }
+      var url = cleanHttpUrl(trimmed("jobSourceUrl"));
+      if (!url) {
+        toast("Pega una URL oficial que empiece por http o https.");
+        el("jobSourceUrl").focus();
+        return false;
+      }
+      var selectedField = el("jobRequestedField").value;
+      var targets = selectedExistingClinicJobTargets();
+      var labels = targets.map(function (item) { return item.label; });
+      var fieldKeys = targets.map(function (item) { return item.key; });
+      var labelSummary = selectedField ? labels.map(function (item) { return item.toLowerCase(); }).join(", ") : "datos claros de esa URL";
+      var payload = {
+        job_type: "EXTRACT_CLINIC_PROFILE",
+        status: "queued",
+        priority: selectedField ? 110 : 100,
+        entity_type: "clinic",
+        entity_id: clinic.id,
+        clinic_id: clinic.id,
+        input: {
+          mode: "shadow",
+          clinic_id: clinic.id,
+          clinic_slug: clinic.slug,
+          clinic_name: clinic.display_name,
+          source_url: url,
+          source_urls: [url],
+          requested_fields: fieldKeys,
+          requested_field_labels: labels,
+          missing_fields: labels,
+          primary_requested_fields: selectedField ? fieldKeys.slice(0, 1) : [],
+          primary_requested_field_labels: selectedField ? labels.slice(0, 1) : [],
+          operator_requested_field_keys: fieldKeys,
+          operator_requested_field_labels: labels,
+          operator_requested_field_summary: labelSummary,
+          human_supplied_source: true,
+          target_scope: selectedField ? "operator_selected_fields" : "operator_clear_profile_fields",
+          ui_route: "sidebar_existing_clinic_source_job",
+          source_job_version: "2026-09-01.recommend-clinic-source",
+          operator_intent: selectedField
+            ? "Daniel indica que esta URL oficial contiene " + labelSummary + " de esta clínica. Revisar solo ese alcance y devolver propuestas revisables."
+            : "Daniel recomienda esta URL oficial para completar una clínica existente. Extraer solo datos claros de esa URL y devolver propuestas revisables.",
+          llm_boundary: "respect_source_job_context_scope",
+          allowed_output: "review_queue_proposal_only",
+          instruction: "Extrae solo datos claros de esta fuente y crea propuestas revisables. No publiques ni guardes datos en la ficha sin aprobacion humana."
+        },
+        model_tier: "cheap",
+        requires_human: false
+      };
+      var result = await client.from("agent_jobs").insert(payload).select("id").single();
+      if (result.error) {
+        toast("No se pudo añadir el trabajo.");
+        return false;
+      }
+      setInput("jobSourceUrl", "");
+      toast("Recomendación añadida a Trabajos.");
+      return true;
+    }
+
     async function createJob(event) {
       event.preventDefault();
       if (dashboardOpenReviewCount >= SAFE_WRITE_REVIEW_BACKLOG_LIMIT) {
@@ -9831,6 +10248,12 @@
         return;
       }
       el("jobBtn").disabled = true;
+      if (el("jobType").value === "EXTRACT_CLINIC_PROFILE") {
+        var queued = await createExistingClinicSourceJob();
+        el("jobBtn").disabled = false;
+        if (queued) await loadDashboard();
+        return;
+      }
       var payload = {
         job_type: el("jobType").value,
         status: "queued",
@@ -9932,10 +10355,21 @@
       el("jobType").addEventListener("change", updateJobHelp);
       Array.prototype.slice.call(document.querySelectorAll("[data-job-query]")).forEach(function (button) {
         button.addEventListener("click", function () {
+          el("jobType").value = "DISCOVER_CLINIC";
           setInput("jobQuery", button.getAttribute("data-job-query"));
           setInput("jobCountry", "España");
           updateJobHelp();
           el("jobQuery").focus();
+        });
+      });
+      Array.prototype.slice.call(document.querySelectorAll("[data-job-clinic]")).forEach(function (button) {
+        button.addEventListener("click", function () {
+          el("jobType").value = "EXTRACT_CLINIC_PROFILE";
+          setInput("jobExistingClinic", button.getAttribute("data-job-clinic"));
+          setInput("jobSourceUrl", button.getAttribute("data-job-url"));
+          el("jobRequestedField").value = button.getAttribute("data-job-field") || "";
+          updateJobHelp();
+          el("jobSourceUrl").focus();
         });
       });
       el("clinicForm").addEventListener("submit", saveClinic);
@@ -10024,6 +10458,10 @@
       el("reviewClinicInlineEditBtn").addEventListener("click", toggleReviewClinicInlineEdit);
       el("reviewClinicEditPanel").addEventListener("input", updateReviewClinicEditChangeCount);
       el("reviewClinicEditPanel").addEventListener("change", updateReviewClinicEditChangeCount);
+      el("reviewClinicPendingList").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-review-id]");
+        if (button) openReviewEntry(button.getAttribute("data-review-id"));
+      });
       el("reviewBackToListBtn").addEventListener("click", closeReviewEditor);
       el("clinicSearch").addEventListener("input", renderClinics);
       el("clinicStatusFilter").addEventListener("change", renderClinics);

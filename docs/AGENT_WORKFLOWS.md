@@ -68,6 +68,11 @@ Rules:
 - Never publish from discovery.
 - Store candidates as jobs or draft clinic records.
 - Anything with low clinic probability goes to review or is discarded.
+- Public-site recommendations enter as `DISCOVER_CLINIC` jobs with
+  `input.source: "public_site_recommend_clinic"`. They may include a clinic
+  name, official website, city, country, requested information and a short note.
+  They must be treated as user-submitted leads: validate against official
+  sources and create review proposals only.
 
 ## DEDUPE_CLINIC
 
@@ -121,6 +126,13 @@ Operator bridge:
   "review_card_specialist_source_handoff"`. The worker/LLM may use that URL only
   to prepare a new specialist-focused review proposal; it must not treat the URL
   as approval to publish or to broaden the card into unrelated fields.
+- When Daniel creates a job from **Recomendar clínica** for an existing clinic,
+  the job should carry `ui_route: "sidebar_existing_clinic_source_job"` and a
+  bounded `target_scope`:
+  `operator_selected_fields` when Daniel chooses a specific field, or
+  `operator_clear_profile_fields` when he only supplies an official URL. The
+  worker may return review proposals, but it must not update the clinic profile
+  directly.
 - `scripts/process_extract_clinic_profile_jobs.py` can process those jobs in
   shadow mode and turn clear findings into a `clinic_profile_enrichment` review
   card.
@@ -150,6 +162,10 @@ Operator bridge:
   proposal.
 - Completing the job never edits a clinic profile, never publishes and never
   bypasses Daniel's approve/reject/modify decision.
+- The admin UI may group open review cards by clinic so Daniel sees one visible
+  ficha with accumulated pending improvements. This is a presentation layer
+  only: each `review_queue` row remains one proposal, one decision, one audit
+  trail and one future LLM decision packet.
 
 Required for each claim:
 

@@ -16,6 +16,8 @@ El dominio canonico es `https://www.vitalarga.com`.
 
 El panel operativo se genera en `/admin/`. Los datos quedan protegidos por Supabase Auth y por la lista `admin_users`. Desde ese panel se pueden revisar métricas, crear trabajos en cola, ver historial/evidencias internas y editar clínicas manualmente, incluidos servicios, unidades clínicas, especialistas publicados y contacto. Tras guardar una ficha, Supabase inicia una nueva publicacion de Netlify para que la web estatica recoja los datos vivos.
 
+La home publica incluye **Recomendar Clínica**. Ese formulario anonimo llama a una funcion limitada de Supabase que solo crea un trabajo interno `DISCOVER_CLINIC`; no crea fichas, no escribe en `review_queue` y no publica cambios.
+
 Las ampliaciones de fichas existentes deben entrar primero como propuestas internas de revisión (`clinic_profile_enrichment`). Los archivos con propuestas detalladas son locales/privados y no se suben a GitHub; se pueden convertir en tarjetas internas con `scripts/submit_profile_enrichment_reviews.py`.
 
 ## Siguiente arquitectura

@@ -82,7 +82,7 @@ def main() -> None:
         "Después de bajar bandeja",
         "Primero mira tu próximo clic. Lo demás es contexto.",
         "Estamos bajando la bandeja antes de crear más trabajo.",
-        "Ruta: Filtrar grupo · Abrir una propuesta · Aprobar, rechazar o modificar · Siguiente automática.",
+        "Ruta: Filtrar ficha · revisar sus mejoras pendientes · aprobar, rechazar o modificar · volver a lista.",
         "Tu foco",
         "Trabajo Codex",
         "Mejoras seguras",
