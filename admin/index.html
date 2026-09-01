@@ -7319,7 +7319,6 @@
     }
 
     function reviewModifyIdleLabel(row) {
-      if (reviewCanEditClinicFields(row) && !reviewEditableItems(row).length) return "Editar ficha";
       if (isClinicClaimRequestReview(row)) return "Modificar contacto";
       return "Modificar";
     }
@@ -8404,7 +8403,7 @@
       state.textContent = visibleCount === 1 ? "Única visible" : "Siguiente";
       title.textContent = reviewPrimarySubject(row);
       message.textContent = reviewVisibleLabel(row) + " · prioridad " + row.priority + " · " + date(row.created_at) +
-        ". Al revisarla, la lista se aparta: ficha en el centro y cambio propuesto a la derecha.";
+        ". Al revisarla, la lista se aparta: ficha en el centro y decisión a la derecha.";
       button.setAttribute("data-review-id", row.id);
       show(button, true);
     }
@@ -8680,9 +8679,6 @@
     function openReviewEntry(id) {
       var row = reviewCache.find(function (item) { return item.id === id; });
       if (!row) return false;
-      if (reviewHasManualFieldRoute(row) && openClinicEditorForReview(row, firstReviewMissingFieldTargetId(row))) {
-        return true;
-      }
       openReviewEditor(id);
       return true;
     }

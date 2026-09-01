@@ -79,7 +79,6 @@ def main() -> None:
         ">Rechazar</button>",
         ">Modificar</button>",
         "function reviewModifyIdleLabel",
-        "Editar ficha",
         "Revisión manual",
         "data-review-manual-field",
         "Modificar contacto",
@@ -282,13 +281,14 @@ def main() -> None:
     )
     check(
         "function openReviewEntry" in index
-        and "reviewHasManualFieldRoute(row) && openClinicEditorForReview(row, firstReviewMissingFieldTargetId(row))" in index
+        and "openReviewEditor(id);" in index
+        and "reviewHasManualFieldRoute(row) && openClinicEditorForReview(row, firstReviewMissingFieldTargetId(row))" not in index
         and 'if (button) openReviewEntry(button.getAttribute("data-review-id"))' in index
         and "if (id) openReviewEntry(id)" in index
         and "visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1)" in index
         and "focusManualReviewFieldTargetDirectly(manualTarget);" in index
         and "activeClinicReviewFocusTarget = manualTarget;" in index,
-        "manual review queue entries should open the focused field directly and still expose one field at a time",
+        "manual review queue entries should open the proposal columns before any focused field edit",
     )
     check(
         '"Completar en ficha"' not in index
@@ -464,7 +464,7 @@ def main() -> None:
         "window.requestAnimationFrame(function ()" in index
         and "focusManualReviewFieldTargetDirectly(manualTarget)" in index
         and "focusManualReviewFieldTargetDirectly(activeClinicReviewFocusTarget)" in index,
-        "manual review should open and focus the exact clinic field directly",
+        "manual review actions should open and focus the exact clinic field directly",
     )
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
