@@ -164,7 +164,9 @@ python3 scripts/audit_review_source_job_context.py --compact
 
 Este auditor es de solo lectura: ayuda a decidir si una tarjeta ya está lista
 para asistencia LLM, si el contexto se puede recuperar desde `agent_jobs`, o si
-debe tratarse como revisión manual sin inferir intención original.
+debe tratarse como revisión manual sin inferir intención original. La salida
+humana usa etiquetas como **listo para LLM**, **recuperable desde trabajo** y
+**solo revisión manual**.
 
 ## Relación con el panel
 

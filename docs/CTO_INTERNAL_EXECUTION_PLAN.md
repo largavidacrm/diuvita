@@ -1076,6 +1076,11 @@ Next 10 technical steps:
      `scripts/review_backlog_brief.py`: the read-only inbox bottleneck brief now
      uses the same safe-write pause threshold as `/admin`, including how many
      proposals remain before new source/jobs should stop.
+207. Make source-context audits Daniel-readable. Done locally in
+     `scripts/audit_review_source_job_context.py`: the read-only audit now
+     preserves the bounded source intent fields and renders statuses as
+     **listo para LLM**, **recuperable desde trabajo** or **solo revisión
+     manual**.
 
 ## Daniel decision checkpoints
 

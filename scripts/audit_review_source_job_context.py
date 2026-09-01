@@ -20,10 +20,22 @@ CONTEXT_KEYS = (
     "requested_field_labels",
     "primary_requested_fields",
     "primary_requested_field_labels",
+    "operator_requested_field_keys",
+    "operator_requested_field_labels",
+    "operator_requested_field_summary",
     "target_scope",
     "ui_route",
     "allowed_output",
+    "llm_boundary",
+    "operator_intent",
 )
+
+STATUS_LABELS = {
+    "context_ready": "listo para LLM",
+    "recoverable_from_job": "recuperable desde trabajo",
+    "source_without_context": "solo revisión manual",
+    "no_source_context": "sin contexto de fuente",
+}
 
 
 def as_dict(value: Any) -> dict[str, Any]:
@@ -62,6 +74,11 @@ def has_context(value: dict[str, Any]) -> bool:
 
 def context_subset(value: dict[str, Any]) -> dict[str, Any]:
     return {key: value.get(key) for key in CONTEXT_KEYS if value.get(key) not in (None, "", [], {})}
+
+
+def status_label(value: Any) -> str:
+    clean = clean_str(value)
+    return STATUS_LABELS.get(clean, clean or "sin estado")
 
 
 def audit_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -197,7 +214,7 @@ def format_report(report: dict[str, Any], compact: bool = False) -> str:
         clinic = row.get("clinic_name") or row.get("clinic_slug") or "sin clínica"
         host = row.get("source_host") or "sin host"
         lines.append(
-            f"- {clinic}: {row.get('status')} · {host} · {row.get('next_step')}"
+            f"- {clinic}: {status_label(row.get('status'))} · {host} · {row.get('next_step')}"
         )
         if not compact:
             lines.append(f"  Tarjeta: {row.get('title') or row.get('review_id')}")

@@ -19,6 +19,8 @@ def main():
             "human_supplied_source": True,
             "target_scope": "primary_target_first",
             "requested_fields": ["profesionales"],
+            "operator_requested_field_summary": "especialistas publicados",
+            "llm_boundary": "respect_source_job_context_scope",
         },
     })
     recoverable = audit_row({
@@ -46,6 +48,11 @@ def main():
 
     check(ready["status"] == "context_ready", "ready payload context should be detected")
     check(ready["source_host"] == "imda.example", "ready source host missing")
+    check(
+        ready["payload_context"]["operator_requested_field_summary"] == "especialistas publicados",
+        "ready payload should preserve operator field summary",
+    )
+    check(ready["payload_context"]["llm_boundary"] == "respect_source_job_context_scope", "ready payload should preserve LLM boundary")
     check(recoverable["status"] == "recoverable_from_job", "recoverable job context should be detected")
     check(recoverable["job_context"]["primary_requested_fields"] == ["profesionales"], "job primary field missing")
     check(missing["status"] == "source_without_context", "source without context should be flagged")
@@ -63,7 +70,9 @@ def main():
         "items": [ready, recoverable, missing],
     }, compact=True)
     check("Writes data: no" in output, "report should be read-only")
-    check("Tiara Health: recoverable_from_job" in output, "report should show recoverable Tiara row")
+    check("IMDA: listo para LLM" in output, "report should show human-ready status labels")
+    check("Tiara Health: recuperable desde trabajo" in output, "report should show recoverable Tiara row")
+    check("Example Clinic: solo revisión manual" in output, "report should show source-only rows as manual review")
     check("https://www.tiarahealth.com/our-team-of-experts/" not in output, "compact report should hide full URLs")
     print("OK review source-job context audit: missing context is visible")
 

@@ -51,6 +51,7 @@ SOURCE_MARKERS = [
     ("source worker LLM boundary", "scripts/process_extract_clinic_profile_jobs.py", "llm_boundary"),
     ("LLM source-origin digest status", "scripts/admin_digest.py", "source_origin_audit_status"),
     ("LLM source-origin global status", "scripts/global_plan_status.py", "Preparación LLM de revisiones"),
+    ("LLM source-context audit labels", "scripts/audit_review_source_job_context.py", "listo para LLM"),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
     ("logo download guard", "scripts/fetch_logos.py", "def looks_like_image"),
 ]

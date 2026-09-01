@@ -44,6 +44,7 @@ def main():
     check(any(item["name"] == "source worker LLM boundary" for item in local_checks), "source worker LLM boundary marker missing")
     check(any(item["name"] == "LLM source-origin digest status" for item in local_checks), "LLM source-origin digest marker missing")
     check(any(item["name"] == "LLM source-origin global status" for item in local_checks), "LLM source-origin global marker missing")
+    check(any(item["name"] == "LLM source-context audit labels" for item in local_checks), "LLM source-context audit marker missing")
     check(any(item["name"] == "built admin source-only origin warning" for item in local_checks), "built admin source-only origin marker missing")
     check(any(item["name"] == "built admin manual review context" for item in local_checks), "built admin manual review marker missing")
     check(any(item["name"] == "built admin manual review source handoff" for item in local_checks), "built admin manual source handoff marker missing")
