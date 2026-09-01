@@ -1260,6 +1260,10 @@ Next 10 technical steps:
      accumulated decisions, while the underlying review cards remain atomic for
      LLM packets, local validation and audit history. The list still keeps the
      familiar **Revisar** action.
+238. Fix positive publication blocker copy. Done locally in `/admin/`: positive
+     labels such as **Sin claims bloqueantes pendientes** are no longer shown as
+     something missing before publication. Claims still block publication when
+     they are conflictive, rejected or not yet checked.
 
 ## Daniel decision checkpoints
 

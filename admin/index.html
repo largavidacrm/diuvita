@@ -1750,7 +1750,7 @@
     }
 
     function clinicPublishReadinessCell(row) {
-      var missing = clinicPublicationMissingLabels(row);
+      var missing = actionablePublicationMissingLabels(clinicPublicationMissingLabels(row));
       var visible = row.status === "published" || row.status === "preliminary";
       var webPending = clinicHasPendingPublicChange(row, publicationControlCache);
       var webPendingNote = webPending
@@ -1767,8 +1767,8 @@
       var label = visible
         ? "Visible con pendientes"
         : "Falta para publicar";
-      var primaryMissing = publicationMissingActionLabel(missing[0]);
-      var rest = missing.slice(1, 3).map(publicationMissingActionLabel).join(" · ");
+      var primaryMissing = missing[0];
+      var rest = missing.slice(1, 3).join(" · ");
       if (missing.length > 3) rest += " · +" + (missing.length - 3);
       var detail = rest || "Abre la ficha y completa ese campo.";
       return '<div class="publish-cell"><span class="pill warning">' + html(label) +
@@ -1776,7 +1776,7 @@
     }
 
     function clinicRowActions(row) {
-      var missing = clinicPublicationMissingLabels(row);
+      var missing = actionablePublicationMissingLabels(clinicPublicationMissingLabels(row));
       var visible = isPublicClinicStatus(row.status);
       var publishLabel = missing.length ? "Completar" : visible ? "Visible" : "Publicar";
       var publishDisabled = visible && !missing.length ? " disabled" : "";
@@ -1788,7 +1788,7 @@
 
     function clinicMatchesPublishFilter(row, filter) {
       if (!filter) return true;
-      var missing = clinicPublicationMissingLabels(row);
+      var missing = actionablePublicationMissingLabels(clinicPublicationMissingLabels(row));
       var visible = isPublicClinicStatus(row.status);
       if (filter === "ready") return missing.length === 0;
       if (filter === "needs_work") return missing.length > 0;
@@ -5863,12 +5863,16 @@
       var clean = text(label).trim();
       var lower = clean.toLowerCase();
       if (lower.indexOf("sin claims bloqueantes") >= 0 || lower.indexOf("sin claim bloqueante") >= 0) {
-        return blockingClaimsMissingLabel();
+        return "";
       }
       if (lower.indexOf("claim bloqueante") >= 0 || lower.indexOf("claims bloqueantes") >= 0) {
         return "Resolver claims bloqueantes pendientes";
       }
       return clean;
+    }
+
+    function actionablePublicationMissingLabels(labels) {
+      return (labels || []).map(publicationMissingActionLabel).filter(Boolean);
     }
 
     function publicationMissingSentence(label) {
@@ -6000,9 +6004,10 @@
     function missingFinalValidationLabels() {
       var targetStatus = trimmed("clinicStatus");
       var publicTarget = targetStatus === "published" || targetStatus === "preliminary";
-      return finalValidationItems(publicTarget)
+      var missing = finalValidationItems(publicTarget)
         .filter(function (item) { return item.required && !item.ok; })
         .map(validationDisplayLabel);
+      return actionablePublicationMissingLabels(missing);
     }
 
     function publicStatus(status) {
@@ -6082,9 +6087,9 @@
       var row = clinicCache.find(function (item) { return item.id === clinicId; });
       if (!row) return;
       openClinicEditor(clinicId);
-      var missing = clinicPublicationMissingLabels(row);
+      var missing = actionablePublicationMissingLabels(clinicPublicationMissingLabels(row));
       if (missing.length) {
-        toast("Abro la ficha: " + publicationMissingSentence(publicationMissingActionLabel(missing[0])) + " antes de publicar.");
+        toast("Abro la ficha: " + publicationMissingSentence(missing[0]) + " antes de publicar.");
         window.setTimeout(function () {
           focusPublishField(publishMissingTargetId(missing[0]));
         }, 0);
