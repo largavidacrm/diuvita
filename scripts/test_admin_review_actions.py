@@ -241,6 +241,7 @@ def main() -> None:
         and "function reviewManualFieldTarget" in index
         and "function reviewActiveManualTarget" in index
         and "function focusManualReviewFieldTarget" in index
+        and "function focusManualReviewFieldTargetDirectly" in index
         and "function markManualReviewFieldTarget" in index
         and "function openClinicEditorForReview" in index
         and "function openReviewManualField" in index
@@ -285,7 +286,7 @@ def main() -> None:
         and 'if (button) openReviewEntry(button.getAttribute("data-review-id"))' in index
         and "if (id) openReviewEntry(id)" in index
         and "visibleAuditIssues = isBlockingClaimReview(row) ? auditIssues : auditIssues.slice(0, 1)" in index
-        and "focusManualReviewFieldTarget(manualTarget);" in index
+        and "focusManualReviewFieldTargetDirectly(manualTarget);" in index
         and "activeClinicReviewFocusTarget = manualTarget;" in index,
         "manual review queue entries should open the focused field directly and still expose one field at a time",
     )
@@ -304,7 +305,7 @@ def main() -> None:
         and "reviewSourceJobContext(activeClinicReview, activeClinicReviewFocusTarget)" in index
         and "createClinicManualReviewSourceJob" in index
         and "activeClinicReviewFocusTarget" in index
-        and "focusManualReviewFieldTarget(activeClinicReviewFocusTarget)" in index
+        and "focusManualReviewFieldTargetDirectly(activeClinicReviewFocusTarget)" in index
         and "renderClinicManualReviewContext();" in index
         and "activeClinicReviewFocusTarget = manualTarget;" in index
         and "var manualTarget = reviewManualTargetForInput(row, focusTarget)" in index,
@@ -367,6 +368,13 @@ def main() -> None:
         and 'show(el("reviewActionStrip"), false)' in index
         and 'show(el("reviewCasePanel"), false)' in index,
         "opening a review should hide the queue and show the clinic ficha beside the decision",
+    )
+    check(
+        "if (!activeReview && !activeClinicReview)" in index
+        and 'show(el("reviewListPanel"), true);' in index
+        and 'show(el("reviewSelectionPanel"), true);' in index
+        and 'setReviewWorkMode("queue");' in index,
+        "review queue rendering should restore list and side panel when no review is active",
     )
     check(
         'class="work-grid review-work-queue" id="reviewWorkArea"' in index
@@ -454,7 +462,8 @@ def main() -> None:
     )
     check(
         "window.requestAnimationFrame(function ()" in index
-        and "focusManualReviewFieldTarget(manualTarget)" in index,
+        and "focusManualReviewFieldTargetDirectly(manualTarget)" in index
+        and "focusManualReviewFieldTargetDirectly(activeClinicReviewFocusTarget)" in index,
         "manual review should open and focus the exact clinic field directly",
     )
     check(".review-decision-summary" in css, "review decision summary should be styled")

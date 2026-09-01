@@ -2866,10 +2866,6 @@ td small {
   line-height: var(--line-tight);
 }
 
-.review-table td:nth-child(4) {
-  white-space: nowrap;
-}
-
 .review-toolbar select {
   min-width: 0;
   text-overflow: ellipsis;

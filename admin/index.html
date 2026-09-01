@@ -1130,6 +1130,21 @@
       return true;
     }
 
+    function focusManualReviewFieldTargetDirectly(target) {
+      if (!target || !target.inputId) return false;
+      focusManualReviewFieldTarget(target);
+      window.requestAnimationFrame(function () {
+        focusManualReviewFieldTarget(target);
+      });
+      window.setTimeout(function () {
+        focusManualReviewFieldTarget(target);
+      }, 120);
+      window.setTimeout(function () {
+        focusManualReviewFieldTarget(target);
+      }, 360);
+      return true;
+    }
+
     function publishMissingTargetId(label) {
       var map = {
         "Nombre": "clinicName",
@@ -5837,6 +5852,7 @@
         : "Guarda la ficha para cerrar esta revisión y pasar a la siguiente.";
       el("clinicManualReviewMeta").textContent =
         reviewDisplayTitle(activeClinicReview) + " · una ficha, una decisión.";
+      el("clinicManualReviewFocusBtn").textContent = target ? "Volver al campo activo" : "Campo pendiente";
       el("clinicManualReviewFocusBtn").disabled = !target || !target.inputId;
       if (target && target.inputId) markManualReviewFieldTarget(target.inputId);
       var sourceJob = reviewSourceJobContext(activeClinicReview, activeClinicReviewFocusTarget);
@@ -8374,6 +8390,13 @@
       var specialistReview = firstSpecialistTargetReview(reviewCache);
       var specialistTarget = specialistCoverageCache && specialistCoverageCache.nextTarget;
       var actionLead = reviewActionLeadCopy(nextReview, clinicGroup, duplicateReview, sourceTarget, googleLinkReview, specialistTarget);
+      if (!activeReview && !activeClinicReview) {
+        show(el("reviewListPanel"), true);
+        show(el("reviewSelectionPanel"), true);
+        show(el("reviewClinicPanel"), false);
+        show(el("reviewEditor"), false);
+        setReviewWorkMode("queue");
+      }
       renderReviewQueueSelection(nextReview || rows[0] || null, rows.length, hasFilters);
       renderReviewFilterChips();
       renderReviewCasePanel();
@@ -8492,7 +8515,7 @@
       loadClinicSources(activeClinic.id);
       show(el("clinicEditor"), true);
       if (activeClinicReviewFocusTarget && activeClinicReviewFocusTarget.inputId) {
-        focusManualReviewFieldTarget(activeClinicReviewFocusTarget);
+        focusManualReviewFieldTargetDirectly(activeClinicReviewFocusTarget);
       } else {
         el("clinicEditor").scrollIntoView({ behavior: "smooth", block: "start" });
         el("clinicName").focus();
@@ -8677,12 +8700,7 @@
           : "Ficha actualizada desde revisión manual.");
       }
       if (manualTarget && manualTarget.inputId) {
-        window.requestAnimationFrame(function () {
-          focusManualReviewFieldTarget(manualTarget);
-        });
-        window.setTimeout(function () {
-          focusManualReviewFieldTarget(manualTarget);
-        }, 80);
+        focusManualReviewFieldTargetDirectly(manualTarget);
       }
       toast("Edita el campo pendiente y guarda la ficha para cerrar esta revisión.");
       return true;
@@ -9368,7 +9386,7 @@
         if (button) focusPublishField(button.getAttribute("data-publish-field"));
       });
       el("clinicManualReviewFocusBtn").addEventListener("click", function () {
-        focusManualReviewFieldTarget(activeClinicReviewFocusTarget);
+        focusManualReviewFieldTargetDirectly(activeClinicReviewFocusTarget);
       });
       el("clinicManualReviewSourceBtn").addEventListener("click", createClinicManualReviewSourceJob);
       el("clinicAddLocationBtn").addEventListener("click", function () {
