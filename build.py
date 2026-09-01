@@ -1074,19 +1074,19 @@ RECOMMEND_SECTION = """
       <div>
         <p class="kicker">Ayuda a completar la guía</p>
         <h2>Recomendar Clínica</h2>
-        <p>Envía una clínica o una fuente oficial. La revisaremos internamente antes de añadir o cambiar cualquier ficha.</p>
+        <p>Escribe una clínica, una pista o una fuente oficial. La revisaremos internamente antes de añadir o cambiar cualquier ficha.</p>
       </div>
       <button class="recommend-toggle" id="recommendToggle" type="button" aria-expanded="false" aria-controls="recommendFormWrap">Recomendar Clínica</button>
     </div>
     <div class="recommend-form-wrap hidden" id="recommendFormWrap">
       <form class="recommend-form" id="recommendClinicForm">
         <div>
-          <label for="recommendClinicName">Clínica</label>
-          <input id="recommendClinicName" name="clinic_name" autocomplete="organization" required placeholder="Nombre de la clínica">
+          <label for="recommendClinicName">Clínica o pista</label>
+          <input id="recommendClinicName" name="clinic_name" autocomplete="organization" required placeholder="Nombre, ciudad o pista útil">
         </div>
         <div>
-          <label for="recommendClinicWebsite">Web oficial</label>
-          <input id="recommendClinicWebsite" name="website" inputmode="url" placeholder="https://clinicaneleva.com">
+          <label for="recommendClinicWebsite">Link oficial</label>
+          <input id="recommendClinicWebsite" name="website" inputmode="url" placeholder="https://clinicaneleva.com/equipo/">
         </div>
         <div>
           <label for="recommendClinicCity">Ciudad</label>
@@ -1109,7 +1109,7 @@ RECOMMEND_SECTION = """
         </div>
         <div class="recommend-wide">
           <label for="recommendClinicNote">Nota breve</label>
-          <textarea id="recommendClinicNote" name="note" maxlength="500" placeholder="Opcional: qué dato viste o qué falta. No envíes datos médicos personales."></textarea>
+          <textarea id="recommendClinicNote" name="note" maxlength="500" placeholder="Opcional: explica qué viste, qué falta o qué quieres que revisemos. No envíes datos médicos personales."></textarea>
         </div>
         <div class="recommend-trap" aria-hidden="true">
           <label for="recommendTrap">No rellenar</label>

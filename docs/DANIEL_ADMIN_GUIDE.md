@@ -282,10 +282,12 @@ Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde 
 En el menú lateral tienes **Recomendar clínica**. Ahí puedes crear trabajo
 para el agente sin tocar la web: escribe una petición en texto libre, pega un
 link oficial si lo tienes, elige si es una clínica nueva o una ficha existente,
-y el trabajo entra en la cola interna. El panel avisa cuando la bandeja está
-casi llena. Si el freno está cerca del límite, pausa crear más trabajos hasta
-limpiar revisiones. Así evitamos llenar la bandeja con más propuestas antes de
-cerrar las que ya existen.
+y, si quieres, indica qué dato quieres que revise. No hay que usar ejemplos
+prefijados: una frase como "Neleva, completar especialistas" y un link oficial
+son suficientes. El trabajo entra en la cola interna. El panel avisa cuando la
+bandeja está casi llena. Si el freno está cerca del límite, pausa crear más
+trabajos hasta limpiar revisiones. Así evitamos llenar la bandeja con más
+propuestas antes de cerrar las que ya existen.
 
 Para completar una clínica existente, elige **Completar clínica existente**,
 selecciona la ficha, pega una URL oficial y, si quieres, indica qué información
@@ -299,7 +301,10 @@ ni publica automáticamente.
 En **Trabajos** verás primero **Trabajos pendientes** y después **Trabajos
 recientes**. Pendiente significa que el agente todavía tiene que procesarlo o
 lo está procesando; completado significa que ya terminó y, si encontró datos
-útiles, dejó una propuesta para revisar.
+útiles, dejó una propuesta para revisar. En cada trabajo pendiente verás una
+línea breve de **Siguiente**: si hay link oficial, puede procesarse en el ciclo
+CTO; si solo hay texto libre, espera un proveedor real de búsqueda o que se
+añada una fuente oficial.
 
 Si una recomendación tiene **link oficial**, el ciclo CTO puede procesarla y
 convertirla en una propuesta de clínica candidata. Si solo tiene texto libre,

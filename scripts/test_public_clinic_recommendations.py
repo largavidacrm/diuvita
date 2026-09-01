@@ -20,6 +20,9 @@ def main() -> None:
         'href="/#recomendar-clinica"',
         'id="recomendar-clinica"',
         "Recomendar Clínica",
+        "Clínica o pista",
+        "Link oficial",
+        "Nombre, ciudad o pista útil",
         'id="recommendToggle"',
         'id="recommendClinicForm"',
         'id="recommendClinicName"',
@@ -61,7 +64,8 @@ def main() -> None:
 
     check(
         "public_site_recommend_clinic" in admin
-        and "Recomendación pública · " in admin
+        and "Link oficial aportado" in admin
+        and "Texto libre" in admin
         and "Recomendar clínica: " in admin,
         "admin jobs table should make public recommendations visible",
     )

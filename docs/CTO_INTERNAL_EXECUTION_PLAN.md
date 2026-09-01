@@ -1249,6 +1249,12 @@ Next 10 technical steps:
      path. Text-only recommendations stay queued until a real search provider
      exists. The bridge never edits clinic records, creates public pages or
      publishes data.
+236. Simplify free-text clinic recommendations. Done locally in `/admin/` and
+     the public form: **Recomendar clínica** now centers on plain text, an
+     optional official link and an optional field to review, with no internal
+     example buttons such as IMDA or Regenera. Pending jobs now explain the
+     next step: source-backed work can be processed by the supervised CTO cycle,
+     while text-only work waits for a real search provider or an official URL.
 
 ## Daniel decision checkpoints
 

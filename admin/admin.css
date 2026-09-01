@@ -1338,6 +1338,11 @@ td small {
   margin-top: 0.08rem;
 }
 
+td small.job-next-step {
+  color: var(--green-deep);
+  font-weight: 750;
+}
+
 .review-table .pill {
   font-size: 0.76rem;
 }

@@ -47,6 +47,7 @@ def main() -> None:
         'id="jobExistingClinic"',
         'id="jobSourceUrl"',
         'id="jobRequestedField"',
+        "Qué quieres revisar",
         'id="jobQueryLabel"',
         'id="jobQueryHint"',
         'id="jobSourceUrlHint"',
@@ -61,6 +62,11 @@ def main() -> None:
         'id="pendingJobsBody"',
         'id="pendingJobCount"',
         "Trabajos pendientes",
+        "function jobSelectedRequestInfo",
+        "function jobNextStepText",
+        "Link oficial aportado",
+        "Texto libre",
+        "Siguiente: queda esperando búsqueda real",
         "function createExistingClinicSourceJob",
         'ui_route: "sidebar_existing_clinic_source_job"',
         "source_job_version: \"2026-09-01.recommend-clinic-source\"",
@@ -128,6 +134,7 @@ def main() -> None:
         "font-size: var(--text-ui)",
         "font-size: var(--text-body)",
         "font-size: var(--text-title-sm)",
+        ".job-next-step",
     ]:
         check(marker in css, f"missing control sidebar style: {marker}")
 
