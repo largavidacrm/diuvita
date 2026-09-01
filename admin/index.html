@@ -1809,6 +1809,27 @@
       return rows[0] || null;
     }
 
+    function blockingClaimReviewSubject(row) {
+      if (!row) return "";
+      return reviewFirstIssueText(row) || reviewDisplayTitle(row) || "Revisión pendiente";
+    }
+
+    function blockingClaimPublicationLabelForClinic(clinicId) {
+      var rows = blockingClaimReviewsForClinic(clinicId);
+      if (!rows.length) return "Claims bloqueantes";
+      var first = compactText(blockingClaimReviewSubject(rows[0]), 92);
+      if (rows.length === 1) return "1 claim bloqueante: " + first;
+      return rows.length + " claims bloqueantes; primero: " + first;
+    }
+
+    function blockingClaimPublicationDetailForClinic(clinicId) {
+      var rows = blockingClaimReviewsForClinic(clinicId);
+      if (!rows.length) return "Abre la revisión pendiente.";
+      var first = compactText(blockingClaimReviewSubject(rows[0]), 120);
+      if (rows.length === 1) return "Abre esta revisión: " + first;
+      return "Abre la primera de " + rows.length + ": " + first;
+    }
+
     function focusBlockingClaimReviewAction() {
       focusPublishField("clinicEvidencePanel");
       window.setTimeout(function () {
@@ -1834,7 +1855,7 @@
       reviewGoogleLinksFilter = false;
       reviewSpecialistsFilter = false;
       openReviewEntry(row.id);
-      toast("Abro la revisión que bloquea la publicación.");
+      toast("Abro la revisión bloqueante: " + compactText(blockingClaimReviewSubject(row), 96) + ".");
       return true;
     }
 
@@ -1880,6 +1901,10 @@
       var rest = missing.slice(1, 3).join(" · ");
       if (missing.length > 3) rest += " · +" + (missing.length - 3);
       var detail = rest || "Abre la ficha y completa ese campo.";
+      if (publicationMissingIsBlockingClaims(primaryMissing)) {
+        primaryMissing = publicationMissingActionLabel(blockingClaimPublicationLabelForClinic(row.id));
+        detail = blockingClaimPublicationDetailForClinic(row.id);
+      }
       return '<div class="publish-cell"><span class="pill warning">' + html(label) +
         '</span><strong>' + html(primaryMissing) + '</strong><small>' + html(detail) + '</small>' + webPendingNote + '</div>';
     }
@@ -6181,6 +6206,10 @@
         return "";
       }
       if (lower.indexOf("claim bloqueante") >= 0 || lower.indexOf("claims bloqueantes") >= 0) {
+        if (lower.indexOf("resolver ") === 0 || lower.indexOf("esperar ") === 0 || lower.indexOf("reintentar ") === 0) {
+          return clean;
+        }
+        if (/^\d+\s+claims?\s+bloqueantes?[:;]/.test(lower)) return "Resolver " + clean;
         return "Resolver claims bloqueantes pendientes";
       }
       return clean;
@@ -6202,8 +6231,9 @@
       if (activeClinicClaimLoadState === "error") return "Reintentar carga de claims bloqueantes";
       if (activeClinicBlockingClaimCount === null) return "Esperar a que se comprueben los claims bloqueantes";
       var count = Number(activeClinicBlockingClaimCount || 0);
-      if (count === 1) return "Resolver 1 claim bloqueante pendiente";
-      return "Resolver " + count + " claims bloqueantes pendientes";
+      var first = activeClinic ? compactText(blockingClaimReviewSubject(firstBlockingClaimReviewForClinic(activeClinic.id)), 92) : "";
+      if (count === 1) return "Resolver 1 claim bloqueante pendiente" + (first ? ": " + first : "");
+      return "Resolver " + count + " claims bloqueantes pendientes" + (first ? "; primero: " + first : "");
     }
 
     function publicVisibilityText(status) {

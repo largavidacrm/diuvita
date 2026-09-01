@@ -1378,6 +1378,12 @@ Next 10 technical steps:
      visible note that the order is not a ranking or medical recommendation.
      The logo carousel includes every valid logo instead of an arbitrary
      first-12 shortlist, and the change does not edit clinic data.
+257. Make blocking publication claims name the concrete review. Done locally in
+     `/admin/`: publication blockers still use the same guarded logic, but
+     blocking-claim chips, clinic-table readiness cells and the open-review
+     toast now include the first concrete review/issue so Daniel can see what
+     must be approved or rejected instead of only seeing a generic "claims
+     pendientes" message.
 
 ## Daniel decision checkpoints
 
