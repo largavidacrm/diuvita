@@ -48,6 +48,16 @@ def main():
         'window.VITALARGA_LOCAL_VERSION = "codex/test · abc1234 Example";' == injected,
         "local server should inject the current worktree version safely",
     )
+    guarded = inject_local_version(
+        'window.VITALARGA_LOCAL_VERSION = "__VITALARGA_LOCAL_VERSION__";'
+        'var missing = version.indexOf("__VITALARGA_LOCAL_VERSION__") >= 0;',
+        "codex/test · abc1234 Example",
+    )
+    check(guarded.count("codex/test · abc1234 Example") == 1, "local version should only replace the header value")
+    check(
+        'version.indexOf("__VITALARGA_LOCAL_VERSION__")' in guarded,
+        "placeholder guard should remain intact after injection",
+    )
     busy_message = bind_error_message(DEFAULT_HOST, DEFAULT_PORT, OSError(errno.EADDRINUSE, "busy"))
     permission_message = bind_error_message(DEFAULT_HOST, DEFAULT_PORT, OSError(errno.EPERM, "blocked"))
     check("Prueba primero http://127.0.0.1:8765/admin/" in busy_message, "busy port message should point Daniel to the dashboard URL")

@@ -31,6 +31,7 @@ def inject_local_version(html_text: str, version: str) -> str:
     return html_text.replace(
         '"__VITALARGA_LOCAL_VERSION__"',
         json.dumps(version, ensure_ascii=False),
+        1,
     )
 
 
