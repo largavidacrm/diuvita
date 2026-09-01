@@ -45,6 +45,29 @@ def fake_fetch(url, timeout=15):
     )
 
 
+def fake_fetch_summary(url, timeout=15):
+    html = """
+<!doctype html>
+<html>
+<head>
+  <title>Tiara Health Takes Health Management to The Next Level</title>
+  <meta name="description" content="Tiara Health ofrece tratamientos a medida y programas personalizados diseñados para adaptarse a sus retos y necesidades de salud.">
+</head>
+<body>
+  <p>Contact: info@tiarahealth.com +34 682 269 673</p>
+  <p>Tiara Health ofrece tratamientos a medida y programas personalizados diseñados para adaptarse a sus retos y necesidades de salud.</p>
+</body>
+</html>
+""".encode("utf-8")
+    return FetchResult(
+        source_url=url,
+        final_url=url,
+        status_code=200,
+        content_type="text/html; charset=utf-8",
+        body=html,
+    )
+
+
 def main():
     job = {
         "id": "job-1",
@@ -92,6 +115,26 @@ def main():
     check("unidades" in result["proposed_fields"], "units should be proposed")
     check("email" not in result["proposed_fields"], "unrequested contact should not be proposed")
     check(result["proposed_field_counts"]["profesionales"] >= 1, "professional count should be visible")
+
+    summary_job = {
+        **job,
+        "id": "job-summary",
+        "input": {
+            **job["input"],
+            "source_url": "https://www.tiarahealth.com/about-tiara-health/",
+            "requested_fields": ["summary"],
+            "requested_field_labels": ["Resumen"],
+            "primary_requested_fields": ["summary"],
+            "primary_requested_field_labels": ["Resumen"],
+            "missing_fields": ["Resumen"],
+            "operator_requested_field_keys": ["summary"],
+            "operator_requested_field_labels": ["Resumen"],
+            "operator_requested_field_summary": "resumen",
+        },
+    }
+    summary_result = process_job(summary_job, args, "admin@example.test", {}, fetcher=fake_fetch_summary)
+    check(summary_result["status"] == "ready", "summary source should produce a reviewable proposal")
+    check(summary_result["proposed_fields"] == ["summary"], "summary job should only propose the requested summary")
 
     payload = build_payload_for_job(job, {
         "verified_claims": [],

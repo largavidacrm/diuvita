@@ -1199,6 +1199,20 @@ Next 10 technical steps:
      processes one queued `EXTRACT_CLINIC_PROFILE` job per enabled run, creates
      or refreshes a scoped review proposal when it finds clear data, and marks
      the original card as superseded without publishing or saving clinic fields.
+228. Add conservative summary extraction for review-source jobs. Done locally in
+     `scripts/extract_clinic_profile_shadow.py`,
+     `scripts/verify_clinic_profile_shadow.py` and
+     `scripts/submit_shadow_extraction_review.py`: official meta descriptions
+     and clear about-page sentences can now become `summary` proposals when a
+     review-source job asks for **Resumen**. The proposal remains human-review
+     only, team pages are excluded from summary extraction, and requested-field
+     filtering still prevents unrelated contact, service or specialist fields
+     from leaking into that card.
+229. Validate the summary source-job path against live queue state. Done in
+     safe apply mode for Tiara Health: the queued official about-page URL now
+     refreshes a scoped review proposal for `summary` and supersedes the older
+     broad quality-audit card. No clinic profile fields were saved and no public
+     page was published.
 
 ## Daniel decision checkpoints
 

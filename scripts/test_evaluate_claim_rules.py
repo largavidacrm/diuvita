@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Checks for read-only evaluation of stored field claims."""
-from vitalarga_rules import RiskPolicy
+from vitalarga_rules import RiskPolicy, field_risk
 from evaluate_claim_rules import evaluate_rows, format_report, policy_from_automation, summarize
 
 
@@ -54,6 +54,7 @@ def main() -> None:
     check(preview_summary["actions"]["auto_accept"] == 1, "preview should auto-accept the low-risk sourced claim")
     check(preview_summary["actions"]["review"] == 1, "medium-risk claims should stay in review")
     check(preview_summary["risks"]["low"] == 2, "low-risk count missing")
+    check(field_risk("profile.summary") == "medium", "profile summary should stay human-review content risk")
 
     report = format_report(preview, "low-risk auto-publish preview")
     check("Database writes: none" in report, "read-only guarantee missing")

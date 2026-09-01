@@ -23,6 +23,7 @@ LOW_RISK_PREFIXES = (
 )
 
 MEDIUM_RISK_PREFIXES = (
+    "profile.summary",
     "services.",
     "specialties.",
     "units.",

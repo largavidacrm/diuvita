@@ -36,6 +36,8 @@ ResolveOriginReviewFn = Callable[[dict[str, Any], dict[str, Any], str, dict[str,
 
 
 REQUESTED_FIELD_TARGETS = {
+    "summary": {"summary"},
+    "resumen": {"summary"},
     "address": {"locations"},
     "location": {"locations"},
     "locations": {"locations"},

@@ -93,6 +93,10 @@ Rules:
 Purpose: convert web evidence into structured facts.
 
 Output goes into `field_claims`, not directly into published clinic data.
+Official meta descriptions or clear about-page paragraphs may become
+`profile.summary` claims and then `summary` proposals, but only for review.
+Team pages should not generate summary proposals; they stay scoped to team or
+specialist evidence.
 
 Operator bridge:
 

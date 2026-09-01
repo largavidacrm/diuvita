@@ -36,6 +36,8 @@ DEFAULT_OUTPUT_DIR = ROOT / "data" / "extractions"
 EXTRACTION_EXCERPT_CHARS = 5000
 MAX_PROFESSIONALS = 32
 MAX_LOCATIONS = 8
+SUMMARY_MIN_CHARS = 90
+SUMMARY_MAX_CHARS = 280
 
 EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)
 PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s()./-]{7,}\d)(?!\w)")
@@ -67,6 +69,53 @@ PUBLIC_PRICING_RE = re.compile(
     r"(?:precio|tarifa|consulta|programa|bono)[^.]{0,90}(?:€|eur|euros)|"
     r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
     re.I,
+)
+SUMMARY_NOISE_RE = re.compile(
+    r"\b(?:"
+    r"acceptance|aceptaci[oó]n|additional information|apellido|blog articles|"
+    r"cookie policy|contact(?:ar)?|correo electr[oó]nico|faq|journal|legal notice|"
+    r"newsletter|pol[ií]tica de privacidad|privacy policy|reciba informaci[oó]n|"
+    r"receive updated information|recipients|redes sociales|responsable|rights|"
+    r"social networks|subscribe|suscr[ií]bete|suscribirse|your email"
+    r")\b",
+    re.I,
+)
+SUMMARY_SIGNAL_TERMS = (
+    "bienestar",
+    "biomarcadores",
+    "clinic",
+    "clínica",
+    "clinica",
+    "diagnóstico",
+    "diagnostico",
+    "health",
+    "longevidad",
+    "longevity",
+    "medicine",
+    "medicina",
+    "personalised",
+    "personalized",
+    "personalizados",
+    "preventive",
+    "preventiva",
+    "programas",
+    "programmes",
+    "salud",
+    "technology-led",
+    "tratamientos",
+    "wellbeing",
+)
+SUMMARY_SPANISH_TERMS = (
+    "clínica",
+    "clinica",
+    "diagnóstico",
+    "diagnostico",
+    "medicina",
+    "ofrece",
+    "personalizados",
+    "programas",
+    "salud",
+    "tratamientos",
 )
 LOCATION_ADDRESS_RE = re.compile(
     r"\b(?P<address>(?:C/|C\.|Calle|Carrer|Paseo|Pº|P.º|Passeig|Avenida|Av\.?|Avda\.?|"
@@ -709,11 +758,15 @@ def extraction_contact_prefix(text: str) -> str:
 
 
 def source_looks_like_team_page(source_url: str, title: str, text: str) -> bool:
-    url_title = " ".join([source_url, title]).replace("-", " ").replace("_", " ").lower()
-    if any(marker in url_title for marker in TEAM_PAGE_MARKERS):
+    if source_url_title_looks_like_team_page(source_url, title):
         return True
     haystack = text[:6000].lower()
     return any(marker in haystack for marker in TEAM_PAGE_MARKERS)
+
+
+def source_url_title_looks_like_team_page(source_url: str, title: str) -> bool:
+    url_title = " ".join([source_url, title]).replace("-", " ").replace("_", " ").lower()
+    return any(marker in url_title for marker in TEAM_PAGE_MARKERS)
 
 
 def extraction_text_excerpt(readable_text: str, title: str, source_url: str, limit: int) -> str:
@@ -978,6 +1031,75 @@ def plausible_clinic_name(value: str) -> bool:
     return bool(lower_words & CLINIC_NAME_TERMS)
 
 
+def summary_sentences(text: str) -> list[str]:
+    clean = normalize_space(text)
+    if not clean:
+        return []
+    return [
+        normalize_space(part).strip(" -–—|:;")
+        for part in re.split(r"(?<=[.!?])\s+", clean)
+        if normalize_space(part)
+    ]
+
+
+def clean_summary_candidate(value: str) -> str:
+    clean = normalize_space(value).strip(" -–—|:;")
+    clean = re.sub(
+        r"^(?:[A-ZÁÉÍÓÚÜÑ0-9&,'’/-]+\s+){3,}(?=[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ])",
+        "",
+        clean,
+    )
+    return normalize_space(clean).strip(" -–—|:;")
+
+
+def truncate_summary(value: str) -> str:
+    clean = normalize_space(value)
+    if len(clean) <= SUMMARY_MAX_CHARS:
+        return clean
+    truncated = clean[:SUMMARY_MAX_CHARS].rsplit(" ", 1)[0]
+    return normalize_space(truncated).strip(" ,.;:")
+
+
+def summary_score(candidate: str) -> int:
+    clean = normalize_space(candidate)
+    if len(clean) < SUMMARY_MIN_CHARS or SUMMARY_NOISE_RE.search(clean):
+        return -1
+    folded = fold(clean)
+    if not any(term in folded for term in SUMMARY_SIGNAL_TERMS):
+        return -1
+    score = 0
+    score += sum(1 for term in SUMMARY_SIGNAL_TERMS if term in folded)
+    if any(term in folded for term in SUMMARY_SPANISH_TERMS):
+        score += 2
+    if any(term in folded for term in ("tiara health", "longevity", "longevidad", "clinic", "clínica", "clinica")):
+        score += 2
+    if SUMMARY_MIN_CHARS <= len(clean) <= SUMMARY_MAX_CHARS:
+        score += 1
+    return score
+
+
+def extract_summary(text: str, title: str = "", source_url: str = "") -> str | None:
+    if source_url_title_looks_like_team_page(source_url, title):
+        return None
+    sentences = summary_sentences(text)
+    candidates: list[tuple[int, int, str]] = []
+    for index, sentence in enumerate(sentences):
+        clean = clean_summary_candidate(sentence)
+        score = summary_score(clean)
+        if score >= 0:
+            candidates.append((score, -index, truncate_summary(clean)))
+    if not candidates:
+        for index in range(max(0, len(sentences) - 1)):
+            clean = clean_summary_candidate(" ".join(sentences[index : index + 2]))
+            score = summary_score(clean)
+            if score >= 0:
+                candidates.append((score, -index, truncate_summary(clean)))
+    if not candidates:
+        return None
+    candidates.sort(reverse=True)
+    return candidates[0][2]
+
+
 def claim(field_path: str, value: Any, confidence: float, source_url: str) -> dict[str, Any]:
     return {
         "field_path": field_path,
@@ -999,6 +1121,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     locations = extract_locations(text)
     transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
+    summary = extract_summary(text, str(snapshot.get("source_title") or ""), source_url)
     claims: list[dict[str, Any]] = []
 
     name = guess_name(snapshot)
@@ -1007,6 +1130,8 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     if source_url:
         parsed = urlparse(source_url)
         claims.append(claim("contact.website", f"{parsed.scheme}://{parsed.netloc}", 0.86, source_url))
+    if summary:
+        claims.append(claim("profile.summary", summary, 0.64, source_url))
     if contacts["emails"]:
         claims.append(claim("contact.email", contacts["emails"][0], 0.88, source_url))
     if contacts["phones"]:
@@ -1047,8 +1172,10 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     transparency = extract_transparency(text, professionals)
     keywords = detect_keywords(text)
     name = guess_name(snapshot)
+    summary = extract_summary(text, str(snapshot.get("source_title") or ""), str(snapshot.get("final_url") or snapshot.get("source_url") or ""))
     profile = {
         "name": name if plausible_clinic_name(name) else None,
+        "summary": summary,
         "website": claim_website(str(snapshot.get("final_url") or snapshot.get("source_url") or "")),
         "emails": contacts["emails"],
         "phones": contacts["phones"],

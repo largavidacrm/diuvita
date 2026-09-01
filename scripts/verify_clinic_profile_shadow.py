@@ -129,6 +129,10 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"
         confidence = 0.66 if supported else 0.45
+    elif field_path.startswith("profile."):
+        supported, reason = value_supported(value, haystack)
+        verdict = "accepted" if supported else "review"
+        confidence = 0.88 if supported else 0.58
     elif field_path.startswith("location."):
         verdict, confidence, reason = verify_locations(value, haystack)
     elif field_path.startswith(("services.", "specialties.", "units.", "diagnostics.", "programs.", "technologies.", "professionals.")):

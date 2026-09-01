@@ -17,7 +17,10 @@ def main():
     html = """
 <!doctype html>
 <html>
-<head><title>Example Longevity Clinic</title></head>
+<head>
+  <title>Example Longevity Clinic</title>
+  <meta name="description" content="Example Longevity Clinic combina medicina preventiva, biomarcadores y programas personalizados de longevidad.">
+</head>
 <body>
   <p>Medicina preventiva, longevidad and VO2 max.</p>
   <p>Unidad de Longevidad con Dra. Laura García Pérez, nº colegiada 12345.</p>
@@ -42,6 +45,7 @@ def main():
     fields = payload["proposed_fields"]
     check(payload["mode"] == "shadow", "payload should be shadow mode")
     check(payload["clinic_slug"] == "example-clinic", "clinic slug missing")
+    check(fields["summary"].startswith("Example Longevity Clinic combina medicina preventiva"), "summary field missing")
     check(fields["email"] == "info@exampleclinic.test", "email field missing")
     check(fields["telefono"] == "91 6325659", "primary phone field missing")
     check(fields["phone_mobile"] == "676 629 862", "mobile phone field missing")

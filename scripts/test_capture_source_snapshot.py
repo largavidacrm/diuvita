@@ -21,7 +21,11 @@ def main():
     body = b"""
 <!doctype html>
 <html>
-<head><title>Example Longevity Clinic</title><style>.x{}</style></head>
+<head>
+  <title>Example Longevity Clinic</title>
+  <meta name="description" content="Example Longevity Clinic combines preventive medicine and advanced biomarkers.">
+  <style>.x{}</style>
+</head>
 <body>
   <h1>Example Clinic</h1>
   <script>window.secret = "ignore";</script>
@@ -41,6 +45,7 @@ def main():
         )
     )
     check(snapshot["source_title"] == "Example Longevity Clinic", "title extraction failed")
+    check("advanced biomarkers" in snapshot["text_excerpt"], "meta description should be captured")
     check("VO2 max" in snapshot["text_excerpt"], "readable text missing")
     check("info@clinic.example" in snapshot["text_excerpt"], "mailto link should be captured")
     check("+34 600 111 222" in snapshot["text_excerpt"], "tel link should be captured")

@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 FIELD_MAP = {
+    "profile.summary": "summary",
     "contact.email": "email",
     "contact.phone": "telefono",
     "contact.phone_fixed": "phone_fixed",

@@ -6,6 +6,7 @@ from extract_clinic_profile_shadow import (
     extract_from_fetch,
     extract_locations,
     extract_professionals,
+    extract_summary,
     extract_years_in_practice,
 )
 
@@ -145,6 +146,28 @@ def main():
     check(
         imda_locations[0]["address"] == "C/ Goya 5-7, entreplanta. Entrada por pasaje comercial 28001, Madrid",
         "IMDA address should keep postcode and access note",
+    )
+    tiara_about_text = (
+        "About Tiara Health Discover our approach and locations. "
+        "THE GATEWAY TO A LIFE LIVED BETTER Tiara Health takes health management to the next level "
+        "with a proactive and technology-led approach to preventive and longevity medicine. "
+        "Contact Tiara Health Social Networks Newsletter. "
+        "Tiara Health ofrece tratamientos a medida y programas personalizados diseñados para adaptarse "
+        "a sus retos y necesidades de salud."
+    )
+    check(
+        extract_summary(tiara_about_text, "Tiara Health Takes Health Management to The Next Level", "https://www.tiarahealth.com/about-tiara-health/")
+        == "Tiara Health ofrece tratamientos a medida y programas personalizados diseñados para adaptarse a sus retos y necesidades de salud.",
+        "about page should produce a concise official summary proposal",
+    )
+    check(
+        extract_summary(
+            "Our Team of Experts Dr. Francisco Martinez University Seville Bachelor Medicine.",
+            "Our Team of Experts TIARA HEALTH",
+            "https://www.tiarahealth.com/our-team-of-experts/",
+        )
+        is None,
+        "team pages should not become summary proposals",
     )
 
     long_intro = " ".join(["navigation"] * 520)

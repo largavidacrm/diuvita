@@ -76,6 +76,7 @@ class ReadableTextParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.title_parts: list[str] = []
+        self.meta_description_parts: list[str] = []
         self.text_parts: list[str] = []
         self.contact_parts: list[str] = []
         self._skip_depth = 0
@@ -88,10 +89,17 @@ class ReadableTextParser(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         tag = tag.lower()
         entered_boilerplate = False
+        attr_map = {name.lower(): value or "" for name, value in attrs}
+        if tag == "meta":
+            meta_key = (attr_map.get("name") or attr_map.get("property") or "").lower()
+            if meta_key in {"description", "og:description", "twitter:description"}:
+                content = normalize_space(attr_map.get("content") or "")
+                if content:
+                    self.meta_description_parts.append(content)
         if tag in {"script", "style", "noscript", "svg"}:
             self._skip_depth += 1
         if tag == "a" and not self._skip_depth:
-            href = dict(attrs).get("href") or ""
+            href = attr_map.get("href") or ""
             if visible_link_value(href):
                 self._contact_href = href
                 self._contact_text_parts = []
@@ -139,7 +147,7 @@ class ReadableTextParser(HTMLParser):
 
     @property
     def readable_text(self) -> str:
-        parts = compact_readable_parts([*self.contact_parts, *self.text_parts])
+        parts = compact_readable_parts([*self.contact_parts, *self.meta_description_parts, *self.text_parts])
         return normalize_space(" ".join(parts))
 
 
