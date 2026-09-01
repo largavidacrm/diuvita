@@ -7106,8 +7106,28 @@
       return values;
     }
 
-    function renderReviewEvidence(row) {
-      var items = reviewEvidenceItems(row);
+    function payloadHasReviewSourceContext(payload) {
+      var keys = [
+        "from_review_id",
+        "human_supplied_source",
+        "requested_fields",
+        "requested_field_labels",
+        "primary_requested_fields",
+        "primary_requested_field_labels",
+        "target_scope",
+        "ui_route",
+        "allowed_output"
+      ];
+      return keys.some(function (key) {
+        var value = (payload || {})[key];
+        if (value == null) return false;
+        if (Array.isArray(value)) return value.length > 0;
+        if (typeof value === "object") return Object.keys(value).length > 0;
+        return text(value).trim() !== "";
+      });
+    }
+
+    function reviewSourceOriginDetails(row, items) {
       var payload = (row && row.payload) || {};
       var primaryLabels = Array.isArray(payload.primary_requested_field_labels)
         ? payload.primary_requested_field_labels.filter(function (item) { return text(item).trim(); })
@@ -7124,10 +7144,21 @@
       if (targetLabels.length) originParts.push("Campo pedido: " + targetLabels.join(", "));
       if (payload.target_scope === "primary_target_first") originParts.push("Alcance: primero el campo activo");
       if (payload.target_scope === "specialist_source_only") originParts.push("Alcance: solo especialistas");
-      el("reviewSourceOrigin").innerHTML = originParts.length
-        ? '<span>' + html(originParts.join(" · ")) + '</span>'
+      if (!originParts.length && (items || []).length && !payloadHasReviewSourceContext(payload)) {
+        originParts.push("Fuente sin contexto de tarea: úsala solo como evidencia revisable, no como orden al LLM.");
+        return { tone: "source-only", text: originParts.join(" · ") };
+      }
+      return { tone: "scoped", text: originParts.join(" · ") };
+    }
+
+    function renderReviewEvidence(row) {
+      var items = reviewEvidenceItems(row);
+      var origin = reviewSourceOriginDetails(row, items);
+      el("reviewSourceOrigin").className = "review-source-origin hidden" + (origin.tone ? " review-source-origin-" + origin.tone : "");
+      el("reviewSourceOrigin").innerHTML = origin.text
+        ? '<span>' + html(origin.text) + '</span>'
         : "";
-      show(el("reviewSourceOrigin"), Boolean(originParts.length));
+      show(el("reviewSourceOrigin"), Boolean(origin.text));
       el("reviewEvidenceCount").textContent = items.length + (items.length === 1 ? " fuente" : " fuentes");
       el("reviewEvidenceList").innerHTML = items.length
         ? '<ul class="compact-list">' + items.map(function (item) {

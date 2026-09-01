@@ -1057,6 +1057,11 @@ Next 10 technical steps:
      `scripts/daniel_review_brief.py`: Daniel-facing next-click guidance now
      says that manual-review priorities open the pending field directly in the
      clinic ficha, matching the dashboard behavior.
+203. Make source-only evidence explicit in review cards. Done locally in
+     `/admin/`: legacy review cards that contain a source URL but no source-job
+     context now show a compact **Fuente sin contexto de tarea** line, so
+     Daniel and future LLM assistance treat the URL as evidence only, not as an
+     instruction to infer missing intent or broaden the review.
 
 ## Daniel decision checkpoints
 

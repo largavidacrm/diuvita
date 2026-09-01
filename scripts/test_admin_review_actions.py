@@ -455,6 +455,13 @@ def main() -> None:
     check(".work-grid.review-work-queue .review-list-panel" in css, "review queue side panel should stay explicit in CSS")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
     check(".review-link-status" in css and ".review-link-status-warning" in css, "proposal link status should be styled")
+    check(
+        "function payloadHasReviewSourceContext" in index
+        and "function reviewSourceOriginDetails" in index
+        and "Fuente sin contexto de tarea: úsala solo como evidencia revisable, no como orden al LLM." in index
+        and ".review-source-origin-source-only" in css,
+        "source-only evidence should be visible without becoming LLM task context",
+    )
     check(".review-source-origin" in css, "Daniel-supplied source origin should be styled")
     check(".review-proposal-focus" in css and ".review-current-relevant" in css, "current/proposed decision panels should be styled")
     check(".review-evidence-panel" in css and ".review-warning-panel" in css, "evidence/warning panels should be styled")

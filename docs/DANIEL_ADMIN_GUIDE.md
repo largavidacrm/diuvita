@@ -303,6 +303,10 @@ En **Fuente o evidencia**, cada propuesta muestra los enlaces o datos que
 justifican el cambio cuando existen. Eso te permite ver de dónde sale un dato
 sin leer información técnica cruda.
 
+Si ves **Fuente sin contexto de tarea**, significa que el enlace sirve como
+evidencia para revisar, pero no sabemos qué quería pedir exactamente el trabajo
+original. No se usa como orden para el LLM ni para completar otros campos.
+
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
 Puedes usar el filtro **Especialistas** para ver solo tarjetas que mencionan
 especialistas publicados o profesionales detectados.

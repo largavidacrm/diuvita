@@ -1852,6 +1852,11 @@ td small {
   background: var(--wash);
 }
 
+.review-source-origin-source-only {
+  border-color: rgba(166, 129, 62, 0.28);
+  background: #fff7e8;
+}
+
 .review-source-origin span {
   color: var(--green-deep);
   font-size: 0.8rem;
