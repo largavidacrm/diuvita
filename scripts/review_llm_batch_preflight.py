@@ -113,6 +113,53 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
     }
 
 
+def compact_item_line(item: dict[str, Any]) -> str:
+    title = str(item.get("title") or "Revisión sin título")
+    status = "lista para LLM" if item.get("llm_ready") else "manual"
+    target_keys = item.get("manual_review_targets") or []
+    target_text = f" · campos: {', '.join(target_keys[:4])}" if target_keys else ""
+    if len(target_keys) > 4:
+        target_text += f" +{len(target_keys) - 4}"
+    reason = ""
+    if item.get("blocked_reason"):
+        reason = " · " + str(item["blocked_reason"]).split(":", 1)[0]
+    return f"- {title}: {status}{target_text}{reason}"
+
+
+def format_preflight_report(report: dict[str, Any], limit: int = 8) -> str:
+    summary = report.get("summary") or {}
+    items = [item for item in report.get("items") or [] if isinstance(item, dict)]
+    blocked = [item for item in items if not item.get("llm_ready")]
+    ready = [item for item in items if item.get("llm_ready")]
+    lines = [
+        "# Preflight LLM de revisiones",
+        "",
+        "Lectura: este informe no llama a ningún LLM, no escribe datos y no resuelve tarjetas.",
+        "",
+        "## Resumen",
+        f"- Preparables para LLM estricto: {summary.get('llm_ready', 0)}/{summary.get('total_packets', 0)}",
+        f"- Bloqueadas: {summary.get('blocked', 0)}",
+        f"- Fuente sin contexto: {summary.get('source_without_context', 0)}",
+        f"- Con campo manual detectado: {summary.get('manual_review_target_packets', 0)}",
+    ]
+    if ready:
+        lines.extend([
+            "",
+            "## Listas para preparar sugerencia",
+            *[compact_item_line(item) for item in ready[:limit]],
+        ])
+    if blocked:
+        lines.extend([
+            "",
+            "## Mantener manuales o pasar URL oficial",
+            *[compact_item_line(item) for item in blocked[:limit]],
+        ])
+    shown_count = min(len(ready), limit) + min(len(blocked), limit)
+    if len(items) > shown_count:
+        lines.append(f"- ... {len(items) - shown_count} tarjetas más en esta lectura.")
+    return "\n".join(lines)
+
+
 def preflight_report(
     rows: list[dict[str, Any]],
     llm_ready_only: bool = False,
@@ -142,6 +189,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-file", type=Path, help="Read review rows from a local JSON file instead of Supabase.")
     parser.add_argument("--llm-ready-only", action="store_true", help="Report only packets that pass strict LLM preflight.")
     parser.add_argument("--fail-if-blocked", action="store_true", help="Exit non-zero when any reported packet is blocked.")
+    parser.add_argument("--compact", action="store_true", help="Print a short Spanish summary instead of JSON.")
+    parser.add_argument("--compact-limit", type=int, default=8, help="Maximum item lines shown in compact mode.")
     return parser.parse_args()
 
 
@@ -152,7 +201,10 @@ def main() -> int:
     else:
         rows = load_rows(args.limit, load_env_file(), clinic=args.clinic, review_id=args.review_id)
     report = preflight_report(rows, llm_ready_only=args.llm_ready_only)
-    print(json.dumps(report, ensure_ascii=False, indent=2))
+    if args.compact:
+        print(format_preflight_report(report, limit=max(1, args.compact_limit)))
+    else:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
     if args.fail_if_blocked and report["summary"]["blocked"]:
         return 1
     return 0

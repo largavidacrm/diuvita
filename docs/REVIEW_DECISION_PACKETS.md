@@ -163,12 +163,13 @@ en vez de generar un prompt ambiguo.
 Antes de preparar un lote asistido, usa el preflight:
 
 ```bash
-python3 scripts/review_llm_batch_preflight.py --limit 20
+python3 scripts/review_llm_batch_preflight.py --compact --limit 20
 ```
 
 Este informe no llama a ningún LLM y no escribe datos. Solo indica qué tarjetas
 pasarían el modo estricto, cuáles quedan bloqueadas por **fuente sin contexto**
-y qué revisiones manuales tienen un campo concreto para abrir en el admin.
+y qué revisiones manuales tienen un campo concreto para abrir en el admin. Sin
+`--compact`, devuelve JSON para automatizaciones internas.
 Para quedarse solo con tarjetas estrictamente preparables:
 
 ```bash

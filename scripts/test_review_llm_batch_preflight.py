@@ -2,7 +2,7 @@
 """Checks LLM batch preflight stays read-only and one-decision scoped."""
 from pathlib import Path
 
-from review_llm_batch_preflight import PREFLIGHT_SCHEMA_VERSION, preflight_report
+from review_llm_batch_preflight import PREFLIGHT_SCHEMA_VERSION, format_preflight_report, preflight_report
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -125,8 +125,15 @@ def main():
     check(ready_only["summary"]["reported_packets"] == 2, "ready-only should report only strict-ready packets")
     check(all(item["llm_ready"] for item in ready_only["items"]), "ready-only report should not include blocked items")
 
+    compact = format_preflight_report(report, limit=2)
+    check("# Preflight LLM de revisiones" in compact, "compact title missing")
+    check("Preparables para LLM estricto: 2/3" in compact, "compact ready count missing")
+    check("Mantener manuales o pasar URL oficial" in compact, "compact manual section missing")
+    check("source_without_context" in compact, "compact blocked reason missing")
+
     source = (ROOT / "scripts" / "review_llm_batch_preflight.py").read_text(encoding="utf-8")
     check("--fail-if-blocked" in source, "CLI should offer a blocking preflight mode")
+    check("--compact" in source, "CLI should offer a Daniel-readable compact mode")
     check("admin_update_clinic" not in source, "preflight script must not contain write hooks")
     print("OK review LLM batch preflight: strict-ready batches stay safe")
 
