@@ -1053,6 +1053,10 @@ Next 10 technical steps:
      local helper now prints the exact URL and current git version it serves,
      and Daniel's guide explains that the active local port is the latest one
      Codex provides, not always `8765`.
+202. Align briefs with direct manual-review opening. Done locally in
+     `scripts/daniel_review_brief.py`: Daniel-facing next-click guidance now
+     says that manual-review priorities open the pending field directly in the
+     clinic ficha, matching the dashboard behavior.
 
 ## Daniel decision checkpoints
 

@@ -324,7 +324,7 @@ def main():
         "quality audit should open the concrete higher-priority ficha",
     )
     check(
-        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; corrige solo ese campo con Revisión manual."
+        "Pulsa Abrir prioridad: Revisión manual: Clínica Benzaquén; se abrirá directamente el campo pendiente en la ficha."
         in audit_priority_output,
         "quality audit next click should point to manual review",
     )
