@@ -151,6 +151,8 @@ clinic rows keep working while richer profiles can be edited from `/admin/`.
 
 `supabase/migrations/0013_quality_audit_detail_fields.sql` expands the quality audit so it also flags missing units and highlighted technology.
 
+`supabase/migrations/0024_single_issue_quality_audits.sql` updates the quality audit workflow so future manual-review cards are single-decision: one missing field per card, with `quality_issue_code` and `field_path` preserved for traceability. Apply only after Daniel approves changing the live Supabase function.
+
 Local candidate batches can be submitted with:
 
 ```bash

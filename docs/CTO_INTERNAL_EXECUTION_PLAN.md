@@ -1236,6 +1236,12 @@ Next 10 technical steps:
      `Tecnología` and `Especialistas` before `Sedes y acceso`; multi-location
      profiles display the access block full-width with one compact card per
      sede. Google Maps buttons still require a direct clinic profile URL.
+234. Prepare one-field quality-audit generation. Done locally as migration
+     `supabase/migrations/0024_single_issue_quality_audits.sql`, not applied to
+     live Supabase yet: future quality audits can create one manual-review card
+     per missing field, with `quality_issue_code` and `field_path` kept for
+     traceability. This aligns new cards with the one-card, one-decision review
+     flow and needs Daniel approval before changing the live function.
 
 ## Daniel decision checkpoints
 
