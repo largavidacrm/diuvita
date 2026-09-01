@@ -569,6 +569,7 @@ clinics = sort_clinics(clinics)
 # Homogeneidad: en tarjetas se usa la MINIATURA normalizada (thumb, <=260x64) dentro
 # de una pastilla blanca de altura fija; en la ficha, el logo original.
 LOGOS_FILE = os.path.join(ROOT, "data", "logos.json")
+LOGO_STATUS_FILE = os.path.join(ROOT, "assets", "logos", "status.json")
 ORIG_DIR = os.path.join(ROOT, "assets", "logos", "orig")
 THUMB_DIR = os.path.join(ROOT, "assets", "logos", "thumb")
 
@@ -596,9 +597,17 @@ def _find(dirpath, slug):
 
 logo_files, thumb_files = {}, {}
 if os.path.exists(LOGOS_FILE):
+    _logo_status = {}
+    if os.path.exists(LOGO_STATUS_FILE):
+        try:
+            _logo_status = json.load(open(LOGO_STATUS_FILE, encoding="utf-8"))
+        except Exception:
+            _logo_status = {}
     _logos = json.load(open(LOGOS_FILE, encoding="utf-8"))
     for _slug, _info in _logos.items():
         if not _info.get("aprobado"):
+            continue
+        if isinstance(_logo_status.get(_slug), dict) and _logo_status[_slug].get("ok") is False:
             continue
         _o, _t = _find(ORIG_DIR, _slug), _find(THUMB_DIR, _slug)
         if _o: logo_files[_slug] = _o
@@ -1027,8 +1036,41 @@ JS = """<script>
       var timer=null;
       var originals=[];
       if(!track) return;
-      originals=[].slice.call(track.querySelectorAll(".mini-logo"));
+      function removeNode(node){
+        if(node&&node.parentNode) node.parentNode.removeChild(node);
+      }
+      function refreshOriginals(){
+        [].slice.call(track.querySelectorAll(".mini-logo.logo-failed")).forEach(removeNode);
+        originals=[].slice.call(track.querySelectorAll(".mini-logo:not(.logo-clone)"));
+      }
+      function removeFailedCarouselLogo(img){
+        var item=img&&img.closest?img.closest(".mini-logo"):null;
+        if(item){
+          var slug=item.getAttribute("data-slug");
+          item.classList.add("logo-failed");
+          [].slice.call(track.querySelectorAll(".mini-logo")).forEach(function(candidate){
+            if(!slug||candidate.getAttribute("data-slug")===slug) removeNode(candidate);
+          });
+          refreshOriginals();
+          update();
+          return;
+        }
+        var box=img&&img.closest?img.closest(".logobox"):null;
+        if(box) box.classList.add("logo-failed");
+      }
+      function bindLogoImageGuards(scope){
+        [].slice.call(scope.querySelectorAll(".mini-logo img")).forEach(function(img){
+          if(img.getAttribute("data-logo-guarded")) return;
+          img.setAttribute("data-logo-guarded","true");
+          img.addEventListener("error",function(){removeFailedCarouselLogo(img);});
+          img.addEventListener("load",function(){
+            if(img.naturalWidth===0||img.naturalHeight===0) removeFailedCarouselLogo(img);
+          });
+          if(img.complete&&(img.naturalWidth===0||img.naturalHeight===0)) removeFailedCarouselLogo(img);
+        });
+      }
       function ensureLoop(){
+        refreshOriginals();
         if(track.querySelector(".logo-clone")||originals.length<2) return;
         originals.forEach(function(item){
           var clone=item.cloneNode(true);
@@ -1037,6 +1079,7 @@ JS = """<script>
           clone.setAttribute("tabindex","-1");
           track.appendChild(clone);
         });
+        bindLogoImageGuards(track);
       }
       function loopPoint(){
         var clone=track.querySelector(".logo-clone");
@@ -1096,6 +1139,7 @@ JS = """<script>
       root.addEventListener("focusin",pause);
       root.addEventListener("focusout",play);
       window.addEventListener("resize",function(){normalize();update();});
+      bindLogoImageGuards(track);
       ensureLoop();
       update();
       play();
