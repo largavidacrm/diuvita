@@ -39,7 +39,9 @@
   },
   "tiara-health": {
     "url": "https://www.tiarahealth.com/wp-content/uploads/2023/07/Tiara-Health_color.svg",
-    "aprobado": true
+    "aprobado": false,
+    "motivo": "Desactivado: la URL actual no devuelve un logo válido",
+    "decidido": "2026-09-01"
   },
   "arvila-magna": {
     "url": "https://www.google.com/s2/favicons?domain=arvilamagna.com&sz=128",

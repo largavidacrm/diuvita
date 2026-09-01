@@ -652,7 +652,8 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .chip:hover{border-color:var(--green);color:var(--green-deep)}
 .chip.on{background:var(--green);border-color:var(--green);color:#fff}
 .logo-carousel{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;align-items:center;gap:.45rem;max-width:1180px;margin:.25rem auto 0;padding:.5rem 5vw 1.05rem;box-sizing:border-box}
-.logo-strip{min-width:0;display:flex;gap:.6rem;overflow-x:auto;margin:0;padding:.1rem;scroll-behavior:smooth;scroll-snap-type:x proximity;scrollbar-width:none}
+.logo-viewport{min-width:0;position:relative;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+.logo-strip{min-width:0;display:flex;gap:.6rem;overflow-x:auto;margin:0;padding:.1rem;scroll-behavior:smooth;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
 .logo-strip::-webkit-scrollbar{display:none}
 .logo-nav{width:42px;height:42px;display:inline-grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font:inherit;font-size:1.45rem;font-weight:800;line-height:1;cursor:pointer}
 .logo-nav:hover{border-color:#C7DBD5;background:var(--surface-strong)}
@@ -662,6 +663,7 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .mini-logo:hover{text-decoration:none;background:#fff;border-color:#C7DBD5}
 .mini-logo:focus-visible{outline:3px solid rgba(14,79,74,.25);outline-offset:3px}
 .mini-logo{scroll-snap-align:center}
+.mini-logo.logo-clone{scroll-snap-align:none}
 .logo-carousel .mini-logo.logo-failed{display:none}
 .mini-logo img{max-width:126px;max-height:26px;object-fit:contain;display:block}
 .logo-fallback{display:none;color:var(--green-deep);font-size:.82rem;font-weight:800;line-height:1.1;overflow-wrap:anywhere}
@@ -987,28 +989,57 @@ JS = """<script>
       var prev=root.querySelector('[data-logo-nav="prev"]');
       var next=root.querySelector('[data-logo-nav="next"]');
       var timer=null;
+      var originals=[];
       if(!track) return;
+      originals=[].slice.call(track.querySelectorAll(".mini-logo"));
+      function ensureLoop(){
+        if(track.querySelector(".logo-clone")||originals.length<2) return;
+        originals.forEach(function(item){
+          var clone=item.cloneNode(true);
+          clone.classList.add("logo-clone");
+          clone.setAttribute("aria-hidden","true");
+          clone.setAttribute("tabindex","-1");
+          track.appendChild(clone);
+        });
+      }
+      function loopPoint(){
+        var clone=track.querySelector(".logo-clone");
+        return clone?clone.offsetLeft:0;
+      }
       function maxScroll(){return Math.max(0,track.scrollWidth-track.clientWidth);}
       function step(){
         var item=track.querySelector(".mini-logo:not(.logo-failed)");
         return item?Math.max(120,item.getBoundingClientRect().width+12):160;
       }
+      function normalize(){
+        var point=loopPoint();
+        if(point<=0) return;
+        while(track.scrollLeft>=point) track.scrollLeft-=point;
+        while(track.scrollLeft<0) track.scrollLeft+=point;
+      }
       function update(){
         var max=maxScroll();
-        if(prev) prev.disabled=max<=2||track.scrollLeft<=2;
-        if(next) next.disabled=max<=2||track.scrollLeft>=max-2;
+        if(prev) prev.disabled=max<=2;
+        if(next) next.disabled=max<=2;
       }
       function move(dir){
         var max=maxScroll();
+        var point=loopPoint();
         if(max<=2) return;
-        if(dir>0&&track.scrollLeft>=max-2){
+        if(point>0){
+          if(dir<0&&track.scrollLeft<=2) track.scrollLeft=point+track.scrollLeft;
+          track.scrollBy({left:step()*dir,behavior:"smooth"});
+          window.setTimeout(function(){normalize();update();},360);
+        }else if(dir>0&&track.scrollLeft>=max-2){
           track.scrollTo({left:0,behavior:"smooth"});
+          window.setTimeout(update,260);
         }else if(dir<0&&track.scrollLeft<=2){
           track.scrollTo({left:max,behavior:"smooth"});
+          window.setTimeout(update,260);
         }else{
           track.scrollBy({left:step()*dir,behavior:"smooth"});
+          window.setTimeout(update,260);
         }
-        window.setTimeout(update,260);
       }
       function pause(){
         if(timer){
@@ -1023,12 +1054,13 @@ JS = """<script>
       }
       if(prev) prev.addEventListener("click",function(){pause();move(-1);});
       if(next) next.addEventListener("click",function(){pause();move(1);});
-      track.addEventListener("scroll",function(){window.requestAnimationFrame(update);});
+      track.addEventListener("scroll",function(){window.requestAnimationFrame(function(){normalize();update();});});
       root.addEventListener("pointerenter",pause);
       root.addEventListener("pointerleave",play);
       root.addEventListener("focusin",pause);
       root.addEventListener("focusout",play);
-      window.addEventListener("resize",update);
+      window.addEventListener("resize",function(){normalize();update();});
+      ensureLoop();
       update();
       play();
     });
@@ -1206,7 +1238,7 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </section>
 <section class="logo-carousel" data-logo-carousel aria-label="Clínicas con logo en Vitalarga">
 <button class="logo-nav" data-logo-nav="prev" type="button" aria-label="Logo anterior">&lsaquo;</button>
-<div class="logo-strip" tabindex="0" aria-label="Logos de clínicas en la guía">{featured_logos}</div>
+<div class="logo-viewport"><div class="logo-strip" tabindex="0" aria-label="Logos de clínicas en la guía">{featured_logos}</div></div>
 <button class="logo-nav" data-logo-nav="next" type="button" aria-label="Logo siguiente">&rsaquo;</button>
 </section>
 {RECOMMEND_SECTION}

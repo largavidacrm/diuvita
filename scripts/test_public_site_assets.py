@@ -26,6 +26,7 @@ def looks_like_real_logo(path: Path) -> bool:
 def main() -> None:
     source = (ROOT / "build.py").read_text(encoding="utf-8")
     fetch_logos = (ROOT / "scripts" / "fetch_logos.py").read_text(encoding="utf-8")
+    logo_config = json.loads((ROOT / "data" / "logos.json").read_text(encoding="utf-8"))
     logo_status = json.loads((ROOT / "assets" / "logos" / "status.json").read_text(encoding="utf-8"))
 
     for marker in [
@@ -56,9 +57,16 @@ def main() -> None:
         "Tiara's blocked HTML challenge should not remain as a logo asset",
     )
     check(
+        logo_config.get("tiara-health", {}).get("aprobado") is False,
+        "Tiara's invalid source should not stay approved as a logo",
+    )
+    check(
         logo_status.get("tiara-health", {}).get("ok") is False
-        and "no parece un logo" in logo_status.get("tiara-health", {}).get("error", ""),
-        "Tiara logo status should explain the invalid download",
+        and (
+            "no parece un logo" in logo_status.get("tiara-health", {}).get("error", "")
+            or logo_status.get("tiara-health", {}).get("skipped") == "no aprobado"
+        ),
+        "Tiara logo status should explain why it is not active",
     )
 
     for logo_dir in [ROOT / "assets" / "logos" / "orig", ROOT / "assets" / "logos" / "thumb"]:

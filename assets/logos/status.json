@@ -53,7 +53,7 @@
   },
   "tiara-health": {
     "ok": false,
-    "error": "descarga no válida: no parece un logo"
+    "skipped": "no aprobado"
   },
   "arvila-magna": {
     "ok": true,

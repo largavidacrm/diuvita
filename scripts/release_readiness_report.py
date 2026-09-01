@@ -191,13 +191,16 @@ def logo_status_check(root: Path) -> dict[str, Any]:
         return {"name": "Tiara logo status", "kind": "json", "path": str(path.relative_to(root)), "ok": None, "detail": "sin status"}
     status = json.loads(path.read_text(encoding="utf-8"))
     tiara = status.get("tiara-health") if isinstance(status, dict) else {}
-    ok = isinstance(tiara, dict) and tiara.get("ok") is False and "no parece un logo" in str(tiara.get("error") or "")
+    detail = str(tiara.get("error") or tiara.get("skipped") or "") if isinstance(tiara, dict) else "formato inesperado"
+    ok = isinstance(tiara, dict) and tiara.get("ok") is False and (
+        "no parece un logo" in detail or detail == "no aprobado"
+    )
     return {
         "name": "Tiara logo status",
         "kind": "json",
         "path": "assets/logos/status.json",
         "ok": ok,
-        "detail": str(tiara.get("error") or "") if isinstance(tiara, dict) else "formato inesperado",
+        "detail": detail,
     }
 
 

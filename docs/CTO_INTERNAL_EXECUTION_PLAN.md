@@ -1321,6 +1321,13 @@ Next 10 technical steps:
      links and how many Google-review links still need a confirmed Maps
      profile. These are read-only triage signals and never approve or publish
      a Google link.
+248. Make the public logo strip behave as a real carousel. Done locally in
+     `build.py`, `data/logos.json` and logo checks: the homepage logo strip now
+     has a clipped carousel viewport, loops by duplicating logo items only for
+     visual movement, keeps the duplicate items out of accessibility navigation
+     and pauses on interaction. Tiara Health remains in the guide, but its
+     current logo URL is disabled until it provides a valid logo asset, so it
+     does not appear as a broken logo.
 
 ## Daniel decision checkpoints
 
