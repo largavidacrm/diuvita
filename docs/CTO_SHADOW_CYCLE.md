@@ -14,27 +14,28 @@ for Daniel instead of implementing, softening or silently discarding the change.
 5. hydrate pending source records;
 6. monitor source changes;
 7. process changed-source cards into profile-enrichment proposals;
-8. optionally run saved-source shadow extraction batches;
-9. turn blocking claims into internal quality-review cards;
-10. measure source snapshot retention without deleting evidence;
-11. measure visible source coverage without writing evidence;
-12. measure visible-profile completeness without editing clinics;
-13. optionally summarize publication blockers across clinics without editing
+8. optionally process one queued source URL supplied from a review card;
+9. optionally run saved-source shadow extraction batches;
+10. turn blocking claims into internal quality-review cards;
+11. measure source snapshot retention without deleting evidence;
+12. measure visible source coverage without writing evidence;
+13. measure visible-profile completeness without editing clinics;
+14. optionally summarize publication blockers across clinics without editing
     or publishing records;
-14. measure review-inbox bottlenecks without resolving cards;
-15. optionally reconcile Google Maps/review-link cards without printing long
+15. measure review-inbox bottlenecks without resolving cards;
+16. optionally reconcile Google Maps/review-link cards without printing long
     link payloads;
-16. optionally reconcile published/proposed/internal specialists without
+17. optionally reconcile published/proposed/internal specialists without
     exposing long professional lists in the cycle output;
-17. optionally summarize private specialist proposal batches without printing
+18. optionally summarize private specialist proposal batches without printing
     proposed professional names;
-18. print the admin digest;
-19. evaluate stored claims against publication rules.
-20. optionally run strict editorial limit checks;
-21. optionally check public production URLs without logging in or writing data.
-22. optionally explain one clinic's public visibility state without publishing
+19. print the admin digest;
+20. evaluate stored claims against publication rules.
+21. optionally run strict editorial limit checks;
+22. optionally check public production URLs without logging in or writing data.
+23. optionally explain one clinic's public visibility state without publishing
     or exposing long team/professional payloads.
-23. optionally compare saved public data with deployed clinic pages to detect
+24. optionally compare saved public data with deployed clinic pages to detect
     stale pages.
 
 Default mode is dry-run:
@@ -84,6 +85,21 @@ python3 scripts/run_cto_shadow_cycle.py --source-shadow-limit 3
 
 In safe apply mode, that optional batch can create or refresh internal review
 cards, but still does not edit clinics or publish pages.
+
+Review-supplied source URL jobs are also off by default. These are created when
+Daniel pastes an official URL from a review card. The dashboard closes that
+original card so it stops cluttering the queue, but the URL is only processed
+when the supervised CTO cycle is run with the extraction step enabled:
+
+```bash
+python3 scripts/run_cto_shadow_cycle.py --apply-safe --extract-profile-job --extract-profile-job-replace-existing
+```
+
+Each run processes one due queued `EXTRACT_CLINIC_PROFILE` job. If clear data is
+found, safe apply creates or refreshes a reviewable proposal scoped to the
+requested field. When that happens, the original URL-handoff review is marked as
+superseded. No clinic data is saved and nothing is published until Daniel
+approves or modifies the new proposal.
 
 Team-page discovery is also off by default. To search a small visible-clinic
 batch for specialist pages before hydration:

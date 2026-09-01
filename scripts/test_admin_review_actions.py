@@ -404,9 +404,20 @@ def main() -> None:
         "function reviewSourceJobPendingNote" in index
         and "function closeReviewWorkspaceAfterSourceJob" in index
         and 'resolveReviewItem(row.id, "resolved", reviewSourceJobPendingNote(sourceJob, url))' in index
-        and "Fuente enviada al agente. La revisión volverá como propuesta cuando haya datos revisables." in index
+        and "Fuente enviada al agente. Queda en cola para el ciclo CTO supervisado; volverá como propuesta cuando haya datos revisables." in index
+        and "La tarjeta se cierra y queda sustituida si el ciclo CTO supervisado crea una propuesta revisable." in index
         and "Cierro esta revisión hasta que vuelva como propuesta." in index,
         "source jobs should close the originating review until the agent returns a proposal",
+    )
+    check(
+        "function jobDetailText" in index
+        and "function jobDateText" in index
+        and '.select("job_type, status, confidence, cost_cents, created_at, scheduled_for, input")' in index
+        and "URL desde revisión · " in index
+        and "ciclo CTO supervisado · vuelve como propuesta revisable" in index
+        and "En cola para ciclo CTO supervisado" in index
+        and "jobDateText(row)" in index,
+        "jobs table should explain review-source jobs and queued cycle timing",
     )
     check(
         "function reviewSourceJobOperatorIntent" in index

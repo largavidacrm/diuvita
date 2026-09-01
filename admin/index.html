@@ -229,7 +229,7 @@
                 </div>
                 <button class="btn secondary" id="clinicManualReviewSourceBtn" type="button">Enviar URL al agente</button>
               </div>
-              <p class="field-note" id="clinicManualReviewSourceHint">El agente creará una propuesta revisable; no publica ni guarda datos en la ficha.</p>
+              <p class="field-note" id="clinicManualReviewSourceHint">Queda en cola para el ciclo CTO supervisado; volverá como propuesta revisable.</p>
             </details>
           </div>
         </section>
@@ -880,7 +880,7 @@
                   </div>
                   <button class="btn secondary" id="reviewSourceJobBtn" type="button">Enviar al agente</button>
                 </div>
-                <p class="field-note" id="reviewSourceJobHint">El agente/LLM creará propuestas revisables; no publica ni guarda datos en la ficha.</p>
+                <p class="field-note" id="reviewSourceJobHint">Queda en cola para el ciclo CTO supervisado; volverá como propuesta revisable.</p>
               </section>
             </section>
             <section class="review-evidence-panel" id="reviewEvidencePanel">
@@ -1317,6 +1317,44 @@
 
     function money(cents) {
       return ((Number(cents || 0) / 100).toFixed(2)).replace(".", ",") + " €";
+    }
+
+    function jobInput(row) {
+      var input = row && row.input;
+      return input && typeof input === "object" && !Array.isArray(input) ? input : {};
+    }
+
+    function jobList(value) {
+      return Array.isArray(value)
+        ? value.map(function (item) { return text(item).trim(); }).filter(Boolean)
+        : [];
+    }
+
+    function jobRequestedFieldsLabel(input) {
+      var labels = jobList(input.requested_field_labels);
+      var keys = jobList(input.requested_fields);
+      var values = labels.length ? labels : keys;
+      if (!values.length) return "";
+      return values.slice(0, 3).join(", ") + (values.length > 3 ? " +" + (values.length - 3) : "");
+    }
+
+    function jobDetailText(row) {
+      var input = jobInput(row);
+      if (row && row.job_type === "EXTRACT_CLINIC_PROFILE" && input.from_review_id) {
+        var fieldText = jobRequestedFieldsLabel(input) || "campo indicado";
+        return "URL desde revisión · " + fieldText + " · ciclo CTO supervisado · vuelve como propuesta revisable";
+      }
+      if (row && row.status === "queued") {
+        return "En cola para ciclo CTO supervisado";
+      }
+      return "";
+    }
+
+    function jobDateText(row) {
+      if (row && row.status === "queued" && row.scheduled_for) {
+        return "Previsto: " + date(row.scheduled_for);
+      }
+      return date(row && row.created_at);
     }
 
     function toast(text) {
@@ -6068,7 +6106,8 @@
         el("clinicManualReviewSourceUrl").placeholder = sourceJob.example.placeholder;
         el("clinicManualReviewSourceHint").textContent = sourceJob.paused
           ? "Pausa preventiva activa: primero limpia revisiones antes de enviar más fuentes al agente."
-          : "El agente/LLM mirará solo " + sourceJob.labels + " y dejará otra propuesta revisable.";
+          : "Queda en cola para el ciclo CTO supervisado. Mirará solo " + sourceJob.labels +
+            " y volverá como propuesta revisable.";
         el("clinicManualReviewSourceBtn").disabled = sourceJob.paused;
       } else {
         setInput("clinicManualReviewSourceUrl", "");
@@ -7680,7 +7719,7 @@
       el("reviewSourceJobUrl").placeholder = sourceJob.example.placeholder;
       el("reviewSourceJobHint").textContent = sourceJob.paused
         ? "Pausa preventiva activa: primero limpia revisiones antes de enviar más fuentes al agente."
-        : "Mirará solo este alcance y dejará otra propuesta revisable. " +
+        : "Queda en cola para el ciclo CTO supervisado. Mirará solo este alcance y volverá como propuesta revisable. " +
           safeWriteSlotLabel(dashboardOpenReviewCount) + ". No publica ni guarda datos en la ficha.";
       el("reviewSourceJobBtn").disabled = sourceJob.paused;
       setInput("reviewSourceJobUrl", "");
@@ -9478,7 +9517,7 @@
 
         var jobRows = await client
           .from("agent_jobs")
-          .select("job_type, status, confidence, cost_cents, created_at")
+          .select("job_type, status, confidence, cost_cents, created_at, scheduled_for, input")
           .order("created_at", { ascending: false })
           .limit(8);
 
@@ -9487,7 +9526,11 @@
           emptyRow(jobsBody, 5, "Sin trabajos recientes");
         } else {
           jobsBody.innerHTML = jobRows.data.map(function (row) {
-            return "<tr><td>" + html(row.job_type) + "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) + "</td><td>" + money(row.cost_cents) + "</td><td>" + date(row.created_at) + "</td></tr>";
+            var detail = jobDetailText(row);
+            return "<tr><td><strong>" + html(row.job_type) + "</strong>" +
+              (detail ? "<small>" + html(detail) + "</small>" : "") +
+              "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) +
+              "</td><td>" + money(row.cost_cents) + "</td><td>" + html(jobDateText(row)) + "</td></tr>";
           }).join("");
         }
 
@@ -9664,7 +9707,7 @@
     function reviewSourceJobPendingNote(sourceJob, url) {
       var labels = sourceJob && sourceJob.labels ? sourceJob.labels : "el campo indicado";
       return "URL oficial enviada al agente para revisar " + labels +
-        ". La tarjeta se cierra hasta que vuelva como propuesta revisable. No publica ni guarda datos en la ficha. Fuente: " + url;
+        ". La tarjeta se cierra y queda sustituida si el ciclo CTO supervisado crea una propuesta revisable. No publica ni guarda datos en la ficha. Fuente: " + url;
     }
 
     function closeReviewWorkspaceAfterSourceJob(row) {
@@ -9757,7 +9800,7 @@
       closeReviewWorkspaceAfterSourceJob(row);
       await loadDashboard();
       el("reviewSelectionMessage").textContent =
-        "Fuente enviada al agente. La revisión volverá como propuesta cuando haya datos revisables.";
+        "Fuente enviada al agente. Queda en cola para el ciclo CTO supervisado; volverá como propuesta cuando haya datos revisables.";
       show(el("reviewSelectionPanel"), true);
       toast("Trabajo creado. Cierro esta revisión hasta que vuelva como propuesta.");
     }

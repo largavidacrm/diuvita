@@ -1193,6 +1193,12 @@ Next 10 technical steps:
      Daniel has configured Google Search Console for Vitalarga in another
      thread. This repo records the status only; it does not manage Search
      Console ownership, DNS, Netlify, SSL or verification tokens.
+227. Clarify review-source job queue behavior. Done locally in `/admin/` and
+     docs: when Daniel sends an official URL from a review card, the card closes
+     and the job is shown as waiting for the supervised CTO cycle. The worker
+     processes one queued `EXTRACT_CLINIC_PROFILE` job per enabled run, creates
+     or refreshes a scoped review proposal when it finds clear data, and marks
+     the original card as superseded without publishing or saving clinic fields.
 
 ## Daniel decision checkpoints
 

@@ -103,6 +103,9 @@ Operator bridge:
   `operator_intent`, `operator_requested_field_summary`, `llm_boundary`,
   `target_scope`, `ui_route` and an `allowed_output` of
   `review_queue_proposal_only`.
+- Those jobs are queued by the admin UI and processed only by the supervised
+  CTO cycle or an explicit worker run. Refreshing the dashboard never executes
+  them, and the UI should say they are waiting for the supervised cycle.
 - When the source is supplied from a manual-review field banner, the job should
   carry `target_scope: "primary_target_first"` and `ui_route:
   "manual_review_banner_source_handoff"` so the worker/LLM treats Daniel's URL
@@ -117,6 +120,10 @@ Operator bridge:
 - `scripts/process_extract_clinic_profile_jobs.py` can process those jobs in
   shadow mode and turn clear findings into a `clinic_profile_enrichment` review
   card.
+- If that created or refreshed card contains actionable proposed data for the
+  same source, the worker resolves the original review as superseded. That is a
+  queue-management action only: it does not approve, publish or save clinic
+  profile fields.
 - The processor filters proposed fields to the job's `requested_fields`; it does
   not use a useful source as permission to propose unrelated clinic changes.
 - The generated review card must preserve the job's primary-field scope

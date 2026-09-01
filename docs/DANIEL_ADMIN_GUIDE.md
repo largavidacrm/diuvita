@@ -343,7 +343,12 @@ ficha desde esa fuente sin contexto.
 Si pegas una **URL oficial para el agente**, la revisión actual se cierra y
 desaparece de la cola visible. El agente solo puede crear una nueva propuesta
 revisable con lo que haya encontrado; no publica ni guarda datos directamente en
-la ficha.
+la ficha. Ese trabajo no se ejecuta al pulsar **Actualizar**: queda en cola para
+el ciclo CTO supervisado. Cuando Codex procesa esa cola con extracción de URL de
+revisión, si encuentra datos claros crea o refresca una propuesta revisable y la
+tarjeta original queda cerrada como sustituida. Si no encuentra nada útil, queda
+registrado como trabajo revisado/fallido según el resultado, sin tocar la ficha
+pública.
 
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
 Puedes usar el filtro **Especialistas** para ver solo tarjetas que mencionan
