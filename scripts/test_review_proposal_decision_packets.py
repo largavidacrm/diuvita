@@ -120,6 +120,10 @@ def main():
     check(safe_packet["decision_scope"] == "single_review_item", "packet should represent one review card")
     check(safe_packet["allowed_actions"] == ["approve", "reject", "modify"], "decision actions missing")
     check(safe_packet["automation_contract"]["write_policy"] == "read_only_packet", "LLM contract should stay read-only")
+    check(
+        safe_packet["automation_contract"]["after_decision"] == "resolve_current_review_then_return_to_review_list",
+        "review decisions should return Daniel to the list",
+    )
     check(safe_packet["proposal_type"] == "Mejora de ficha", "proposal type label missing")
     check(safe_packet["clinic"]["name"] == "Unidad de Longevidad IMDA", "clinic identity missing")
     check(len(safe_packet["proposed_change"]) == 3, "proposed field count missing")
@@ -132,6 +136,20 @@ def main():
         any(item["label"] == "Teléfono principal" for item in safe_packet["current_relevant"]),
         "current relevant field missing",
     )
+    profile_context = safe_packet["manual_profile_edit_context"]
+    check(profile_context["ui_label"] == "Editar ficha", "side-panel edit label missing")
+    check(profile_context["human_only"] is True, "side-panel edits must stay human-only")
+    check(profile_context["write_policy"] == "human_decision_only", "side-panel write policy missing")
+    check(profile_context["allowed_actions_to_persist"] == ["approve", "modify"], "side-panel persistence actions missing")
+    check(profile_context["reject_discards"] is True, "reject should discard side-panel edits")
+    check(profile_context["safe_to_auto_publish"] is False, "side-panel edits should never auto-publish")
+    check(profile_context["field_count"] >= 20, "side-panel editable field count missing")
+    profile_keys = [item["key"] for item in profile_context["fields"]]
+    check(
+        all(key in profile_keys for key in ["display_name", "summary", "website", "profesionales", "telefono"]),
+        "side-panel editable fields should include core clinic fields",
+    )
+    check("value" not in profile_context["fields"][0]["current"], "safe side-panel context should omit raw values")
     check("value" not in safe_packet["proposed_change"][0]["proposed"], "safe default should omit proposed values")
     maps_context = safe_packet["proposed_change"][0]["google_maps_review"]
     check(maps_context["kind"] == "google_maps_profile_link", "Maps review context kind missing")
@@ -256,6 +274,14 @@ def main():
         valued_packet["source_origin_status"]["source_url"] == "https://imda.example/contacto",
         "explicit value mode should include source origin URL",
     )
+    valued_phone = [
+        item for item in valued_packet["manual_profile_edit_context"]["fields"]
+        if item["key"] == "telefono"
+    ][0]
+    check(
+        valued_phone["current"]["value"] == "916325659",
+        "explicit value mode should include manual profile current values",
+    )
     check(
         "persona@example.com" in " ".join(valued_packet["warnings"]),
         "explicit value mode should preserve local warning detail",
@@ -313,6 +339,10 @@ def main():
     )
     manual_context = quality_packet["manual_review_context"]
     check(manual_context["mode"] == "manual_admin_field_review", "manual context mode missing")
+    check(
+        manual_context["after_save"] == "resolve_current_review_then_return_to_review_list",
+        "manual save should return Daniel to the review list",
+    )
     check(
         manual_context["primary_target"]["admin_target_id"] == "clinicProfessionals",
         "manual context should keep the admin field to open",

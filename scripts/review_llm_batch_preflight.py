@@ -37,6 +37,11 @@ def manual_target_keys(packet: dict[str, Any]) -> list[str]:
     return keys
 
 
+def manual_profile_edit_available(packet: dict[str, Any]) -> bool:
+    context = packet.get("manual_profile_edit_context")
+    return bool(isinstance(context, dict) and context.get("available"))
+
+
 def blocked_reason(packet: dict[str, Any]) -> str:
     status = source_origin_label(packet)
     if status == "source_without_context":
@@ -56,6 +61,7 @@ def preflight_item(packet: dict[str, Any]) -> dict[str, Any]:
         "source_origin_status": source_origin_label(packet),
         "llm_readiness_status": readiness_status,
         "manual_review_targets": manual_target_keys(packet),
+        "manual_profile_edit_available": manual_profile_edit_available(packet),
         "field_count": len(packet.get("proposed_change") or []),
         "warning_count": len(packet.get("warnings") or []),
         "human_required": True,
@@ -116,6 +122,10 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         item for item in items
         if item.get("manual_review_targets")
     ]
+    manual_profile_edits = [
+        item for item in items
+        if item.get("manual_profile_edit_available")
+    ]
     return {
         "total_packets": total_packets,
         "reported_packets": len(items),
@@ -125,6 +135,7 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         "blocked_source_without_context": len(blocked_source_only),
         "manual_target_prompt_ready": len(manual_target_ready),
         "manual_review_target_packets": len(manual_targets),
+        "manual_profile_edit_available": len(manual_profile_edits),
     }
 
 
@@ -140,10 +151,11 @@ def compact_item_line(item: dict[str, Any]) -> str:
     target_text = f" · campos: {', '.join(target_keys[:4])}" if target_keys else ""
     if len(target_keys) > 4:
         target_text += f" +{len(target_keys) - 4}"
+    profile_text = " · edición ficha" if item.get("manual_profile_edit_available") else ""
     reason = ""
     if not item.get("llm_ready") and item.get("blocked_reason"):
         reason = " · " + str(item["blocked_reason"]).split(":", 1)[0]
-    return f"- {title}: {status}{target_text}{reason}"
+    return f"- {title}: {status}{target_text}{profile_text}{reason}"
 
 
 def format_preflight_report(report: dict[str, Any], limit: int = 8) -> str:
@@ -162,6 +174,7 @@ def format_preflight_report(report: dict[str, Any], limit: int = 8) -> str:
         f"- Bloqueadas: {summary.get('blocked', 0)}",
         f"- Bloqueadas por fuente sin contexto: {summary.get('blocked_source_without_context', 0)}",
         f"- Con campo manual detectado: {summary.get('manual_review_target_packets', 0)}",
+        f"- Con edición manual de ficha: {summary.get('manual_profile_edit_available', 0)}",
     ]
     if ready:
         lines.extend([

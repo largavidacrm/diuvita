@@ -1175,6 +1175,14 @@ Next 10 technical steps:
      appear as the thing that is "missing". The rule remains unchanged:
      publication still waits for claims to load and for blocking claims to be
      resolved.
+224. Expose side-panel clinic edits to future LLM review safely. Done locally in
+     `scripts/review_proposal_decision_packets.py`,
+     `scripts/prepare_review_decision_llm_prompt.py` and
+     `scripts/review_llm_batch_preflight.py`: review packets now carry
+     **Editar ficha** as human-only context with the side-panel fields Daniel can
+     correct. This preserves the automation path without expanding
+     `editable_fields`, allowing writes, resolving cards or changing the
+     return-to-list review flow.
 
 ## Daniel decision checkpoints
 

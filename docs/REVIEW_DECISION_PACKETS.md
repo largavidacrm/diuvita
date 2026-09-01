@@ -17,6 +17,10 @@ El contrato principal es:
   resumen seguro con el título legible, el campo del admin, el motivo pendiente
   y el paso humano esperado. Sirve para asistencia futura con LLM sin darle
   permiso para escribir datos ni resolver la tarjeta.
+- Cuando una revisión tiene ficha o candidata asociada, el paquete puede incluir
+  `manual_profile_edit_context`: lista los campos que Daniel puede corregir con
+  **Editar ficha** en el panel izquierdo. Es contexto humano, no amplía
+  `editable_fields` ni permite al LLM escribir cambios de perfil por su cuenta.
 - Si Daniel aporta una URL oficial desde **Pasar URL al agente**, el paquete
   conserva `source_handoff` y `source_job_request` con alcance
   `primary_target_first`: primero se pide al agente el campo principal de esa
@@ -83,6 +87,8 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - campo manual que abrir si la tarjeta es una revisión manual sin valores
   propuestos.
 - contexto manual de campo, motivo y siguiente paso cuando exista.
+- contexto de edición manual de la ficha, para recordar qué campos puede
+  corregir Daniel sin convertirlos en salida automática del LLM.
 - fuente oficial a pedir o usar como trabajo interno, respetando siempre el
   alcance `primary_target_first` si está presente.
 - fuente oficial de especialistas cuando el alcance sea
@@ -105,6 +111,7 @@ El LLM no debe:
 
 - inventar campos fuera de `editable_fields`;
 - inventar datos para un `manual_review_target`;
+- convertir `manual_profile_edit_context` en cambios de ficha automáticos;
 - convertir una advertencia en aprobación automática;
 - resolver la tarjeta;
 - ejecutar escrituras en Supabase;
@@ -209,7 +216,7 @@ humana usa etiquetas como **listo para LLM**, **recuperable desde trabajo** y
 El panel `/admin/` mantiene la experiencia humana simple:
 
 ```text
-abrir propuesta -> revisar ese cambio -> aprobar / rechazar / modificar -> siguiente
+abrir propuesta -> revisar ese cambio -> aprobar / rechazar / modificar -> volver a lista
 ```
 
 Los paquetes de decisión son la forma técnica de conservar esa misma estructura

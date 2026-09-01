@@ -189,6 +189,10 @@ Required behavior:
   fields, evidence and essential warnings.
 - Include the packet schema version, allowed actions and `editable_fields` so
   automated preparation cannot introduce unrelated clinic changes.
+- When the review has an associated clinic or candidate, include
+  `manual_profile_edit_context` for the **Editar ficha** side panel. This is
+  human-only context: it documents which clinic fields Daniel can correct while
+  reviewing, but it must not expand `editable_fields` or allow LLM writes.
 - For quality-audit cards with no proposed values, include
   `manual_review_targets` and, when useful, a bounded `source_job_request`.
   This lets a future LLM suggest the exact manual field or official source job
@@ -203,6 +207,9 @@ Required behavior:
 - LLM output may suggest or organize the decision, but the card remains
   reviewable and Daniel's action is still `approve`, `reject` or `modify`.
 - `modify` may only change fields listed in that packet's `editable_fields`.
+- `manual_profile_edit_context` can be used to explain that Daniel has manual
+  profile-edit controls in the side panel; it is not a source of automatic
+  `field_changes`.
 - If `editable_fields` is empty, `modify` is valid only as a manual-review
   route to one of the packet's `manual_review_targets`; it must not carry
   invented `field_changes`.

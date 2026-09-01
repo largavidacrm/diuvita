@@ -54,6 +54,22 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
         if isinstance(item, dict) and item.get("key")
     ]
     manual_context = packet.get("manual_review_context") if isinstance(packet.get("manual_review_context"), dict) else {}
+    manual_profile_context = (
+        packet.get("manual_profile_edit_context")
+        if isinstance(packet.get("manual_profile_edit_context"), dict)
+        else {}
+    )
+    manual_profile_fields = [
+        {
+            "key": item.get("key"),
+            "label": item.get("label"),
+            "review_input_id": item.get("review_input_id"),
+            "main_editor_target_id": item.get("main_editor_target_id"),
+            "current": sanitize_for_prompt(item.get("current") or {}),
+        }
+        for item in manual_profile_context.get("fields") or []
+        if isinstance(item, dict) and item.get("key")
+    ]
     source_job = packet.get("source_job_request") if isinstance(packet.get("source_job_request"), dict) else {}
     source_context = packet.get("source_job_context") if isinstance(packet.get("source_job_context"), dict) else {}
     source_origin = packet.get("source_origin_status") if isinstance(packet.get("source_origin_status"), dict) else {}
@@ -75,6 +91,19 @@ def packet_digest(packet: dict[str, Any]) -> dict[str, Any]:
             "source_handoff": sanitize_for_prompt(manual_context.get("source_handoff") or {}),
             "llm_boundary": manual_context.get("llm_boundary"),
         } if manual_context else {},
+        "manual_profile_edit_context": {
+            "available": bool(manual_profile_context.get("available")),
+            "ui_label": manual_profile_context.get("ui_label"),
+            "mode": manual_profile_context.get("mode"),
+            "human_only": bool(manual_profile_context.get("human_only")),
+            "write_policy": manual_profile_context.get("write_policy"),
+            "allowed_actions_to_persist": manual_profile_context.get("allowed_actions_to_persist") or [],
+            "reject_discards": bool(manual_profile_context.get("reject_discards")),
+            "safe_to_auto_publish": bool(manual_profile_context.get("safe_to_auto_publish")),
+            "field_count": manual_profile_context.get("field_count"),
+            "fields": manual_profile_fields,
+            "llm_boundary": manual_profile_context.get("llm_boundary"),
+        } if manual_profile_context else {},
         "source_job_context": {
             "mode": source_context.get("mode"),
             "human_supplied_source": bool(source_context.get("human_supplied_source")),
@@ -150,6 +179,7 @@ def system_prompt() -> str:
         "Tu tarea es proponer una única acción para una única tarjeta: approve, reject o modify.",
         "Si propones modify, solo puedes incluir campos listados en editable_fields.",
         "Si no hay editable_fields pero hay manual_review_targets, puedes proponer modify con manual_review_target_key.",
+        "manual_profile_edit_context describe campos que solo Daniel puede corregir en el panel; no los conviertas en field_changes.",
         "Responde solo JSON válido con el esquema indicado.",
     ])
 

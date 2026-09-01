@@ -80,6 +80,30 @@ ADMIN_FIELD_TARGETS = [
     (("credential", "colegi"), "team_credentialing_visible", "Colegiación visible", "clinicTeamCredentialingVisible"),
     (("price", "precio", "tarifa"), "public_pricing", "Precio público", "clinicPublicPricing"),
 ]
+MANUAL_PROFILE_EDIT_FIELD_TARGETS = [
+    ("display_name", "Nombre", "reviewClinicEditName", "clinicName"),
+    ("summary", "Descripción", "reviewClinicEditSummary", "clinicSummary"),
+    ("website", "Web", "reviewClinicEditWebsite", "clinicWebsite"),
+    ("care_mode", "Modalidad de atención", "reviewClinicEditCareMode", "clinicOnline"),
+    ("city", "Ciudad", "reviewClinicEditCity", "clinicCity"),
+    ("country", "País", "reviewClinicEditCountry", "clinicCountry"),
+    ("region", "Región", "reviewClinicEditRegion", "clinicRegion"),
+    ("address", "Dirección", "reviewClinicEditAddress", "clinicAddress"),
+    ("maps_url", "Google Maps", "reviewClinicEditMapsUrl", "clinicMapsUrl"),
+    ("google_reviews_url", "Valoraciones Google", "reviewClinicEditGoogleReviewsUrl", "clinicGoogleReviewsUrl"),
+    ("locations", "Sedes", "reviewClinicEditLocations", "clinicLocations"),
+    ("services", "Servicios", "reviewClinicEditServices", "clinicServices"),
+    ("specialties", "Especialidades", "reviewClinicEditSpecialties", "clinicSpecialties"),
+    ("unidades", "Unidades", "reviewClinicEditUnits", "clinicUnits"),
+    ("profesionales", "Especialistas", "reviewClinicEditProfessionals", "clinicProfessionals"),
+    ("tech", "Tecnología", "reviewClinicEditTech", "clinicTech"),
+    ("email", "Email", "reviewClinicEditEmail", "clinicEmail"),
+    ("telefono", "Teléfono principal", "reviewClinicEditPhone", "clinicPhone"),
+    ("phone_fixed", "Teléfono fijo", "reviewClinicEditPhoneFixed", "clinicPhoneFixed"),
+    ("phone_mobile", "Móvil", "reviewClinicEditPhoneMobile", "clinicPhoneMobile"),
+    ("phone_whatsapp", "WhatsApp", "reviewClinicEditPhoneWhatsapp", "clinicPhoneWhatsapp"),
+    ("instagram", "Instagram", "reviewClinicEditInstagram", "clinicInstagram"),
+]
 REVIEW_TYPE_LABELS = {
     "candidate_clinic": "Clínica nueva",
     "clinic_profile_enrichment": "Mejora de ficha",
@@ -231,6 +255,7 @@ def current_field_value(clinic: dict[str, Any], key: str) -> Any:
         "address": clinic.get("address") or data.get("address"),
         "summary": clinic.get("summary") or data.get("summary"),
         "status": clinic.get("status") or data.get("status"),
+        "care_mode": data.get("care_mode") or data.get("clinic_online"),
     }
     if clean in direct:
         return direct[clean]
@@ -240,6 +265,53 @@ def current_field_value(clinic: dict[str, Any], key: str) -> Any:
         if canonical == clean and raw in data:
             return data.get(raw)
     return data.get(clean)
+
+
+def manual_profile_edit_context(row: dict[str, Any], include_values: bool = False) -> dict[str, Any]:
+    clinic = row.get("clinic") if isinstance(row.get("clinic"), dict) else {}
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    candidate = candidate_from_payload(payload)
+    identity_keys = ("name", "clinic_name", "display_name", "website", "web", "city", "country")
+    has_profile = bool(
+        clinic
+        or row.get("clinic_id")
+        or row.get("clinic_name")
+        or any(has_visible_value(candidate.get(key)) for key in identity_keys)
+    )
+    if not has_profile:
+        return {}
+    fields: list[dict[str, Any]] = []
+    for key, label, review_input_id, main_editor_target_id in MANUAL_PROFILE_EDIT_FIELD_TARGETS:
+        if clinic:
+            current_value = current_field_value(clinic, key)
+        elif key == "display_name":
+            current_value = candidate.get("name") or candidate.get("clinic_name") or candidate.get("display_name")
+        elif key == "website":
+            current_value = candidate.get("website") or candidate.get("web")
+        elif key == "profesionales":
+            current_value = candidate.get("profesionales") or candidate.get("professionals")
+        else:
+            current_value = candidate.get(key)
+        fields.append({
+            "key": key,
+            "label": label,
+            "review_input_id": review_input_id,
+            "main_editor_target_id": main_editor_target_id,
+            "current": value_packet(current_value, include_values),
+        })
+    return {
+        "available": True,
+        "ui_label": "Editar ficha",
+        "mode": "human_side_panel_profile_edit",
+        "human_only": True,
+        "write_policy": "human_decision_only",
+        "allowed_actions_to_persist": ["approve", "modify"],
+        "reject_discards": True,
+        "safe_to_auto_publish": False,
+        "field_count": len(fields),
+        "fields": fields,
+        "llm_boundary": "may_suggest_attention_but_not_write_manual_profile_edits",
+    }
 
 
 def ordered_proposed_items(row: dict[str, Any]) -> list[dict[str, Any]]:
@@ -352,7 +424,7 @@ def manual_review_context(
         "primary_target": packet_manual_targets[0],
         "issues": issues,
         "operator_action": "open_admin_target_edit_field_then_save_clinic",
-        "after_save": "resolve_current_review_then_advance_to_next_pending",
+        "after_save": "resolve_current_review_then_return_to_review_list",
         "source_handoff": {
             "available": True,
             "ui_label": "Pasar URL al agente",
@@ -769,9 +841,12 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
             "human_gate": "Daniel must choose approve, reject or modify in the review card.",
             "write_policy": "read_only_packet",
             "scope": "single_review_item",
-            "after_decision": "resolve_current_review_then_advance_to_next_pending",
+            "after_decision": "resolve_current_review_then_return_to_review_list",
         },
     }
+    profile_edit_context = manual_profile_edit_context(row, include_values=include_values)
+    if profile_edit_context:
+        packet["manual_profile_edit_context"] = profile_edit_context
     operator_source_context = source_job_context(payload, include_values=include_values)
     if operator_source_context:
         packet["source_job_context"] = operator_source_context

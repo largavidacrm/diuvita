@@ -2842,12 +2842,12 @@
     function globalPlanNextDetailText(nextReview, group, sourceTarget, profileTarget, candidateOpenCount) {
       if (nextReview) {
         if (isClinicClaimRequestReview(nextReview)) {
-          return "Ruta: Abrir reclamación · revisar quién escribe · registrar contacto interno o descartar · siguiente automática.";
+          return "Ruta: Abrir reclamación · revisar quién escribe · registrar contacto interno o descartar · volver a lista.";
         }
         if (nextReview.review_type === "clinic_quality_audit" && !isBlockingClaimReview(nextReview)) {
-          return "Ruta: Abrir prioridad · Revisión manual del campo pendiente · guardar ficha · siguiente automática.";
+          return "Ruta: Abrir prioridad · Revisión manual del campo pendiente · guardar ficha · volver a lista.";
         }
-        return "Ruta: Abrir prioridad · revisar solo ese cambio · aprobar, rechazar o modificar · siguiente automática.";
+        return "Ruta: Abrir prioridad · revisar solo ese cambio · aprobar, rechazar o modificar · volver a lista.";
       }
       if (group) {
         var enrichmentCount = countOpenReviewsByType(group.rows || [], "clinic_profile_enrichment");

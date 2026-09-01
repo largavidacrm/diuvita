@@ -130,8 +130,22 @@ def main():
     source_origin = prompt["packet_digest"]["source_origin_status"]
     check(source_origin["status"] == "context_ready", "prompt digest should keep source origin status")
     check(source_origin["source_host"] == "imda.example", "prompt digest should keep source origin host")
+    manual_profile = prompt["packet_digest"]["manual_profile_edit_context"]
+    check(manual_profile["available"] is True, "prompt digest should expose side-panel edit availability")
+    check(manual_profile["ui_label"] == "Editar ficha", "prompt digest should keep side-panel edit label")
+    check(manual_profile["human_only"] is True, "prompt digest should mark side-panel edits human-only")
+    check(manual_profile["write_policy"] == "human_decision_only", "prompt digest side-panel write policy missing")
+    check(manual_profile["allowed_actions_to_persist"] == ["approve", "modify"], "prompt digest persistence actions missing")
+    check(manual_profile["reject_discards"] is True, "prompt digest should say reject discards manual edits")
+    check(manual_profile["safe_to_auto_publish"] is False, "prompt digest should keep manual edits non-publishable")
+    check(
+        any(item["key"] == "summary" and item["review_input_id"] == "reviewClinicEditSummary" for item in manual_profile["fields"]),
+        "prompt digest should include editable side-panel clinic fields",
+    )
+    check("value" not in str(manual_profile), "prompt digest should not expose side-panel raw values")
     check(prompt["messages"][0]["role"] == "system", "system message missing")
     check("No publicas" in prompt["messages"][0]["content"], "system safety instruction missing")
+    check("manual_profile_edit_context" in prompt["messages"][0]["content"], "system prompt should bound side-panel context")
     check("Responde solo JSON" in prompt["messages"][0]["content"], "JSON-only instruction missing")
     check("https://imda.example/contacto" not in dumped, "safe prompt should remove full evidence URLs")
     check("persona@example.com" not in dumped, "safe prompt should redact emails")
@@ -159,6 +173,11 @@ def main():
         quality_prompt["packet_digest"]["manual_review_context"]["operator_action"]
         == "open_admin_target_edit_field_then_save_clinic",
         "prompt digest should keep the manual operator route",
+    )
+    check(
+        quality_prompt["packet_digest"]["manual_review_context"]["after_save"]
+        == "resolve_current_review_then_return_to_review_list",
+        "prompt digest should keep return-to-list behavior",
     )
     check(
         quality_prompt["packet_digest"]["manual_review_context"]["source_handoff"]["target_scope"]

@@ -104,6 +104,7 @@ def main():
     check(report["summary"]["blocked_source_without_context"] == 1, "blocked source-only count missing")
     check(report["summary"]["manual_target_prompt_ready"] == 1, "manual target ready count missing")
     check(report["summary"]["manual_review_target_packets"] == 1, "manual target count missing")
+    check(report["summary"]["manual_profile_edit_available"] == 3, "manual profile edit count missing")
 
     ready = items["ready-1"]
     check(ready["strict_prompt_status"] == "ready", "context-ready packet should pass strict prompt preflight")
@@ -111,6 +112,7 @@ def main():
     check(ready["prompt_schema_version"] == "review_decision_llm_prompt.v1", "prompt schema marker missing")
     check(ready["prompt_write_policy"] == "no_writes", "prompt write policy missing")
     check(ready["expected_actions"] == ["approve", "reject", "modify"], "expected action contract missing")
+    check(ready["manual_profile_edit_available"] is True, "ready packet should expose side-panel edit availability")
 
     blocked = items["blocked-1"]
     check(blocked["strict_prompt_status"] == "blocked", "source-only packet should be blocked")
@@ -123,6 +125,7 @@ def main():
     check(manual["strict_prompt_status"] == "ready", "manual target packet should produce a safe prompt")
     check(manual["llm_readiness_status"] == "manual_target_prompt_ready", "manual readiness status missing")
     check(manual["manual_review_targets"] == ["profesionales"], "manual target key missing")
+    check(manual["manual_profile_edit_available"] is True, "manual packet should expose side-panel edit availability")
     check(manual["clinic_name"] == "Tiara Health", "manual clinic name missing")
 
     ready_only = preflight_report(rows, llm_ready_only=True)
@@ -135,8 +138,10 @@ def main():
     check("Preparables para LLM estricto: 2/3" in compact, "compact ready count missing")
     check("Rutas manuales listas: 1" in compact, "compact manual route count missing")
     check("Bloqueadas por fuente sin contexto: 1" in compact, "compact source-only blocked count missing")
+    check("Con edición manual de ficha: 3" in compact, "compact manual profile edit count missing")
     check("Mantener manuales o pasar URL oficial" in compact, "compact manual section missing")
     check("ruta manual lista" in compact, "compact manual route label missing")
+    check("edición ficha" in compact, "compact manual profile edit label missing")
     check("source_without_context" in compact, "compact blocked reason missing")
 
     source = (ROOT / "scripts" / "review_llm_batch_preflight.py").read_text(encoding="utf-8")
