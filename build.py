@@ -734,7 +734,7 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .facts dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
 .info-list{display:grid;gap:.38rem}
 .location-list{display:grid;gap:.72rem}
-.profile-location-block{align-self:start}
+.profile-location-block{grid-column:1/-1;align-self:start}
 .profile-location-multiple{grid-column:1/-1}
 .profile-location-multiple .location-list{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem}
 .profile-location-multiple .location-item{border:1px solid var(--line);border-radius:8px;padding:.85rem;background:#fff}

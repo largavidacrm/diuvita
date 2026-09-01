@@ -68,6 +68,7 @@ def main() -> None:
         ".clinic-side .profile-block{margin-top:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}",
         ".profile-list li::before",
         ".location-list{display:grid;gap:.72rem}",
+        ".profile-location-block{grid-column:1/-1;align-self:start}",
         ".profile-location-multiple{grid-column:1/-1}",
         ".profile-location-multiple .location-list{grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem}",
         ".profile-location-multiple .location-item{border:1px solid var(--line);border-radius:8px;padding:.85rem;background:#fff}",
