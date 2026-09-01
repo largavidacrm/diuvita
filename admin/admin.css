@@ -2041,6 +2041,44 @@ td small.job-next-step {
   line-height: 1.32;
 }
 
+.review-proposal-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.62rem;
+}
+
+.review-proposal-actions .btn {
+  min-height: 2rem;
+  padding: 0.36rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.review-proposal-inline-edit {
+  display: grid;
+  gap: 0.42rem;
+  margin-top: 0.62rem;
+  padding-top: 0.62rem;
+  border-top: 1px solid rgba(14, 79, 74, 0.18);
+}
+
+.review-proposal-inline-edit label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-proposal-inline-edit textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.review-proposal-actions-edit {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
 .review-source-origin {
   padding: 0.5rem 0.62rem;
   border: 1px solid rgba(14, 79, 74, 0.18);

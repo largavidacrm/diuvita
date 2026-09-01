@@ -1351,6 +1351,13 @@ Next 10 technical steps:
      now carry `specialist_quality_review`, and the batch preflight counts
      packets with specialists that must be corrected before approval. This is
      read-only and keeps the future LLM role limited to suggestion preparation.
+253. Add direct field decisions inside profile-enrichment review cards. Done
+     locally in `/admin/`: each editable mini-card inside an existing-clinic
+     proposal now offers **Aprobar**, **Rechazar** and **Modificar**. Approving
+     or modifying applies only that field through the existing guarded save
+     path; rejecting removes only that field from the proposal. Each field
+     decision is recorded in the review payload so later LLM assistance can
+     learn from the supervised outcome without auto-publishing anything.
 
 ## Daniel decision checkpoints
 

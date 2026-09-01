@@ -1090,6 +1090,7 @@
     var activeClinic = null;
     var activeReview = null;
     var activeReviewModifyMode = false;
+    var activeReviewFieldModifyIndex = -1;
     var activeReviewProfileEditMode = false;
     var activeClinicReview = null;
     var activeClinicReviewIds = [];
@@ -2361,9 +2362,35 @@
       return digits;
     }
 
-    function isPlausibleSpanishPhone(value) {
+    function normalizedSpanishPhoneDigits(value) {
       var digits = spanishPhoneDigits(value);
-      return digits.length === 9 && /^[6789]/.test(digits);
+      return digits.length === 9 && /^[6789]/.test(digits) ? digits : "";
+    }
+
+    function extractSpanishPhoneDigits(value) {
+      var raw = text(value).trim();
+      if (!raw) return [];
+      var phones = [];
+      var seen = {};
+      function add(candidate) {
+        var digits = normalizedSpanishPhoneDigits(candidate);
+        if (!digits || seen[digits]) return;
+        seen[digits] = true;
+        phones.push(digits);
+      }
+      add(raw);
+      (raw.match(/(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}/g) || []).forEach(add);
+      if (!phones.length) {
+        var compact = compactDigits(raw);
+        if (compact.length > 9 && compact.length % 9 === 0) {
+          for (var index = 0; index < compact.length; index += 9) add(compact.slice(index, index + 9));
+        }
+      }
+      return phones;
+    }
+
+    function isPlausibleSpanishPhone(value) {
+      return extractSpanishPhoneDigits(value).length === 1;
     }
 
     function clinicPhoneFields() {
@@ -8118,7 +8145,57 @@
       return "Información propuesta";
     }
 
-    function reviewProposalFocusActionHtml(row, item) {
+    function reviewSupportsInlineFieldDecision(row, item) {
+      return Boolean(row && row.clinic_id && item &&
+        !reviewFieldIsSynthetic(item.key) &&
+        ["clinic_profile_enrichment", "source_change_detected"].indexOf(row.review_type) >= 0);
+    }
+
+    function reviewFieldApprovalBlockReason(row, item) {
+      if (!reviewSupportsInlineFieldDecision(row, item)) return "";
+      var fields = {};
+      fields[item.key] = item.value;
+      return approvalSafetyWarnings(fields)[0] || "";
+    }
+
+    function reviewProposalFieldEditRows(key) {
+      if (key === "locations") return 4;
+      if (key === "summary") return 4;
+      if (["services", "specialties", "unidades", "profesionales", "tech"].indexOf(key) >= 0) return 5;
+      return 2;
+    }
+
+    function reviewProposalFieldEditorHtml(item, index) {
+      var inputId = "reviewFieldModify_" + index;
+      return '<div class="review-proposal-inline-edit">' +
+        '<label for="' + html(inputId) + '">Versión corregida</label>' +
+        '<textarea id="' + html(inputId) + '" data-review-field-modify-input="' + html(index) +
+        '" rows="' + html(reviewProposalFieldEditRows(item.key)) + '">' +
+        html(proposalEditValue(item.key, item.value)) + '</textarea>' +
+        '<div class="review-proposal-actions review-proposal-actions-edit">' +
+        '<button class="btn" type="button" data-review-field-action="confirm" data-review-field-index="' + html(index) + '">Confirmar</button>' +
+        '<button class="btn secondary" type="button" data-review-field-action="cancel" data-review-field-index="' + html(index) + '">Cancelar</button>' +
+        '</div></div>';
+    }
+
+    function reviewProposalFieldActionsHtml(row, item, index) {
+      if (!reviewSupportsInlineFieldDecision(row, item)) return "";
+      if (activeReviewFieldModifyIndex === index) return reviewProposalFieldEditorHtml(item, index);
+      var approveBlock = reviewFieldApprovalBlockReason(row, item);
+      return '<div class="review-proposal-actions">' +
+        '<button class="btn" type="button" data-review-field-action="approve" data-review-field-index="' + html(index) + '"' +
+        (approveBlock ? ' data-review-field-blocked="true" disabled title="' + html(approveBlock) + '"' : ' title="Aprobar solo este campo"') +
+        '>Aprobar</button>' +
+        '<button class="btn danger" type="button" data-review-field-action="reject" data-review-field-index="' + html(index) + '">Rechazar</button>' +
+        '<button class="btn secondary" type="button" data-review-field-action="edit" data-review-field-index="' + html(index) + '">Modificar</button>' +
+        '</div>';
+    }
+
+    function reviewProposalFocusActionHtml(row, item, index) {
+      if (reviewSupportsInlineFieldDecision(row, item)) {
+        return '<span class="pill' + (reviewFieldApprovalBlockReason(row, item) ? " warning" : "") + '">' +
+          html(activeReviewFieldModifyIndex === index ? "Editando" : "Decisión pendiente") + '</span>';
+      }
       var target = reviewManualFieldTarget(row, item);
       if (target) {
         return '<button class="link-btn review-manual-btn" type="button" data-review-manual-field="' +
@@ -8300,14 +8377,15 @@
         : "Decide solo sobre este cambio. No se publican datos automáticamente.";
       el("reviewProposalFocusCount").textContent = items.length + (row.review_type === "clinic_quality_audit" ? (items.length === 1 ? " campo" : " campos") : (items.length === 1 ? " dato" : " datos"));
       list.innerHTML = items.length
-        ? items.map(function (item) {
+        ? items.map(function (item, index) {
           var hint = reviewProposalFocusHint(item);
           var status = proposalReviewStatusHtml(row, item);
           return '<article class="review-proposal-item"><div class="review-proposal-title"><h4>' + html(item.label) +
-            '</h4>' + reviewProposalFocusActionHtml(row, item) + '</div><div class="review-proposal-value">' +
+            '</h4>' + reviewProposalFocusActionHtml(row, item, index) + '</div><div class="review-proposal-value">' +
             snapshotValueHtml(item.key, item.value) + '</div>' +
             status +
-            (hint ? '<p class="review-proposal-hint">' + html(hint) + '</p>' : '') + '</article>';
+            (hint ? '<p class="review-proposal-hint">' + html(hint) + '</p>' : '') +
+            reviewProposalFieldActionsHtml(row, item, index) + '</article>';
         }).join("")
         : '<p class="empty">Esta tarjeta no trae campos nuevos detectados; puedes aprobarla como revisada o rechazarla.</p>';
     }
@@ -8579,6 +8657,76 @@
 
     function reviewOriginalDecisionFields(row) {
       return reviewFieldsFromItems(reviewProposalFocusItems(row));
+    }
+
+    function reviewFieldItemAtIndex(row, index) {
+      var items = reviewProposalFocusItems(row);
+      var cleanIndex = Number(index);
+      if (!Number.isFinite(cleanIndex) || cleanIndex < 0 || cleanIndex >= items.length) return null;
+      return items[cleanIndex] || null;
+    }
+
+    function reviewFieldObject(item, value) {
+      var fields = {};
+      if (item && !reviewFieldIsSynthetic(item.key)) fields[item.key] = value;
+      return fields;
+    }
+
+    function reviewInlineModifiedValue(item, index) {
+      var input = document.querySelector('[data-review-field-modify-input="' + index + '"]');
+      var raw = input ? input.value : proposalEditValue(item.key, item.value);
+      if (item.key === "locations") return linesToLocations(raw);
+      if (["services", "specialties", "unidades", "profesionales", "tech"].indexOf(item.key) >= 0) {
+        return linesToArray(raw);
+      }
+      return text(raw).trim();
+    }
+
+    function removeCanonicalFieldFromObject(fields, canonicalKey) {
+      Object.keys(fields || {}).forEach(function (rawKey) {
+        if (canonicalProposalField(rawKey) === canonicalKey) delete fields[rawKey];
+      });
+    }
+
+    function reviewPayloadHasRemainingFields(payload) {
+      var fields = proposedFields(payload);
+      return Object.keys(fields || {}).some(function (rawKey) {
+        return !reviewFieldIsSynthetic(canonicalProposalField(rawKey)) && proposalListValue(fields[rawKey]);
+      });
+    }
+
+    function reviewPayloadAfterFieldDecision(row, item, action, value, note) {
+      var payload = cloneJson((row && row.payload) || {});
+      ["proposed_fields", "proposed_current_data", "fields"].forEach(function (groupKey) {
+        if (payload[groupKey] && typeof payload[groupKey] === "object") {
+          removeCanonicalFieldFromObject(payload[groupKey], item.key);
+        }
+      });
+      var decidedAt = new Date().toISOString();
+      payload.field_decisions = Array.isArray(payload.field_decisions) ? payload.field_decisions.slice() : [];
+      payload.field_decisions.push({
+        field: item.key,
+        label: item.label,
+        action: action,
+        value: action === "reject" ? null : value,
+        note: note || "",
+        decided_at: decidedAt
+      });
+      payload.last_field_decision = {
+        field: item.key,
+        action: action,
+        decided_at: decidedAt
+      };
+      return payload;
+    }
+
+    function reviewFieldDecisionNote(action, item) {
+      var manualNote = trimmed("reviewResolutionNote");
+      if (manualNote) return manualNote;
+      var label = item && item.label ? item.label : "Campo";
+      if (action === "reject") return label + " rechazado desde tarjeta individual.";
+      if (action === "modify") return label + " modificado y aprobado desde tarjeta individual.";
+      return label + " aprobado desde tarjeta individual.";
     }
 
     function reviewModifiedDecisionFields(row) {
@@ -8881,6 +9029,9 @@
       el("reviewRejectBtn").disabled = loading;
       el("reviewModifyBtn").disabled = loading;
       el("reviewSourceJobBtn").disabled = loading || sourceJobPaused;
+      Array.prototype.slice.call(document.querySelectorAll("[data-review-field-action]")).forEach(function (button) {
+        button.disabled = loading || button.hasAttribute("data-review-field-blocked");
+      });
     }
 
     async function approveClinicClaimRequestReview(fields, modified, profileFields) {
@@ -8945,7 +9096,23 @@
       return true;
     }
 
-    async function approveExistingClinicReview(fields, modified, profileFields) {
+    function applyDraftToLocalClinic(draft) {
+      var clinic = draft && draft.clinic;
+      if (!clinic) return;
+      clinic.current_data = draft.currentData;
+      clinic.display_name = draft.displayName;
+      clinic.website = draft.website;
+      clinic.country = draft.country;
+      clinic.city = draft.city;
+      clinic.region = draft.region;
+      clinic.address = draft.address;
+      clinic.status = draft.status;
+      clinic.summary = draft.summary;
+      clinic.profile_confidence = draft.confidence;
+      clinic.verification_status = draft.verification;
+    }
+
+    async function saveExistingClinicReviewFields(fields, modified, profileFields, note) {
       profileFields = profileFields || {};
       var clinic = reviewClinicForRow(activeReview);
       if (!clinic) {
@@ -8958,15 +9125,6 @@
         return false;
       }
       if (!Object.keys(fields || {}).length && !Object.keys(profileFields).length) {
-        var resolvedOnly = await resolveReviewItem(
-          activeReview.id,
-          "resolved",
-          trimmed("reviewResolutionNote") || "Propuesta revisada sin cambios de datos."
-        );
-        if (resolvedOnly.error) {
-          toast("No se pudo resolver la propuesta.");
-          return false;
-        }
         return true;
       }
       var built = buildApprovedClinicDraft(clinic, fields);
@@ -8980,9 +9138,6 @@
         toast(profileError);
         return false;
       }
-      var note = trimmed("reviewResolutionNote") || (modified
-        ? "Propuesta aprobada con modificación manual."
-        : "Propuesta aprobada y aplicada.");
       var updateResult = await client.rpc("admin_update_clinic", {
         p_clinic_id: clinic.id,
         p_display_name: draft.displayName,
@@ -9002,12 +9157,111 @@
         toast("No se pudo guardar la ficha.");
         return false;
       }
+      applyDraftToLocalClinic(draft);
+      return true;
+    }
+
+    async function approveExistingClinicReview(fields, modified, profileFields) {
+      profileFields = profileFields || {};
+      if (!Object.keys(fields || {}).length && !Object.keys(profileFields).length) {
+        var resolvedOnly = await resolveReviewItem(
+          activeReview.id,
+          "resolved",
+          trimmed("reviewResolutionNote") || "Propuesta revisada sin cambios de datos."
+        );
+        if (resolvedOnly.error) {
+          toast("No se pudo resolver la propuesta.");
+          return false;
+        }
+        return true;
+      }
+      var note = trimmed("reviewResolutionNote") || (modified
+        ? "Propuesta aprobada con modificación manual."
+        : "Propuesta aprobada y aplicada.");
+      var saved = await saveExistingClinicReviewFields(fields, modified, profileFields, note);
+      if (!saved) return false;
       var resolveResult = await resolveReviewItem(activeReview.id, "resolved", note);
       if (resolveResult.error) {
         toast("Ficha guardada, pero la propuesta no se cerró automáticamente.");
         return false;
       }
       return true;
+    }
+
+    async function persistReviewFieldDecision(row, item, action, value, note) {
+      var nextPayload = reviewPayloadAfterFieldDecision(row, item, action, value, note);
+      if (reviewPayloadHasRemainingFields(nextPayload)) {
+        var updateResult = await client
+          .from("review_queue")
+          .update({ payload: nextPayload })
+          .eq("id", row.id);
+        if (updateResult.error) {
+          toast("No se pudo guardar la decisión de este campo.");
+          return false;
+        }
+        row.payload = nextPayload;
+        activeReview = row;
+        activeReviewFieldModifyIndex = -1;
+        renderReviewValidationView(row);
+        var remaining = reviewProposalFocusItems(row).length;
+        toast((action === "reject" ? "Campo rechazado." : "Campo guardado.") + " Quedan " + remaining + " por revisar en esta propuesta.");
+        return true;
+      }
+      var finalStatus = action === "reject" ? "dismissed" : "resolved";
+      var resolveResult = await resolveReviewItem(row.id, finalStatus, note);
+      if (resolveResult.error) {
+        toast("Campo guardado, pero la propuesta no se cerró automáticamente.");
+        return false;
+      }
+      await finishReviewDecision(action === "reject" ? "Campo rechazado." : "Campo guardado.", row.id);
+      return true;
+    }
+
+    async function approveReviewField(index, modified) {
+      if (!activeReview) return;
+      var item = reviewFieldItemAtIndex(activeReview, index);
+      if (!reviewSupportsInlineFieldDecision(activeReview, item)) return;
+      var value = modified ? reviewInlineModifiedValue(item, index) : item.value;
+      var fields = reviewFieldObject(item, value);
+      var note = reviewFieldDecisionNote(modified ? "modify" : "approve", item);
+      setReviewDecisionLoading(true);
+      var saved = await saveExistingClinicReviewFields(fields, Boolean(modified), {}, note);
+      if (saved) await persistReviewFieldDecision(activeReview, item, modified ? "modify" : "approve", value, note);
+      setReviewDecisionLoading(false);
+    }
+
+    async function rejectReviewField(index) {
+      if (!activeReview) return;
+      var item = reviewFieldItemAtIndex(activeReview, index);
+      if (!reviewSupportsInlineFieldDecision(activeReview, item)) return;
+      var note = reviewFieldDecisionNote("reject", item);
+      setReviewDecisionLoading(true);
+      await persistReviewFieldDecision(activeReview, item, "reject", null, note);
+      setReviewDecisionLoading(false);
+    }
+
+    function startReviewFieldModification(index) {
+      var item = reviewFieldItemAtIndex(activeReview, index);
+      if (!reviewSupportsInlineFieldDecision(activeReview, item)) return;
+      activeReviewFieldModifyIndex = Number(index);
+      renderReviewProposalFocus(activeReview);
+      var input = document.querySelector('[data-review-field-modify-input="' + index + '"]');
+      if (input) input.focus();
+    }
+
+    function cancelReviewFieldModification() {
+      activeReviewFieldModifyIndex = -1;
+      renderReviewProposalFocus(activeReview);
+    }
+
+    function handleReviewFieldAction(button) {
+      var action = button.getAttribute("data-review-field-action");
+      var index = button.getAttribute("data-review-field-index");
+      if (action === "approve") approveReviewField(index, false);
+      else if (action === "reject") rejectReviewField(index);
+      else if (action === "edit") startReviewFieldModification(index);
+      else if (action === "confirm") approveReviewField(index, true);
+      else if (action === "cancel") cancelReviewFieldModification();
     }
 
     async function approveCandidateReview(fields, modified, profileFields) {
@@ -9494,24 +9748,7 @@
     }
 
     function splitSpanishPhones(value) {
-      var raw = text(value).trim();
-      if (!raw) return [];
-      var phones = [];
-      var seen = {};
-      function add(candidate) {
-        var digits = spanishPhoneDigits(candidate);
-        if (!isPlausibleSpanishPhone(digits) || seen[digits]) return;
-        seen[digits] = true;
-        phones.push(digits);
-      }
-      (raw.match(/(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}/g) || []).forEach(add);
-      if (!phones.length) {
-        var compact = compactDigits(raw);
-        if (compact.length > 9 && compact.length % 9 === 0) {
-          for (var index = 0; index < compact.length; index += 9) add(compact.slice(index, index + 9));
-        }
-      }
-      return phones;
+      return extractSpanishPhoneDigits(value);
     }
 
     function phoneTargetKey(phone, fallbackKey) {
@@ -9963,6 +10200,7 @@
 
       var payload = activeReview.payload || {};
       var approvalBlock = reviewApprovalBlockReason(activeReview);
+      activeReviewFieldModifyIndex = -1;
 
       el("reviewEditorTitle").textContent = reviewDisplayTitle(activeReview);
       el("reviewEditorMeta").textContent = reviewVisibleLabel(activeReview) + " · prioridad " + activeReview.priority + " · " + date(activeReview.created_at);
@@ -9994,6 +10232,7 @@
 
     function closeReviewEditor() {
       activeReview = null;
+      activeReviewFieldModifyIndex = -1;
       renderReviewValidationView(null);
       show(el("reviewEditor"), false);
       show(el("reviewClinicPanel"), false);
@@ -10999,6 +11238,11 @@
       el("reviewModifyBtn").addEventListener("click", modifyReview);
       el("reviewSourceJobBtn").addEventListener("click", createReviewSourceJob);
       el("reviewProposalFocusList").addEventListener("click", function (event) {
+        var actionButton = event.target.closest("[data-review-field-action]");
+        if (actionButton) {
+          handleReviewFieldAction(actionButton);
+          return;
+        }
         var button = event.target.closest("[data-review-manual-field]");
         if (!button) return;
         openReviewManualField(button.getAttribute("data-review-manual-field"));

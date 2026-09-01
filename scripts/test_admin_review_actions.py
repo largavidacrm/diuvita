@@ -350,6 +350,23 @@ def main() -> None:
         "dirty specialist proposals should warn and block direct approval until modified",
     )
     check(
+        "function reviewSupportsInlineFieldDecision" in index
+        and "function reviewProposalFieldActionsHtml" in index
+        and 'data-review-field-action="approve"' in index
+        and 'data-review-field-action="reject"' in index
+        and 'data-review-field-action="edit"' in index
+        and 'data-review-field-action="confirm"' in index
+        and "function approveReviewField" in index
+        and "function rejectReviewField" in index
+        and "function handleReviewFieldAction" in index
+        and "function reviewPayloadAfterFieldDecision" in index
+        and "field_decisions" in index
+        and "saveExistingClinicReviewFields(fields, Boolean(modified), {}, note)" in index
+        and "Campo guardado." in index
+        and "Quedan " in index,
+        "profile-enrichment proposal fields should be directly approvable, rejectable or editable in-card",
+    )
+    check(
         "function resetReviewWorkAreaForNav" in index
         and 'if (targetId === "reviewWorkArea") resetReviewWorkAreaForNav();' in index
         and "show(el(\"reviewListPanel\"), true);" in index
@@ -606,6 +623,7 @@ def main() -> None:
     check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css and ".manual-review-section" in css, "manual review context and source handoff should be styled")
     check(".work-grid.review-work-queue .review-list-panel" in css, "review queue side panel should stay explicit in CSS")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")
+    check(".review-proposal-actions" in css and ".review-proposal-inline-edit" in css, "in-card proposal decisions should be styled")
     check(".review-link-status" in css and ".review-link-status-warning" in css, "proposal link status should be styled")
     check(".review-link-checklist" in css and ".review-link-checklist li" in css, "Google Maps checklist should be styled")
     check(

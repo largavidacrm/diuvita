@@ -65,6 +65,8 @@ def main() -> None:
         "function approvalSafetyWarnings",
         "function finishReviewDecision",
         "function spanishPhoneDigits",
+        "function normalizedSpanishPhoneDigits",
+        "function extractSpanishPhoneDigits",
         "function isPlausibleSpanishPhone",
         "function clinicPhoneReviewMessage",
         "function updateClinicPhoneWarnings",

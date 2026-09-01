@@ -349,12 +349,16 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
    el contexto de esa clínica sin seguir mirando la cola.
 4. La columna derecha muestra solo esa propuesta concreta: qué cambio se valora,
    fuente o evidencia, avisos imprescindibles y la observación breve.
-5. Elige una sola acción: **Aprobar**, **Rechazar** o **Modificar**.
-6. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
+5. Si la propuesta trae varias mini-tarjetas, puedes decidir cada campo ahí
+   mismo con **Aprobar**, **Rechazar** o **Modificar**. Al resolver un campo,
+   desaparece de esa propuesta y queda registrado en la tarjeta.
+6. Elige una sola acción global: **Aprobar**, **Rechazar** o **Modificar** solo
+   cuando quieras resolver toda la propuesta de una vez.
+7. Si modificas, corrige únicamente los campos que vienen en esa propuesta y
    confirma con **Guardar modificación**.
    En revisiones manuales, **Modificar** o **Revisión manual** te lleva al campo
    que falta.
-7. Al terminar, el panel cierra esa ficha y vuelve a la lista. Tú eliges la
+8. Al terminar, el panel cierra esa ficha y vuelve a la lista. Tú eliges la
    siguiente revisión; el panel no salta automáticamente a otra tarjeta.
 
 La aprobación aplica la propuesta mediante el flujo existente, pero no cambia la
