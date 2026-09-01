@@ -139,10 +139,24 @@ def review_type_label(value: Any) -> str:
     return REVIEW_TYPE_LABELS.get(str(value or ""), str(value or "Revisión").replace("_", " "))
 
 
+def quality_issue_display_label(row: dict[str, Any]) -> str:
+    payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
+    issues = payload.get("issues")
+    if not isinstance(issues, list) or not issues:
+        return ""
+    issue = issues[0]
+    if isinstance(issue, dict):
+        return str(issue.get("label") or issue.get("detail") or issue.get("reason") or issue.get("code") or "").strip()
+    return str(issue or "").strip()
+
+
 def review_display_title(row: dict[str, Any]) -> str:
     title = str(row.get("title") or "").strip() or "Revisión abierta"
     if row.get("review_type") == "clinic_quality_audit":
-        return re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
+        title = re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
+        issue = quality_issue_display_label(row)
+        if issue and issue.lower() not in title.lower():
+            return f"{title} · {issue}"
     return title
 
 

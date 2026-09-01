@@ -170,8 +170,8 @@ def main():
         "prompt digest should keep manual review targets",
     )
     check(
-        quality_prompt["packet_digest"]["display_title"] == "Revisión manual: Tiara Health",
-        "prompt digest should keep the readable manual review title",
+        quality_prompt["packet_digest"]["display_title"] == "Revisión manual: Tiara Health · Faltan especialistas publicados",
+        "prompt digest should keep the active manual field in the title",
     )
     check(
         quality_prompt["packet_digest"]["manual_review_context"]["operator_action"]

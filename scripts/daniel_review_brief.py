@@ -146,7 +146,17 @@ def review_display_title(item: dict[str, Any] | None) -> str:
         return ""
     title = str(item.get("title") or "").strip()
     if normalized_review_type(item) == "clinic_quality_audit":
-        return re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
+        title = re.sub(r"^Completar ficha:", "Revisión manual:", title, flags=re.I)
+        payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+        issues = payload.get("issues")
+        if isinstance(issues, list) and issues:
+            issue = issues[0]
+            if isinstance(issue, dict):
+                issue_label = str(issue.get("label") or issue.get("detail") or issue.get("reason") or issue.get("code") or "").strip()
+            else:
+                issue_label = str(issue or "").strip()
+            if issue_label and issue_label.lower() not in title.lower():
+                return f"{title} · {issue_label}"
     return title
 
 

@@ -133,7 +133,10 @@ def main():
     check(report["summary"]["direct_change_reviews"] == 2, "direct change count missing")
 
     first = report["items"][0]
-    check(first["title"] == "Revisión manual: Tiara Health", "manual cards should be grouped first")
+    check(
+        first["title"] == "Revisión manual: Tiara Health · Faltan especialistas publicados",
+        "manual cards should show the active field first",
+    )
     check(first["operator_action"] == "open_manual_field", "manual field action missing")
     check(first["manual_primary_target"]["key"] == "profesionales", "primary manual target missing")
     check(first["manual_primary_target"]["admin_target_id"] == "clinicProfessionals", "admin target missing")

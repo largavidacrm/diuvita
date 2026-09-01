@@ -289,7 +289,10 @@ def main():
 
     quality_packet = decision_packet(sample_quality_audit_row())
     check(quality_packet["proposal_type"] == "Revisión manual", "quality proposal type should be manual review")
-    check(quality_packet["display_title"] == "Revisión manual: Tiara Health", "quality title should be human-readable")
+    check(
+        quality_packet["display_title"] == "Revisión manual: Tiara Health · Faltan especialistas publicados",
+        "quality title should name the active manual field",
+    )
     check(not quality_packet["editable_fields"], "quality audit issues should not become direct LLM-editable fields")
     check(packet_is_llm_ready(quality_packet) is True, "manual target packets should allow LLM navigation help")
     check(

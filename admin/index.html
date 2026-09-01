@@ -2732,7 +2732,12 @@
     function reviewDisplayTitle(row) {
       var title = text(row && row.title).trim() || "Revisión abierta";
       if (row && row.review_type === "clinic_quality_audit") {
-        return title.replace(/^Completar ficha:/i, "Revisión manual:");
+        var display = title.replace(/^Completar ficha:/i, "Revisión manual:");
+        var issue = issueLabels(((row.payload || {}).issues) || [])[0] || "";
+        if (issue && display.toLowerCase().indexOf(issue.toLowerCase()) < 0) {
+          return display + " · " + issue;
+        }
+        return display;
       }
       return title;
     }
