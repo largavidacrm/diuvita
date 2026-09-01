@@ -123,6 +123,10 @@ Operator bridge:
   metadata (`primary_requested_fields`, `primary_requested_field_labels`,
   `target_scope`, `ui_route`) so the next human or LLM step can see why the URL
   was supplied.
+- If the URL came from an open manual-review card and the worker creates or
+  refreshes a concrete enrichment proposal, the originating manual card is
+  resolved as superseded. This keeps the admin queue to one decision while the
+  new proposal keeps all source/job context for future LLM-assisted review.
 - Decision packets for those generated cards expose the same provenance as
   `source_job_context`, redacting full URLs by default and keeping the allowed
   output as review-proposal-only.

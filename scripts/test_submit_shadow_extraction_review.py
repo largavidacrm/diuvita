@@ -61,6 +61,10 @@ def main():
         signature.parameters["allow_multiple_open_clinic_reviews"].default is False,
         "multiple clinic review cards should be opt-in",
     )
+    check(
+        signature.parameters["replace_existing_clinic_review"].default is False,
+        "same-clinic review refresh should be opt-in",
+    )
 
     captured = {}
 
@@ -79,9 +83,37 @@ def main():
     sql = captured.get("sql", "")
     check("open_clinic_reviews as" in sql, "same-clinic duplicate guard missing")
     check("existing_clinic as" in sql, "same-clinic existing review CTE missing")
+    check("updated_clinic as" in sql, "same-clinic refresh CTE missing")
     check(
         "and (false or not exists (select 1 from existing_clinic))" in sql,
         "new review should be blocked when another clinic review is open",
+    )
+
+    captured.clear()
+
+    def fake_run_psql_updated_clinic(sql, local_env):
+        captured["sql"] = sql
+        return '[{"status": "updated_clinic", "id": "review-1", "title": "Open review"}]'
+
+    original_run_psql = create_review.__globals__["run_psql"]
+    try:
+        create_review.__globals__["run_psql"] = fake_run_psql_updated_clinic
+        result = create_review(
+            "example-clinic",
+            payload,
+            "admin@example.test",
+            {},
+            replace_existing_clinic_review=True,
+        )
+    finally:
+        create_review.__globals__["run_psql"] = original_run_psql
+
+    check(result["status"] == "updated_clinic", "same-clinic refresh should update the existing card")
+    sql = captured.get("sql", "")
+    check("where true\n    and rq.id = existing_clinic.id" in sql, "same-clinic refresh should be opt-in true")
+    check(
+        "and not exists (select 1 from updated_clinic)" in sql,
+        "insert should be blocked after refreshing an existing clinic card",
     )
     print("OK review payload: shadow extraction")
 

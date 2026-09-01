@@ -6,9 +6,13 @@ from capture_source_snapshot import FetchResult
 from process_extract_clinic_profile_jobs import (
     build_payload_for_job,
     compact_result,
+    complete_job,
+    created_review_replaces_origin,
     filter_proposed_fields_for_request,
     process_job,
     requested_targets,
+    review_source_job_should_replace_existing_reviews,
+    source_job_origin_review_id,
     validate_job,
 )
 
@@ -110,8 +114,16 @@ def main():
     check(payload["llm_boundary"] == "respect_source_job_context_scope", "payload should keep LLM boundary")
     check(payload["allowed_output"] == "review_queue_proposal_only", "payload should preserve proposal-only contract")
     check("No edita la ficha ni publica datos" in " ".join(payload["warnings"]), "payload should keep safety warning")
+    check(source_job_origin_review_id(job) == "review-1", "origin review id should be readable")
+    check(
+        review_source_job_should_replace_existing_reviews(job) is True,
+        "review-supplied source jobs should replace stale open review cards",
+    )
+    check(created_review_replaces_origin({"status": "updated_clinic"}) is True, "updated clinic card should supersede origin")
+    check(created_review_replaces_origin({"status": "existing_clinic"}) is False, "unchanged card should not supersede origin")
 
     calls = []
+    superseded = []
 
     def fake_create_review(
         clinic_slug,
@@ -120,9 +132,21 @@ def main():
         local_env,
         replace_existing,
         allow_multiple_open_clinic_reviews,
+        replace_existing_clinic_review,
     ):
-        calls.append((clinic_slug, payload, admin_email, replace_existing, allow_multiple_open_clinic_reviews))
+        calls.append((
+            clinic_slug,
+            payload,
+            admin_email,
+            replace_existing,
+            allow_multiple_open_clinic_reviews,
+            replace_existing_clinic_review,
+        ))
         return {"status": "inserted", "id": "review-new"}
+
+    def fake_supersede_origin(job, created_review, admin_email, local_env):
+        superseded.append((job["id"], created_review["id"], admin_email))
+        return {"id": "review-1", "status": "resolved"}
 
     apply_args = Namespace(
         timeout=15,
@@ -130,21 +154,49 @@ def main():
         replace_existing=True,
         allow_multiple_open_clinic_reviews=True,
     )
-    applied = process_job(job, apply_args, "admin@example.test", {}, fetcher=fake_fetch, review_creator=fake_create_review)
+    applied = process_job(
+        job,
+        apply_args,
+        "admin@example.test",
+        {},
+        fetcher=fake_fetch,
+        review_creator=fake_create_review,
+        origin_review_resolver=fake_supersede_origin,
+    )
     check(applied["created_review"]["status"] == "inserted", "apply mode should create a review")
     check(applied["writes_data"] is True, "apply mode should report a write")
     check(calls and calls[0][0] == "tiara-health", "review creator should receive clinic slug")
     check(calls and calls[0][3] is True, "replace flag should pass through")
     check(calls and calls[0][4] is True, "multiple-open flag should pass through")
+    check(calls and calls[0][5] is True, "manual source jobs should refresh existing clinic review cards")
     check(calls and calls[0][1]["from_review_id"] == "review-1", "created review should trace source review")
     check(calls and calls[0][1]["target_scope"] == "primary_target_first", "created review should keep source scope")
+    check(applied["superseded_review"]["status"] == "resolved", "origin manual review should be superseded")
+    check(superseded and superseded[0][0] == "job-1", "origin resolver should receive the source job")
 
     compact = compact_result(applied)
     check("verification_summary" not in compact, "compact result should omit verification details")
     check(compact["writes_data"] is True, "compact result should keep write signal")
     check(compact["created_review"]["id"] == "review-new", "compact result should keep created review id")
+    check(compact["superseded_review"]["id"] == "review-1", "compact result should keep superseded origin id")
     check(compact["primary_requested_fields"] == ["profesionales"], "compact result should keep primary requested fields")
     check(compact["target_scope"] == "primary_target_first", "compact result should keep source scope")
+
+    captured_complete = {}
+    original_run_psql = complete_job.__globals__["run_psql"]
+    try:
+        def fake_complete_run_psql(sql, local_env):
+            captured_complete["sql"] = sql
+            return '{"id": "00000000-0000-0000-0000-000000000001", "status": "completed"}'
+
+        complete_job.__globals__["run_psql"] = fake_complete_run_psql
+        complete_job("00000000-0000-0000-0000-000000000001", compact, "admin@example.test", {})
+    finally:
+        complete_job.__globals__["run_psql"] = original_run_psql
+    complete_sql = captured_complete.get("sql", "")
+    check("cross join claims" in complete_sql, "complete job should execute admin claims CTE")
+    check("current_setting('request.jwt.claims'" not in complete_sql, "complete job should not parse possibly empty claims")
+    check("origin_review_superseded" in complete_sql, "complete event should record origin supersession")
 
     check(requested_targets(["specialists", "technology"]) == {"profesionales", "tech"}, "aliases should map to UI fields")
     check(

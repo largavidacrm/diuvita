@@ -130,6 +130,7 @@ def create_review(
     local_env: dict[str, str],
     replace_existing: bool = False,
     allow_multiple_open_clinic_reviews: bool = False,
+    replace_existing_clinic_review: bool = False,
 ) -> dict[str, Any]:
     if not payload.get("proposed_fields"):
         return {"status": "empty", "slug": clinic_slug}
@@ -137,6 +138,7 @@ def create_review(
     sql_payload = json.dumps(payload, ensure_ascii=False)
     should_replace = "true" if replace_existing else "false"
     allow_multiple = "true" if allow_multiple_open_clinic_reviews else "false"
+    should_replace_clinic = "true" if replace_existing_clinic_review else "false"
     sql = f"""
 with target as (
   select id, slug, display_name, city, country, website
@@ -192,6 +194,18 @@ updated as (
     and rq.id = existing.id
   returning rq.id, rq.title
 ),
+updated_clinic as (
+  update public.review_queue rq
+  set
+    payload = (select data from payload_input),
+    priority = greatest(rq.priority, 60),
+    assigned_to = coalesce(rq.assigned_to, {sql_literal(admin_email)})
+  from existing_clinic
+  where {should_replace_clinic}
+    and rq.id = existing_clinic.id
+    and not exists (select 1 from updated)
+  returning rq.id, rq.title
+),
 inserted as (
   insert into public.review_queue (
     clinic_id,
@@ -215,21 +229,26 @@ inserted as (
   from target t
   cross join payload_input p
   where not exists (select 1 from existing)
+    and not exists (select 1 from updated_clinic)
     and ({allow_multiple} or not exists (select 1 from existing_clinic))
   returning id, title
 ),
 resolved as (
   select 'updated' as status, id, title from updated
   union all
+  select 'updated_clinic' as status, id, title from updated_clinic
+  union all
   select 'inserted' as status, id, title from inserted
   union all
   select 'existing' as status, id, title from existing
     where not exists (select 1 from inserted)
       and not exists (select 1 from updated)
+      and not exists (select 1 from updated_clinic)
   union all
   select 'existing_clinic' as status, id, title from existing_clinic
     where not exists (select 1 from inserted)
       and not exists (select 1 from updated)
+      and not exists (select 1 from updated_clinic)
       and not exists (select 1 from existing)
 )
 select coalesce(jsonb_agg(to_jsonb(resolved.*)), '[]'::jsonb)

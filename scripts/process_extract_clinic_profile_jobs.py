@@ -31,7 +31,8 @@ BATCH_NAME = "review-source-job"
 BATCH_VERSION = "2026-08-31"
 
 FetchFn = Callable[..., FetchResult]
-CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool], dict[str, Any]]
+CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool, bool], dict[str, Any]]
+ResolveOriginReviewFn = Callable[[dict[str, Any], dict[str, Any], str, dict[str, str]], dict[str, Any] | None]
 
 
 REQUESTED_FIELD_TARGETS = {
@@ -68,6 +69,16 @@ REQUESTED_FIELD_TARGETS = {
     "public_pricing": {"public_pricing"},
     "pricing_url": {"public_pricing"},
 }
+
+SOURCE_JOB_REVIEW_HANDOFF_ROUTES = {
+    "manual_review_banner_source_handoff",
+    "review_card_specialist_source_handoff",
+}
+SOURCE_JOB_REVIEW_HANDOFF_SCOPES = {
+    "primary_target_first",
+    "specialist_source_only",
+}
+REVIEW_REPLACED_STATUSES = {"inserted", "updated", "updated_clinic"}
 
 
 class JobProcessingError(RuntimeError):
@@ -131,6 +142,24 @@ def requested_targets(fields: list[str]) -> set[str]:
     for field in fields:
         targets.update(REQUESTED_FIELD_TARGETS.get(field, {field}))
     return targets
+
+
+def source_job_origin_review_id(job: dict[str, Any]) -> str:
+    return clean_str(as_dict(job.get("input")).get("from_review_id"))
+
+
+def review_source_job_should_replace_existing_reviews(job: dict[str, Any]) -> bool:
+    input_data = as_dict(job.get("input"))
+    return (
+        bool(source_job_origin_review_id(job))
+        and clean_str(input_data.get("ui_route")) in SOURCE_JOB_REVIEW_HANDOFF_ROUTES
+        and clean_str(input_data.get("target_scope")) in SOURCE_JOB_REVIEW_HANDOFF_SCOPES
+        and clean_str(input_data.get("allowed_output") or "review_queue_proposal_only") == "review_queue_proposal_only"
+    )
+
+
+def created_review_replaces_origin(created_review: dict[str, Any] | None) -> bool:
+    return clean_str(as_dict(created_review).get("status")) in REVIEW_REPLACED_STATUSES
 
 
 def filter_proposed_fields_for_request(
@@ -228,6 +257,7 @@ def process_job(
     local_env: dict[str, str],
     fetcher: FetchFn = fetch_url,
     review_creator: CreateReviewFn = create_review,
+    origin_review_resolver: ResolveOriginReviewFn | None = None,
 ) -> dict[str, Any]:
     clinic_slug, source_url, fields = validate_job(job)
     extraction = extract_from_fetch(fetcher(source_url, timeout=args.timeout))
@@ -252,14 +282,19 @@ def process_job(
         "writes_data": False,
     }
     if args.apply and proposed_fields:
+        source_replaces_review = review_source_job_should_replace_existing_reviews(job)
         result["created_review"] = review_creator(
             clinic_slug,
             payload,
             admin_email,
             local_env,
-            args.replace_existing,
+            args.replace_existing or source_replaces_review,
             args.allow_multiple_open_clinic_reviews,
+            source_replaces_review,
         )
+        if source_replaces_review and created_review_replaces_origin(result.get("created_review")):
+            resolver = origin_review_resolver or supersede_origin_review
+            result["superseded_review"] = resolver(job, result["created_review"], admin_email, local_env)
         result["writes_data"] = True
     return result
 
@@ -279,8 +314,48 @@ def compact_result(result: dict[str, Any]) -> dict[str, Any]:
         "proposed_fields": result.get("proposed_fields") or [],
         "proposed_field_counts": result.get("proposed_field_counts") or {},
         "created_review": result.get("created_review"),
+        "superseded_review": result.get("superseded_review"),
         "writes_data": bool(result.get("writes_data")),
     }
+
+
+def supersede_origin_review(
+    job: dict[str, Any],
+    created_review: dict[str, Any],
+    admin_email: str,
+    local_env: dict[str, str],
+) -> dict[str, Any] | None:
+    origin_review_id = source_job_origin_review_id(job)
+    if not origin_review_id:
+        return None
+    created_review_id = clean_str(as_dict(created_review).get("id"))
+    created_review_title = clean_str(as_dict(created_review).get("title"))
+    note_parts = [
+        "Sustituida por propuesta concreta generada desde la URL oficial indicada por Daniel.",
+        "No publica datos ni modifica la ficha.",
+    ]
+    if created_review_title:
+        note_parts.append(f"Propuesta revisable: {created_review_title}.")
+    if created_review_id:
+        note_parts.append(f"review_id nuevo/actualizado: {created_review_id}.")
+    note = " ".join(note_parts)
+    sql = f"""
+with claims as (
+  select set_config(
+    'request.jwt.claims',
+    jsonb_build_object('email', {sql_literal(admin_email)})::text,
+    true
+  )
+)
+select to_jsonb(public.admin_resolve_review_item(
+  {sql_literal(origin_review_id)}::uuid,
+  'resolved',
+  {sql_literal(note)}::text
+))
+from claims;
+"""
+    output = run_psql(sql, local_env).strip()
+    return json.loads(output) if output else None
 
 
 def pick_next_job(admin_email: str, worker: str, local_env: dict[str, str]) -> dict[str, Any] | None:
@@ -364,16 +439,18 @@ event as (
   select
     'extract_clinic_profile_shadow_completed',
     'admin',
-    lower(coalesce((current_setting('request.jwt.claims', true)::jsonb ->> 'email'), '')),
+    lower({sql_literal(admin_email)}),
     'agent_job',
     updated.id,
     updated.clinic_id,
     jsonb_build_object(
       'mode', 'shadow',
       'review_created', {sql_literal(str(bool(output.get("created_review"))).lower())}::boolean,
+      'origin_review_superseded', {sql_literal(str(bool(output.get("superseded_review"))).lower())}::boolean,
       'proposed_fields', {sql_literal(json.dumps(output.get("proposed_fields") or [], ensure_ascii=False))}::jsonb
     )
   from updated
+  cross join claims
 )
 select coalesce((select to_jsonb(updated.*) from updated), 'null'::jsonb);
 """

@@ -918,6 +918,13 @@ Next 10 technical steps:
      compact internal origin line with the requested field and
      `primary_target_first` scope, so Daniel can see why that evidence is being
      considered without opening other queue context.
+175. Replace manual source hints with one concrete proposal. Done locally in
+     `scripts/process_extract_clinic_profile_jobs.py` and
+     `scripts/submit_shadow_extraction_review.py`: when Daniel gives an
+     official URL from a manual review, the worker can refresh the open
+     enrichment card for that clinic, preserve the source/job context for later
+     LLM review, and mark the originating manual card as superseded without
+     editing or publishing clinic data.
 175. Expose source-job context in LLM decision packets. Done locally in
      `scripts/review_proposal_decision_packets.py` and
      `scripts/prepare_review_decision_llm_prompt.py`: proposals generated from
