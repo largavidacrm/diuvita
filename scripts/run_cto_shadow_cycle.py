@@ -185,6 +185,14 @@ STEP_ITEM_KEYS = {
         "proposed_fields",
         "created_review",
     ),
+    "process_discovery_recommendation_jobs": (
+        "job_id",
+        "status",
+        "source_url",
+        "candidate",
+        "completed_job",
+        "reason",
+    ),
     "check_production_health": ("name", "url", "status", "ok", "missing_markers", "error"),
     "check_public_site_freshness": ("slug", "name", "url", "fresh", "missing_markers", "error"),
     "clinic_public_visibility_report": ("slug", "clinic_name", "status", "updated_at"),
@@ -231,6 +239,7 @@ STEP_LABELS = {
     "process_source_change_reviews": "conversion de cambios en propuestas",
     "submit_source_shadow_reviews": "extraccion shadow desde fuentes guardadas",
     "process_extract_clinic_profile_jobs": "extraccion desde fuentes indicadas en revision",
+    "process_discovery_recommendation_jobs": "recomendaciones con link oficial",
     "submit_blocking_claim_reviews": "claims bloqueantes",
     "measure_source_snapshot_retention": "retencion de evidencias",
     "measure_source_coverage": "cobertura de fuentes",
@@ -256,6 +265,7 @@ REVIEW_CARD_CREATING_STEPS = {
     "discover_clinic_google_links",
     "submit_source_shadow_reviews",
     "process_extract_clinic_profile_jobs",
+    "process_discovery_recommendation_jobs",
     "submit_blocking_claim_reviews",
 }
 
@@ -682,6 +692,42 @@ def manual_review_route_status(step: dict[str, Any] | None) -> str:
     return "; ".join(parts) if parts else f"{total} tarjetas sin ruta especial"
 
 
+def discovery_recommendation_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no procesadas en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    status = str(summary.get("status") or "").strip()
+    if status == "empty":
+        return "sin recomendaciones con link en cola"
+    if status == "needs_search_provider":
+        return "pendientes de proveedor de busqueda real"
+    if status != "ready":
+        return status or "medidas"
+    candidate = summary.get("candidate") if isinstance(summary.get("candidate"), dict) else {}
+    name = str(candidate.get("name") or candidate.get("website") or "recomendacion").strip()
+    counts = candidate.get("field_counts") if isinstance(candidate.get("field_counts"), dict) else {}
+    labels = {
+        "emails": "emails",
+        "locations": "sedes",
+        "phones": "telefonos",
+        "professionals": "especialistas",
+        "services": "servicios",
+        "specialties": "especialidades",
+        "technologies": "tecnologias",
+        "units": "unidades",
+    }
+    count_text = ", ".join(f"{value} {labels.get(key, key)}" for key, value in sorted(counts.items())[:3])
+    completed = summary.get("completed_job") if isinstance(summary.get("completed_job"), dict) else {}
+    reviews = as_int(completed.get("review_items_created"))
+    if reviews:
+        return f"{name}: {reviews} propuesta creada"
+    if count_text:
+        return f"{name}: lista para crear propuesta ({count_text})"
+    return f"{name}: lista para crear propuesta"
+
+
 def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     steps = [step for step in output.get("steps") or [] if isinstance(step, dict)]
     failed_step = first_failed_step(steps)
@@ -757,6 +803,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     enrichment_consolidation = enrichment_consolidation_status(enrichment_consolidation_step)
     manual_route_step = find_step(steps, "manual_review_route_brief")
     manual_review_routes = manual_review_route_status(manual_route_step)
+    discovery_recommendation_step = find_step(steps, "process_discovery_recommendation_jobs")
+    discovery_recommendations = discovery_recommendation_status(discovery_recommendation_step)
 
     if admin_digest:
         next_action = next_action_label(admin_digest)
@@ -813,6 +861,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "specialist_claim_proposals": specialist_claim_proposals,
         "enrichment_consolidation": enrichment_consolidation,
         "manual_review_routes": manual_review_routes,
+        "discovery_recommendations": discovery_recommendations,
         "attention": attention,
     }
 
@@ -838,6 +887,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
         f"- Consolidacion mejoras: {brief.get('enrichment_consolidation')}.",
         f"- Rutas revision manual: {brief.get('manual_review_routes')}.",
+        f"- Recomendaciones con link: {brief.get('discovery_recommendations')}.",
         f"- Conciliacion Google: {brief.get('google_link_reconciliation')}.",
         f"- Conciliacion especialistas: {brief.get('specialist_reconciliation')}.",
         f"- Propuestas especialistas: {brief.get('specialist_claim_proposals')}.",
@@ -961,6 +1011,21 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             (
                 "process_extract_clinic_profile_jobs",
                 extract_job_args,
+                max(90, args.fetch_timeout + 30),
+            )
+        )
+    if args.discovery_recommendation_job:
+        steps.append(
+            (
+                "process_discovery_recommendation_jobs",
+                [
+                    "process_discovery_recommendation_jobs.py",
+                    "--pick-next",
+                    "--timeout",
+                    str(args.fetch_timeout),
+                    "--compact",
+                    *apply_flag,
+                ],
                 max(90, args.fetch_timeout + 30),
             )
         )
@@ -1205,6 +1270,11 @@ def parse_args() -> argparse.Namespace:
         "--extract-profile-job",
         action="store_true",
         help="Optionally process one queued EXTRACT_CLINIC_PROFILE job created from a review source URL.",
+    )
+    parser.add_argument(
+        "--discovery-recommendation-job",
+        action="store_true",
+        help="Optionally process one queued DISCOVER_CLINIC recommendation that already has an official URL.",
     )
     parser.add_argument(
         "--extract-profile-job-replace-existing",

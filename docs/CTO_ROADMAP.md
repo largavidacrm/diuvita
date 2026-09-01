@@ -88,6 +88,9 @@ Done in this repo now:
 - Add a public Supabase feed for the static site build.
 - Add a private Supabase-triggered Netlify rebuild path after public clinic edits.
 - Add a shadow discovery review path: candidates become review cards or unpublished drafts, never public pages.
+- Add a source-backed recommendation bridge: public/admin recommendations that
+  already include an official URL can become candidate review cards without
+  creating or publishing clinic records.
 - Add a seed exporter for the current clinic JSON.
 - Add this CTO roadmap.
 - Protect local secrets and generated files in `.gitignore`.

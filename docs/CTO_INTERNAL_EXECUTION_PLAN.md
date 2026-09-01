@@ -1242,6 +1242,13 @@ Next 10 technical steps:
      per missing field, with `quality_issue_code` and `field_path` kept for
      traceability. This aligns new cards with the one-card, one-decision review
      flow and needs Daniel approval before changing the live function.
+235. Process source-backed clinic recommendations. Done locally in
+     `scripts/process_discovery_recommendation_jobs.py` and the CTO cycle:
+     recommendations that include an official URL can now be read in shadow
+     mode and completed through the existing `DISCOVER_CLINIC` review-queue
+     path. Text-only recommendations stay queued until a real search provider
+     exists. The bridge never edits clinic records, creates public pages or
+     publishes data.
 
 ## Daniel decision checkpoints
 

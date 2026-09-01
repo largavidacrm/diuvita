@@ -301,6 +301,11 @@ recientes**. Pendiente significa que el agente todavía tiene que procesarlo o
 lo está procesando; completado significa que ya terminó y, si encontró datos
 útiles, dejó una propuesta para revisar.
 
+Si una recomendación tiene **link oficial**, el ciclo CTO puede procesarla y
+convertirla en una propuesta de clínica candidata. Si solo tiene texto libre,
+queda pendiente hasta que activemos un proveedor real de búsqueda; el sistema
+no inventa clínicas desde una frase suelta.
+
 En la web pública hay un botón **Recomendar Clínica**. Cualquier visitante puede
 enviar una clínica o una fuente oficial. Eso entra aquí como trabajo pendiente:
 no crea ficha pública, no cambia una clínica existente y no aprueba nada sin

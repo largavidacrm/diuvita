@@ -73,6 +73,15 @@ Rules:
   name, official website, city, country, requested information and a short note.
   They must be treated as user-submitted leads: validate against official
   sources and create review proposals only.
+- Source-backed recommendations can be processed by
+  `scripts/process_discovery_recommendation_jobs.py`. This bridge only handles
+  jobs that already include an official URL (`source_url`, `source_urls`,
+  `website` or `web`). It extracts a candidate profile from that source and
+  completes the existing `DISCOVER_CLINIC` job through the review queue. It
+  never creates or edits clinic records and never publishes.
+- Text-only recommendations remain queued until a real search/discovery
+  provider exists. The script reports them as `needs_search_provider` instead
+  of inventing candidates from free text.
 
 ## DEDUPE_CLINIC
 

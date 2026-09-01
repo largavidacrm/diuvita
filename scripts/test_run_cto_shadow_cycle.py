@@ -9,6 +9,7 @@ from run_cto_shadow_cycle import (
     clinic_visibility_status,
     compact_summary,
     cycle_next_clicks,
+    discovery_recommendation_status,
     enrichment_consolidation_status,
     format_cycle_brief,
     google_link_reconciliation_status,
@@ -679,6 +680,7 @@ def main():
     check("Conciliacion Google: no comprobada en este ciclo" in brief_text, "plain brief Google reconciliation line missing")
     check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
     check("Propuestas especialistas: no comprobadas en este ciclo" in brief_text, "plain brief specialist proposal line missing")
+    check("Recomendaciones con link: no procesadas en este ciclo" in brief_text, "plain brief recommendation line missing")
     check(open_review_count_from_digest(cycle_digest) == 45, "open review count should be readable for guards")
 
     compact_priority_digest = {
@@ -869,6 +871,59 @@ def main():
         in format_cycle_brief(manual_route_cycle_brief),
         "plain brief should show manual route result",
     )
+    discovery_step = {
+        "name": "process_discovery_recommendation_jobs",
+        "ok": True,
+        "summary": {
+            "status": "ready",
+            "source_url": "https://clinic.example/",
+            "candidate": {
+                "name": "Clinic Example",
+                "website": "https://clinic.example",
+                "field_counts": {"professionals": 4, "services": 3},
+                "recommendation_context": {
+                    "source": "admin_recommend_clinic_form",
+                    "requested_info_label": "Especialistas publicados",
+                    "allowed_output": "review_queue_proposal_only",
+                },
+            },
+        },
+    }
+    discovery_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [discovery_step],
+    })
+    check(
+        discovery_recommendation_status(discovery_step)
+        == "Clinic Example: lista para crear propuesta (4 especialistas, 3 servicios)",
+        "discovery recommendation status should summarize field counts",
+    )
+    check(
+        "Recomendaciones con link: Clinic Example: lista para crear propuesta (4 especialistas, 3 servicios)"
+        in format_cycle_brief(discovery_cycle_brief),
+        "plain brief should show discovery recommendation result",
+    )
+    completed_discovery_step = {
+        **discovery_step,
+        "summary": {
+            **discovery_step["summary"],
+            "completed_job": {"status": "completed", "review_items_created": 1},
+        },
+    }
+    check(
+        discovery_recommendation_status(completed_discovery_step) == "Clinic Example: 1 propuesta creada",
+        "completed discovery recommendation should show created review count",
+    )
+    empty_discovery_step = {
+        "name": "process_discovery_recommendation_jobs",
+        "ok": True,
+        "summary": {"status": "empty", "reason": "No queued source-backed discovery jobs."},
+    }
+    check(
+        discovery_recommendation_status(empty_discovery_step) == "sin recomendaciones con link en cola",
+        "empty discovery recommendation step should be explicit",
+    )
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -889,6 +944,7 @@ def main():
         extract_profile_job=False,
         extract_profile_job_replace_existing=False,
         extract_profile_job_allow_multiple_open_clinic_reviews=False,
+        discovery_recommendation_job=False,
         digest_limit=5,
         claim_limit=6,
         blocking_claim_limit=9,
@@ -934,6 +990,7 @@ def main():
     check("process_source_change_reviews" in names, "source-change processing step missing")
     check("submit_source_shadow_reviews" not in names, "source shadow batch should be off by default")
     check("process_extract_clinic_profile_jobs" not in names, "review-supplied source jobs should be off by default")
+    check("process_discovery_recommendation_jobs" not in names, "source-backed discovery recommendations should be off by default")
     check("check_operational_limits_strict" not in names, "strict editorial scan should be off by default")
     check("check_production_health" not in names, "production health should be off by default")
     check("check_public_site_freshness" not in names, "public freshness should be off by default")
@@ -984,6 +1041,7 @@ def main():
         extract_profile_job=False,
         extract_profile_job_replace_existing=False,
         extract_profile_job_allow_multiple_open_clinic_reviews=False,
+        discovery_recommendation_job=False,
         digest_limit=5,
         claim_limit=6,
         blocking_claim_limit=9,
@@ -1064,6 +1122,7 @@ def main():
         extract_profile_job=True,
         extract_profile_job_replace_existing=True,
         extract_profile_job_allow_multiple_open_clinic_reviews=True,
+        discovery_recommendation_job=True,
         digest_limit=5,
         claim_limit=6,
         blocking_claim_limit=9,
@@ -1104,6 +1163,7 @@ def main():
     ))
     source_shadow_step = [step for step in optional_steps if step[0] == "submit_source_shadow_reviews"][0]
     extract_job_step = [step for step in optional_steps if step[0] == "process_extract_clinic_profile_jobs"][0]
+    discovery_recommendation_step = [step for step in optional_steps if step[0] == "process_discovery_recommendation_jobs"][0]
     seed_apply_step = [step for step in optional_steps if step[0] == "seed_visible_clinic_sources"][0]
     team_source_step = [step for step in optional_steps if step[0] == "discover_clinic_team_sources"][0]
     google_reconciliation_step = [step for step in optional_steps if step[0] == "google_link_review_reconciliation"][0]
@@ -1125,6 +1185,11 @@ def main():
     check("--replace-existing" in extract_job_step[1], "review-supplied source job replace flag should pass through")
     check("--allow-multiple-open-clinic-reviews" in extract_job_step[1], "review-supplied source job multiple-review flag should pass through")
     check(optional_steps.index(extract_job_step) < optional_steps.index(source_shadow_step), "review-supplied source jobs should run before saved-source batches")
+    check("--apply" in discovery_recommendation_step[1], "source-backed recommendation jobs should follow safe apply mode")
+    check("--pick-next" in discovery_recommendation_step[1], "source-backed recommendation jobs should pick one queued job")
+    check("--compact" in discovery_recommendation_step[1], "source-backed recommendation jobs should stay compact")
+    check(optional_steps.index(extract_job_step) < optional_steps.index(discovery_recommendation_step), "source-backed recommendations should run after review-supplied source jobs")
+    check(optional_steps.index(discovery_recommendation_step) < optional_steps.index(source_shadow_step), "source-backed recommendations should run before saved-source batches")
     check("--json" in google_reconciliation_step[1], "Google reconciliation should be machine readable")
     check("Arvila" in google_reconciliation_step[1], "Google reconciliation clinic should pass through")
     check("4" in google_reconciliation_step[1], "Google reconciliation limit should pass through")
