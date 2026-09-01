@@ -6392,7 +6392,10 @@
       if (key === "website") return Boolean(cleanHttpUrl(currentData.web || currentData.website));
       if (key === "address") return hasVisibleText(currentData.address) || locationsHavePublicAccess(normalizedLocations(currentData.locations));
       if (key === "maps_url") return currentDataHasReviewedMaps(currentData);
-      if (key === "google_reviews_url") return Boolean(cleanHttpUrl(currentData.google_reviews_url || currentData.reviews_url));
+      if (key === "google_reviews_url") {
+        return Boolean(cleanHttpUrl(currentData.google_reviews_url || currentData.reviews_url)) &&
+          currentDataHasReviewedMaps(currentData);
+      }
       if (key === "email" || key === "telefono") return currentDataHasPublicContact(currentData);
       if (["services", "specialties", "unidades", "profesionales"].indexOf(key) >= 0) {
         return countVisibleArray(currentData[key]) > 0;
@@ -9984,15 +9987,16 @@
           .limit(8);
 
         var jobsBody = el("jobsBody");
-        if (jobRows.error || !jobRows.data || jobRows.data.length === 0) {
+        var recentJobRows = (jobRows.data || []).filter(function (row) {
+          return ["queued", "running"].indexOf(row.status) < 0;
+        }).slice(0, 8);
+        if (jobRows.error || recentJobRows.length === 0) {
           emptyRow(jobsBody, 5, "Sin trabajos recientes");
         } else {
-          jobsBody.innerHTML = jobRows.data.map(function (row) {
+          jobsBody.innerHTML = recentJobRows.map(function (row) {
             var detail = jobDetailText(row);
-            var nextStep = row.status === "queued" || row.status === "running" ? jobNextStepText(row) : "";
             return "<tr><td><strong>" + html(jobTitleText(row)) + "</strong>" +
               (detail ? "<small>" + html(detail) + "</small>" : "") +
-              (nextStep ? '<small class="job-next-step">' + html(nextStep) + "</small>" : "") +
               "</td><td>" + pill(row.status) + "</td><td>" + pct(row.confidence) +
               "</td><td>" + money(row.cost_cents) + "</td><td>" + html(jobDateText(row)) + "</td></tr>";
           }).join("");

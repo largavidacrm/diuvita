@@ -1270,6 +1270,15 @@ Next 10 technical steps:
      Daniel must match in Google. This does not approve URLs automatically and
      keeps the existing rule that only real clinic Google Business/Profile URLs
      can be saved.
+240. Keep Google reviews tied to verified Maps profiles. Done locally in
+     `/admin/`: a manual review for **Valoraciones Google** only closes after
+     the clinic has both the review link and a reviewed Google Maps clinic
+     profile. This prevents isolated reviews URLs from making a profile look
+     publication-ready without the actual Google Business/Profile match.
+241. Remove duplicated job rows from the dashboard. Done locally in `/admin/`:
+     queued or running jobs appear only under **Trabajos pendientes**. They
+     move to **Trabajos recientes** only after leaving the pending states, so
+     Daniel does not see the same recommendation twice.
 
 ## Daniel decision checkpoints
 

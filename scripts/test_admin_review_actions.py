@@ -430,8 +430,11 @@ def main() -> None:
         and "URL recomendada · " in index
         and "ciclo CTO supervisado · vuelve como propuesta revisable" in index
         and "En cola para ciclo CTO supervisado" in index
+        and "var recentJobRows = (jobRows.data || []).filter(function (row)" in index
+        and 'return ["queued", "running"].indexOf(row.status) < 0;' in index
+        and "recentJobRows.map(function (row)" in index
         and "jobDateText(row)" in index,
-        "jobs table should explain review-source jobs and queued cycle timing",
+        "jobs table should explain pending jobs and keep them out of recent jobs",
     )
     check(
         "function reviewSourceJobOperatorIntent" in index
@@ -492,6 +495,7 @@ def main() -> None:
         and "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica." in index
         and "Valoraciones Google: confirma primero el perfil real de Google Maps" in index
         and "Antes de guardar Valoraciones Google, confirma y guarda el perfil real de Google Maps de la clínica." in index
+        and "currentDataHasReviewedMaps(currentData)" in index
         and "Alguna sede trae Google Maps dudoso" in index
         and "Comprobación manual" in index
         and "El nombre visible en Google debe coincidir con:" in index
