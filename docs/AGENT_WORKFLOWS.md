@@ -127,12 +127,17 @@ Operator bridge:
   to prepare a new specialist-focused review proposal; it must not treat the URL
   as approval to publish or to broaden the card into unrelated fields.
 - When Daniel creates a job from **Recomendar clínica** for an existing clinic,
-  the job should carry `ui_route: "sidebar_existing_clinic_source_job"` and a
-  bounded `target_scope`:
+  the job should carry `source: "admin_recommend_clinic_form"`,
+  `ui_route: "sidebar_existing_clinic_source_job"`, any `operator_note` Daniel
+  typed, and a bounded `target_scope`:
   `operator_selected_fields` when Daniel chooses a specific field, or
   `operator_clear_profile_fields` when he only supplies an official URL. The
   worker may return review proposals, but it must not update the clinic profile
   directly.
+- When Daniel recommends a new clinic from the admin form, the
+  `DISCOVER_CLINIC` job should carry `source: "admin_recommend_clinic_form"` and
+  preserve both `operator_note` and any official `source_url` as context for the
+  future proposal.
 - `scripts/process_extract_clinic_profile_jobs.py` can process those jobs in
   shadow mode and turn clear findings into a `clinic_profile_enrichment` review
   card.

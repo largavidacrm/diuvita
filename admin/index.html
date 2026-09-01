@@ -916,10 +916,6 @@
                   <option value="QUALITY_AUDIT">Auditar fichas existentes</option>
                 </select>
               </div>
-              <div class="field" id="jobQueryField">
-                <label for="jobQuery">Clínica o búsqueda</label>
-                <input id="jobQuery" name="jobQuery" value="longevity clinic Spain" placeholder="Nombre, web, ciudad o pista">
-              </div>
               <div class="field" id="jobCountryField">
                 <label for="jobCountry">País</label>
                 <input id="jobCountry" name="jobCountry" value="España">
@@ -928,10 +924,6 @@
                 <label for="jobExistingClinic">Clínica existente</label>
                 <input id="jobExistingClinic" list="jobExistingClinicOptions" placeholder="Neleva">
                 <datalist id="jobExistingClinicOptions"></datalist>
-              </div>
-              <div class="field hidden" id="jobSourceUrlField">
-                <label for="jobSourceUrl">URL oficial</label>
-                <input id="jobSourceUrl" type="url" placeholder="https://clinicaneleva.com/equipo/">
               </div>
               <div class="field hidden" id="jobRequestedFieldWrap">
                 <label for="jobRequestedField">Información a completar</label>
@@ -948,12 +940,16 @@
                   <option value="maps_url">Google Maps</option>
                 </select>
               </div>
-            </div>
-            <div class="job-examples" aria-label="Ejemplos de trabajo">
-              <button class="link-btn" type="button" data-job-query="Unidad de Longevidad IMDA dirección teléfono especialistas">IMDA: dirección y contacto</button>
-              <button class="link-btn" type="button" data-job-query="Regenera Clinic especialistas equipo médico">Regenera: especialistas</button>
-              <button class="link-btn" type="button" data-job-query="RoseBar Longevity Club dirección Google Maps teléfono">RoseBar: ubicación</button>
-              <button class="link-btn" type="button" data-job-clinic="Neleva" data-job-url="https://clinicaneleva.com/equipo/" data-job-field="profesionales">Neleva: especialistas</button>
+              <div class="field" id="jobSourceUrlField">
+                <label for="jobSourceUrl">Link oficial</label>
+                <input id="jobSourceUrl" type="url" placeholder="https://clinica.es/equipo/">
+                <p class="field-note" id="jobSourceUrlHint">Opcional si solo estás recomendando una clínica nueva.</p>
+              </div>
+              <div class="field field-wide" id="jobQueryField">
+                <label for="jobQuery" id="jobQueryLabel">Texto para el agente</label>
+                <textarea id="jobQuery" name="jobQuery" rows="3" placeholder="Escribe el nombre, web, ciudad, dato que falta o cualquier pista útil."></textarea>
+                <p class="field-note" id="jobQueryHint">Puedes pegar aquí contexto libre. No incluyas datos médicos personales.</p>
+              </div>
             </div>
             <p class="job-backlog-hint" id="jobBacklogHint">El freno de bandeja se calculará al cargar el panel.</p>
             <button class="btn" id="jobBtn" type="submit">Recomendar clínica</button>
@@ -1412,6 +1408,9 @@
       if (row && row.job_type === "DISCOVER_CLINIC" && input.source === "public_site_recommend_clinic") {
         return "Recomendar clínica: " + (input.clinic_name || input.query || "recomendación pública");
       }
+      if (row && row.job_type === "DISCOVER_CLINIC" && input.source === "admin_recommend_clinic_form") {
+        return "Recomendar clínica: " + (input.operator_note || input.query || input.source_url || "recomendación interna");
+      }
       if (row && row.job_type === "DISCOVER_CLINIC") return "Recomendar clínica";
       if (row && row.job_type === "QUALITY_AUDIT") return "Auditar fichas existentes";
       if (row && row.job_type === "EXTRACT_CLINIC_PROFILE") {
@@ -1424,6 +1423,10 @@
       var input = jobInput(row);
       if (row && row.job_type === "DISCOVER_CLINIC" && input.source === "public_site_recommend_clinic") {
         return "Recomendación pública · " + (input.requested_info_label || "Añadir clínica nueva") + " · queda en revisión interna";
+      }
+      if (row && row.job_type === "DISCOVER_CLINIC" && input.source === "admin_recommend_clinic_form") {
+        var detail = input.source_url ? "link oficial aportado" : "texto libre";
+        return "Recomendación interna · " + detail + " · queda en revisión interna";
       }
       if (row && row.job_type === "EXTRACT_CLINIC_PROFILE" && input.ui_route === "sidebar_existing_clinic_source_job") {
         var label = jobRequestedFieldsLabel(input) || "datos claros de la URL";
@@ -3832,23 +3835,34 @@
 
     function updateJobHelp() {
       var type = el("jobType").value;
-      show(el("jobQueryField"), type !== "EXTRACT_CLINIC_PROFILE");
+      show(el("jobQueryField"), true);
       show(el("jobCountryField"), type !== "EXTRACT_CLINIC_PROFILE");
       show(el("jobExistingClinicField"), type === "EXTRACT_CLINIC_PROFILE");
-      show(el("jobSourceUrlField"), type === "EXTRACT_CLINIC_PROFILE");
+      show(el("jobSourceUrlField"), type !== "QUALITY_AUDIT");
       show(el("jobRequestedFieldWrap"), type === "EXTRACT_CLINIC_PROFILE");
       el("jobForm").classList.toggle("job-form-existing-clinic", type === "EXTRACT_CLINIC_PROFILE");
       if (type === "QUALITY_AUDIT") {
-        el("jobHelp").innerHTML = '<strong>Auditar fichas existentes</strong><p>Revisa las clínicas que ya están en Vitalarga y crea tareas internas si falta dirección, Google Maps, contacto, especialistas u otros campos.</p>';
+        el("jobHelp").innerHTML = '<strong>Auditar fichas existentes</strong><p>Revisa fichas ya creadas y deja campos pendientes como propuestas internas.</p>';
+        el("jobQueryLabel").textContent = "Alcance opcional";
+        el("jobQuery").placeholder = "Ejemplo: revisar clínicas de Marbella con contacto incompleto";
+        el("jobQueryHint").textContent = "Déjalo vacío si quieres auditar toda la base.";
         el("jobBtn").textContent = "Auditar fichas";
         return;
       }
       if (type === "EXTRACT_CLINIC_PROFILE") {
-        el("jobHelp").innerHTML = '<strong>Completar una clínica existente</strong><p>Elige la ficha, pega una URL oficial y, si quieres, acota el dato: especialistas, servicios, sedes, contacto u otro campo. El agente solo dejará propuestas para revisión.</p>';
+        el("jobHelp").innerHTML = '<strong>Completar una clínica existente</strong><p>Elige la ficha, pega el link oficial y añade una nota si quieres acotar lo que debe mirar.</p>';
+        el("jobQueryLabel").textContent = "Nota para el agente";
+        el("jobQuery").placeholder = "Ejemplo: en esta página está todo el equipo; completar especialistas publicados.";
+        el("jobQueryHint").textContent = "Texto libre para orientar al agente. No cambia la ficha directamente.";
+        el("jobSourceUrlHint").textContent = "Necesario para completar una ficha existente desde una fuente concreta.";
         el("jobBtn").textContent = "Añadir a trabajos";
         return;
       }
-      el("jobHelp").innerHTML = '<strong>Recomendar clínica</strong><p>Escribe el nombre, web, ciudad o cualquier pista. El agente buscará datos y dejará una propuesta interna; no se publica solo.</p>';
+      el("jobHelp").innerHTML = '<strong>Recomendar clínica</strong><p>Escribe una pista y pega un link si lo tienes. Entrará en Trabajos y volverá como propuesta revisable.</p>';
+      el("jobQueryLabel").textContent = "Texto para el agente";
+      el("jobQuery").placeholder = "Nombre de clínica, ciudad, web, qué has visto o qué quieres que revise.";
+      el("jobQueryHint").textContent = "Puedes escribir una frase normal. No incluyas datos médicos personales.";
+      el("jobSourceUrlHint").textContent = "Opcional si solo estás recomendando una clínica nueva.";
       el("jobBtn").textContent = "Recomendar clínica";
     }
 
@@ -10188,7 +10202,12 @@
       var targets = selectedExistingClinicJobTargets();
       var labels = targets.map(function (item) { return item.label; });
       var fieldKeys = targets.map(function (item) { return item.key; });
+      var operatorNote = trimmed("jobQuery");
       var labelSummary = selectedField ? labels.map(function (item) { return item.toLowerCase(); }).join(", ") : "datos claros de esa URL";
+      var intent = selectedField
+        ? "Daniel indica que esta URL oficial contiene " + labelSummary + " de esta clínica. Revisar solo ese alcance y devolver propuestas revisables."
+        : "Daniel recomienda esta URL oficial para completar una clínica existente. Extraer solo datos claros de esa URL y devolver propuestas revisables.";
+      if (operatorNote) intent += " Nota de Daniel: " + operatorNote;
       var payload = {
         job_type: "EXTRACT_CLINIC_PROFILE",
         status: "queued",
@@ -10203,6 +10222,7 @@
           clinic_name: clinic.display_name,
           source_url: url,
           source_urls: [url],
+          source: "admin_recommend_clinic_form",
           requested_fields: fieldKeys,
           requested_field_labels: labels,
           missing_fields: labels,
@@ -10211,13 +10231,12 @@
           operator_requested_field_keys: fieldKeys,
           operator_requested_field_labels: labels,
           operator_requested_field_summary: labelSummary,
+          operator_note: operatorNote,
           human_supplied_source: true,
           target_scope: selectedField ? "operator_selected_fields" : "operator_clear_profile_fields",
           ui_route: "sidebar_existing_clinic_source_job",
           source_job_version: "2026-09-01.recommend-clinic-source",
-          operator_intent: selectedField
-            ? "Daniel indica que esta URL oficial contiene " + labelSummary + " de esta clínica. Revisar solo ese alcance y devolver propuestas revisables."
-            : "Daniel recomienda esta URL oficial para completar una clínica existente. Extraer solo datos claros de esa URL y devolver propuestas revisables.",
+          operator_intent: intent,
           llm_boundary: "respect_source_job_context_scope",
           allowed_output: "review_queue_proposal_only",
           instruction: "Extrae solo datos claros de esta fuente y crea propuestas revisables. No publiques ni guardes datos en la ficha sin aprobacion humana."
@@ -10231,6 +10250,7 @@
         return false;
       }
       setInput("jobSourceUrl", "");
+      setInput("jobQuery", "");
       toast("Recomendación añadida a Trabajos.");
       return true;
     }
@@ -10254,15 +10274,41 @@
         if (queued) await loadDashboard();
         return;
       }
+      var jobType = el("jobType").value;
+      var operatorNote = trimmed("jobQuery");
+      var rawSourceUrl = trimmed("jobSourceUrl");
+      var sourceUrl = rawSourceUrl ? cleanHttpUrl(rawSourceUrl) : "";
+      if (rawSourceUrl && !sourceUrl) {
+        el("jobBtn").disabled = false;
+        toast("El link debe empezar por http o https.");
+        el("jobSourceUrl").focus();
+        return;
+      }
+      if (jobType === "DISCOVER_CLINIC" && !operatorNote && !sourceUrl) {
+        el("jobBtn").disabled = false;
+        toast("Escribe un texto o pega un link.");
+        el("jobQuery").focus();
+        return;
+      }
+      var jobInputData = {
+        query: [operatorNote, sourceUrl].filter(Boolean).join(" "),
+        country: el("jobCountry").value.trim(),
+        mode: "shadow",
+        source: "admin_recommend_clinic_form",
+        operator_note: operatorNote,
+        ui_route: jobType === "QUALITY_AUDIT" ? "admin_quality_audit_form" : "admin_recommend_clinic_form",
+        allowed_output: "review_queue_proposal_only"
+      };
+      if (sourceUrl) {
+        jobInputData.source_url = sourceUrl;
+        jobInputData.source_urls = [sourceUrl];
+        jobInputData.human_supplied_source = true;
+      }
       var payload = {
-        job_type: el("jobType").value,
+        job_type: jobType,
         status: "queued",
         priority: 100,
-        input: {
-          query: el("jobQuery").value.trim(),
-          country: el("jobCountry").value.trim(),
-          mode: "shadow"
-        },
+        input: jobInputData,
         model_tier: "cheap",
         requires_human: false
       };
@@ -10286,6 +10332,8 @@
       } else {
         toast("Trabajo enviado a cola.");
       }
+      setInput("jobQuery", "");
+      setInput("jobSourceUrl", "");
       el("jobBtn").disabled = false;
       await loadDashboard();
     }
@@ -10353,25 +10401,6 @@
       el("loginForm").addEventListener("submit", signIn);
       el("jobForm").addEventListener("submit", createJob);
       el("jobType").addEventListener("change", updateJobHelp);
-      Array.prototype.slice.call(document.querySelectorAll("[data-job-query]")).forEach(function (button) {
-        button.addEventListener("click", function () {
-          el("jobType").value = "DISCOVER_CLINIC";
-          setInput("jobQuery", button.getAttribute("data-job-query"));
-          setInput("jobCountry", "España");
-          updateJobHelp();
-          el("jobQuery").focus();
-        });
-      });
-      Array.prototype.slice.call(document.querySelectorAll("[data-job-clinic]")).forEach(function (button) {
-        button.addEventListener("click", function () {
-          el("jobType").value = "EXTRACT_CLINIC_PROFILE";
-          setInput("jobExistingClinic", button.getAttribute("data-job-clinic"));
-          setInput("jobSourceUrl", button.getAttribute("data-job-url"));
-          el("jobRequestedField").value = button.getAttribute("data-job-field") || "";
-          updateJobHelp();
-          el("jobSourceUrl").focus();
-        });
-      });
       el("clinicForm").addEventListener("submit", saveClinic);
       el("clinicForm").addEventListener("input", updateFinalValidation);
       el("clinicForm").addEventListener("change", updateFinalValidation);

@@ -280,15 +280,18 @@ Cuando la madurez diga **Lista para Daniel**, no significa que se active sola. S
 Aunque aparezcan capturas candidatas a limpieza, el sistema no borra nada desde el panel. Borrar evidencias requiere una decisión explícita tuya.
 
 En el menú lateral tienes **Recomendar clínica**. Ahí puedes crear trabajo
-para el agente sin tocar la web: recomendar una clínica nueva, completar una
-clínica existente con una URL oficial o lanzar una auditoría interna. El panel
-avisa cuando la bandeja está casi llena. Si el freno está cerca del límite,
-pausa crear más trabajos hasta limpiar revisiones. Así evitamos llenar la
-bandeja con más propuestas antes de cerrar las que ya existen.
+para el agente sin tocar la web: escribe una petición en texto libre, pega un
+link oficial si lo tienes, elige si es una clínica nueva o una ficha existente,
+y el trabajo entra en la cola interna. El panel avisa cuando la bandeja está
+casi llena. Si el freno está cerca del límite, pausa crear más trabajos hasta
+limpiar revisiones. Así evitamos llenar la bandeja con más propuestas antes de
+cerrar las que ya existen.
 
 Para completar una clínica existente, elige **Completar clínica existente**,
 selecciona la ficha, pega una URL oficial y, si quieres, indica qué información
 buscas: especialistas, servicios, sedes, contacto, Google Maps u otro campo. El
+campo **Nota para el agente** sirve para escribir frases normales, por ejemplo
+"en esta página está todo el equipo; completar especialistas publicados". El
 trabajo queda en **Trabajos pendientes** hasta que lo procese el ciclo CTO
 supervisado. Cuando haya datos revisables, volverá como propuesta; no se guarda
 ni publica automáticamente.

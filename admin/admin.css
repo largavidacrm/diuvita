@@ -1412,6 +1412,14 @@ td small {
   grid-template-columns: minmax(12rem, 0.7fr) minmax(16rem, 1fr) minmax(14rem, 0.8fr);
 }
 
+.job-form-grid .field-wide {
+  grid-column: 1 / -1;
+}
+
+.job-form-grid textarea {
+  min-height: 6.5rem;
+}
+
 .job-help {
   padding: 0.78rem 0.85rem;
   border: 1px solid rgba(14, 79, 74, 0.22);
@@ -1429,18 +1437,6 @@ td small {
   color: var(--muted);
   font-weight: 650;
   line-height: 1.35;
-}
-
-.job-examples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.job-examples .link-btn {
-  min-height: 2rem;
-  padding: 0.3rem 0.52rem;
-  font-size: 0.88rem;
 }
 
 .job-backlog-hint {

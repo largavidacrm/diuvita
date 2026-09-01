@@ -47,12 +47,17 @@ def main() -> None:
         'id="jobExistingClinic"',
         'id="jobSourceUrl"',
         'id="jobRequestedField"',
-        'data-job-clinic="Neleva"',
-        'data-job-url="https://clinicaneleva.com/equipo/"',
-        'data-job-field="profesionales"',
+        'id="jobQueryLabel"',
+        'id="jobQueryHint"',
+        'id="jobSourceUrlHint"',
+        '<textarea id="jobQuery"',
+        "Texto para el agente",
+        "Link oficial",
         "Recomendar clínica",
         "Completar clínica existente",
         "Añadir a trabajos",
+        'source: "admin_recommend_clinic_form"',
+        "operator_note",
         'id="pendingJobsBody"',
         'id="pendingJobCount"',
         "Trabajos pendientes",
@@ -84,6 +89,16 @@ def main() -> None:
         'jumpToControlSection("reviewWorkArea")',
     ]:
         check(marker in index, f"missing control sidebar marker: {marker}")
+
+    for removed_marker in [
+        'data-job-query=',
+        'data-job-clinic=',
+        'IMDA: dirección y contacto',
+        'Regenera: especialistas',
+        'RoseBar: ubicación',
+        'Neleva: especialistas',
+    ]:
+        check(removed_marker not in index, f"old recommendation example should be gone: {removed_marker}")
 
     for marker in [
         ".control-layout",
