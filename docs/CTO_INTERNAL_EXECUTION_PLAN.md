@@ -1133,6 +1133,12 @@ Next 10 technical steps:
      `/admin/`: quality-audit rows now state **Abrirá: [campo]** with the first
      pending issue, so Daniel sees what the review asks before opening the
      ficha.
+219. Carry manual-review routes into the CTO cycle brief. Done locally in
+     `scripts/run_cto_shadow_cycle.py`: unattended CTO runs now include how many
+     review cards open a concrete admin field, how many can accept an official
+     URL for a bounded agent job, and how many remain blocked by source-only
+     context. This preserves the future LLM automation path without calling an
+     LLM, writing clinic data or resolving cards.
 
 ## Daniel decision checkpoints
 

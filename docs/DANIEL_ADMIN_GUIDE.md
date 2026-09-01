@@ -235,18 +235,22 @@ especialistas. Eso no guarda ni publica: solo prepara el formulario para que lo
 revises antes de guardar.
 
 Si una revisión manual dice que faltan datos pero la fuente está clara, abre la
-tarjeta: el panel te llevará directamente al dato que falta, para que lo edites
-tú. Si conoces una URL oficial donde el agente debe mirar, pégala en **Dile al
-agente dónde mirar** y pulsa **Enviar URL al agente**. Por ejemplo, si faltan
-especialistas, pega la página oficial de equipo o especialistas. Eso crea
-trabajo interno para propuestas revisables, limitado a los campos pendientes de
-esa tarjeta; no guarda ni publica datos.
+tarjeta: primero verás la ficha y la revisión en columnas. Desde ahí, pulsa
+**Modificar** o **Revisión manual** para abrir directamente el campo que toca en
+la ficha. Si conoces una URL oficial donde el agente debe mirar, pégala en
+**Dile al agente dónde mirar** y pulsa **Enviar URL al agente**. Por ejemplo, si
+faltan especialistas, pega la página oficial de equipo o especialistas. Eso
+crea trabajo interno para propuestas revisables, limitado a los campos
+pendientes de esa tarjeta; no guarda ni publica datos.
 
 Codex también puede generar una lectura interna de rutas de revisión manual.
 Sirve para saber qué tarjetas deben abrir un campo concreto, cuáles permiten
 pegar una URL oficial para el agente y cuáles siguen siendo solo revisión
 humana. Esa lectura no llama a ningún LLM, no cambia datos y no resuelve
 tarjetas.
+El ciclo CTO interno también puede incluir esa lectura para preparar futura
+ayuda LLM, pero la decisión sigue estando en el panel: una tarjeta, una
+decisión humana.
 
 En el editor de clínica, **Modalidad de atención** describe si la clínica es
 presencial, online o mixta. No decide la publicación. La publicación se decide

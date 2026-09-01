@@ -12,6 +12,7 @@ from run_cto_shadow_cycle import (
     enrichment_consolidation_status,
     format_cycle_brief,
     google_link_reconciliation_status,
+    manual_review_route_status,
     open_review_count_from_digest,
     publication_readiness_status,
     skipped_step,
@@ -55,6 +56,35 @@ def main():
     })
     check(compact_items["items_count"] == 2, "items count should be kept")
     check("items" not in compact_items, "full item list should be removed")
+    compact_manual_routes = compact_summary("manual_review_route_brief", {
+        "summary": {
+            "reported_packets": 3,
+            "manual_field_routes": 2,
+            "source_handoff_available": 1,
+            "blocked_without_operator_context": 1,
+        },
+        "items": [
+            {
+                "title": "Revisión manual: Tiara Health",
+                "clinic_name": "Tiara Health",
+                "operator_action": "open_manual_field",
+                "human_next_step": "Abrir la ficha y editar Especialistas publicados.",
+                "manual_primary_target": {
+                    "key": "profesionales",
+                    "label": "Especialistas publicados",
+                    "admin_target_id": "clinicProfessionals",
+                },
+                "raw_packet": {"large": True},
+            }
+        ],
+    })
+    check(compact_manual_routes["items_count"] == 1, "manual route item count should be kept")
+    check("items" not in compact_manual_routes, "raw manual route items should be removed")
+    check(
+        compact_manual_routes["sample_items"][0]["manual_primary_target"]["admin_target_id"] == "clinicProfessionals",
+        "manual route sample should keep the admin target",
+    )
+    check("raw_packet" not in compact_manual_routes["sample_items"][0], "manual route raw packets should be omitted")
     compact_proposals = compact_summary("export_specialist_claim_proposals", {
         "summary": {"proposal_count": 1, "skipped_with_open_cards": 2},
         "proposals": [
@@ -353,6 +383,29 @@ def main():
         == "1 telefonos dudosos en 2 grupos; revisar antes de fusionar",
         "weak phone consolidation status should be visible",
     )
+    manual_route_step = {
+        "name": "manual_review_route_brief",
+        "ok": True,
+        "summary": {
+            "summary": {
+                "reported_packets": 6,
+                "manual_field_routes": 3,
+                "source_handoff_available": 2,
+                "blocked_without_operator_context": 1,
+                "direct_change_reviews": 1,
+            },
+            "items_count": 6,
+        },
+    }
+    check(
+        manual_review_route_status(manual_route_step)
+        == "3 abren campo directo; 2 permiten URL oficial; 1 bloqueadas por fuente sin contexto",
+        "manual review route status should summarize operator routes",
+    )
+    check(
+        manual_review_route_status(None) == "no comprobadas en este ciclo",
+        "missing manual route step should be explicit",
+    )
     compact_digest = compact_summary("admin_digest", {
         "admin_email": "admin@example.test",
         "summary": {"reviews": {"open": 2}},
@@ -620,6 +673,7 @@ def main():
     check("Preparacion publicacion: no comprobada en este ciclo" in brief_text, "plain brief publication readiness line missing")
     check("Visibilidad clinica: no comprobada en este ciclo" in brief_text, "plain brief clinic visibility line missing")
     check("Consolidacion mejoras: no comprobada en este ciclo" in brief_text, "plain brief consolidation line missing")
+    check("Rutas revision manual: no comprobadas en este ciclo" in brief_text, "plain brief manual routes line missing")
     check("Conciliacion Google: no comprobada en este ciclo" in brief_text, "plain brief Google reconciliation line missing")
     check("Conciliacion especialistas: no comprobada en este ciclo" in brief_text, "plain brief specialist reconciliation line missing")
     check("Propuestas especialistas: no comprobadas en este ciclo" in brief_text, "plain brief specialist proposal line missing")
@@ -794,6 +848,21 @@ def main():
         in format_cycle_brief(consolidation_cycle_brief),
         "plain brief should show consolidation result",
     )
+    manual_route_cycle_brief = build_cycle_brief({
+        "mode": "dry_run",
+        "ok": True,
+        "steps": [manual_route_step],
+    })
+    check(
+        manual_route_cycle_brief["manual_review_routes"]
+        == "3 abren campo directo; 2 permiten URL oficial; 1 bloqueadas por fuente sin contexto",
+        "manual route status should enter cycle brief",
+    )
+    check(
+        "Rutas revision manual: 3 abren campo directo; 2 permiten URL oficial; 1 bloqueadas por fuente sin contexto"
+        in format_cycle_brief(manual_route_cycle_brief),
+        "plain brief should show manual route result",
+    )
     steps = build_steps(Namespace(
         apply_safe=False,
         review_limit=2,
@@ -826,6 +895,7 @@ def main():
         publication_readiness_clinic="",
         publication_readiness_limit=8,
         backlog_brief_limit=4,
+        manual_route_limit=6,
         enrichment_consolidation_limit=6,
         enrichment_consolidation_clinic="",
         google_link_reconciliation=False,
@@ -920,6 +990,7 @@ def main():
         publication_readiness_clinic="",
         publication_readiness_limit=8,
         backlog_brief_limit=4,
+        manual_route_limit=6,
         enrichment_consolidation_limit=6,
         enrichment_consolidation_clinic="",
         google_link_reconciliation=False,
@@ -953,10 +1024,14 @@ def main():
     backlog_step = [step for step in steps if step[0] == "review_backlog_brief"][0]
     check("--json" in backlog_step[1], "review backlog brief should be machine readable")
     check("4" in backlog_step[1], "review backlog brief limit should pass through")
+    manual_route_step_def = [step for step in steps if step[0] == "manual_review_route_brief"][0]
+    check("--preserve-order" in manual_route_step_def[1], "manual route brief should keep dashboard queue order")
+    check("6" in manual_route_step_def[1], "manual route limit should pass through")
     consolidation_step_def = [step for step in steps if step[0] == "consolidate_profile_enrichment_reviews"][0]
     check("--json" in consolidation_step_def[1], "consolidation should be machine readable")
     check("6" in consolidation_step_def[1], "consolidation limit should pass through")
-    check(steps.index(backlog_step) < steps.index(consolidation_step_def), "consolidation should follow backlog brief")
+    check(steps.index(backlog_step) < steps.index(manual_route_step_def), "manual routes should follow backlog brief")
+    check(steps.index(manual_route_step_def) < steps.index(consolidation_step_def), "consolidation should follow manual route brief")
     digest_step = [step for step in steps if step[0] == "admin_digest"][0]
     check(steps.index(consolidation_step_def) < steps.index(digest_step), "consolidation should run before admin digest")
     check("--json" in digest_step[1], "admin digest should be machine readable")
@@ -995,6 +1070,7 @@ def main():
         publication_readiness_clinic="Monarka",
         publication_readiness_limit=5,
         backlog_brief_limit=4,
+        manual_route_limit=6,
         enrichment_consolidation_limit=4,
         enrichment_consolidation_clinic="Sensabell",
         google_link_reconciliation=True,

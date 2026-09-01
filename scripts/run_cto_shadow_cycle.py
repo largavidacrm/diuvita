@@ -128,6 +128,25 @@ STEP_ITEM_KEYS = {
         "max_priority",
         "oldest_created_at",
     ),
+    "manual_review_route_brief": (
+        "title",
+        "clinic_name",
+        "review_type",
+        "proposal_type",
+        "priority",
+        "operator_action",
+        "human_next_step",
+        "llm_help_scope",
+        "manual_primary_target",
+        "manual_target_labels",
+        "source_origin_status",
+        "source_handoff",
+        "editable_field_count",
+        "proposed_field_count",
+        "warning_count",
+        "writes_data",
+        "calls_llm",
+    ),
     "consolidate_profile_enrichment_reviews": (
         "clinic_name",
         "clinic_slug",
@@ -218,6 +237,7 @@ STEP_LABELS = {
     "measure_profile_completeness": "completitud de fichas",
     "clinic_publication_readiness": "preparacion para publicacion",
     "review_backlog_brief": "atascos de bandeja",
+    "manual_review_route_brief": "rutas de revision manual",
     "consolidate_profile_enrichment_reviews": "consolidacion de mejoras duplicadas",
     "admin_digest": "resumen interno",
     "evaluate_claim_rules": "reglas de publicacion",
@@ -632,6 +652,32 @@ def enrichment_consolidation_status(step: dict[str, Any] | None) -> str:
     return f"{fields} campos listos para revisar en {groups} grupos ({cards} tarjetas)"
 
 
+def manual_review_route_status(step: dict[str, Any] | None) -> str:
+    if not step:
+        return "no comprobadas en este ciclo"
+    if not step.get("ok"):
+        return "revisar"
+    summary = safe_step_summary(step)
+    counts = summary.get("summary") if isinstance(summary.get("summary"), dict) else {}
+    total = as_int(counts.get("reported_packets") or counts.get("total_packets"))
+    if not total:
+        return "sin tarjetas medidas"
+    manual = as_int(counts.get("manual_field_routes"))
+    handoff = as_int(counts.get("source_handoff_available"))
+    blocked = as_int(counts.get("blocked_without_operator_context"))
+    direct = as_int(counts.get("direct_change_reviews"))
+    parts: list[str] = []
+    if manual:
+        parts.append(f"{manual} abren campo directo")
+    if handoff:
+        parts.append(f"{handoff} permiten URL oficial")
+    if blocked:
+        parts.append(f"{blocked} bloqueadas por fuente sin contexto")
+    if direct and not parts:
+        parts.append(f"{direct} listas para decision directa")
+    return "; ".join(parts) if parts else f"{total} tarjetas sin ruta especial"
+
+
 def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     steps = [step for step in output.get("steps") or [] if isinstance(step, dict)]
     failed_step = first_failed_step(steps)
@@ -705,6 +751,8 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
     specialist_claim_proposals = specialist_claim_proposal_status(specialist_claim_proposal_step)
     enrichment_consolidation_step = find_step(steps, "consolidate_profile_enrichment_reviews")
     enrichment_consolidation = enrichment_consolidation_status(enrichment_consolidation_step)
+    manual_route_step = find_step(steps, "manual_review_route_brief")
+    manual_review_routes = manual_review_route_status(manual_route_step)
 
     if admin_digest:
         next_action = next_action_label(admin_digest)
@@ -760,6 +808,7 @@ def build_cycle_brief(output: dict[str, Any]) -> dict[str, Any]:
         "specialist_reconciliation": specialist_reconciliation,
         "specialist_claim_proposals": specialist_claim_proposals,
         "enrichment_consolidation": enrichment_consolidation,
+        "manual_review_routes": manual_review_routes,
         "attention": attention,
     }
 
@@ -784,6 +833,7 @@ def format_cycle_brief(brief: dict[str, Any]) -> str:
         f"- Preparacion publicacion: {brief.get('publication_readiness')}.",
         f"- Visibilidad clinica: {brief.get('clinic_visibility')}.",
         f"- Consolidacion mejoras: {brief.get('enrichment_consolidation')}.",
+        f"- Rutas revision manual: {brief.get('manual_review_routes')}.",
         f"- Conciliacion Google: {brief.get('google_link_reconciliation')}.",
         f"- Conciliacion especialistas: {brief.get('specialist_reconciliation')}.",
         f"- Propuestas especialistas: {brief.get('specialist_claim_proposals')}.",
@@ -987,6 +1037,16 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str], int]]:
             45,
         ),
         (
+            "manual_review_route_brief",
+            [
+                "manual_review_route_brief.py",
+                "--limit",
+                str(args.manual_route_limit),
+                "--preserve-order",
+            ],
+            45,
+        ),
+        (
             "consolidate_profile_enrichment_reviews",
             [
                 "consolidate_profile_enrichment_reviews.py",
@@ -1168,6 +1228,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--publication-readiness-clinic", default="", help="Clinic name or slug for publication-readiness diagnostics.")
     parser.add_argument("--publication-readiness-limit", type=int, default=8)
     parser.add_argument("--backlog-brief-limit", type=int, default=8)
+    parser.add_argument("--manual-route-limit", type=int, default=30, help="Maximum open review routes to summarize.")
     parser.add_argument("--enrichment-consolidation-limit", type=int, default=8)
     parser.add_argument("--enrichment-consolidation-clinic", default="", help="Clinic name or slug for duplicate enrichment consolidation.")
     parser.add_argument(
@@ -1253,6 +1314,7 @@ def main() -> int:
         args.source_coverage_limit,
         args.profile_completeness_limit,
         args.publication_readiness_limit,
+        args.manual_route_limit,
         args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
@@ -1279,6 +1341,7 @@ def main() -> int:
         args.source_coverage_limit,
         args.profile_completeness_limit,
         args.publication_readiness_limit,
+        args.manual_route_limit,
         args.enrichment_consolidation_limit,
         args.google_link_reconciliation_limit,
         args.specialist_reconciliation_limit,
