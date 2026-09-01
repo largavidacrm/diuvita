@@ -1038,6 +1038,11 @@ Next 10 technical steps:
      checks that Google Reviews dependency metadata, the LLM suggestion guard
      and source-origin status remain present before treating the worktree as
      locally ready.
+199. Surface LLM source-context readiness in status reports. Done locally in
+     `scripts/admin_digest.py` and `scripts/global_plan_status.py`: roadmap
+     snapshots now show how many source-backed review cards are ready for LLM
+     assistance, recoverable from their source job, or only safe for manual
+     review because they carry a URL without operator context.
 
 ## Daniel decision checkpoints
 

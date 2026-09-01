@@ -11,6 +11,7 @@ from global_plan_status import (
     plan_phase,
     review_backlog_needs_care,
     source_monitoring_status,
+    source_origin_audit_status,
     specialist_status,
     visible_clinic_status,
 )
@@ -92,6 +93,13 @@ def sample_digest():
                 "professionals_count": 11,
             },
         },
+        "review_source_origin_audit": {
+            "cards": 22,
+            "context_ready": 4,
+            "recoverable_from_job": 3,
+            "source_without_context": 15,
+            "no_source_context": 0,
+        },
         "profile_completeness": {
             "visible_clinics": 19,
             "with_pending_fields": 19,
@@ -166,6 +174,7 @@ def main():
     )
     check(codex_can_continue_status(digest) == "mejorar panel, extractores y checks sin crear tarjetas nuevas", "Codex safe next step missing")
     check(not_ready_status(digest) == "muestra humana insuficiente: 2/200 candidatas", "not-ready reason missing")
+    check(source_origin_audit_status(digest) == "4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual", "LLM source-origin status missing")
     check("# Vitalarga: estado del plan global" in output, "title missing")
     check("Git: main · abc123 Test commit" in output, "git label missing")
     check("## Lectura rápida" in output, "quick-read section missing")
@@ -183,6 +192,7 @@ def main():
     check("Trazabilidad de fuentes: 11/19 fichas con fuente" in output, "source coverage line missing")
     check("Sedes y ubicaciones: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Ciclo autónomo: activo en sombra; señal automática base" in output, "shadow cycle line missing")
+    check("Preparación LLM de revisiones: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual" in output, "LLM review preparation line missing")
     check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
     check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
     check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "top publication blocker missing")

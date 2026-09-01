@@ -17,6 +17,7 @@ from admin_digest import (
     publication_control_status,
     publication_readiness_status,
     review_backlog_guard_status,
+    source_origin_audit_status,
     source_coverage_status,
     specialist_review_status,
     top_publication_missing_field,
@@ -150,6 +151,13 @@ def main():
                 "title": "Regenera Clinic Medicina de la Longevidad",
                 "professionals_count": 11,
             },
+        },
+        "review_source_origin_audit": {
+            "cards": 22,
+            "context_ready": 4,
+            "recoverable_from_job": 3,
+            "source_without_context": 15,
+            "no_source_context": 0,
         },
         "recent_failed_jobs": [],
         "claim_quality": {
@@ -371,6 +379,10 @@ def main():
         specialist_review_status(digest) == "2 tarjetas; 17 especialistas propuestos; primera: Regenera Clinic Medicina de la Longevidad · 11 especialistas",
         "specialist review status missing",
     )
+    check(
+        source_origin_audit_status(digest) == "4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual",
+        "source origin audit status missing",
+    )
     limited_digest = dict(digest)
     limited_digest["open_reviews"] = [
         {
@@ -425,6 +437,7 @@ def main():
     check("Publicacion web: con cambios pendientes de verse online" in pending_output, "pending publication line missing")
     check("Freno bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
+    check("Contexto LLM revisiones: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual" in output, "source origin audit line missing")
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
     check(
         'proposed_google_maps_check = "btrim(proposed.value) ~* \'^https?://\'"' in source,
@@ -438,6 +451,8 @@ def main():
     )
     check("publication_readiness_base as (" in source, "digest should calculate publication readiness")
     check("'publication_readiness', (select data from publication_readiness)" in source, "digest should expose publication readiness")
+    check("review_source_origin_audit as (" in source, "digest should calculate source-origin audit")
+    check("'review_source_origin_audit', (select data from review_source_origin_audit)" in source, "digest should expose source-origin audit")
     check("Especialistas pendientes: 2 tarjetas; 17 especialistas propuestos" in output, "specialist pending line missing")
     check("Grupo por clinica: Abrir Sensabell: 5 tarjetas" in output, "clinic workgroup line missing")
     check("Duplicados mejoras: 1 clinicas / 2 tarjetas" in output, "duplicate enrichment signal missing")

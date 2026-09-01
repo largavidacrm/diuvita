@@ -405,6 +405,121 @@ specialist_reviews as (
   ) as data
   from specialist_review_rows
 ),
+review_source_origin_raw as (
+  select
+    rq.id,
+    rq.title,
+    rq.created_at,
+    c.slug as clinic_slug,
+    c.display_name as clinic_name,
+    coalesce(
+      nullif(btrim(coalesce(rq.payload ->> 'source_url', '')), ''),
+      nullif(btrim(case
+        when jsonb_typeof(coalesce(rq.payload -> 'source_urls', '[]'::jsonb)) = 'array'
+          then coalesce((rq.payload -> 'source_urls') ->> 0, '')
+        else ''
+      end), ''),
+      nullif(btrim(coalesce(aj.input ->> 'source_url', '')), ''),
+      nullif(btrim(case
+        when jsonb_typeof(coalesce(aj.input -> 'source_urls', '[]'::jsonb)) = 'array'
+          then coalesce((aj.input -> 'source_urls') ->> 0, '')
+        else ''
+      end), ''),
+      ''
+    ) as source_url,
+    exists (
+      select 1
+      from (values
+        ('from_review_id'),
+        ('human_supplied_source'),
+        ('requested_fields'),
+        ('requested_field_labels'),
+        ('primary_requested_fields'),
+        ('primary_requested_field_labels'),
+        ('target_scope'),
+        ('ui_route'),
+        ('allowed_output')
+      ) as context_keys(key)
+      where coalesce(rq.payload, '{{}}'::jsonb) ? context_keys.key
+        and coalesce(rq.payload -> context_keys.key, 'null'::jsonb)
+          not in ('null'::jsonb, '""'::jsonb, '[]'::jsonb, '{{}}'::jsonb)
+    ) as payload_has_context,
+    exists (
+      select 1
+      from (values
+        ('from_review_id'),
+        ('human_supplied_source'),
+        ('requested_fields'),
+        ('requested_field_labels'),
+        ('primary_requested_fields'),
+        ('primary_requested_field_labels'),
+        ('target_scope'),
+        ('ui_route'),
+        ('allowed_output')
+      ) as context_keys(key)
+      where coalesce(aj.input, '{{}}'::jsonb) ? context_keys.key
+        and coalesce(aj.input -> context_keys.key, 'null'::jsonb)
+          not in ('null'::jsonb, '""'::jsonb, '[]'::jsonb, '{{}}'::jsonb)
+    ) as job_has_context
+  from public.review_queue rq
+  left join public.clinics c on c.id = rq.clinic_id
+  left join public.agent_jobs aj on aj.id::text = coalesce(rq.payload ->> 'job_id', '')
+  where rq.status = 'open'
+    and rq.review_type = 'clinic_profile_enrichment'
+    and (
+      rq.payload ? 'source_url'
+      or rq.payload ? 'source_urls'
+      or rq.payload ? 'job_id'
+      or aj.input ? 'source_url'
+      or aj.input ? 'source_urls'
+    )
+),
+review_source_origin_rows as (
+  select
+    *,
+    case
+      when payload_has_context then 'context_ready'
+      when job_has_context then 'recoverable_from_job'
+      when source_url <> '' then 'source_without_context'
+      else 'no_source_context'
+    end as status
+  from review_source_origin_raw
+),
+review_source_origin_audit as (
+  select jsonb_build_object(
+    'cards', count(*),
+    'context_ready', count(*) filter (where status = 'context_ready'),
+    'recoverable_from_job', count(*) filter (where status = 'recoverable_from_job'),
+    'source_without_context', count(*) filter (where status = 'source_without_context'),
+    'no_source_context', count(*) filter (where status = 'no_source_context'),
+    'first_attention', coalesce(
+      (
+        select to_jsonb(items)
+        from (
+          select
+            id,
+            title,
+            created_at,
+            clinic_slug,
+            clinic_name,
+            status
+          from review_source_origin_rows
+          where status <> 'context_ready'
+          order by
+            case status
+              when 'recoverable_from_job' then 1
+              when 'source_without_context' then 2
+              else 3
+            end,
+            created_at asc
+          limit 1
+        ) items
+      ),
+      '{{}}'::jsonb
+    )
+  ) as data
+  from review_source_origin_rows
+),
 review_examples_by_type as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.review_type), '[]'::jsonb) as data
   from (
@@ -1188,6 +1303,7 @@ select jsonb_build_object(
   'review_first_clinic_workgroup', (select data from review_first_clinic_workgroup),
   'google_link_reviews', (select data from google_link_reviews),
   'specialist_reviews', (select data from specialist_reviews),
+  'review_source_origin_audit', (select data from review_source_origin_audit),
   'review_examples_by_type', (select data from review_examples_by_type),
   'recent_failed_jobs', (select data from recent_failed_jobs),
   'recent_jobs_by_type', (select data from recent_jobs_by_type),
@@ -1688,6 +1804,27 @@ def specialist_review_status(digest: dict[str, Any]) -> str:
     return f"{count} {plural(count, 'tarjeta', 'tarjetas')}; {detail}"
 
 
+def source_origin_audit_status(digest: dict[str, Any]) -> str:
+    status = digest.get("review_source_origin_audit") or {}
+    if not isinstance(status, dict):
+        return "sin mejoras con fuente para preparar"
+    cards = as_int(status.get("cards"))
+    if not cards:
+        return "sin mejoras con fuente para preparar"
+    ready = as_int(status.get("context_ready"))
+    recoverable = as_int(status.get("recoverable_from_job"))
+    source_only = as_int(status.get("source_without_context"))
+    no_source = as_int(status.get("no_source_context"))
+    parts = [f"{ready}/{cards} listas para LLM"]
+    if recoverable:
+        parts.append(f"{recoverable} recuperables desde trabajo")
+    if source_only:
+        parts.append(f"{source_only} solo fuente: revisión manual")
+    if no_source:
+        parts.append(f"{no_source} sin fuente utilizable")
+    return "; ".join(parts)
+
+
 def format_digest(digest: dict[str, Any]) -> str:
     summary = digest.get("summary") or {}
     clinics = summary.get("clinics") or {}
@@ -1780,6 +1917,9 @@ def format_digest(digest: dict[str, Any]) -> str:
     specialist_reviews = specialist_review_status(digest)
     if specialist_reviews != "sin tarjetas con especialistas":
         output.append(line("Especialistas pendientes", specialist_reviews))
+    source_origin = source_origin_audit_status(digest)
+    if source_origin != "sin mejoras con fuente para preparar":
+        output.append(line("Contexto LLM revisiones", source_origin))
     clinic_group = first_clinic_workgroup(digest)
     if clinic_group != "sin grupo por clínica medido":
         output.append(line("Grupo por clinica", clinic_group))
