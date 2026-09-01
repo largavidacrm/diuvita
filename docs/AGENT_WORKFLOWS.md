@@ -209,6 +209,13 @@ Required behavior:
 - If a packet contains `source_job_context`, the LLM can use it only to explain
   provenance and keep attention on the requested field; it is not permission to
   write source data, publish, or broaden the proposal.
+- If a packet contains `source_origin_status: source_without_context`, the LLM
+  may treat the URL as evidence to review, but must not infer the operator's
+  original intent from the host or URL alone.
+- If a packet contains `google_reviews_review.approval_dependency` and
+  `satisfied` is false, the LLM must not suggest approving or modifying the
+  Google reviews field until the clinic has a confirmed Google Maps profile or
+  the same packet also proposes one for Daniel to confirm first.
 
 ## APPLY_PUBLICATION_RULES
 

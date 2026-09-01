@@ -1033,6 +1033,11 @@ Next 10 technical steps:
      with a source URL but no operator/job context now carry
      `source_origin_status: source_without_context`, so LLM assistance can use
      the source as evidence without inferring why that URL was supplied.
+198. Add release-readiness markers for LLM review safeguards. Done locally in
+     `scripts/release_readiness_report.py`: the local readiness report now
+     checks that Google Reviews dependency metadata, the LLM suggestion guard
+     and source-origin status remain present before treating the worktree as
+     locally ready.
 
 ## Daniel decision checkpoints
 

@@ -40,6 +40,10 @@ SOURCE_MARKERS = [
     ("admin non-flat review columns", "admin/admin.css", "minmax(0, 1fr) minmax(260px, 320px)"),
     ("LLM manual review context", "scripts/review_proposal_decision_packets.py", "manual_review_context"),
     ("LLM manual source scope", "scripts/review_proposal_decision_packets.py", "primary_target_first"),
+    ("LLM Google reviews dependency", "scripts/review_proposal_decision_packets.py", '"approval_dependency"'),
+    ("LLM Google reviews suggestion guard", "scripts/validate_review_decision_suggestion.py", "google_reviews_dependency_errors"),
+    ("LLM source origin status", "scripts/review_proposal_decision_packets.py", "source_origin_status"),
+    ("LLM prompt source origin status", "scripts/prepare_review_decision_llm_prompt.py", '"source_origin_status"'),
     ("logo asset guard in build", "build.py", "def _looks_like_logo_asset"),
     ("logo download guard", "scripts/fetch_logos.py", "def looks_like_image"),
 ]
