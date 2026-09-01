@@ -7,6 +7,7 @@ from global_plan_status import (
     daniel_now_status,
     format_global_plan_status,
     location_status,
+    llm_review_readiness_blocker,
     not_ready_status,
     plan_phase,
     review_backlog_needs_care,
@@ -173,14 +174,27 @@ def main():
         "Daniel next step should open the concrete priority review",
     )
     check(codex_can_continue_status(digest) == "mejorar panel, extractores y checks sin crear tarjetas nuevas", "Codex safe next step missing")
-    check(not_ready_status(digest) == "muestra humana insuficiente: 2/200 candidatas", "not-ready reason missing")
+    check(
+        llm_review_readiness_blocker(digest)
+        == "preparación LLM incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual",
+        "LLM readiness blocker missing",
+    )
+    check(
+        not_ready_status(digest)
+        == "muestra humana insuficiente: 2/200 candidatas; preparación LLM incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual",
+        "not-ready reason missing",
+    )
     check(source_origin_audit_status(digest) == "4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual", "LLM source-origin status missing")
     check("# Vitalarga: estado del plan global" in output, "title missing")
     check("Git: main · abc123 Test commit" in output, "git label missing")
     check("## Lectura rápida" in output, "quick-read section missing")
     check("Daniel ahora: Abrir prioridad: abre el filtro Claims bloqueantes en el panel" in output, "Daniel quick action missing")
     check("Codex puede seguir con: mejorar panel, extractores y checks sin crear tarjetas nuevas" in output, "Codex safe work missing")
-    check("No activar todavía: muestra humana insuficiente: 2/200 candidatas" in output, "not-ready quick line missing")
+    check(
+        "No activar todavía: muestra humana insuficiente: 2/200 candidatas; preparación LLM incompleta: 4/22 listas para LLM; 3 recuperables desde trabajo; 15 solo fuente: revisión manual"
+        in output,
+        "not-ready quick line missing",
+    )
     check("## Siguiente en el panel" in output, "panel next-click section missing")
     check("No crees trabajos nuevos hasta bajar la bandeja; ahora está pausa preventiva: 48/50 abiertas; baja de 45." in output, "panel backlog guard missing")
     check("Pulsa Abrir prioridad: abre el filtro Claims bloqueantes en el panel." in output, "panel priority click missing")

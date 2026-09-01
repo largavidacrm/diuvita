@@ -1098,6 +1098,10 @@ Next 10 technical steps:
      preparation can now use `--require-llm-ready`, which refuses source-only
      packets without operator/job context instead of generating ambiguous LLM
      work.
+212. Surface incomplete LLM review readiness in the global quick read. Done
+     locally in `scripts/global_plan_status.py`: **No activar todavía** now
+     combines the human sample blocker with source-context readiness, so Daniel
+     can see when review-assistance LLM batches remain unsafe.
 
 ## Daniel decision checkpoints
 

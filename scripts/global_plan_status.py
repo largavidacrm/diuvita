@@ -165,10 +165,31 @@ def codex_can_continue_status(digest: dict[str, Any]) -> str:
     return "preparar el siguiente bloque técnico sin publicar"
 
 
+def llm_review_readiness_blocker(digest: dict[str, Any]) -> str:
+    status = digest.get("review_source_origin_audit") or {}
+    cards = as_int(status.get("cards"))
+    if not cards:
+        return ""
+    ready = as_int(status.get("context_ready"))
+    source_only = as_int(status.get("source_without_context"))
+    recoverable = as_int(status.get("recoverable_from_job"))
+    if ready >= cards:
+        return ""
+    if source_only or recoverable:
+        return f"preparación LLM incompleta: {source_origin_audit_status(digest)}"
+    return ""
+
+
 def not_ready_status(digest: dict[str, Any]) -> str:
     blockers = maturity_blockers(digest)
+    reasons = []
     if blockers:
-        return blockers[0]
+        reasons.append(blockers[0])
+    llm_blocker = llm_review_readiness_blocker(digest)
+    if llm_blocker:
+        reasons.append(llm_blocker)
+    if reasons:
+        return "; ".join(reasons[:2])
     return "auto-publicación y growth quedan parados hasta decisión explícita de Daniel"
 
 
