@@ -1164,6 +1164,11 @@ Next 10 technical steps:
      **Aprobar** or **Modificar**, never through **Rechazar**, so the single
      review decision remains traceable and future LLM automation still sees a
      bounded proposal lifecycle.
+222. Preview manual side-panel edits before decision. Done locally in `/admin/`:
+     inline clinic edits now show a compact **Cambios manuales preparados**
+     summary with before/after snippets. This keeps the review decision simple
+     while making it obvious which manual corrections will be saved if Daniel
+     approves or modifies the proposal.
 
 ## Daniel decision checkpoints
 

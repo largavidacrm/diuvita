@@ -786,6 +786,10 @@
                   <input id="reviewClinicEditInstagram" type="text">
                 </div>
               </div>
+              <div class="review-clinic-edit-changes hidden" id="reviewClinicEditChanges">
+                <strong>Cambios manuales preparados</strong>
+                <ul id="reviewClinicEditChangesList"></ul>
+              </div>
               <p class="field-note" id="reviewClinicEditHint">Los cambios se aplican solo si apruebas o guardas la modificación.</p>
             </section>
           </div>
@@ -7144,24 +7148,50 @@
       return normalizedFieldValue(value);
     }
 
-    function reviewClinicProfileEditedFields(row) {
-      var fields = {};
-      if (!activeReviewProfileEditMode || !row) return fields;
+    function reviewClinicProfileEditedFieldItems(row) {
+      var items = [];
+      if (!activeReviewProfileEditMode || !row) return items;
       reviewClinicProfileEditDefinitions().forEach(function (definition) {
         var baseValue = reviewClinicProfileEditBaseValue(row, definition);
         var inputValue = reviewClinicProfileInputValue(definition);
         if (reviewClinicProfileCompareValue(baseValue) !== reviewClinicProfileCompareValue(inputValue)) {
-          fields[definition.key] = inputValue;
+          items.push({
+            key: definition.key,
+            label: proposalLabel(definition.key),
+            beforeValue: baseValue,
+            afterValue: inputValue
+          });
         }
+      });
+      return items;
+    }
+
+    function reviewClinicProfileEditedFields(row) {
+      var fields = {};
+      reviewClinicProfileEditedFieldItems(row).forEach(function (item) {
+        fields[item.key] = item.afterValue;
       });
       return fields;
     }
 
+    function renderReviewClinicEditChanges(items) {
+      items = items || [];
+      show(el("reviewClinicEditChanges"), Boolean(items.length));
+      el("reviewClinicEditChangesList").innerHTML = items.map(function (item) {
+        return '<li><strong>' + html(item.label) + '</strong><small>' +
+          html(compactText(displayDiffValue(item.key, item.beforeValue), 120)) +
+          " -> " +
+          html(compactText(displayDiffValue(item.key, item.afterValue), 120)) +
+          '</small></li>';
+      }).join("");
+    }
+
     function updateReviewClinicEditChangeCount() {
-      var changes = Object.keys(reviewClinicProfileEditedFields(activeReview)).length;
-      el("reviewClinicEditChangeCount").textContent = changes + (changes === 1 ? " cambio" : " cambios");
-      el("reviewClinicEditPanel").classList.toggle("has-edits", changes > 0);
-      el("reviewClinicInlineEditBtn").classList.toggle("has-edits", changes > 0);
+      var items = reviewClinicProfileEditedFieldItems(activeReview);
+      el("reviewClinicEditChangeCount").textContent = items.length + (items.length === 1 ? " cambio" : " cambios");
+      el("reviewClinicEditPanel").classList.toggle("has-edits", items.length > 0);
+      el("reviewClinicInlineEditBtn").classList.toggle("has-edits", items.length > 0);
+      renderReviewClinicEditChanges(items);
     }
 
     function setReviewClinicEditMode(enabled) {

@@ -42,6 +42,8 @@ def main() -> None:
         'id="reviewClinicEditServices"',
         'id="reviewClinicEditProfessionals"',
         'id="reviewClinicEditPhone"',
+        'id="reviewClinicEditChanges"',
+        'id="reviewClinicEditChangesList"',
         'id="reviewClinicEditHint"',
         'id="reviewBackToListBtn"',
         'id="reviewSelectionPanel"',
@@ -101,6 +103,7 @@ def main() -> None:
         "Dato pendiente: ",
         "Guarda la ficha para cerrar esta revisión y volver a la lista.",
         "Los cambios se aplican solo si apruebas o guardas la modificación.",
+        "Cambios manuales preparados",
         "URL oficial para el agente",
         "Enviar URL al agente",
         "Editar en ficha",
@@ -296,7 +299,9 @@ def main() -> None:
         and "function reviewClinicProfileEditDefinitions" in index
         and "function reviewClinicProfileEditListDisplayValue" in index
         and "function populateReviewClinicEditFields" in index
+        and "function reviewClinicProfileEditedFieldItems" in index
         and "function reviewClinicProfileEditedFields" in index
+        and "function renderReviewClinicEditChanges" in index
         and "function updateReviewClinicEditChangeCount" in index
         and "function setReviewClinicEditMode" in index
         and "function toggleReviewClinicInlineEdit" in index
@@ -529,7 +534,7 @@ def main() -> None:
     check(".review-decision-summary" in css, "review decision summary should be styled")
     check(".review-clinic-panel" in css and ".review-clinic-profile" in css, "review clinic ficha panel should be styled")
     check(".review-clinic-facts" in css and ".review-clinic-data-panel" in css, "review clinic ficha details should be styled")
-    check(".review-clinic-edit-panel" in css and ".review-clinic-edit-grid" in css and ".review-clinic-panel .link-btn.has-edits" in css, "review clinic direct edit panel should be styled")
+    check(".review-clinic-edit-panel" in css and ".review-clinic-edit-grid" in css and ".review-clinic-edit-changes" in css and ".review-clinic-panel .link-btn.has-edits" in css, "review clinic direct edit panel should be styled")
     check(".clinic-manual-review-context" in css and ".clinic-manual-source" in css and ".manual-review-section" in css, "manual review context and source handoff should be styled")
     check(".work-grid.review-work-queue .review-list-panel" in css, "review queue side panel should stay explicit in CSS")
     check(".review-proposal-title" in css and ".review-proposal-hint" in css and ".review-manual-btn" in css, "proposal action hints should be styled")

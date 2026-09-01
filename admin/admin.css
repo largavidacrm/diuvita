@@ -1719,6 +1719,38 @@ td small {
   min-height: 5.4rem;
 }
 
+.review-clinic-edit-changes {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.65rem 0.72rem;
+  border: 1px solid rgba(14, 79, 74, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.review-clinic-edit-changes strong {
+  font-size: var(--text-ui);
+  line-height: var(--line-tight);
+}
+
+.review-clinic-edit-changes ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-clinic-edit-changes li {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.review-clinic-edit-changes small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .review-editor-panel {
   position: sticky;
   top: 5rem;

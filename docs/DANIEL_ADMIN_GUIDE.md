@@ -207,7 +207,8 @@ para corregir directamente datos generales de la clínica, como nombre,
 descripción, web, ubicación, sedes, servicios, especialistas o contacto. Esos
 cambios no se guardan al escribirlos: solo se aplican si apruebas la propuesta
 o guardas una modificación. Si rechazas la propuesta, esas correcciones no se
-aplican.
+aplican. Mientras editas, verás un resumen corto de los cambios manuales
+preparados para comprobarlos antes de decidir.
 
 Al entrar en la ficha desde **Revisión manual**, arriba verás una banda con el
 campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en
