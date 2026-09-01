@@ -71,11 +71,11 @@ deben cumplirse estos gates:
 
 ## Orden publico
 
-El orden publico deseado es neutro, aleatorio o rotatorio, con una indicacion
-visible de que no es ranking ni recomendacion.
+El orden publico deseado es neutro y rotatorio, con una indicacion visible de
+que no es ranking ni recomendacion.
 
-Este cambio debe hacerse en un bloque separado porque afecta a la experiencia
-publica. Debe verificarse que:
+Estado local: implementado como rotacion visible diaria en listas publicas y
+carrusel de logos. Debe verificarse que:
 
 - no favorece de forma estable a una clinica concreta;
 - no crea lenguaje de recomendacion, calidad, superioridad o ranking;

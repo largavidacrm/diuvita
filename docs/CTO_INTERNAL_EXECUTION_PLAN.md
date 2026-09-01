@@ -1372,6 +1372,12 @@ Next 10 technical steps:
      clinic fields. The check protects the canonical domain, no-ranking/no
      recommendation boundary, Google Maps profile rule, comparable-field plan
      and read-only verification limits.
+256. Add neutral rotating public order. Done locally in `build.py` and
+     `scripts/test_public_neutral_order.py`: public clinic grids and the logo
+     carousel now use a deterministic daily rotation in the browser, with a
+     visible note that the order is not a ranking or medical recommendation.
+     The logo carousel includes every valid logo instead of an arbitrary
+     first-12 shortlist, and the change does not edit clinic data.
 
 ## Daniel decision checkpoints
 

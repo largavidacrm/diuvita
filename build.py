@@ -760,6 +760,7 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .visit:hover{text-decoration:none;background:var(--green-deep)}
 .clinic-side .visit{width:100%}
 .note{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:1rem 1.1rem;font-size:.93rem;color:var(--muted);margin-top:1.4rem}
+.order-note{margin:.2rem 0 1rem;color:var(--muted);font-size:.92rem;font-weight:700}
 .recommend{max-width:1180px;margin:.25rem auto 1rem;padding:0 5vw}
 .recommend-inner{display:grid;gap:.75rem;padding:1rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-shadow:0 1px 0 rgba(23,35,31,.03)}
 .recommend-head{display:flex;align-items:center;justify-content:space-between;gap:1rem}
@@ -875,7 +876,7 @@ def attrs(c):
         " ".join(c.get("profesionales", [])),
     ]
     search_text = " ".join(str(part).lower() for part in search_parts if part)
-    return f'data-city="{h(all_cities)}" data-country="{h(c["country"])}" data-spec="{h("|".join(c["specialties"]))}" data-text="{h(search_text)}"'
+    return f'data-slug="{h(c["slug"])}" data-city="{h(all_cities)}" data-country="{h(c["country"])}" data-spec="{h("|".join(c["specialties"]))}" data-text="{h(search_text)}"'
 
 def logo_img(c, ficha=False):
     if ficha:
@@ -932,9 +933,9 @@ city_chips = "".join(f'<button class="chip" data-f="city" data-v="{h(ct)}">{h(ct
 country_chips = "".join(f'<button class="chip" data-f="country" data-v="{h(co)}">{h(co)}</button>' for co in countries)
 spec_chips = "".join(f'<button class="chip" data-f="spec" data-v="{h(s)}">{h(s)}</button>' for s in specialties)
 allcards = "".join(card(c) for c in clinics)
-featured_logo_clinics = [c for c in clinics if c.get("slug") in thumb_files][:12]
+featured_logo_clinics = [c for c in clinics if c.get("slug") in thumb_files]
 featured_logos = "".join(
-    f'<a class="mini-logo" href="/clinica/{h(c["slug"])}/" aria-label="Ver ficha de {h(c["name"])}"><img src="/assets/logos/thumb/{h(thumb_files[c["slug"]])}" alt="{h(c["name"])}" loading="lazy" onerror="this.closest(\'.mini-logo\').classList.add(\'logo-failed\')"><span class="logo-fallback">{h(c["name"])}</span></a>'
+    f'<a class="mini-logo" href="/clinica/{h(c["slug"])}/" data-neutral-item data-slug="{h(c["slug"])}" aria-label="Ver ficha de {h(c["name"])}"><img src="/assets/logos/thumb/{h(thumb_files[c["slug"]])}" alt="{h(c["name"])}" loading="lazy" onerror="this.closest(\'.mini-logo\').classList.add(\'logo-failed\')"><span class="logo-fallback">{h(c["name"])}</span></a>'
     for c in featured_logo_clinics
 )
 
@@ -943,6 +944,51 @@ PUBLIC_SITE_CONFIG_JSON = json.dumps({
     "supabasePublishableKey": public_env("SUPABASE_PUBLISHABLE_KEY"),
 }, ensure_ascii=False).replace("<", "\\u003c")
 PUBLIC_SITE_CONFIG = f'<script>window.VITALARGA_PUBLIC_CONFIG={PUBLIC_SITE_CONFIG_JSON};</script>'
+ORDER_NOTE = '<p class="order-note">El orden de las fichas rota de forma neutra: no es un ranking ni una recomendación médica.</p>'
+
+NEUTRAL_ORDER_JS = """<script>
+(function(){
+  function hashText(value){
+    var hash=2166136261;
+    value=String(value||"");
+    for(var i=0;i<value.length;i++){
+      hash^=value.charCodeAt(i);
+      hash+=(hash<<1)+(hash<<4)+(hash<<7)+(hash<<8)+(hash<<24);
+    }
+    return hash>>>0;
+  }
+  function daySeed(){
+    var now=new Date();
+    var start=Date.UTC(now.getUTCFullYear(),0,1);
+    var today=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
+    return String(now.getUTCFullYear())+"-"+String(Math.floor((today-start)/86400000));
+  }
+  function itemSlug(item){
+    return item.getAttribute("data-slug")||item.textContent||"";
+  }
+  function neutralOrderKey(item,scope,seed){
+    return hashText(scope+"|"+seed+"|"+itemSlug(item));
+  }
+  window.applyNeutralCardOrder=function(){
+    var seed=daySeed();
+    document.querySelectorAll("[data-neutral-results]").forEach(function(container){
+      var scope=container.getAttribute("data-neutral-results")||"public";
+      var items=[].slice.call(container.children).filter(function(item){
+        return item.matches&&item.matches(".card,[data-neutral-item]");
+      });
+      if(items.length<2) return;
+      items.map(function(item,index){
+        return {item:item,index:index,key:neutralOrderKey(item,scope,seed),slug:itemSlug(item)};
+      }).sort(function(a,b){
+        return (a.key-b.key)||a.slug.localeCompare(b.slug)||a.index-b.index;
+      }).forEach(function(entry){
+        container.appendChild(entry.item);
+      });
+    });
+  };
+  window.applyNeutralCardOrder();
+})();
+</script>"""
 
 JS = """<script>
 (function(){
@@ -1238,16 +1284,17 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </section>
 <section class="logo-carousel" data-logo-carousel aria-label="Clínicas con logo en Vitalarga">
 <button class="logo-nav" data-logo-nav="prev" type="button" aria-label="Logo anterior">&lsaquo;</button>
-<div class="logo-viewport"><div class="logo-strip" tabindex="0" aria-label="Logos de clínicas en la guía">{featured_logos}</div></div>
+<div class="logo-viewport"><div class="logo-strip" tabindex="0" data-neutral-results="home-logos" aria-label="Logos de clínicas en la guía">{featured_logos}</div></div>
 <button class="logo-nav" data-logo-nav="next" type="button" aria-label="Logo siguiente">&rsaquo;</button>
 </section>
 {RECOMMEND_SECTION}
 <section class="results-section">
 <div class="resbar"><p class="rescount" id="count"></p><button class="clear-btn" id="clearFilters" type="button">Limpiar filtros</button></div>
-<div class="grid">{allcards}</div>
+{ORDER_NOTE}
+<div class="grid" data-neutral-results="home-clinics">{allcards}</div>
 <p class="empty-state hidden" id="emptyState">No hay clínicas con esos filtros.</p>
 <div class="note">¿Conoces una clínica de longevidad que no aparece aquí? Usa <a href="/#recomendar-clinica">Recomendar Clínica</a> y la evaluaremos según nuestros <a href="/sobre/">criterios de inclusión</a>. Aparecer en Vitalarga es gratuito — y no se puede pagar.</div>
-</section>{PUBLIC_SITE_CONFIG}{JS}""" + FOOTER
+</section>{NEUTRAL_ORDER_JS}{PUBLIC_SITE_CONFIG}{JS}""" + FOOTER
 
 # --- fichas ---
 def status_label(c):
@@ -1464,7 +1511,7 @@ def ciudad_page(city):
     grid = "".join(card(c) for c in cs)
     return head(f"Clínicas de longevidad en {city} | {SITE}", f"Las {len(cs)} clínicas de medicina de longevidad documentadas en {city}.", f"/ciudad/{slugify(city)}/") + f"""
 <div class="hero"><h1>Clínicas de longevidad en <em>{city}</em></h1><p class="sub">{len(cs)} clínica{"s" if len(cs)>1 else ""} documentada{"s" if len(cs)>1 else ""} en la guía.</p></div>
-<div class="wrap"><div class="grid">{grid}</div></div>""" + FOOTER
+<div class="wrap">{ORDER_NOTE}<div class="grid" data-neutral-results="city:{h(city)}">{grid}</div></div>{NEUTRAL_ORDER_JS}""" + FOOTER
 
 SOBRE = head(f"Sobre la guía | {SITE}", "Qué es Vitalarga y con qué criterios incluimos clínicas en la guía.", "/sobre/") + """
 <div class="ficha"><h1>Sobre Vitalarga</h1>
