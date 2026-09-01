@@ -345,6 +345,7 @@ def main() -> None:
         and "Especialistas contiene entradas sospechosas" in index
         and "Corregir antes de aprobar" in index
         and "Usa Modificar y deja solo nombres claros" in index
+        and "humanModifiedSpecialists" in index
         and "Boolean(reviewApprovalBlockReason(activeReview))" in index
         and "var approvalBlock = reviewApprovalBlockReason(activeReview);" in index,
         "dirty specialist proposals should warn and block direct approval until modified",

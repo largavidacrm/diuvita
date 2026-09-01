@@ -24,6 +24,7 @@ TEST_STEPS = [
     ("test: Netlify deploy guard", "scripts/test_netlify_ignore_build.py"),
     ("test: public-site rebuild control", "scripts/test_public_site_rebuild_pending_control.py"),
     ("test: quality audit SQL", "scripts/test_quality_audit_single_decision_sql.py"),
+    ("test: scoped quality audit SQL", "scripts/test_quality_audit_scoped_sql.py"),
     ("test: operational limits", "scripts/test_check_operational_limits.py"),
     ("test: publication rules", "scripts/test_vitalarga_rules.py"),
     ("test: claim rule evaluation", "scripts/test_evaluate_claim_rules.py"),

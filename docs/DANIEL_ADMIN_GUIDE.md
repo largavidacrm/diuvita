@@ -507,6 +507,9 @@ En **Historial de cambios**, cada versión antigua indica qué campos cambiaría
 En **Recomendar clínica**, puedes elegir **Auditar fichas existentes**.
 
 Eso revisa las fichas visibles y crea tareas si falta algo importante, por ejemplo especialistas, servicios, especialidades, dirección, resumen o contacto.
+Puedes dejarlo en toda la base, o elegir una clínica concreta de Vitalarga.
+Si eliges una clínica y un dato, por ejemplo **Tiara Health** y **Especialistas publicados**, la auditoría queda acotada a esa ficha y a ese campo.
+En **Alcance opcional** puedes pegar una nota o un link oficial para orientar el trabajo.
 
 La revisión manual no cambia la web. Solo crea tareas internas para revisar.
 

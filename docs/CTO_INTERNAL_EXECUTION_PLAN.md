@@ -1358,6 +1358,13 @@ Next 10 technical steps:
      path; rejecting removes only that field from the proposal. Each field
      decision is recorded in the review payload so later LLM assistance can
      learn from the supervised outcome without auto-publishing anything.
+254. Scope manual audit jobs from the admin form. Done locally in `/admin/` and
+     `supabase/migrations/0027_scoped_quality_audit_jobs.sql`: when Daniel
+     chooses **Auditar fichas existentes**, he can now pick a clinic already in
+     Vitalarga, choose an optional field such as specialists or contact, and
+     paste free text or a link as scope. The resulting job preserves
+     `clinic_id`, requested fields and operator intent so the audit/LLM cycle
+     can create bounded review cards instead of guessing from free text.
 
 ## Daniel decision checkpoints
 

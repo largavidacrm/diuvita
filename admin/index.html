@@ -922,8 +922,10 @@
               </div>
               <div class="field hidden" id="jobExistingClinicField">
                 <label for="jobExistingClinic">Clínica existente</label>
-                <input id="jobExistingClinic" list="jobExistingClinicOptions" placeholder="Neleva">
-                <datalist id="jobExistingClinicOptions"></datalist>
+                <select id="jobExistingClinic" name="jobExistingClinic">
+                  <option value="">Cargando clínicas...</option>
+                </select>
+                <p class="field-note" id="jobExistingClinicHint">Elige una ficha de Vitalarga.</p>
               </div>
               <div class="field hidden" id="jobRequestedFieldWrap">
                 <label for="jobRequestedField">Qué quieres revisar</label>
@@ -1496,7 +1498,9 @@
         return "Recomendar clínica: " + (jobShortValue(input.clinic_name || input.operator_note || input.query || input.source_url) || "recomendación interna");
       }
       if (row && row.job_type === "DISCOVER_CLINIC") return "Recomendar clínica";
-      if (row && row.job_type === "QUALITY_AUDIT") return "Auditar fichas existentes";
+      if (row && row.job_type === "QUALITY_AUDIT") {
+        return input.clinic_name ? "Auditar ficha: " + input.clinic_name : "Auditar fichas existentes";
+      }
       if (row && row.job_type === "EXTRACT_CLINIC_PROFILE") {
         return "Completar clínica: " + (input.clinic_name || input.clinic_slug || "ficha existente");
       }
@@ -1522,6 +1526,13 @@
         var fieldText = jobRequestedFieldsLabel(input) || "campo indicado";
         return "URL desde revisión · " + fieldText + " · ciclo CTO supervisado · vuelve como propuesta revisable";
       }
+      if (row && row.job_type === "QUALITY_AUDIT") {
+        var auditParts = [];
+        if (input.clinic_name) auditParts.push("ficha elegida");
+        if (jobRequestedFieldsLabel(input)) auditParts.push(jobRequestedFieldsLabel(input));
+        if (jobHasOfficialSource(row)) auditParts.push("link en alcance");
+        return (auditParts.length ? auditParts.join(" · ") : "toda la base visible") + " · deja propuestas internas";
+      }
       if (row && row.status === "queued") {
         return "En cola para ciclo CTO supervisado";
       }
@@ -1541,7 +1552,9 @@
         return "Siguiente: leer la URL oficial y proponer solo " + label.toLowerCase() + ".";
       }
       if (row && row.job_type === "QUALITY_AUDIT") {
-        return "Siguiente: revisar fichas existentes y crear tarjetas internas si faltan datos.";
+        var auditLabel = jobRequestedFieldsLabel(input);
+        return "Siguiente: revisar " + (input.clinic_name ? input.clinic_name : "fichas existentes") +
+          (auditLabel ? " para " + auditLabel.toLowerCase() : "") + " y crear tarjetas internas si faltan datos.";
       }
       return "";
     }
@@ -4110,15 +4123,30 @@
     }
 
     function renderJobExistingClinicOptions() {
-      var datalist = el("jobExistingClinicOptions");
-      if (!datalist) return;
-      datalist.innerHTML = (clinicCache || []).map(function (row) {
-        return '<option value="' + html(jobExistingClinicLabel(row)) + '"></option>';
+      var select = el("jobExistingClinic");
+      if (!select) return;
+      var current = select.value;
+      var type = el("jobType") ? el("jobType").value : "";
+      var placeholder = type === "QUALITY_AUDIT" ? "Todas las clínicas" : "Elige una clínica";
+      var rows = (clinicCache || []).slice().sort(function (a, b) {
+        return jobExistingClinicLabel(a).localeCompare(jobExistingClinicLabel(b), "es", { sensitivity: "base" });
+      });
+      select.innerHTML = '<option value="">' + html(placeholder) + '</option>' + rows.map(function (row) {
+        return '<option value="' + html(row.id) + '">' + html(jobExistingClinicLabel(row)) + '</option>';
       }).join("");
+      if (current && rows.some(function (row) { return String(row.id) === String(current); })) {
+        select.value = current;
+      }
     }
 
     function selectedJobExistingClinic() {
-      var query = compactLookup(trimmed("jobExistingClinic"));
+      var selectedId = trimmed("jobExistingClinic");
+      if (!selectedId) return null;
+      var byId = (clinicCache || []).find(function (row) {
+        return String(row.id) === String(selectedId);
+      });
+      if (byId) return byId;
+      var query = compactLookup(selectedId);
       if (!query) return null;
       var exact = (clinicCache || []).find(function (row) {
         return compactLookup(jobExistingClinicLabel(row)) === query ||
@@ -4138,20 +4166,25 @@
       var type = el("jobType").value;
       show(el("jobQueryField"), true);
       show(el("jobCountryField"), type !== "EXTRACT_CLINIC_PROFILE");
-      show(el("jobExistingClinicField"), type === "EXTRACT_CLINIC_PROFILE");
+      show(el("jobExistingClinicField"), type === "EXTRACT_CLINIC_PROFILE" || type === "QUALITY_AUDIT");
       show(el("jobSourceUrlField"), type !== "QUALITY_AUDIT");
-      show(el("jobRequestedFieldWrap"), type !== "QUALITY_AUDIT");
+      show(el("jobRequestedFieldWrap"), true);
       el("jobForm").classList.toggle("job-form-existing-clinic", type === "EXTRACT_CLINIC_PROFILE");
+      renderJobExistingClinicOptions();
       if (type === "QUALITY_AUDIT") {
         el("jobHelp").innerHTML = '<strong>Auditar fichas existentes</strong><p>Revisa fichas ya creadas y deja campos pendientes como propuestas internas.</p>';
+        el("jobExistingClinicHint").textContent = "Opcional: elige una ficha concreta o deja todas las clínicas.";
+        el("jobRequestedFieldWrap").querySelector("label").textContent = "Qué quieres auditar";
         el("jobQueryLabel").textContent = "Alcance opcional";
-        el("jobQuery").placeholder = "Ejemplo: revisar clínicas de Marbella con contacto incompleto";
-        el("jobQueryHint").textContent = "Déjalo vacío si quieres auditar toda la base.";
+        el("jobQuery").placeholder = "Ejemplo: en esta página está todo el equipo; revisar especialistas";
+        el("jobQueryHint").textContent = "Puedes dejar una nota o enlace como pista. La auditoría solo crea propuestas internas.";
         el("jobBtn").textContent = "Auditar fichas";
         return;
       }
       if (type === "EXTRACT_CLINIC_PROFILE") {
         el("jobHelp").innerHTML = '<strong>Completar una clínica existente</strong><p>Elige la ficha, pega el link oficial y añade una nota si quieres acotar lo que debe mirar.</p>';
+        el("jobExistingClinicHint").textContent = "Obligatorio: elige la ficha que debe completar el agente.";
+        el("jobRequestedFieldWrap").querySelector("label").textContent = "Qué quieres revisar";
         el("jobQueryLabel").textContent = "Nota para el agente";
         el("jobQuery").placeholder = "Ejemplo: en esta página está todo el equipo; completar especialistas publicados.";
         el("jobQueryHint").textContent = "Texto libre para orientar al agente. No cambia la ficha directamente.";
@@ -4160,6 +4193,7 @@
         return;
       }
       el("jobHelp").innerHTML = '<strong>Recomendar clínica</strong><p>Escribe texto libre, pega un link oficial si lo tienes y, opcionalmente, indica qué dato quieres que mire.</p>';
+      el("jobRequestedFieldWrap").querySelector("label").textContent = "Qué quieres revisar";
       el("jobQueryLabel").textContent = "Texto para el agente";
       el("jobQuery").placeholder = "Ejemplo: clínica existente Neleva, completar especialistas; o nueva clínica de longevidad en Valencia.";
       el("jobQueryHint").textContent = "Puedes escribir una frase normal. No incluyas datos médicos personales.";
@@ -5139,6 +5173,11 @@
     function cleanHttpUrl(value) {
       var clean = text(value).trim();
       return /^https?:\/\//i.test(clean) ? clean : "";
+    }
+
+    function firstHttpUrlFromText(value) {
+      var match = text(value).match(/https?:\/\/[^\s<>"']+/i);
+      return match ? cleanHttpUrl(match[0].replace(/[),.;]+$/, "")) : "";
     }
 
     function arrayLines(value) {
@@ -8745,7 +8784,8 @@
       return fields;
     }
 
-    function approvalSafetyWarnings(fields) {
+    function approvalSafetyWarnings(fields, options) {
+      options = options || {};
       var warnings = [];
       function add(value) {
         var clean = text(value).trim();
@@ -8780,7 +8820,7 @@
             }
           });
         }
-        if (key === "profesionales" && suspiciousSpecialistValues(value).length) {
+        if (key === "profesionales" && !options.humanModifiedSpecialists && suspiciousSpecialistValues(value).length) {
           add("Especialistas contiene entradas sospechosas. Usa Modificar y deja solo nombres de profesionales publicados.");
         }
         var phoneWarning = proposalPhoneWarning(key, value);
@@ -9119,7 +9159,9 @@
         toast("No encuentro la ficha enlazada para aprobar esta propuesta.");
         return false;
       }
-      var safetyWarnings = approvalSafetyWarnings(Object.assign({}, fields || {}, profileFields));
+      var safetyWarnings = approvalSafetyWarnings(Object.assign({}, fields || {}, profileFields), {
+        humanModifiedSpecialists: Boolean(modified)
+      });
       if (safetyWarnings.length) {
         toast(safetyWarnings[0]);
         return false;
@@ -10997,10 +11039,12 @@
       var operatorNote = trimmed("jobQuery");
       var rawSourceUrl = jobType === "QUALITY_AUDIT" ? "" : trimmed("jobSourceUrl");
       var sourceUrl = rawSourceUrl ? cleanHttpUrl(rawSourceUrl) : "";
-      var selectedRequestInfo = jobType === "DISCOVER_CLINIC"
+      var selectedRequestInfo = jobType === "DISCOVER_CLINIC" || jobType === "QUALITY_AUDIT"
         ? jobSelectedRequestInfo(el("jobRequestedField").value)
         : jobSelectedRequestInfo("");
       var requestLabelForQuery = jobType === "DISCOVER_CLINIC" ? selectedRequestInfo.label : "";
+      var selectedAuditClinic = jobType === "QUALITY_AUDIT" ? selectedJobExistingClinic() : null;
+      var auditNoteUrl = jobType === "QUALITY_AUDIT" ? firstHttpUrlFromText(operatorNote) : "";
       if (rawSourceUrl && !sourceUrl) {
         el("jobBtn").disabled = false;
         toast("El link debe empezar por http o https.");
@@ -11014,7 +11058,13 @@
         return;
       }
       var jobInputData = {
-        query: [operatorNote, sourceUrl, requestLabelForQuery ? "Revisar: " + requestLabelForQuery : ""].filter(Boolean).join(" "),
+        query: [
+          operatorNote,
+          sourceUrl,
+          selectedAuditClinic ? selectedAuditClinic.display_name : "",
+          requestLabelForQuery ? "Revisar: " + requestLabelForQuery : "",
+          jobType === "QUALITY_AUDIT" && selectedRequestInfo.label ? "Auditar: " + selectedRequestInfo.label : ""
+        ].filter(Boolean).join(" "),
         country: el("jobCountry").value.trim(),
         mode: "shadow",
         source: "admin_recommend_clinic_form",
@@ -11032,6 +11082,31 @@
         jobInputData.operator_requested_field_keys = jobInputData.requested_fields;
         jobInputData.operator_requested_field_labels = jobInputData.requested_field_labels;
         jobInputData.operator_requested_field_summary = selectedRequestInfo.label;
+      }
+      if (jobType === "QUALITY_AUDIT") {
+        jobInputData.target_scope = selectedAuditClinic ? "selected_clinic" : "all_visible_clinics";
+        jobInputData.field_scope = selectedRequestInfo.fields.length ? "operator_selected_fields" : "all_quality_fields";
+        jobInputData.operator_intent = selectedAuditClinic
+          ? "Daniel pide auditar una ficha existente concreta: " + selectedAuditClinic.display_name + "."
+          : "Daniel pide auditar fichas existentes de Vitalarga.";
+        if (selectedAuditClinic) {
+          jobInputData.clinic_id = selectedAuditClinic.id;
+          jobInputData.clinic_slug = selectedAuditClinic.slug;
+          jobInputData.clinic_name = selectedAuditClinic.display_name;
+        }
+        if (selectedRequestInfo.fields.length) {
+          jobInputData.requested_fields = selectedRequestInfo.fields.map(function (item) { return item.key; });
+          jobInputData.requested_field_labels = selectedRequestInfo.fields.map(function (item) { return item.label; });
+          jobInputData.operator_requested_field_keys = jobInputData.requested_fields;
+          jobInputData.operator_requested_field_labels = jobInputData.requested_field_labels;
+          jobInputData.operator_requested_field_summary = selectedRequestInfo.label;
+          jobInputData.operator_intent += " Revisar solo: " + selectedRequestInfo.label + ".";
+        }
+        if (auditNoteUrl) {
+          jobInputData.source_url = auditNoteUrl;
+          jobInputData.source_urls = [auditNoteUrl];
+          jobInputData.human_supplied_source = true;
+        }
       }
       if (sourceUrl) {
         jobInputData.source_url = sourceUrl;
@@ -11056,6 +11131,11 @@
         model_tier: "cheap",
         requires_human: false
       };
+      if (jobType === "QUALITY_AUDIT" && selectedAuditClinic) {
+        payload.entity_type = "clinic";
+        payload.entity_id = selectedAuditClinic.id;
+        payload.clinic_id = selectedAuditClinic.id;
+      }
       var result = await client.from("agent_jobs").insert(payload).select("id").single();
       if (result.error) {
         el("jobBtn").disabled = false;
@@ -11077,6 +11157,7 @@
         toast("Trabajo enviado a cola.");
       }
       setInput("jobQuery", "");
+      setInput("jobExistingClinic", "");
       setInput("jobSourceUrl", "");
       el("jobBtn").disabled = false;
       await loadDashboard();
