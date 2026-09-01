@@ -1301,6 +1301,13 @@ Next 10 technical steps:
      `admin_users` before locking the queued job. This lets the supervised CTO
      cycle consume public/admin recommendations with official URLs and return
      review cards without publishing or editing clinic profiles.
+245. Allow bounded LLM prep for legacy source reviews. Done locally in the
+     review decision packet, preflight and route-brief scripts: older review
+     cards that only preserved a source URL can now be considered for LLM help
+     if they already include explicit editable proposed fields. The LLM remains
+     read-only, may not infer Daniel's original intent from the URL, may not
+     expand beyond those fields, and must still return a suggestion for human
+     approval, rejection or modification.
 
 ## Daniel decision checkpoints
 

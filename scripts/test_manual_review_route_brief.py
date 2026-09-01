@@ -129,7 +129,8 @@ def main():
     check(report["summary"]["source_handoff_available"] == 2, "source handoff count missing")
     check(report["summary"]["manual_navigation_llm_ready"] == 1, "manual LLM navigation count missing")
     check(report["summary"]["source_only_reviewable"] == 1, "source-only reviewable count missing")
-    check(report["summary"]["blocked_without_operator_context"] == 1, "blocked source-only count missing")
+    check(report["summary"]["legacy_source_llm_ready"] == 1, "legacy source LLM-ready count missing")
+    check(report["summary"]["blocked_without_operator_context"] == 0, "blocked source-only count missing")
     check(report["summary"]["direct_change_reviews"] == 2, "direct change count missing")
 
     first = report["items"][0]
@@ -153,7 +154,7 @@ def main():
     )
     source_only = by_id["blocked-1"]
     check(source_only["operator_action"] == "review_proposed_change_source_only", "source-only review action missing")
-    check(source_only["llm_help_scope"] == "blocked_without_operator_context", "source-only LLM block missing")
+    check(source_only["llm_help_scope"] == "legacy_source_explicit_fields_only", "source-only LLM scope missing")
     ready = by_id["ready-1"]
     check(ready["operator_action"] == "review_proposed_change", "context-ready row should remain a direct proposal")
     check(ready["llm_help_scope"] == "prepare_suggestion_then_validate_locally", "strict LLM scope missing")
@@ -162,10 +163,11 @@ def main():
     check("# Rutas de revisión manual" in compact, "compact title missing")
     check("Abren campo directo: 1" in compact, "compact manual count missing")
     check("Permiten pasar URL oficial al agente: 2" in compact, "compact source handoff count missing")
-    check("Revisables manualmente aunque no listas para LLM: 1" in compact, "compact source-only reviewable count missing")
-    check("Bloqueadas para LLM por fuente sin contexto: 1" in compact, "compact LLM block count missing")
+    check("Fuentes heredadas listas con límites: 1" in compact, "compact legacy source count missing")
+    check("Revisiones con fuente heredada: 1" in compact, "compact source-only reviewable count missing")
+    check("Bloqueadas para LLM por fuente sin contexto: 0" in compact, "compact LLM block count missing")
     check("desde la propuesta, abrir Especialistas publicados en ficha" in compact, "compact manual field line missing")
-    check("revisar/modificar campos propuestos manualmente" in compact, "compact source-only review line missing")
+    check("fuente heredada acotada para ayuda LLM" in compact, "compact source-only review line missing")
     check("solo creará propuesta revisable" in compact, "compact source safety line missing")
     check("... 1 tarjetas más" in compact, "compact overflow line missing")
     check("abrir Especialistas publicados" in compact_item_line(first), "compact item helper missing")

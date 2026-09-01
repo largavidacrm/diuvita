@@ -36,13 +36,15 @@ El contrato principal es:
   resumen humano del campo solicitado, alcance, ruta del admin, barrera LLM y
   política de salida. Sin `--include-values`, las URLs completas siguen ocultas.
 - Si una propuesta ya trae campos editables pero solo conserva una fuente sin
-  contexto, Daniel puede aprobar, rechazar o modificar esos campos manualmente.
-  Lo que permanece bloqueado es usar esa fuente como instrucción nueva para el
-  LLM hasta recuperar el campo solicitado y el alcance del trabajo.
-- Si una propuesta antigua solo trae una fuente pero no conserva contexto de
-  trabajo, el paquete expone `source_origin_status:
-  "source_without_context"` con el host y el límite LLM: no inferir intención
-  original solo por la URL.
+  contexto, el paquete expone `source_origin_status: "source_without_context"`
+  con `prompt_policy: "bounded_legacy_source_only"`. Daniel puede aprobar,
+  rechazar o modificar esos campos, y el LLM puede preparar ayuda solo sobre
+  esos `editable_fields` y `proposed_change`, sin inferir intención original ni
+  ampliar el alcance por la URL.
+- Si una propuesta antigua solo trae una fuente pero no conserva campos
+  editables ni contexto de trabajo, sigue bloqueada para preparación LLM: se
+  revisa manualmente o se sustituye por un nuevo trabajo con campo y fuente
+  explícitos.
 - La salida por defecto no incluye valores completos, emails, teléfonos crudos
   ni URLs completas de evidencia.
 - El script no resuelve tarjetas, no edita clínicas y no publica páginas.

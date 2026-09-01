@@ -595,11 +595,25 @@ def source_origin_status(payload: dict[str, Any], include_values: bool = False) 
             "llm_boundary": "respect_source_job_context_scope",
         }
     elif sources:
+        fields = proposed_fields(payload)
         status = {
             "status": "source_without_context",
-            "next_step": "review_manually_do_not_infer_original_intent_from_url",
-            "llm_boundary": "do_not_infer_operator_intent_from_source_host_only",
+            "write_policy": "read_only_packet",
         }
+        if fields:
+            status.update({
+                "prompt_policy": "bounded_legacy_source_only",
+                "target_scope": "explicit_proposed_fields_only",
+                "next_step": "prepare_suggestion_only_for_explicit_proposed_fields",
+                "llm_boundary": "do_not_infer_operator_intent_or_expand_beyond_proposed_fields",
+            })
+        else:
+            status.update({
+                "prompt_policy": "manual_only_until_explicit_fields",
+                "target_scope": "no_explicit_proposed_fields",
+                "next_step": "review_manually_or_create_operator_scoped_source_job",
+                "llm_boundary": "do_not_infer_operator_intent_or_fields_from_source_url",
+            })
     else:
         return {}
     if host:
@@ -902,9 +916,22 @@ def packet_has_manual_target_prompt_route(packet: dict[str, Any]) -> bool:
     )
 
 
+def packet_has_legacy_source_prompt_route(packet: dict[str, Any]) -> bool:
+    source_origin = packet.get("source_origin_status")
+    if not isinstance(source_origin, dict) or source_origin.get("status") != "source_without_context":
+        return False
+    if source_origin.get("prompt_policy") != "bounded_legacy_source_only":
+        return False
+    proposed = [item for item in packet.get("proposed_change") or [] if isinstance(item, dict)]
+    editable = [item for item in packet.get("editable_fields") or [] if isinstance(item, dict)]
+    return bool(proposed and editable)
+
+
 def packet_llm_readiness_status(packet: dict[str, Any]) -> str:
     if packet_has_manual_target_prompt_route(packet):
         return "manual_target_prompt_ready"
+    if packet_has_legacy_source_prompt_route(packet):
+        return "legacy_source_prompt_ready"
     source_origin = packet.get("source_origin_status")
     if isinstance(source_origin, dict) and source_origin.get("status") == "source_without_context":
         return "blocked_source_without_context"

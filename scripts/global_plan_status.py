@@ -173,9 +173,10 @@ def llm_review_readiness_blocker(digest: dict[str, Any]) -> str:
     ready = as_int(status.get("context_ready"))
     source_only = as_int(status.get("source_without_context"))
     recoverable = as_int(status.get("recoverable_from_job"))
-    if ready >= cards:
+    no_source = as_int(status.get("no_source_context"))
+    if ready + source_only >= cards and not recoverable and not no_source:
         return ""
-    if source_only or recoverable:
+    if recoverable or no_source:
         return f"preparación LLM de propuestas con fuente incompleta: {source_origin_audit_status(digest)}"
     return ""
 

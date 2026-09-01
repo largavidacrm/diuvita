@@ -33,7 +33,7 @@ CONTEXT_KEYS = (
 STATUS_LABELS = {
     "context_ready": "listo para LLM",
     "recoverable_from_job": "recuperable desde trabajo",
-    "source_without_context": "solo revisión manual",
+    "source_without_context": "fuente heredada acotada",
     "no_source_context": "sin contexto de fuente",
 }
 
@@ -95,7 +95,7 @@ def audit_row(row: dict[str, Any]) -> dict[str, Any]:
         next_step = "puede recuperarse desde agent_jobs antes de pedir ayuda LLM"
     elif url:
         status = "source_without_context"
-        next_step = "revisar manualmente; no inferir intención original solo por la URL"
+        next_step = "puede preparar sugerencia solo sobre campos propuestos; no inferir intención original"
     else:
         status = "no_source_context"
         next_step = "usar la revisión humana normal"
@@ -203,7 +203,7 @@ def format_report(report: dict[str, Any], compact: bool = False) -> str:
         f"- Tarjetas revisadas: {summary.get('cards', 0)}",
         f"- Contexto listo: {summary.get('context_ready', 0)}",
         f"- Recuperable desde trabajo: {summary.get('recoverable_from_job', 0)}",
-        f"- Fuente sin contexto: {summary.get('source_without_context', 0)}",
+        f"- Fuente heredada acotada: {summary.get('source_without_context', 0)}",
         "",
     ]
     if not rows:

@@ -72,7 +72,7 @@ def main():
     check("Writes data: no" in output, "report should be read-only")
     check("IMDA: listo para LLM" in output, "report should show human-ready status labels")
     check("Tiara Health: recuperable desde trabajo" in output, "report should show recoverable Tiara row")
-    check("Example Clinic: solo revisión manual" in output, "report should show source-only rows as manual review")
+    check("Example Clinic: fuente heredada acotada" in output, "report should show source-only rows as bounded legacy sources")
     check("https://www.tiarahealth.com/our-team-of-experts/" not in output, "compact report should hide full URLs")
     print("OK review source-job context audit: missing context is visible")
 

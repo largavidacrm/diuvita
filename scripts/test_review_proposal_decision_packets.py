@@ -186,11 +186,18 @@ def main():
     reviews_origin = reviews_packet["source_origin_status"]
     check(reviews_origin["status"] == "source_without_context", "legacy source-only cards should expose missing source context")
     check(reviews_origin["source_host"] == "clinic.example", "legacy source context should keep only the host by default")
+    check(reviews_origin["prompt_policy"] == "bounded_legacy_source_only", "legacy source policy should stay bounded")
+    check(reviews_origin["target_scope"] == "explicit_proposed_fields_only", "legacy source scope should only cover proposed fields")
+    check(reviews_origin["write_policy"] == "read_only_packet", "legacy source policy should stay read-only")
+    check(
+        reviews_origin["llm_boundary"] == "do_not_infer_operator_intent_or_expand_beyond_proposed_fields",
+        "legacy source boundary should prevent broadening",
+    )
     check("source_url" not in reviews_origin, "legacy source context should not expose full URL by default")
     check(packet_is_llm_ready(safe_packet) is True, "context-ready packets should be available for LLM help")
     check(packet_llm_readiness_status(safe_packet) == "strict_prompt_ready", "context-ready packet status missing")
-    check(packet_is_llm_ready(reviews_packet) is False, "source-only packets should be excluded from LLM-ready batches")
-    check(packet_llm_readiness_status(reviews_packet) == "blocked_source_without_context", "source-only status missing")
+    check(packet_is_llm_ready(reviews_packet) is True, "legacy source packets with explicit fields should be LLM-ready with limits")
+    check(packet_llm_readiness_status(reviews_packet) == "legacy_source_prompt_ready", "legacy source status missing")
     reviews_with_maps_packet = decision_packet({
         "id": "reviews-2",
         "title": "Revisar valoraciones Google: Clinic",
@@ -382,8 +389,8 @@ def main():
         },
     ], llm_ready_only=True)
     check(filtered_report["llm_ready_only"] is True, "LLM-ready report flag missing")
-    check(filtered_report["packet_count"] == 2, "LLM-ready batches should exclude source-only packets")
-    check(filtered_report["excluded_source_without_context"] == 1, "LLM-ready report should count excluded source-only packets")
+    check(filtered_report["packet_count"] == 3, "LLM-ready batches should include bounded legacy source packets")
+    check(filtered_report["excluded_source_without_context"] == 0, "LLM-ready report should not exclude bounded legacy source packets")
 
     unsourced_specialist_packet = decision_packet(sample_unsourced_specialist_row())
     source_request = unsourced_specialist_packet["source_job_request"]

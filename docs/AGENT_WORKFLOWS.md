@@ -267,9 +267,14 @@ Required behavior:
 - If a packet contains `source_job_context`, the LLM can use it only to explain
   provenance and keep attention on the requested field; it is not permission to
   write source data, publish, or broaden the proposal.
-- If a packet contains `source_origin_status: source_without_context`, the LLM
-  may treat the URL as evidence to review, but must not infer the operator's
-  original intent from the host or URL alone.
+- If a packet contains `source_origin_status: source_without_context` with
+  `prompt_policy: bounded_legacy_source_only`, the LLM may help only when the
+  packet already has explicit `editable_fields` and `proposed_change`; it must
+  use the URL as evidence for those fields only, without inferring the original
+  operator intent or widening the proposal.
+- If a source-only packet has no explicit editable fields, it remains blocked
+  for LLM preparation and must be reviewed manually or replaced by a new
+  operator-scoped source job.
 - If a packet contains `google_reviews_review.approval_dependency` and
   `satisfied` is false, the LLM must not suggest approving or modifying the
   Google reviews field until the clinic has a confirmed Google Maps profile or

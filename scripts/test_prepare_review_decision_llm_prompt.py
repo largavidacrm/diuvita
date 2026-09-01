@@ -99,6 +99,18 @@ def sample_reviews_packet():
     }, include_values=True)
 
 
+def sample_source_without_editable_packet():
+    return decision_packet({
+        "id": "legacy-source-empty",
+        "title": "Revisar fuente antigua: Clinic",
+        "review_type": "clinic_profile_enrichment",
+        "payload": {
+            "source_url": "https://clinic.example/contacto",
+        },
+        "clinic": {"display_name": "Clinic", "current_data": {}},
+    }, include_values=True)
+
+
 def main():
     full_packet = sample_packet(include_values=True)
     prompt = build_prompt(full_packet)
@@ -150,6 +162,7 @@ def main():
     check(prompt["messages"][0]["role"] == "system", "system message missing")
     check("No publicas" in prompt["messages"][0]["content"], "system safety instruction missing")
     check("manual_profile_edit_context" in prompt["messages"][0]["content"], "system prompt should bound side-panel context")
+    check("bounded_legacy_source_only" in prompt["messages"][0]["content"], "system prompt should bound legacy source usage")
     check("Responde solo JSON" in prompt["messages"][0]["content"], "JSON-only instruction missing")
     check("https://imda.example/contacto" not in dumped, "safe prompt should remove full evidence URLs")
     check("persona@example.com" not in dumped, "safe prompt should redact emails")
@@ -217,11 +230,25 @@ def main():
         reviews_prompt["packet_digest"]["source_origin_status"]["status"] == "source_without_context",
         "prompt digest should warn about source-only cards without operator context",
     )
+    check(
+        reviews_prompt["packet_digest"]["source_origin_status"]["prompt_policy"] == "bounded_legacy_source_only",
+        "prompt digest should keep bounded legacy source policy",
+    )
+    check(
+        reviews_prompt["packet_digest"]["source_origin_status"]["target_scope"] == "explicit_proposed_fields_only",
+        "prompt digest should limit legacy source scope to explicit proposed fields",
+    )
     reviews_dumped = str(reviews_prompt)
     check("https://clinic.example/contacto" not in reviews_dumped, "safe reviews prompt should redact source URLs")
     require_llm_ready(full_packet)
-    blocked_message = exits_with_message(require_llm_ready, sample_reviews_packet())
-    check("not LLM-ready" in blocked_message, "strict prompt mode should block source-only packets")
+    require_llm_ready(sample_reviews_packet())
+    source_without_editable = sample_source_without_editable_packet()
+    check(
+        source_without_editable["source_origin_status"]["prompt_policy"] == "manual_only_until_explicit_fields",
+        "source-only packets without explicit fields should stay manual-only",
+    )
+    blocked_message = exits_with_message(require_llm_ready, source_without_editable)
+    check("not LLM-ready" in blocked_message, "strict prompt mode should block source-only packets without editable fields")
 
     full_prompt = build_prompt(full_packet, allow_full_values=True)
     full_dumped = str(full_prompt)

@@ -180,6 +180,7 @@ def system_prompt() -> str:
         "Si propones modify, solo puedes incluir campos listados en editable_fields.",
         "Si no hay editable_fields pero hay manual_review_targets, puedes proponer modify con manual_review_target_key.",
         "manual_profile_edit_context describe campos que solo Daniel puede corregir en el panel; no los conviertas en field_changes.",
+        "Si source_origin_status contiene prompt_policy bounded_legacy_source_only, usa esa fuente solo como evidencia de los campos explícitos; no infieras intención original ni amplíes la propuesta.",
         "Responde solo JSON válido con el esquema indicado.",
     ])
 
@@ -219,7 +220,7 @@ def require_llm_ready(packet: dict[str, Any]) -> None:
     if packet_is_llm_ready(packet):
         return
     raise SystemExit(
-        "Packet is not LLM-ready: source-only proposal lacks operator/job context and no manual target route is available. "
+        "Packet is not LLM-ready: source-only proposal lacks explicit editable fields, operator/job context and a manual target route. "
         "Review manually or use review_llm_batch_preflight.py --compact before assisted batches."
     )
 
@@ -234,7 +235,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--packet-file", type=Path, required=True, help="Decision packet JSON file or packet report.")
     parser.add_argument("--review-id", default="", help="Packet review_id to select when packet-file is a report.")
-    parser.add_argument("--require-llm-ready", action="store_true", help="Exit if the selected packet is source-only without operator/job context.")
+    parser.add_argument("--require-llm-ready", action="store_true", help="Exit if the selected packet is source-only without explicit editable fields, operator/job context or a manual route.")
     parser.add_argument("--allow-full-values", action="store_true", help="Keep raw packet values for deliberate local LLM preparation.")
     return parser.parse_args()
 

@@ -45,7 +45,7 @@ def manual_profile_edit_available(packet: dict[str, Any]) -> bool:
 def blocked_reason(packet: dict[str, Any]) -> str:
     status = source_origin_label(packet)
     if status == "source_without_context":
-        return "source_without_context: revisar manualmente o crear trabajo desde una URL oficial aportada por Daniel."
+        return "source_without_context: sin campos editables explícitos para una sugerencia acotada."
     return "packet_failed_strict_llm_ready_check"
 
 
@@ -118,6 +118,10 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         item for item in ready
         if item.get("llm_readiness_status") == "manual_target_prompt_ready"
     ]
+    legacy_source_ready = [
+        item for item in ready
+        if item.get("llm_readiness_status") == "legacy_source_prompt_ready"
+    ]
     manual_targets = [
         item for item in items
         if item.get("manual_review_targets")
@@ -134,6 +138,7 @@ def summarize_items(items: list[dict[str, Any]], total_packets: int) -> dict[str
         "source_without_context": len(source_only),
         "blocked_source_without_context": len(blocked_source_only),
         "manual_target_prompt_ready": len(manual_target_ready),
+        "legacy_source_prompt_ready": len(legacy_source_ready),
         "manual_review_target_packets": len(manual_targets),
         "manual_profile_edit_available": len(manual_profile_edits),
     }
@@ -143,6 +148,8 @@ def compact_item_line(item: dict[str, Any]) -> str:
     title = str(item.get("title") or "Revisión sin título")
     if item.get("llm_readiness_status") == "manual_target_prompt_ready":
         status = "ruta manual lista"
+    elif item.get("llm_readiness_status") == "legacy_source_prompt_ready":
+        status = "fuente heredada lista"
     elif item.get("llm_ready"):
         status = "lista para LLM"
     else:
@@ -171,6 +178,7 @@ def format_preflight_report(report: dict[str, Any], limit: int = 8) -> str:
         "## Resumen",
         f"- Preparables para LLM estricto: {summary.get('llm_ready', 0)}/{summary.get('total_packets', 0)}",
         f"- Rutas manuales listas: {summary.get('manual_target_prompt_ready', 0)}",
+        f"- Fuentes heredadas acotadas: {summary.get('legacy_source_prompt_ready', 0)}",
         f"- Bloqueadas: {summary.get('blocked', 0)}",
         f"- Bloqueadas por fuente sin contexto: {summary.get('blocked_source_without_context', 0)}",
         f"- Con campo manual detectado: {summary.get('manual_review_target_packets', 0)}",

@@ -1817,11 +1817,11 @@ def source_origin_audit_status(digest: dict[str, Any]) -> str:
     recoverable = as_int(status.get("recoverable_from_job"))
     source_only = as_int(status.get("source_without_context"))
     no_source = as_int(status.get("no_source_context"))
-    parts = [f"{ready}/{cards} listas para LLM"]
+    parts = [f"{ready}/{cards} con contexto explícito"]
     if recoverable:
         parts.append(f"{recoverable} recuperables desde trabajo")
     if source_only:
-        parts.append(f"{source_only} solo fuente: revisión manual")
+        parts.append(f"{source_only} fuente heredada acotada")
     if no_source:
         parts.append(f"{no_source} sin fuente utilizable")
     return "; ".join(parts)
