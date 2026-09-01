@@ -306,10 +306,7 @@
             <input id="clinicMapsUrl" name="clinicMapsUrl" type="url" placeholder="https://">
             <p class="field-warning hidden" id="clinicMapsUrlWarning">Pega el perfil de Google Business de la clínica, no una búsqueda, ruta o dirección.</p>
           </div>
-          <div class="field">
-            <label for="clinicGoogleReviewsUrl">Valoraciones Google</label>
-            <input id="clinicGoogleReviewsUrl" name="clinicGoogleReviewsUrl" type="url" placeholder="https://">
-          </div>
+          <input id="clinicGoogleReviewsUrl" name="clinicGoogleReviewsUrl" type="hidden">
           <div class="field">
             <label for="clinicPrimaryLocationOnline">Visibilidad sede principal</label>
             <select id="clinicPrimaryLocationOnline" name="clinicPrimaryLocationOnline">
@@ -325,7 +322,7 @@
                 <button class="btn secondary" id="clinicAddLocationBtn" type="button">Añadir sede</button>
               </div>
               <div class="location-rows" id="clinicLocationRows"></div>
-              <textarea class="hidden" id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones | Tipo | Visibilidad"></textarea>
+              <textarea class="hidden" id="clinicLocations" name="clinicLocations" rows="4" placeholder="Nombre | Ciudad | Dirección | Google Maps | Tipo | Visibilidad"></textarea>
             </div>
             <section class="pending-specialists hidden" id="clinicPendingLocationsPanel">
               <div class="pending-specialists-head">
@@ -518,7 +515,6 @@
               <label><input type="checkbox" data-lock-field="location.address"> Dirección</label>
               <label><input type="checkbox" data-lock-field="location.locations"> Sedes</label>
               <label><input type="checkbox" data-lock-field="location.maps_url"> Google Maps</label>
-              <label><input type="checkbox" data-lock-field="location.google_reviews_url"> Valoraciones Google</label>
               <label><input type="checkbox" data-lock-field="services.list"> Servicios</label>
               <label><input type="checkbox" data-lock-field="specialties.list"> Especialidades</label>
               <label><input type="checkbox" data-lock-field="units.list"> Unidades</label>
@@ -709,13 +705,10 @@
                   <label for="reviewClinicEditMapsUrl">Google Maps</label>
                   <input id="reviewClinicEditMapsUrl" type="url">
                 </div>
-                <div class="field">
-                  <label for="reviewClinicEditGoogleReviewsUrl">Valoraciones Google</label>
-                  <input id="reviewClinicEditGoogleReviewsUrl" type="url">
-                </div>
+                <input id="reviewClinicEditGoogleReviewsUrl" type="hidden">
                 <div class="field field-wide">
                   <label for="reviewClinicEditLocations">Sedes</label>
-                  <textarea id="reviewClinicEditLocations" rows="3" placeholder="Nombre | Ciudad | Dirección | Google Maps | Valoraciones | Tipo | Visibilidad"></textarea>
+                  <textarea id="reviewClinicEditLocations" rows="3" placeholder="Nombre | Ciudad | Dirección | Google Maps | Tipo | Visibilidad"></textarea>
                 </div>
                 <div class="field">
                   <label for="reviewClinicEditServices">Servicios</label>
@@ -1732,7 +1725,6 @@
         pendingWebsite: 0,
         pendingAddress: 0,
         pendingGoogleMaps: 0,
-        pendingGoogleReviews: 0,
         pendingContact: 0,
         pendingServices: 0,
         pendingSpecialties: 0,
@@ -1747,7 +1739,6 @@
         multiLocationClinics: 0,
         locationRowsMissingAddress: 0,
         locationRowsMissingMaps: 0,
-        locationRowsMissingReviews: 0,
         nextTarget: null,
         unavailable: false
       };
@@ -1759,7 +1750,6 @@
         ["pendingWebsite", "Web oficial"],
         ["pendingAddress", "Dirección"],
         ["pendingGoogleMaps", "Google Maps"],
-        ["pendingGoogleReviews", "Valoraciones Google"],
         ["pendingContact", "Contacto"],
         ["pendingServices", "Servicios"],
         ["pendingSpecialties", "Especialidades"],
@@ -2514,13 +2504,11 @@
         stats.rows += 1;
         if (!hasVisibleText(location.address)) stats.missingAddress += 1;
         if (!hasReviewedGoogleMapsUrl(location.maps_url, location.google_maps_url, location.map_url)) stats.missingMaps += 1;
-        if (!hasVisibleText(location.google_reviews_url, location.reviews_url, location.valoraciones_url)) stats.missingReviews += 1;
         return stats;
       }, {
         rows: 0,
         missingAddress: 0,
-        missingMaps: 0,
-        missingReviews: 0
+        missingMaps: 0
       });
     }
 
@@ -2546,15 +2534,6 @@
       return hasReviewedGoogleMapsUrl(data.maps_url, data.google_maps_url, data.map_url);
     }
 
-    function hasOnlineLocationReviews(row) {
-      var data = (row && row.current_data) || {};
-      var explicitLocations = normalizedLocations(data.locations);
-      var visibleLocations = visibleClinicLocationsFromData(data);
-      if (explicitLocations.length && !locationsHavePhysicalLocation(visibleLocations)) return true;
-      if (explicitLocations.length) return locationsHaveGoogleReviewsUrl(visibleLocations);
-      return hasVisibleText(data.google_reviews_url, data.reviews_url);
-    }
-
     function profilePendingFields(row) {
       var data = row.current_data || {};
       var fields = [];
@@ -2562,7 +2541,6 @@
       if (!hasVisibleText(row.website, data.web)) fields.push("pendingWebsite");
       if (!hasOnlineLocationAddress(row)) fields.push("pendingAddress");
       if (!hasOnlineLocationMaps(row)) fields.push("pendingGoogleMaps");
-      if (!hasOnlineLocationReviews(row)) fields.push("pendingGoogleReviews");
       if (!hasVisibleText(data.email) && !hasPhoneData(data)) fields.push("pendingContact");
       if (!countVisibleArray(data.services)) fields.push("pendingServices");
       if (!countVisibleArray(data.specialties)) fields.push("pendingSpecialties");
@@ -2610,7 +2588,6 @@
         if (locationStats.rows > 1) completeness.multiLocationClinics += 1;
         completeness.locationRowsMissingAddress += locationStats.missingAddress;
         completeness.locationRowsMissingMaps += locationStats.missingMaps;
-        completeness.locationRowsMissingReviews += locationStats.missingReviews;
         if (pending.length) completeness.withPendingFields += 1;
         else completeness.withoutPendingFields += 1;
         pending.forEach(function (key) {
@@ -3924,14 +3901,11 @@
     }
 
     function reviewGoogleReviewItems(row) {
-      return proposalLinkItems((row && row.payload) || {}).filter(function (item) {
-        return item.kind === "google_reviews_url" && Boolean(proposalLinkUrl(item.url));
-      });
+      return [];
     }
 
     function reviewGoogleMapsRowTriage(row) {
       var mapItems = reviewGoogleMapItems(row);
-      var reviewItems = reviewGoogleReviewItems(row);
       var direct = mapItems.some(function (item) {
         var status = proposalGoogleMapsStatus(item.url);
         return status && status.tone === "ready";
@@ -3943,11 +3917,11 @@
       var clinic = reviewClinicForRow(row);
       var currentHasMaps = Boolean(clinic && currentDataHasReviewedMaps(clinic.current_data || {}));
       return {
-        hasGoogle: Boolean(mapItems.length || reviewItems.length),
+        hasGoogle: Boolean(mapItems.length),
         directMaps: direct ? 1 : 0,
         weakMaps: weak ? 1 : 0,
-        reviewsWithoutMaps: reviewItems.length && !direct && !currentHasMaps ? 1 : 0,
-        reviewLinks: reviewItems.length
+        reviewsWithoutMaps: 0,
+        reviewLinks: 0
       };
     }
 
@@ -3956,8 +3930,6 @@
       var parts = [];
       if (triage.directMaps) parts.push("Parece perfil directo");
       if (triage.weakMaps) parts.push("Maps dudoso");
-      if (triage.reviewsWithoutMaps) parts.push("Valoración sin Maps confirmado");
-      if (!parts.length && triage.reviewLinks) parts.push("Valoraciones: confirma la misma ficha de Maps");
       return parts.join(" · ") || "Revisión manual de Google";
     }
 
@@ -3989,9 +3961,6 @@
       }
       if (summary.weakMaps) {
         parts.push(googleLinkCountLabel(summary.weakMaps, "dudosa", "dudosas"));
-      }
-      if (summary.reviewsWithoutMaps) {
-        parts.push(googleLinkCountLabel(summary.reviewsWithoutMaps, "valoración sin Maps confirmado", "valoraciones sin Maps confirmado"));
       }
       if (parts.length === 1) parts.push("revisión manual");
       return parts.join(" · ");
@@ -4107,8 +4076,7 @@
           { inputId: "clinicInstagram", label: "Instagram", key: "instagram" }
         ],
         maps_url: [
-          { inputId: "clinicMapsUrl", label: "Google Maps", key: "maps_url" },
-          { inputId: "clinicGoogleReviewsUrl", label: "Valoraciones Google", key: "google_reviews_url" }
+          { inputId: "clinicMapsUrl", label: "Google Maps", key: "maps_url" }
         ]
       };
     }
@@ -4507,9 +4475,6 @@
       var locationMapsLabel = completeness.unavailable
         ? "—"
         : completeness.locationRowsMissingMaps + " sin Maps";
-      var locationReviewsLabel = completeness.unavailable
-        ? "—"
-        : completeness.locationRowsMissingReviews + " sin valoraciones";
       var backlogQuality = reviewBacklogQuality(openReviews || []);
       var clinicWorkgroup = firstClinicWorkgroup(openReviews || []);
       var backlogGuard = reviewBacklogGuardStatus(reviews.open || (openReviews || []).length);
@@ -4569,7 +4534,6 @@
         systemItem("Fichas pendientes", profileQueueSignal(completeness, nextReview), completeness.nextTarget ? "warning-text" : ""),
         systemItem("Sedes explícitas", locationRowsLabel, completeness.locationRowsMissingAddress ? "warning-text" : ""),
         systemItem("Sedes explícitas sin Maps", locationMapsLabel, completeness.locationRowsMissingMaps ? "warning-text" : ""),
-        systemItem("Sedes explícitas sin valoraciones", locationReviewsLabel, completeness.locationRowsMissingReviews ? "warning-text" : ""),
         systemItem("Duplicados mejoras", duplicateReviewLabel, backlogQuality.duplicateClinics ? "warning-text" : ""),
         systemItem("Tarjetas duplicadas", duplicateReviewDetail, backlogQuality.duplicateReviews ? "warning-text" : ""),
         systemItem("Primer atasco", duplicateTargetLabel, backlogQuality.firstDuplicateTarget ? "warning-text" : ""),
@@ -5224,7 +5188,6 @@
         location.city || location.ciudad || "",
         location.address || location.direccion || location.dirección || "",
         location.maps_url || location.google_maps_url || location.map_url || "",
-        location.google_reviews_url || location.reviews_url || location.valoraciones_url || "",
         locationKindValue(location),
         locationVisibilityValue(location) ? "visible" : "internal"
       ].map(function (item) {
@@ -5243,19 +5206,23 @@
       var clean = text(line).trim();
       if (!clean) return null;
       if (clean.indexOf("|") < 0) return { address: clean };
-      var parts = clean.split("|").map(function (part) { return part.trim(); });
+      var rawParts = clean.split("|").map(function (part) { return part.trim(); });
+      var parts = rawParts.slice();
       while (parts.length < 7) parts.push("");
-      var legacyVisibility = parts[5] && !isLocationKindValue(parts[5]);
+      var hasLegacyReviewsColumn = rawParts.length >= 7 || /^https?:\/\//i.test(parts[4]);
+      var kindPart = hasLegacyReviewsColumn ? parts[5] : parts[4];
+      var visibilityPart = hasLegacyReviewsColumn ? parts[6] : parts[5];
+      var legacyVisibility = kindPart && !isLocationKindValue(kindPart);
       var location = {
         name: parts[0],
         city: parts[1],
         address: parts[2],
         maps_url: parts[3],
-        google_reviews_url: parts[4],
-        kind: legacyVisibility ? "" : parts[5]
+        kind: legacyVisibility ? "" : kindPart
       };
-      if (legacyVisibility) location.public_visible = locationVisibilityValue({ public_visible: parts[5] });
-      else if (parts[6]) location.public_visible = locationVisibilityValue({ public_visible: parts[6] });
+      if (hasLegacyReviewsColumn) location.google_reviews_url = parts[4];
+      if (legacyVisibility) location.public_visible = locationVisibilityValue({ public_visible: kindPart });
+      else if (visibilityPart) location.public_visible = locationVisibilityValue({ public_visible: visibilityPart });
       if (!location.address && parts[1] && parts.filter(Boolean).length === 2) {
         location.city = "";
         location.address = parts[1];
@@ -5330,7 +5297,7 @@
         kind: locationKindValue(location),
         public_visible: locationVisibilityValue(location)
       };
-      var hasMeaningfulData = ["name", "city", "address", "maps_url", "google_reviews_url"].some(function (key) {
+      var hasMeaningfulData = ["name", "city", "address", "maps_url"].some(function (key) {
         return Boolean(item[key]);
       }) || item.kind === "online";
       if (!hasMeaningfulData) return null;
@@ -5371,14 +5338,12 @@
       var savedPrimary = savedLocations[0] || null;
       var address = (clinic && clinic.address) || data.address;
       var mapsUrl = data.maps_url || data.google_maps_url;
-      var reviewsUrl = data.google_reviews_url || data.reviews_url;
-      if (address || mapsUrl || reviewsUrl) {
+      if (address || mapsUrl) {
         return normalizedLocation({
           name: "Sede principal",
           city: (clinic && clinic.city) || data.city,
           address: address,
           maps_url: mapsUrl,
-          google_reviews_url: reviewsUrl,
           kind: savedPrimary ? locationKindValue(savedPrimary) : locationKindValue(data),
           public_visible: savedPrimary ? locationVisibilityValue(savedPrimary) : locationVisibilityValue(data)
         });
@@ -5396,13 +5361,12 @@
 
     function primaryLocationFromForm() {
       var kind = trimmed("clinicPrimaryLocationKind") || "physical";
-      if (kind !== "online" && !trimmed("clinicAddress") && !trimmed("clinicMapsUrl") && !trimmed("clinicGoogleReviewsUrl")) return null;
+      if (kind !== "online" && !trimmed("clinicAddress") && !trimmed("clinicMapsUrl")) return null;
       return normalizedLocation({
         name: "Sede principal",
         city: trimmed("clinicCity"),
         address: trimmed("clinicAddress"),
         maps_url: trimmed("clinicMapsUrl"),
-        google_reviews_url: trimmed("clinicGoogleReviewsUrl"),
         kind: kind,
         public_visible: trimmed("clinicPrimaryLocationOnline") !== "offline"
       });
@@ -5620,7 +5584,6 @@
           '<label class="location-field-wide">Dirección<input data-location-field="address" value="' + html(location.address || "") + '" placeholder="Calle y número"></label>' +
           '<label class="location-field-wide">Google Maps<input data-location-field="maps_url" type="url" value="' + html(location.maps_url || "") + '" placeholder="https://"></label>' +
           '<p class="location-field-warning hidden" data-location-maps-warning></p>' +
-          '<label class="location-field-wide">Valoraciones Google<input data-location-field="google_reviews_url" type="url" value="' + html(location.google_reviews_url || "") + '" placeholder="https://"></label>' +
         '</div>' +
       '</article>';
     }
@@ -5716,14 +5679,6 @@
       });
     }
 
-    function locationsHaveGoogleReviewsUrl(value) {
-      if (!Array.isArray(value)) return false;
-      return value.some(function (location) {
-        if (!location || typeof location === "string") return false;
-        return Boolean(text(location.google_reviews_url || location.reviews_url || location.valoraciones_url).trim());
-      });
-    }
-
     function setInput(id, value) {
       el(id).value = text(value);
     }
@@ -5804,7 +5759,6 @@
         "location.address": trimmed("clinicAddress"),
         "location.locations": currentClinicLocations(),
         "location.maps_url": trimmed("clinicMapsUrl"),
-        "location.google_reviews_url": trimmed("clinicGoogleReviewsUrl"),
         "summary": trimmed("clinicSummary"),
         "services.list": linesToArray(el("clinicServices").value),
         "specialties.list": linesToArray(el("clinicSpecialties").value),
@@ -5873,7 +5827,6 @@
         "location.address": "Dirección",
         "location.locations": "Sedes",
         "location.maps_url": "Google Maps",
-        "location.google_reviews_url": "Valoraciones Google",
         "summary": "Resumen",
         "services.list": "Servicios",
         "specialties.list": "Especialidades",
@@ -6747,10 +6700,6 @@
       if (key === "website") return Boolean(cleanHttpUrl(currentData.web || currentData.website));
       if (key === "address") return hasVisibleText(currentData.address) || locationsHavePublicAccess(normalizedLocations(currentData.locations));
       if (key === "maps_url") return currentDataHasReviewedMaps(currentData);
-      if (key === "google_reviews_url") {
-        return Boolean(cleanHttpUrl(currentData.google_reviews_url || currentData.reviews_url)) &&
-          currentDataHasReviewedMaps(currentData);
-      }
       if (key === "email" || key === "telefono") return currentDataHasPublicContact(currentData);
       if (["services", "specialties", "unidades", "profesionales"].indexOf(key) >= 0) {
         return countVisibleArray(currentData[key]) > 0;
@@ -6985,6 +6934,10 @@
       return aliases[clean] || clean;
     }
 
+    function isDeprecatedProposalField(key) {
+      return canonicalProposalField(key) === "google_reviews_url";
+    }
+
     function proposalListValue(value) {
       if (Array.isArray(value)) {
         if (value.some(function (item) { return item && typeof item === "object"; })) {
@@ -7010,8 +6963,6 @@
         locations: "Sedes",
         maps_url: "Google Maps",
         google_maps_url: "Google Maps",
-        google_reviews_url: "Valoraciones Google",
-        reviews_url: "Valoraciones Google",
         summary: "Resumen",
         services: "Servicios",
         specialties: "Especialidades",
@@ -7034,7 +6985,7 @@
         instagram: "Instagram"
       };
       var items = Object.keys(labels).filter(function (key) {
-        return hasOwn(fields, key) && proposalListValue(fields[key]);
+        return !isDeprecatedProposalField(key) && hasOwn(fields, key) && proposalListValue(fields[key]);
       }).map(function (key) {
         return proposalLabel(key) + ": " + proposalListValue(fields[key]);
       });
@@ -7159,8 +7110,6 @@
       [
         ["maps_url", "Google Maps", "maps_url"],
         ["google_maps_url", "Google Maps", "maps_url"],
-        ["google_reviews_url", "Valoraciones Google", "google_reviews_url"],
-        ["reviews_url", "Valoraciones Google", "google_reviews_url"],
         ["pricing_url", "Página de precios", "pricing_url"],
         ["website", "Web propuesta", "website"],
         ["web", "Web propuesta", "website"]
@@ -7173,7 +7122,6 @@
           var suffix = text(location.name || location.city || "").trim();
           var labelSuffix = suffix ? " · " + suffix : index === 0 ? " · sede principal" : " · sede adicional";
           addProposalLink(items, seen, "Google Maps" + labelSuffix, location.maps_url || location.google_maps_url || location.map_url, "maps_url");
-          addProposalLink(items, seen, "Valoraciones Google" + labelSuffix, location.google_reviews_url || location.reviews_url || location.valoraciones_url, "google_reviews_url");
         });
       }
       return items;
@@ -7182,7 +7130,6 @@
     function reviewHasGoogleLinkProposal(row) {
       return proposalLinkItems((row && row.payload) || {}).some(function (item) {
         if (item.kind === "maps_url") return Boolean(proposalLinkUrl(item.url));
-        if (item.kind === "google_reviews_url") return Boolean(proposalLinkUrl(item.url));
         return false;
       });
     }
@@ -7417,7 +7364,6 @@
         locations: "Sedes",
         maps_url: "Google Maps",
         google_maps_url: "Google Maps",
-        google_reviews_url: "Valoraciones Google",
         summary: "Resumen",
         services: "Servicios",
         specialties: "Especialidades",
@@ -7914,7 +7860,6 @@
         { key: "region", inputId: "reviewClinicEditRegion", kind: "text" },
         { key: "address", inputId: "reviewClinicEditAddress", kind: "text" },
         { key: "maps_url", inputId: "reviewClinicEditMapsUrl", kind: "text" },
-        { key: "google_reviews_url", inputId: "reviewClinicEditGoogleReviewsUrl", kind: "text" },
         { key: "locations", inputId: "reviewClinicEditLocations", kind: "locations" },
         { key: "services", inputId: "reviewClinicEditServices", kind: "array" },
         { key: "specialties", inputId: "reviewClinicEditSpecialties", kind: "array" },
@@ -8070,8 +8015,6 @@
         "locations",
         "maps_url",
         "google_maps_url",
-        "google_reviews_url",
-        "reviews_url",
         "summary",
         "services",
         "specialties",
@@ -8100,7 +8043,6 @@
       if (key === "maps_url") {
         return reviewedMapsProfileValue(proposalListValue(value)) ? "Perfil revisable" : "Confirmar perfil real";
       }
-      if (key === "google_reviews_url") return "Confirmar misma ficha";
       if (key === "locations") return "Cargar sedes y revisar";
       if (key === "profesionales") return "Revisar equipo";
       if (["public_pricing", "pricing_url", "team_credentialing_visible"].indexOf(key) >= 0) return "Revisión humana";
@@ -8111,6 +8053,7 @@
 
     function pushProposalFocusItem(items, seen, row, key, value, label, action) {
       var canonicalKey = canonicalProposalField(key);
+      if (isDeprecatedProposalField(canonicalKey)) return;
       var cleanValue = proposalListValue(value);
       if (!cleanValue) return;
       var identity = canonicalKey + "|" + normalizedFieldValue(value).toLowerCase();
@@ -8179,9 +8122,6 @@
       if (item.key === "maps_url") {
         var warning = googleMapsReviewMessage(proposalListValue(item.value));
         return warning || "Abre el enlace y confirma que es el perfil real de la clínica antes de aprobar.";
-      }
-      if (item.key === "google_reviews_url") {
-        return "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica.";
       }
       if (item.key === "claim_request") {
         return "Aprobar registra este interlocutor como contacto interno. No cambia la web ni concede acceso.";
@@ -8308,16 +8248,6 @@
       };
     }
 
-    function proposalGoogleReviewsStatus(value) {
-      var url = proposalLinkUrl(proposalListValue(value));
-      if (!url) return null;
-      return {
-        tone: "neutral",
-        label: "Valoraciones Google",
-        detail: "Confirma que pertenecen a la misma ficha de Google Maps."
-      };
-    }
-
     function foldedReviewText(value) {
       var clean = text(value).trim();
       if (!clean) return "";
@@ -8435,19 +8365,13 @@
     }
 
     function reviewMapsChecklistHtml(row, item) {
-      if (!item || ["maps_url", "google_reviews_url"].indexOf(item.key) < 0) return "";
+      if (!item || item.key !== "maps_url") return "";
       var expected = reviewMapsExpectedClinicLabel(row);
-      var checks = item.key === "maps_url"
-        ? [
-          "Debe abrir una ficha de Google Maps, no una búsqueda, ruta o dirección.",
-          "El nombre visible en Google debe coincidir con: " + (expected || "esta clínica"),
-          "Si no coincide, usa Modificar o Rechazar."
-        ]
-        : [
-          "Debe pertenecer a la misma ficha de Google Maps de la clínica.",
-          "Confirma primero que el perfil de Google Maps está guardado o propuesto en esta revisión.",
-          "No apruebes valoraciones aisladas sin esa coincidencia."
-        ];
+      var checks = [
+        "Debe abrir una ficha de Google Maps, no una búsqueda, ruta o dirección.",
+        "El nombre visible en Google debe coincidir con: " + (expected || "esta clínica"),
+        "Si no coincide, usa Modificar o Rechazar."
+      ];
       return '<div class="review-link-checklist"><span>Comprobación manual</span><ul>' +
         checks.map(function (check) { return '<li>' + html(check) + '</li>'; }).join("") +
         '</ul></div>';
@@ -8456,7 +8380,6 @@
     function proposalReviewStatusHtml(row, item) {
       var status = null;
       if (item.key === "maps_url") status = proposalGoogleMapsStatus(item.value);
-      if (item.key === "google_reviews_url") status = proposalGoogleReviewsStatus(item.value);
       if (item.key === "profesionales") status = proposalSpecialistsStatus(item.value);
       if (!status) return "";
       return '<div class="review-link-status ' + html("review-link-status-" + status.tone) + '">' +
@@ -8613,10 +8536,6 @@
         var warning = proposalLinkWarning(item);
         if (warning) add(item.label + ": " + warning);
       });
-      var proposalKeys = (proposalItems || []).map(function (item) { return item.key; });
-      if (proposalKeys.indexOf("google_reviews_url") >= 0) {
-        add("Valoraciones Google: confirma primero el perfil real de Google Maps y después que las reseñas pertenecen a esa misma ficha.");
-      }
       (proposalItems || []).forEach(function (item) {
         var phoneWarning = proposalPhoneWarning(item.key, item.value);
         if (phoneWarning) add(phoneWarning);
@@ -8868,21 +8787,11 @@
             add("Google Maps debe ser el perfil real de la clínica, no una búsqueda, ruta o dirección.");
           }
         }
-        if (key === "google_reviews_url") {
-          var reviewsUrl = proposalListValue(value);
-          if (reviewsUrl && !fieldsHaveReviewedMapsContext(fields, activeReview)) {
-            add("Antes de guardar Valoraciones Google, confirma y guarda el perfil real de Google Maps de la clínica.");
-          }
-        }
         if (key === "locations") {
           normalizedLocations(value).forEach(function (location) {
             var mapsUrl = locationFieldValue(location, ["maps_url", "google_maps_url", "map_url"]);
             var message = googleMapsReviewMessage(mapsUrl);
             if (message) add("Sede propuesta: " + message);
-            var reviewsUrl = locationFieldValue(location, ["google_reviews_url", "reviews_url", "valoraciones_url"]);
-            if (reviewsUrl && !reviewedMapsProfileValue(mapsUrl) && !fieldsHaveReviewedMapsContext(fields, activeReview)) {
-              add("Antes de guardar Valoraciones Google de una sede, confirma y guarda el perfil real de Google Maps de esa clínica.");
-            }
           });
         }
         if (key === "profesionales" && !options.humanModifiedSpecialists && !options.confirmedNoisySpecialists && suspiciousSpecialistValues(value).length) {
@@ -9736,7 +9645,7 @@
         direct = "Guardar dirección y seguir";
       } else if (keys.length === 1 && keys[0] === "locations") {
         direct = "Guardar sede y seguir";
-      } else if (keys.every(function (key) { return ["address", "locations", "maps_url", "google_reviews_url"].indexOf(key) >= 0; })) {
+      } else if (keys.every(function (key) { return ["address", "locations", "maps_url"].indexOf(key) >= 0; })) {
         direct = "Guardar ubicación y seguir";
       } else {
         direct = "Guardar estos cambios";

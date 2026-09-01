@@ -61,7 +61,6 @@ def main() -> None:
         "Google Maps propuesto. Acepta solo el perfil real de la clínica.",
         "Estado: \" + reviewGoogleMapsRowTriageLabel(row)",
         'if (item.kind === "maps_url") return Boolean(proposalLinkUrl(item.url));',
-        'if (item.kind === "google_reviews_url") return Boolean(proposalLinkUrl(item.url));',
         'filterChip("Google Maps", googleLinkCount, reviewGoogleLinksFilter, { "data-review-google-links": "true" })',
         'filterChip("Especialistas", specialistCount, reviewSpecialistsFilter, { "data-review-specialists": "true" })',
         "[data-review-type],[data-review-priority],[data-review-duplicate],[data-review-google-links],[data-review-specialists],[data-review-group],[data-review-group-clear]",

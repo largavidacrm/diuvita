@@ -308,28 +308,7 @@ google_link_review_rows as (
       where {location_maps_check}
         and not {location_direct_maps_check}
     )) as weak_maps_proposed,
-    (exists (
-      select 1
-      from jsonb_each_text(
-        (case when jsonb_typeof(rq.payload -> 'proposed_fields') = 'object' then rq.payload -> 'proposed_fields' else '{{}}'::jsonb end) ||
-        (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
-        (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
-      ) proposed(key, value)
-      where proposed.key in ('google_reviews_url', 'reviews_url')
-        and btrim(proposed.value) ~* '^https?://'
-    ) or exists (
-      select 1
-      from jsonb_array_elements(
-        (case when jsonb_typeof(rq.payload #> '{{proposed_fields,locations}}') = 'array' then rq.payload #> '{{proposed_fields,locations}}' else '[]'::jsonb end) ||
-        (case when jsonb_typeof(rq.payload #> '{{proposed_current_data,locations}}') = 'array' then rq.payload #> '{{proposed_current_data,locations}}' else '[]'::jsonb end) ||
-        (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
-      ) location(value)
-      where coalesce(
-        nullif(btrim(location.value ->> 'google_reviews_url'), ''),
-        nullif(btrim(location.value ->> 'reviews_url'), ''),
-        nullif(btrim(location.value ->> 'valoraciones_url'), '')
-      ) ~* '^https?://'
-    )) as reviews_proposed
+    false as reviews_proposed
   from public.review_queue rq
   left join public.clinics c on c.id = rq.clinic_id
   where rq.status = 'open'
@@ -341,13 +320,8 @@ google_link_review_rows as (
           (case when jsonb_typeof(rq.payload -> 'proposed_current_data') = 'object' then rq.payload -> 'proposed_current_data' else '{{}}'::jsonb end) ||
           (case when jsonb_typeof(rq.payload -> 'fields') = 'object' then rq.payload -> 'fields' else '{{}}'::jsonb end)
         ) proposed(key, value)
-        where (
-          proposed.key in ('maps_url', 'google_maps_url')
+        where proposed.key in ('maps_url', 'google_maps_url')
           and {proposed_google_maps_check}
-        ) or (
-          proposed.key in ('google_reviews_url', 'reviews_url')
-          and btrim(proposed.value) ~* '^https?://'
-        )
       )
       or exists (
         select 1
@@ -357,11 +331,6 @@ google_link_review_rows as (
           (case when jsonb_typeof(rq.payload #> '{{fields,locations}}') = 'array' then rq.payload #> '{{fields,locations}}' else '[]'::jsonb end)
         ) location(value)
         where {location_maps_check}
-          or coalesce(
-            nullif(btrim(location.value ->> 'google_reviews_url'), ''),
-            nullif(btrim(location.value ->> 'reviews_url'), ''),
-            nullif(btrim(location.value ->> 'valoraciones_url'), '')
-          ) ~* '^https?://'
       )
     )
 ),
@@ -370,10 +339,7 @@ google_link_reviews as (
     'open_count', count(*),
     'direct_maps_count', count(*) filter (where direct_maps_proposed),
     'weak_maps_count', count(*) filter (where weak_maps_proposed),
-    'reviews_without_maps_count', count(*) filter (
-      where reviews_proposed
-        and not (current_maps_present or direct_maps_proposed)
-    ),
+    'reviews_without_maps_count', 0,
     'first_review', coalesce(
       (
         select to_jsonb(items)
@@ -961,25 +927,6 @@ visible_profile_base as (
       )
     ) as has_address,
     {has_google_maps} as has_google_maps,
-    (
-      nullif(btrim(coalesce(c.current_data ->> 'google_reviews_url', c.current_data ->> 'reviews_url', '')), '') is not null
-      or exists (
-        select 1
-        from jsonb_array_elements(
-          case
-            when jsonb_typeof(c.current_data -> 'locations') = 'array'
-              then c.current_data -> 'locations'
-            else '[]'::jsonb
-          end
-        ) as location(value)
-        where nullif(btrim(coalesce(
-          location.value ->> 'google_reviews_url',
-          location.value ->> 'reviews_url',
-          location.value ->> 'valoraciones_url',
-          ''
-        )), '') is not null
-      )
-    ) as has_google_reviews,
     nullif(btrim(coalesce(c.current_data ->> 'email', '')), '') is not null
       or nullif(btrim(coalesce(c.current_data ->> 'telefono', c.current_data ->> 'phone', c.current_data ->> 'telephone', '')), '') is not null as has_contact,
     nullif(btrim(coalesce(
@@ -1065,7 +1012,6 @@ visible_profile_checks as (
       case when not has_website then 'Web oficial' end,
       case when not has_address then 'Dirección' end,
       case when not has_google_maps then 'Google Maps de clínica' end,
-      case when not has_google_reviews then 'Valoraciones Google' end,
       case when not has_contact then 'Email o teléfono' end,
       case when not has_services then 'Servicios' end,
       case when not has_specialties then 'Especialidades' end,
@@ -1092,7 +1038,6 @@ profile_completeness as (
     'pending_website', count(*) filter (where not has_website),
     'pending_address', count(*) filter (where not has_address),
     'pending_google_maps', count(*) filter (where not has_google_maps),
-    'pending_google_reviews', count(*) filter (where not has_google_reviews),
     'pending_contact', count(*) filter (where not has_contact),
     'pending_services', count(*) filter (where not has_services),
     'pending_specialties', count(*) filter (where not has_specialties),
@@ -1283,13 +1228,7 @@ visible_location_rows as (
         else ''
       end
     )), '') is not null as has_address,
-    {location_maps_check} as has_google_maps_profile,
-    nullif(btrim(coalesce(
-      location.value ->> 'google_reviews_url',
-      location.value ->> 'reviews_url',
-      location.value ->> 'valoraciones_url',
-      ''
-    )), '') is not null as has_google_reviews
+    {location_maps_check} as has_google_maps_profile
   from public.clinics c
   cross join lateral jsonb_array_elements(
     case
@@ -1359,7 +1298,6 @@ location_coverage as (
     'total_locations', count(*),
     'locations_missing_address', count(*) filter (where not has_address),
     'locations_missing_google_maps_profile', count(*) filter (where not has_google_maps_profile),
-    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews),
     'clinics_with_location_proposals', coalesce((select count(*) from visible_location_review_proposals), 0),
     'proposed_location_rows', coalesce((select sum(proposed_location_count) from visible_location_review_proposals), 0),
     'clinics_with_location_claims', coalesce((select count(*) from visible_location_claims), 0),
@@ -1466,7 +1404,6 @@ PROFILE_COMPLETENESS_FIELDS = [
     ("pending_website", "Web oficial"),
     ("pending_address", "Dirección"),
     ("pending_google_maps", "Google Maps"),
-    ("pending_google_reviews", "Valoraciones Google"),
     ("pending_contact", "Contacto"),
     ("pending_services", "Servicios"),
     ("pending_specialties", "Especialidades"),
@@ -1755,14 +1692,12 @@ def location_coverage_status(digest: dict[str, Any]) -> str:
         return "; ".join(parts)
     multi = as_int(coverage.get("multi_location_clinics"))
     missing_maps = as_int(coverage.get("locations_missing_google_maps_profile"))
-    missing_reviews = as_int(coverage.get("locations_missing_google_reviews"))
     missing_address = as_int(coverage.get("locations_missing_address"))
     parts.extend([
         f"{multi} {plural(multi, 'clínica multisede', 'clínicas multisede')}",
         f"{proposals} {plural(proposals, 'propuesta en bandeja', 'propuestas en bandeja')}",
         f"{internal} {plural(internal, 'interna detectada', 'internas detectadas')}",
         f"{missing_maps} sedes explícitas sin Maps de clínica",
-        f"{missing_reviews} sedes explícitas sin valoraciones",
         f"{missing_address} sedes explícitas sin dirección",
     ])
     return "; ".join(parts)
@@ -1902,15 +1837,10 @@ def google_link_review_status(digest: dict[str, Any]) -> str:
     status_parts = []
     direct_maps = as_int(status.get("direct_maps_count"))
     weak_maps = as_int(status.get("weak_maps_count"))
-    reviews_without_maps = as_int(status.get("reviews_without_maps_count"))
     if direct_maps:
         status_parts.append(f"{direct_maps} {plural(direct_maps, 'parece perfil directo', 'parecen perfil directo')}")
     if weak_maps:
         status_parts.append(f"{weak_maps} {plural(weak_maps, 'dudosa', 'dudosas')}")
-    if reviews_without_maps:
-        status_parts.append(
-            f"{reviews_without_maps} {plural(reviews_without_maps, 'valoración sin Maps confirmado', 'valoraciones sin Maps confirmado')}"
-        )
     status_detail = f"; {'; '.join(status_parts)}" if status_parts else ""
     return f"{count} {plural(count, 'tarjeta', 'tarjetas')}{status_detail}; primera: {first_label}"
 

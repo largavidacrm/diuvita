@@ -24,7 +24,6 @@ def main() -> None:
         "def location_display_name(",
         "def transparency_block(",
         "def location_maps_url(",
-        "def location_reviews_url(",
         "def location_detail(",
         "def location_kind_value(",
         "def location_is_online(",
@@ -51,7 +50,6 @@ def main() -> None:
         'class="location-list"',
         'class="location-actions"',
         'location_display_name(loc, c, multiple)',
-        'Valoraciones Google',
         'id="transparencia"',
         'class="transparency-grid"',
         'Años en ejercicio',
@@ -107,10 +105,12 @@ def main() -> None:
         "section-count",
         "Sede {index + 1}",
         "google_maps_search_url",
+        "def location_reviews_url(",
+        "Valoraciones Google",
     ]:
         check(removed_marker not in source, f"public profile should not render decorative counters: {removed_marker}")
 
-    maps_body = source[source.index("def location_maps_url("):source.index("def location_reviews_url(")]
+    maps_body = source[source.index("def location_maps_url("):source.index("def location_detail(")]
     check("is_google_maps_profile_url" in maps_body, "Google Maps links should require direct clinic profile signal")
     check("google_maps_search_url" not in source, "public profiles should not generate generic Google Maps searches")
     check("location_address" not in maps_body, "Google Maps fallback should use clinic name, not street address")

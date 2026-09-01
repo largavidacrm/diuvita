@@ -44,7 +44,6 @@ FIELD_ORDER = [
     "address",
     "locations",
     "maps_url",
-    "google_reviews_url",
     "summary",
     "services",
     "specialties",
@@ -68,7 +67,6 @@ ADMIN_FIELD_TARGETS = [
     (("website", "web"), "website", "Web oficial", "clinicWebsite"),
     (("address", "direcci", "sede"), "address", "Dirección", "clinicAddress"),
     (("maps", "google maps"), "maps_url", "Google Maps", "clinicMapsUrl"),
-    (("reviews", "valoraciones", "reseñas", "resenas"), "google_reviews_url", "Valoraciones Google", "clinicGoogleReviewsUrl"),
     (("contact", "contacto", "tel", "phone", "telefono", "email"), "email", "Contacto público", "clinicEmail"),
     (("contact", "contacto", "tel", "phone", "telefono"), "telefono", "Teléfono principal", "clinicPhone"),
     (("service", "servicio"), "services", "Servicios", "clinicServices"),
@@ -91,7 +89,6 @@ MANUAL_PROFILE_EDIT_FIELD_TARGETS = [
     ("region", "Región", "reviewClinicEditRegion", "clinicRegion"),
     ("address", "Dirección", "reviewClinicEditAddress", "clinicAddress"),
     ("maps_url", "Google Maps", "reviewClinicEditMapsUrl", "clinicMapsUrl"),
-    ("google_reviews_url", "Valoraciones Google", "reviewClinicEditGoogleReviewsUrl", "clinicGoogleReviewsUrl"),
     ("locations", "Sedes", "reviewClinicEditLocations", "clinicLocations"),
     ("services", "Servicios", "reviewClinicEditServices", "clinicServices"),
     ("specialties", "Especialidades", "reviewClinicEditSpecialties", "clinicSpecialties"),
@@ -148,6 +145,10 @@ SPECIALIST_TITLE_RE = re.compile(r"^(?:dr\.?|dra\.?|doctor|doctora|lic\.?|d\.o\.
 def canonical_field(key: Any) -> str:
     clean = str(key or "").strip()
     return FIELD_ALIASES.get(clean, clean)
+
+
+def is_deprecated_field(key: Any) -> bool:
+    return canonical_field(key) == "google_reviews_url"
 
 
 def folded_text(value: Any) -> str:
@@ -429,6 +430,8 @@ def ordered_proposed_items(row: dict[str, Any]) -> list[dict[str, Any]]:
 
     def add(key: Any, value: Any, label: str = "") -> None:
         clean = canonical_field(key)
+        if is_deprecated_field(clean):
+            return
         if clean in seen or not has_visible_value(value):
             return
         seen.add(clean)
@@ -568,8 +571,6 @@ def source_candidates(payload: dict[str, Any]) -> list[tuple[str, str]]:
     for key, label in [
         ("maps_url", "Google Maps propuesto"),
         ("google_maps_url", "Google Maps propuesto"),
-        ("google_reviews_url", "Valoraciones propuestas"),
-        ("reviews_url", "Valoraciones propuestas"),
         ("pricing_url", "Fuente de precios"),
     ]:
         add(label, proposed_fields(payload).get(key))
@@ -791,32 +792,6 @@ def google_maps_profile_dependency(clinic: dict[str, Any], fields: dict[str, Any
     }
 
 
-def google_reviews_review_context(
-    key: str,
-    value: Any,
-    clinic: dict[str, Any] | None = None,
-    fields: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    if canonical_field(key) != "google_reviews_url":
-        return {}
-    urls = [str(item).strip() for item in field_values(value) if str(item or "").strip()]
-    if not urls:
-        return {}
-    dependency = google_maps_profile_dependency(clinic or {}, fields or {})
-    return {
-        "kind": "google_reviews_link",
-        "overall_status": "reviews_link_needs_main_profile_confirmation",
-        "url_count": len(urls),
-        "human_label": "Confirmar misma ficha",
-        "approval_dependency": dependency,
-        "required_human_check": "confirm_reviews_match_main_google_business_profile",
-        "next_step": "confirm_reviews_match_confirmed_google_maps_profile"
-        if dependency["satisfied"]
-        else "confirm_main_google_maps_profile_before_approval",
-        "safe_to_auto_publish": False,
-    }
-
-
 def phone_warning(key: str, value: Any) -> str:
     if canonical_field(key) not in PHONE_FIELDS:
         return ""
@@ -869,10 +844,6 @@ def warning_items(row: dict[str, Any], proposed_items: list[dict[str, Any]], inc
             for location in value if isinstance(value, list) else []:
                 if isinstance(location, dict):
                     add(maps_warning("maps_url", location.get("maps_url") or location.get("google_maps_url")))
-        if key == "google_reviews_url":
-            dependency = google_maps_profile_dependency(clinic if isinstance(clinic, dict) else {}, fields)
-            if not dependency["satisfied"]:
-                add("Valoraciones Google requiere confirmar primero el perfil real de Google Maps de la clínica.")
         if canonical_field(key) == "profesionales":
             add(specialist_quality_warning(value, include_values=include_values))
         if key in {"status", "profile_confidence", "verification_status"}:
@@ -926,9 +897,6 @@ def decision_packet(row: dict[str, Any], include_values: bool = False) -> dict[s
         maps_context = google_maps_review_context(key, item["value"])
         if maps_context:
             field_packet["google_maps_review"] = maps_context
-        reviews_context = google_reviews_review_context(key, item["value"], clinic=clinic, fields=fields)
-        if reviews_context:
-            field_packet["google_reviews_review"] = reviews_context
         specialists_context = specialist_review_context(key, item["value"], include_values=include_values)
         if specialists_context:
             field_packet["specialist_quality_review"] = specialists_context

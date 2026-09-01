@@ -69,7 +69,7 @@ def main() -> None:
 
     links = proposed_links(direct_row["payload"])
     check(links["maps"] == ["https://www.google.com/maps/place/Clinic+A/"], "Maps links should be deduped")
-    check(links["reviews"] == ["https://www.google.com/maps/place/Clinic+A/reviews"], "review links should be deduped")
+    check("reviews" not in links, "review links should no longer be operational reconciliation fields")
 
     direct = reconcile_row(direct_row)
     unsafe = reconcile_row(unsafe_row)
@@ -94,26 +94,22 @@ def main() -> None:
         "review_cards": 3,
         "cards_with_direct_maps": 1,
         "cards_with_unsafe_maps": 1,
-        "cards_with_review_links": 3,
-        "manual_decision_items": 5,
-    }, "summary counts should classify Google review cards")
+        "cards_with_review_links": 0,
+        "manual_decision_items": 2,
+    }, "summary counts should classify Google Maps cards")
     check(direct["direct_map_count"] == 1, "direct Maps count missing")
     check(direct["unsafe_map_count"] == 0, "direct Maps should not be unsafe")
-    check(direct["manual_decision_count"] == 2, "direct card should expose Maps and reviews decisions")
-    check(
-        direct["manual_decision_sequence"][1]["depends_on"] == "maps_url",
-        "Google reviews decision should depend on the main Maps profile",
-    )
-    check(direct["fields_to_review"] == ["Google Maps", "Valoraciones Google"], "decision fields missing")
+    check(direct["manual_decision_count"] == 1, "direct card should expose one Maps decision")
+    check(direct["fields_to_review"] == ["Google Maps"], "decision fields missing")
     check(direct["manual_decision_items"][0]["manual_decision"] == "confirm_real_clinic_profile", "direct Maps decision missing")
     check(direct["manual_decision_items"][0]["safe_to_auto_publish"] is False, "direct Maps should still require human review")
     check("confirmar que es la ficha real" in direct["next_step"], "direct Maps next step missing")
     check(unsafe["map_status_counts"]["street_address"] == 1, "street-address Maps status missing")
     check(unsafe["manual_decision_items"][0]["manual_decision"] == "reject_or_replace_with_real_profile", "unsafe Maps decision missing")
     check("no guardar ese Maps" in unsafe["next_step"], "unsafe Maps next step missing")
-    check(review_only["review_link_count"] == 1, "review-only link count missing")
-    check(review_only["fields_to_review"] == ["Valoraciones Google"], "review-only decision field missing")
-    check("completar primero el perfil principal" in review_only["next_step"], "review-only next step missing")
+    check(review_only["review_link_count"] == 0, "review-only link count should be ignored")
+    check(review_only["fields_to_review"] == [], "review-only cards should not expose decision fields")
+    check("sin enlace útil" in review_only["next_step"], "review-only next step missing")
     check("parece perfil directo de clínica: 1" in first_status_label(direct["map_status_counts"]), "direct status label missing")
     check("parece dirección suelta; no guardar: 1" in first_status_label(unsafe["map_status_counts"]), "unsafe status label missing")
     check("# Vitalarga Google link review reconciliation" in output, "title missing")
@@ -121,13 +117,13 @@ def main() -> None:
     check("Tarjetas: 3" in output, "summary card count missing")
     check("Estado Maps: parece perfil directo de clínica: 1" in output, "direct output status missing")
     check("Estado Maps: parece dirección suelta; no guardar: 1" in output, "unsafe output status missing")
-    check("Decisiones manuales: Google Maps, Valoraciones Google" in output, "decision fields should be printed")
-    check("Orden sugerido: 1. Google Maps -> 2. Valoraciones Google tras Google Maps" in output, "decision sequence should be printed")
+    check("Decisiones manuales: Google Maps" in output, "decision fields should be printed")
+    check("Valoraciones Google" not in output, "review fields should not be printed")
     check("Con perfil directo: 1" in compact_output, "compact direct count missing")
     check("Con Maps dudoso: 1" in compact_output, "compact unsafe count missing")
-    check("Con valoraciones: 3" in compact_output, "compact review count missing")
-    check("Decisiones manuales: 5" in compact_output, "compact decision count missing")
-    check("campos: Google Maps, Valoraciones Google" in compact_output, "compact field labels missing")
+    check("Con valoraciones" not in compact_output, "compact review count should not be printed")
+    check("Decisiones manuales: 2" in compact_output, "compact decision count missing")
+    check("campos: Google Maps" in compact_output, "compact field labels missing")
     check("Clinic A: Completar enlaces Google: Clinic A" in compact_output, "compact card label missing")
     check("Nota: salida compacta sin URLs" in compact_output, "compact privacy note missing")
     check("https://www.google.com/maps" not in compact_output, "compact output should not print Google URLs")
@@ -155,7 +151,7 @@ def main() -> None:
     check(loaded["summary"]["review_cards"] == 2, "loaded report should include summary")
     check("public.review_queue" in sql, "query should read review cards")
     check("rq.status = 'open'" in sql, "query should only inspect open reviews")
-    check("maps_url" in sql and "google_reviews_url" in sql, "query should find Google fields")
+    check("maps_url" in sql and "google_reviews_url" not in sql, "query should only find Maps fields")
     check("rq.payload" in sql, "query should load payload for local extraction")
     check("rq.title ilike" in sql, "query should allow review title search")
     check("limit 5" in sql, "query should cap result size")

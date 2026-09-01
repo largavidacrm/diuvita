@@ -264,10 +264,10 @@ def main():
         "action": "approve",
         "reason": "Las reseñas parecen correctas.",
     })
-    check(not reviews_without_maps["valid"], "Google reviews should not be approved without confirmed Maps")
+    check(not reviews_without_maps["valid"], "Google reviews-only packets should not be approved")
     check(
-        any("Google reviews require a confirmed clinic Google Maps profile" in error for error in reviews_without_maps["errors"]),
-        "Google reviews dependency error missing",
+        any("no editable proposal" in error for error in reviews_without_maps["errors"]),
+        "empty proposal error missing",
     )
 
     reviews_modify_without_maps = validate_suggestion(sample_reviews_packet(), {
@@ -275,14 +275,25 @@ def main():
         "action": "modify",
         "field_changes": {"google_reviews_url": "https://www.google.com/maps/place/Clinic/reviews"},
     })
-    check(not reviews_modify_without_maps["valid"], "Google reviews modify should require confirmed Maps context")
+    check(not reviews_modify_without_maps["valid"], "Google reviews modify should be rejected as non-editable")
+    check(
+        "field is not editable in this packet: google_reviews_url" in reviews_modify_without_maps["errors"],
+        "deprecated review field should be reported as non-editable",
+    )
 
     reviews_with_maps = validate_suggestion(sample_reviews_packet(has_maps=True), {
         "review_id": "reviews-1",
         "action": "approve",
         "reason": "Daniel confirma que pertenecen al perfil de Maps guardado.",
     })
-    check(reviews_with_maps["valid"], "Google reviews should pass once the clinic has a direct Maps profile")
+    check(not reviews_with_maps["valid"], "Google reviews should stay retired even when Maps exists")
+
+    reviews_reject = validate_suggestion(sample_reviews_packet(has_maps=True), {
+        "review_id": "reviews-1",
+        "action": "reject",
+        "reason": "Campo retirado.",
+    })
+    check(reviews_reject["valid"], "legacy reviews-only packets should remain rejectable")
 
     dirty_specialist_packet = sample_dirty_specialist_packet()
     dirty_specialist_approve = validate_suggestion(dirty_specialist_packet, {

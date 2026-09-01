@@ -198,21 +198,7 @@ def main():
         },
         "clinic": {"display_name": "Clinic", "current_data": {}},
     })
-    reviews_context = reviews_packet["proposed_change"][0]["google_reviews_review"]
-    check(reviews_context["kind"] == "google_reviews_link", "Google reviews context kind missing")
-    check(
-        reviews_context["overall_status"] == "reviews_link_needs_main_profile_confirmation",
-        "Google reviews links should depend on the main profile confirmation",
-    )
-    check(
-        reviews_context["approval_dependency"]["satisfied"] is False,
-        "Google reviews should expose a missing Maps dependency",
-    )
-    check(
-        reviews_context["next_step"] == "confirm_main_google_maps_profile_before_approval",
-        "Google reviews without Maps should ask for the main profile first",
-    )
-    check(reviews_context["safe_to_auto_publish"] is False, "Google reviews should stay human-gated")
+    check(reviews_packet["proposed_change"] == [], "Google reviews should no longer become decision fields")
     reviews_origin = reviews_packet["source_origin_status"]
     check(reviews_origin["status"] == "source_without_context", "legacy source-only cards should expose missing source context")
     check(reviews_origin["source_host"] == "clinic.example", "legacy source context should keep only the host by default")
@@ -226,32 +212,8 @@ def main():
     check("source_url" not in reviews_origin, "legacy source context should not expose full URL by default")
     check(packet_is_llm_ready(safe_packet) is True, "context-ready packets should be available for LLM help")
     check(packet_llm_readiness_status(safe_packet) == "strict_prompt_ready", "context-ready packet status missing")
-    check(packet_is_llm_ready(reviews_packet) is True, "legacy source packets with explicit fields should be LLM-ready with limits")
-    check(packet_llm_readiness_status(reviews_packet) == "legacy_source_prompt_ready", "legacy source status missing")
-    reviews_with_maps_packet = decision_packet({
-        "id": "reviews-2",
-        "title": "Revisar valoraciones Google: Clinic",
-        "review_type": "clinic_profile_enrichment",
-        "payload": {
-            "source_url": "https://clinic.example/contacto",
-            "proposed_fields": {
-                "google_reviews_url": "https://www.google.com/maps/place/Clinic/reviews",
-            },
-        },
-        "clinic": {
-            "display_name": "Clinic",
-            "current_data": {"maps_url": "https://www.google.com/maps/place/Clinic/"},
-        },
-    })
-    reviews_with_maps_context = reviews_with_maps_packet["proposed_change"][0]["google_reviews_review"]
-    check(
-        reviews_with_maps_context["approval_dependency"]["satisfied"] is True,
-        "Google reviews should detect an existing direct Maps profile",
-    )
-    check(
-        reviews_with_maps_context["next_step"] == "confirm_reviews_match_confirmed_google_maps_profile",
-        "Google reviews with Maps should ask Daniel to match the same profile",
-    )
+    check(packet_is_llm_ready(reviews_packet) is False, "legacy reviews-only packets should not be LLM-ready")
+    check(packet_llm_readiness_status(reviews_packet) == "blocked_source_without_context", "legacy reviews-only status missing")
     check("value" not in safe_packet["current_relevant"][0]["current"], "safe default should omit current values")
     check(safe_packet["evidence"][0]["host"] == "imda.example", "safe evidence should keep host")
     check("value" not in safe_packet["evidence"][0], "safe default should omit evidence URLs")
@@ -419,8 +381,8 @@ def main():
         },
     ], llm_ready_only=True)
     check(filtered_report["llm_ready_only"] is True, "LLM-ready report flag missing")
-    check(filtered_report["packet_count"] == 3, "LLM-ready batches should include bounded legacy source packets")
-    check(filtered_report["excluded_source_without_context"] == 0, "LLM-ready report should not exclude bounded legacy source packets")
+    check(filtered_report["packet_count"] == 2, "LLM-ready batches should exclude reviews-only legacy packets")
+    check(filtered_report["excluded_source_without_context"] == 1, "LLM-ready report should count excluded reviews-only packets")
 
     unsourced_specialist_packet = decision_packet(sample_unsourced_specialist_row())
     source_request = unsourced_specialist_packet["source_job_request"]

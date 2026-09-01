@@ -107,12 +107,9 @@ Un LLM puede recibir un paquete y devolver una ayuda breve:
 - estado estructurado de Google Maps cuando la propuesta trae ese campo,
   recordando que incluso un enlace con pinta de perfil directo requiere
   comprobación humana antes de aprobar.
-- estado estructurado de Valoraciones Google cuando la propuesta trae ese
-  enlace, recordando que debe pertenecer a la misma ficha principal de Google
-  Maps antes de guardarse. El paquete incluye una `approval_dependency` que
-  indica si ya existe un perfil Google Maps directo en la ficha o en la misma
-  propuesta; si no existe, una sugerencia LLM de aprobar o modificar
-  Valoraciones Google debe rechazarse en validación.
+- compatibilidad de solo lectura con propuestas antiguas de reseñas de Google.
+  Las valoraciones ya no son un campo operativo separado: el LLM no debe
+  convertirlas en una nueva decisión ni tratarlas como requisito de completitud.
 - estado estructurado de calidad de especialistas cuando una lista parece
   contaminada por menús, textos legales, sociedades o categorías. En ese caso
   el LLM solo puede sugerir `modify` o `reject`, nunca aprobar tal cual.

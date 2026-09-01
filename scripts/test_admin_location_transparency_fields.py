@@ -89,7 +89,6 @@ def main() -> None:
         "setJsonInteger(currentData, \"specialists_count\"",
         "\"location.locations\": currentClinicLocations()",
         "\"location.maps_url\": trimmed(\"clinicMapsUrl\")",
-        "\"location.google_reviews_url\": trimmed(\"clinicGoogleReviewsUrl\")",
         "\"transparency.years_in_practice\": trimmed(\"clinicYearsInPractice\")",
         "\"transparency.specialists_count\": trimmed(\"clinicSpecialistsCount\")",
         "\"team.credentialing_visible\": trimmed(\"clinicTeamCredentialingVisible\")",

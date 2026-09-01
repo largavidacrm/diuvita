@@ -22,7 +22,6 @@ def main():
             {"field": "summary", "label": "Resumen suficiente", "present": 3, "pending": 1},
             {"field": "website", "label": "Web oficial", "present": 4, "pending": 0},
             {"field": "google_maps", "label": "Google Maps de clínica", "present": 1, "pending": 3},
-            {"field": "google_reviews", "label": "Valoraciones Google", "present": 0, "pending": 4},
             {"field": "specialists", "label": "Especialistas publicados", "present": 1, "pending": 3},
             {"field": "years_in_practice", "label": "Años en ejercicio", "present": 1, "pending": 3},
             {"field": "specialists_count", "label": "Número de especialistas", "present": 2, "pending": 2},
@@ -77,7 +76,7 @@ def main():
     check("Primer campo: Email o teléfono" in output, "next pending field missing")
     check("Resumen suficiente: 3 listos / 1 pendientes" in output, "field summary missing")
     check("Google Maps de clínica: 1 listos / 3 pendientes" in output, "Google Maps field missing")
-    check("Valoraciones Google: 0 listos / 4 pendientes" in output, "Google reviews field missing")
+    check("Valoraciones Google" not in output, "Google reviews should no longer be a profile-completeness field")
     check("Especialistas publicados: 1 listos / 3 pendientes" in output, "specialist field missing")
     check("Años en ejercicio: 1 listos / 3 pendientes" in output, "years-in-practice field missing")
     check("Número de especialistas: 2 listos / 2 pendientes" in output, "specialist-count field missing")

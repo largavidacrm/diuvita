@@ -115,7 +115,6 @@ def main() -> None:
         "URL oficial para el agente",
         "Enviar URL al agente",
         "Editar en ficha",
-        "Confirmar misma ficha",
         "review-proposal-title",
         "review-proposal-hint",
         "Clínica afectada",
@@ -206,10 +205,8 @@ def main() -> None:
     check(
         'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
         and '["maps_url", "Google Maps", "maps_url"]' in index
-        and '["google_reviews_url", "Valoraciones Google", "google_reviews_url"]' in index
-        and '["reviews_url", "Valoraciones Google", "google_reviews_url"]' in index
         and '["pricing_url", "Página de precios", "pricing_url"]' in index,
-        "proposed review links should be safe and cover Maps/reviews/pricing",
+        "proposed review links should be safe and cover Maps/pricing",
     )
     check(
         "parece búsqueda, ruta o dirección" in index
@@ -541,14 +538,11 @@ def main() -> None:
     )
     check(
         "Abre el enlace y confirma que es el perfil real de la clínica antes de aprobar." in index
-        and "Comprueba que las valoraciones pertenecen a la misma ficha de Google Maps de la clínica." in index
-        and "Valoraciones Google: confirma primero el perfil real de Google Maps" in index
-        and "Antes de guardar Valoraciones Google, confirma y guarda el perfil real de Google Maps de la clínica." in index
         and "currentDataHasReviewedMaps(currentData)" in index
         and "Alguna sede trae Google Maps dudoso" in index
         and "Comprobación manual" in index
         and "El nombre visible en Google debe coincidir con:" in index
-        and "No apruebes valoraciones aisladas sin esa coincidencia." in index,
+        and "No apruebes valoraciones aisladas sin esa coincidencia." not in index,
         "Google Maps proposals should show actionable in-card review hints",
     )
     check(

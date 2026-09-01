@@ -59,13 +59,13 @@ profile links from searches, routes or street-address links, and gives Daniel
 the next manual review step.
 
 The JSON report also includes `manual_decision_items`. Each item points to the
-field under review (`maps_url` or `google_reviews_url`), the status of the link,
-the safe admin action and `safe_to_auto_publish: false`. This is intentional:
-a direct-looking Google link can guide the review, but it must still be opened
-and confirmed as the clinic's real Google Business/Profile before saving.
-The report also includes `manual_decision_sequence`: Google Maps is reviewed
-before Google reviews, because review links must belong to the same main clinic
-profile. The sequence is guidance for a human or future LLM assistant; it never
+field under review (`maps_url`), the status of the link, the safe admin action
+and `safe_to_auto_publish: false`. This is intentional: a direct-looking Google
+link can guide the review, but it must still be opened and confirmed as the
+clinic's real Google Business/Profile before saving. Google reviews are no
+longer a separate operational field; they remain accessible inside the clinic's
+Google Maps profile. The sequence is guidance for a human or future LLM
+assistant; it never
 publishes or writes data.
 
 Apply mode creates internal `clinic_profile_enrichment` review cards only:

@@ -147,7 +147,7 @@ def main():
             "open_count": 4,
             "direct_maps_count": 2,
             "weak_maps_count": 1,
-            "reviews_without_maps_count": 1,
+            "reviews_without_maps_count": 0,
             "first_review": {
                 "review_type": "clinic_profile_enrichment",
                 "priority": 60,
@@ -245,7 +245,6 @@ def main():
             "pending_website": 0,
             "pending_address": 0,
             "pending_google_maps": 19,
-            "pending_google_reviews": 18,
             "pending_contact": 6,
             "pending_services": 0,
             "pending_specialties": 0,
@@ -263,7 +262,6 @@ def main():
             "total_locations": 3,
             "locations_missing_address": 0,
             "locations_missing_google_maps_profile": 2,
-            "locations_missing_google_reviews": 3,
             "clinics_with_location_proposals": 1,
             "proposed_location_rows": 2,
             "clinics_with_location_claims": 2,
@@ -376,11 +374,11 @@ def main():
     )
     check(top_pending_profile_field(digest) == "Google Maps · 19 fichas", "top pending profile field missing")
     check(
-        location_coverage_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sedes explícitas sin Maps de clínica; 3 sedes explícitas sin valoraciones; 0 sedes explícitas sin dirección",
+        location_coverage_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sedes explícitas sin Maps de clínica; 0 sedes explícitas sin dirección",
         "location coverage status missing",
     )
     check(
-        google_link_review_status(digest) == "4 tarjetas; 2 parecen perfil directo; 1 dudosa; 1 valoración sin Maps confirmado; primera: Completar enlaces Google: Sensabell",
+        google_link_review_status(digest) == "4 tarjetas; 2 parecen perfil directo; 1 dudosa; primera: Completar enlaces Google: Sensabell",
         "Google link review status missing",
     )
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
@@ -474,10 +472,10 @@ def main():
     )
     check("Publicacion web: con cambios pendientes de verse online" in pending_output, "pending publication line missing")
     check("Freno bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard line missing")
-    check("Google Maps pendientes: 4 tarjetas; 2 parecen perfil directo; 1 dudosa; 1 valoración sin Maps confirmado; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
+    check("Google Maps pendientes: 4 tarjetas; 2 parecen perfil directo; 1 dudosa; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
     check("'direct_maps_count', count(*) filter (where direct_maps_proposed)" in source, "Google Maps digest should count direct-looking profiles")
     check("'weak_maps_count', count(*) filter (where weak_maps_proposed)" in source, "Google Maps digest should count weak proposals")
-    check("'reviews_without_maps_count', count(*) filter (" in source, "Google Maps digest should count reviews without confirmed Maps")
+    check("'reviews_without_maps_count', 0" in source, "Google reviews should no longer be counted as an operational Google link review")
     check("Ayuda IA revisiones: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos" in output, "source origin audit line missing")
     source = (ROOT / "scripts" / "admin_digest.py").read_text(encoding="utf-8")
     check(
@@ -485,7 +483,7 @@ def main():
         "review digest should count weak proposed Maps URLs for human review",
     )
     check("proposed.key in ('maps_url', 'google_maps_url')" in source, "review digest should detect proposed Maps fields")
-    check("proposed.key in ('google_reviews_url', 'reviews_url')" in source, "review digest should still include Google review links")
+    check("proposed.key in ('google_reviews_url', 'reviews_url')" not in source, "review digest should no longer include Google review links")
     check(
         'location_maps_check = f"btrim({location_maps_value}) ~* \'^https?://\'"' in source,
         "review digest should count weak location Maps URLs for human review",

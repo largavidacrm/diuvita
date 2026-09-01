@@ -34,8 +34,6 @@ FIELD_LABELS = {
     "locations": "Sedes",
     "maps_url": "Google Maps",
     "google_maps_url": "Google Maps",
-    "google_reviews_url": "Valoraciones Google",
-    "reviews_url": "Valoraciones Google",
     "summary": "Resumen",
     "services": "Servicios",
     "specialties": "Especialidades",

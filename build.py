@@ -116,8 +116,6 @@ def normalize_clinic(clinic):
         "care_mode",
         "maps_url",
         "google_maps_url",
-        "google_reviews_url",
-        "reviews_url",
         "years_in_practice",
         "team_credentialing_visible",
         "public_pricing",
@@ -247,11 +245,13 @@ def location_from_dict(value):
         "city": first_text(value.get("city"), value.get("ciudad")),
         "address": first_text(value.get("address"), value.get("direccion"), value.get("dirección")),
         "maps_url": external_url(first_text(value.get("maps_url"), value.get("google_maps_url"), value.get("map_url"))),
+        # Legacy: kept for compatibility with older local data, but no longer
+        # rendered or required as a Vitalarga operational field.
         "google_reviews_url": external_url(first_text(value.get("google_reviews_url"), value.get("reviews_url"), value.get("valoraciones_url"))),
         "kind": location_kind_value(value),
         "public_visible": location_public_visible_value(value),
     }
-    has_content = any(loc.get(key) for key in ("name", "city", "address", "maps_url", "google_reviews_url")) or loc["kind"] == "online"
+    has_content = any(loc.get(key) for key in ("name", "city", "address", "maps_url")) or loc["kind"] == "online"
     return {key: item for key, item in loc.items() if item or key == "public_visible"} if has_content else {}
 
 def location_from_text(value):
@@ -400,16 +400,6 @@ def location_maps_url(loc, c):
         c.get("google_maps_url"),
     ))
     return direct if is_google_maps_profile_url(direct) else ""
-
-def location_reviews_url(loc, c):
-    if location_is_online(loc):
-        return ""
-    return external_url(first_text(
-        loc.get("google_reviews_url"),
-        loc.get("reviews_url"),
-        c.get("google_reviews_url"),
-        c.get("reviews_url"),
-    ))
 
 def location_detail(loc, c):
     if location_is_online(loc):
@@ -1332,9 +1322,6 @@ def facts_block(c):
         maps_url = location_maps_url(primary, c)
         value = f'<a href="{h(maps_url)}" rel="nofollow noopener" target="_blank">{h(address)}</a>' if maps_url else h(address)
         facts.append(("Dirección principal", value))
-    reviews_url = location_reviews_url(primary, c)
-    if reviews_url:
-        facts.append(("Valoraciones Google", f'<a href="{h(reviews_url)}" rel="nofollow noopener" target="_blank">Abrir valoraciones</a>'))
     if c.get("web") and external_url(c["web"]):
         url = external_url(c["web"])
         facts.append(("Web oficial", f'<a href="{h(url)}" rel="nofollow noopener" target="_blank">{h(display_url(url))}</a>'))
@@ -1364,13 +1351,10 @@ def locations_block(c):
         name = location_display_name(loc, c, multiple)
         address = location_address(loc)
         maps_url = location_maps_url(loc, c)
-        reviews_url = location_reviews_url(loc, c)
         detail = location_detail(loc, c)
         actions = []
         if maps_url:
             actions.append(f'<a class="mini-action" href="{h(maps_url)}" rel="nofollow noopener" target="_blank">Google Maps</a>')
-        if reviews_url:
-            actions.append(f'<a class="mini-action" href="{h(reviews_url)}" rel="nofollow noopener" target="_blank">Valoraciones Google</a>')
         actions_html = f'<div class="location-actions">{"".join(actions)}</div>' if actions else ""
         rows.append(
             '<article class="location-item">'

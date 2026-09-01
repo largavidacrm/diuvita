@@ -106,7 +106,6 @@ def sample_digest():
             "with_pending_fields": 19,
             "without_pending_fields": 0,
             "pending_google_maps": 19,
-            "pending_google_reviews": 18,
             "pending_specialists": 17,
             "pending_contact": 6,
         },
@@ -116,7 +115,6 @@ def sample_digest():
             "total_locations": 3,
             "locations_missing_address": 0,
             "locations_missing_google_maps_profile": 2,
-            "locations_missing_google_reviews": 3,
             "clinics_with_location_proposals": 1,
             "proposed_location_rows": 2,
             "clinics_with_location_claims": 2,
@@ -167,7 +165,7 @@ def main():
     check(visible_clinic_status(digest) == "11 publicadas y 8 preliminares", "visible clinic status missing")
     check(automation_status(digest) == "modo sombra activo; auto-publicación apagada", "automation status missing")
     check(specialist_status(digest) == "2/19 fichas con especialistas; 17 pendientes", "specialist status missing")
-    check(location_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sedes explícitas sin Maps de clínica; 3 sedes explícitas sin valoraciones; 0 sedes explícitas sin dirección", "location status missing")
+    check(location_status(digest) == "3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas; 2 sedes explícitas sin Maps de clínica; 0 sedes explícitas sin dirección", "location status missing")
     check(source_monitoring_status(digest) == "todo reciente; próxima revisión 2026-09-29 09:58", "source monitoring missing")
     check(
         daniel_now_status(digest) == "Abrir prioridad: abre el filtro Claims bloqueantes en el panel",

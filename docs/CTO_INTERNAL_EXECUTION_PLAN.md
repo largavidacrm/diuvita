@@ -1269,16 +1269,14 @@ Next 10 technical steps:
      something missing before publication. Claims still block publication when
      they are conflictive, rejected or not yet checked.
 239. Make Google Maps review decisions more explicit. Done locally in
-     `/admin/`: Maps and Google review proposals now show a compact manual
-     checklist next to the proposed link, including the clinic name/location
-     Daniel must match in Google. This does not approve URLs automatically and
-     keeps the existing rule that only real clinic Google Business/Profile URLs
-     can be saved.
-240. Keep Google reviews tied to verified Maps profiles. Done locally in
-     `/admin/`: a manual review for **Valoraciones Google** only closes after
-     the clinic has both the review link and a reviewed Google Maps clinic
-     profile. This prevents isolated reviews URLs from making a profile look
-     publication-ready without the actual Google Business/Profile match.
+     `/admin/`: Maps proposals show a compact manual checklist next to the
+     proposed link, including the clinic name/location Daniel must match in
+     Google. This does not approve URLs automatically and keeps the existing
+     rule that only real clinic Google Business/Profile URLs can be saved.
+240. Retire Google reviews as a separate operational field. Done locally in
+     `/admin/`, public profiles and local reports: Google reviews are no
+     longer shown, requested or counted as a publication/completeness gap.
+     Reviews remain accessible inside the verified Google Maps profile.
 241. Remove duplicated job rows from the dashboard. Done locally in `/admin/`:
      queued or running jobs appear only under **Trabajos pendientes**. They
      move to **Trabajos recientes** only after leaving the pending states, so

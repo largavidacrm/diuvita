@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks for Google Maps/review link discovery."""
+"""Checks for Google Maps link discovery."""
 
 from argparse import Namespace
 from pathlib import Path
@@ -39,7 +39,7 @@ def main():
     candidates = discover_google_links("https://exampleclinic.test/", html)
     links = best_links(candidates)
     check(links["maps_url"].startswith("https://www.google.com/maps/place/"), "profile Maps link missing")
-    check("review" in links["google_reviews_url"].lower(), "Google review link missing")
+    check("google_reviews_url" not in links, "Google review links should not be proposed")
 
     address_only = discover_google_links(
         "https://exampleclinic.test/",
@@ -144,7 +144,6 @@ def main():
         "country": "España",
         "website": "https://exampleclinic.test",
         "has_google_maps": False,
-        "has_google_reviews": False,
     }
     args = Namespace(
         timeout=15,
@@ -172,7 +171,7 @@ def main():
     dry_run = process_clinic(clinic, args, "admin@example.test", {}, fake_fetcher, fake_review_creator)
     check(dry_run["status"] == "ready", "clinic should be ready when Google links are detected")
     check(dry_run["proposed_fields"]["maps_url"] == links["maps_url"], "maps_url proposal missing")
-    check(dry_run["proposed_fields"]["google_reviews_url"] == links["google_reviews_url"], "reviews proposal missing")
+    check("google_reviews_url" not in dry_run["proposed_fields"], "reviews proposal should stay out of new review cards")
     check(not created, "dry-run should not create review cards")
 
     contact_home = """
@@ -268,12 +267,13 @@ def main():
         "safety": "safe",
     })
     check(safe_compact["safe_compact"] is True, "safe compact marker missing")
-    check(safe_compact["ready_items"][0]["proposed_field_keys"] == ["google_reviews_url", "maps_url"], "safe compact should keep field names")
+    check(safe_compact["ready_items"][0]["proposed_field_keys"] == ["maps_url"], "safe compact should keep field names")
     check(safe_compact["ready_items"][0]["maps_proposed"], "safe compact should keep Maps count signal")
+    check(not safe_compact["ready_items"][0]["reviews_proposed"], "safe compact should not advertise review links")
     check("proposed_fields" not in safe_compact["ready_items"][0], "safe compact should omit proposed URLs")
     check("https://www.google.com/maps" not in str(safe_compact), "safe compact should not contain Google URLs")
 
-    already_complete = dict(clinic, has_google_maps=True, has_google_reviews=True)
+    already_complete = dict(clinic, has_google_maps=True)
     complete = process_clinic(already_complete, args, "admin@example.test", {}, fake_fetcher, fake_review_creator)
     check(complete["status"] == "empty", "complete clinic should not propose duplicate Google links")
 

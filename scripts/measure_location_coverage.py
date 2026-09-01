@@ -108,13 +108,7 @@ with visible_clinics as (
         else ''
       end
     )), '') is not null as has_address,
-    {location_maps_check} as has_google_maps_profile,
-    nullif(btrim(coalesce(
-      location.value ->> 'google_reviews_url',
-      location.value ->> 'reviews_url',
-      location.value ->> 'valoraciones_url',
-      ''
-    )), '') is not null as has_google_reviews
+    {location_maps_check} as has_google_maps_profile
   from visible_clinics c
   cross join lateral jsonb_array_elements(
     case
@@ -130,8 +124,7 @@ location_checks as (
     count(*) over (partition by lr.id) as clinic_location_count,
     array_remove(array[
       case when not has_address then 'Dirección' end,
-      case when not has_google_maps_profile then 'Google Maps de clínica' end,
-      case when not has_google_reviews then 'Valoraciones Google' end
+      case when not has_google_maps_profile then 'Google Maps de clínica' end
     ], null) as pending_fields
   from location_rows lr
 ),
@@ -147,8 +140,6 @@ location_checks as (
 	    'locations_missing_address', count(*) filter (where not has_address),
 	    'locations_with_google_maps_profile', count(*) filter (where has_google_maps_profile),
 	    'locations_missing_google_maps_profile', count(*) filter (where not has_google_maps_profile),
-	    'locations_with_google_reviews', count(*) filter (where has_google_reviews),
-	    'locations_missing_google_reviews', count(*) filter (where not has_google_reviews),
 	    'clinics_with_location_proposals', (select count(*) from location_review_proposals),
 	    'proposed_location_rows', coalesce((select sum(proposed_location_count) from location_review_proposals), 0),
 	    'clinics_with_location_claims', (select count(*) from location_claims),
@@ -315,11 +306,6 @@ def location_next_step(row: dict[str, Any]) -> str:
             f"añadir el perfil real de Google Business de {clinic} para {location}; "
             "no usar búsqueda, ruta ni enlace de dirección"
         )
-    if "Valoraciones Google" in pending:
-        return (
-            f"añadir el enlace directo a valoraciones Google de {clinic} para {location}, "
-            "solo si sale del perfil real de la clínica"
-        )
     if pending:
         return f"revisar {location} de {clinic}: pendiente {', '.join(pending)}"
     return f"revisar {location} de {clinic}"
@@ -432,7 +418,6 @@ def format_location_coverage(report: dict[str, Any]) -> str:
     summary = report.get("summary") or {}
     total_locations = as_int(summary.get("total_locations"))
     maps_ready = as_int(summary.get("locations_with_google_maps_profile"))
-    reviews_ready = as_int(summary.get("locations_with_google_reviews"))
     address_ready = as_int(summary.get("locations_with_address"))
     rows = report.get("pending_locations") or []
     proposal_rows = report.get("pending_location_proposals") or []
@@ -449,7 +434,6 @@ def format_location_coverage(report: dict[str, Any]) -> str:
         f"- Sedes medidas: {total_locations}",
         f"- Sedes con dirección: {address_ready}/{total_locations} ({pct(address_ready, total_locations)})",
         f"- Sedes con Google Maps de clínica: {maps_ready}/{total_locations} ({pct(maps_ready, total_locations)})",
-        f"- Sedes con valoraciones Google: {reviews_ready}/{total_locations} ({pct(reviews_ready, total_locations)})",
         f"- Bandeja de revisión: {location_review_backlog_guard(summary)}",
         f"- Clínicas con sedes propuestas en bandeja: {as_int(summary.get('clinics_with_location_proposals'))}",
         f"- Sedes propuestas en bandeja: {as_int(summary.get('proposed_location_rows'))}",

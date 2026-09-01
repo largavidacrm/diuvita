@@ -76,7 +76,6 @@ def main() -> None:
         "Filtrar grupo",
         "Acepta solo el perfil real de la clínica",
         "parecen perfil directo",
-        "valoraciones sin Maps confirmado",
         'reviewGoogleMapsTriageLabel(reviewCache) + ". Primera: "',
         "Abrir siguiente",
         "Abrir prioridad",

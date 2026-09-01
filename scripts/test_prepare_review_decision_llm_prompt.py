@@ -256,11 +256,7 @@ def main():
     check("ESCAR" not in str(dirty_specialist_prompt["packet_digest"]), "safe digest should not expose dirty specialist values")
 
     reviews_prompt = build_prompt(sample_reviews_packet())
-    reviews_field = reviews_prompt["packet_digest"]["fields"][0]["google_reviews_review"]
-    check(
-        reviews_field["approval_dependency"]["satisfied"] is False,
-        "prompt digest should keep missing Google Reviews dependency",
-    )
+    check(reviews_prompt["packet_digest"]["fields"] == [], "Google reviews should no longer enter LLM prompt fields")
     check(
         reviews_prompt["packet_digest"]["source_origin_status"]["status"] == "source_without_context",
         "prompt digest should warn about source-only cards without operator context",
@@ -276,7 +272,8 @@ def main():
     reviews_dumped = str(reviews_prompt)
     check("https://clinic.example/contacto" not in reviews_dumped, "safe reviews prompt should redact source URLs")
     require_llm_ready(full_packet)
-    require_llm_ready(sample_reviews_packet())
+    blocked_reviews_message = exits_with_message(require_llm_ready, sample_reviews_packet())
+    check("not LLM-ready" in blocked_reviews_message, "Google reviews-only packets should be blocked from assisted batches")
     source_without_editable = sample_source_without_editable_packet()
     check(
         source_without_editable["source_origin_status"]["prompt_policy"] == "manual_only_until_explicit_fields",

@@ -162,7 +162,6 @@ def sample_digest():
             "pending_website": 0,
             "pending_address": 0,
             "pending_google_maps": 19,
-            "pending_google_reviews": 18,
             "pending_contact": 6,
             "pending_services": 0,
             "pending_specialties": 0,

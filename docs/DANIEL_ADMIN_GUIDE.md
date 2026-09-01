@@ -200,12 +200,6 @@ a esa clínica. La tarjeta muestra una **Comprobación manual** con el nombre de
 la ficha que debe coincidir en Google. **No guardar tal cual** significa que
 parece búsqueda, ruta, dirección suelta o enlace insuficiente.
 
-Si la propuesta trae **Valoraciones Google**, confirma primero el perfil real
-de Google Maps de la clínica. Después valida que el enlace de reseñas pertenece
-a esa misma ficha, no a otra sede, búsqueda o página genérica. El panel bloquea
-la aprobación directa de valoraciones si la ficha no tiene todavía un Google
-Maps real confirmado.
-
 En las revisiones manuales de calidad, al pulsar **Revisar** primero se abre la
 vista en columnas: ficha de la clínica y revisión concreta. Desde ahí,
 **Modificar** o **Revisión manual** abre la ficha en el campo pendiente. Al
@@ -233,9 +227,10 @@ El editor abre el bloque correspondiente y marca visualmente el campo activo
 para que no tengas que buscarlo por toda la ficha.
 
 En las fichas, **Google Maps** es el enlace al perfil de la clínica en Google.
-**Valoraciones Google** es el enlace directo a sus reseñas. Si no tenemos el
-perfil real de la clínica, el campo queda pendiente; no usamos enlaces genéricos
-a una dirección.
+Las valoraciones no se guardan como campo independiente: si Daniel quiere
+verlas, están dentro del propio perfil de Google Maps. Si no tenemos el perfil
+real de la clínica, Google Maps queda pendiente; no usamos enlaces genéricos a
+una dirección.
 
 Si una tarjeta muestra un aviso bajo el enlace de Google Maps, trátalo como
 pendiente: abre el enlace y apruébalo solo si ves la ficha real de la clínica.
@@ -410,8 +405,8 @@ representa una propuesta y una decisión.
 ## Editar sedes de una clínica
 
 En el editor de clínica, la sede principal se edita en los campos normales de
-**Dirección**, **Google Maps** y **Valoraciones Google**. El apartado **Sedes
-adicionales** solo se usa cuando la clínica tiene más de una ubicación.
+**Dirección** y **Google Maps**. El apartado **Sedes adicionales** solo se usa
+cuando la clínica tiene más de una ubicación.
 
 El editor evita duplicar la sede principal debajo del formulario. También evita
 etiquetas tipo “Sede 1” o “Sede 2”: usa sede principal y sedes adicionales para

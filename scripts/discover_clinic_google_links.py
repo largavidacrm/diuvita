@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Discover official Google Maps/review links for visible Vitalarga clinics.
+"""Discover official Google Maps links for visible Vitalarga clinics.
 
 Default mode is dry-run. Apply mode creates internal clinic_profile_enrichment
 review cards only; it never edits clinic profiles, resolves reviews, or
@@ -250,11 +250,11 @@ def classify_google_link(url: str, label: str, source_tag: str) -> GoogleLinkCan
     if label:
         score += 2
     if is_review:
-        score += 12
+        return None
     return GoogleLinkCandidate(
         url=url,
         label=label,
-        kind="google_reviews_url" if is_review else "maps_url",
+        kind="maps_url",
         score=score,
         source_tag=source_tag,
     )
@@ -348,7 +348,7 @@ def looks_like_address_label(label: str) -> bool:
 
 def best_links(candidates: list[GoogleLinkCandidate], clinic: dict[str, Any] | None = None) -> dict[str, str]:
     result: dict[str, str] = {}
-    for kind in ("maps_url", "google_reviews_url"):
+    for kind in ("maps_url",):
         matches = [candidate for candidate in candidates if candidate.kind == kind]
         if matches:
             ranked = sorted(
@@ -389,8 +389,8 @@ def google_link_rejection_reason(
         return ""
     if not candidates:
         return ""
-    if clinic and clinic.get("has_google_maps") and clinic.get("has_google_reviews"):
-        return "la clínica ya tiene Google Maps y valoraciones guardados"
+    if clinic and clinic.get("has_google_maps"):
+        return "la clínica ya tiene Google Maps guardado"
     maps_candidates = [candidate for candidate in candidates if candidate.kind == "maps_url"]
     if maps_candidates:
         ranked = sorted(
@@ -413,9 +413,6 @@ def google_link_rejection_reason(
                 return "el candidato no tiene identificador claro de perfil de clínica"
             return "el candidato no contiene señal clara del nombre de la clínica"
         return "el candidato de Maps no supera la regla de perfil directo"
-    review_candidates = [candidate for candidate in candidates if candidate.kind == "google_reviews_url"]
-    if review_candidates:
-        return "solo se han detectado enlaces de valoraciones, falta el perfil principal de la clínica"
     return "los enlaces detectados no son perfiles Google Maps válidos"
 
 
@@ -446,7 +443,6 @@ def direct_link_predicate(*keys: str) -> str:
 def load_visible_clinics(limit: int, clinic_slug: str | None, local_env: dict[str, str]) -> list[dict[str, Any]]:
     clinic_filter = f"and c.slug = {sql_literal(clinic_slug)}" if clinic_slug else ""
     has_google_maps = google_maps_profile_link_predicate("maps_url", "google_maps_url", "map_url")
-    has_google_reviews = direct_link_predicate("google_reviews_url", "reviews_url", "valoraciones_url")
     sql = f"""
 with visible as (
   select
@@ -458,7 +454,6 @@ with visible as (
     c.status,
     c.website,
     {has_google_maps} as has_google_maps,
-    {has_google_reviews} as has_google_reviews,
     case when c.status = 'published' then 0 else 1 end as status_order
   from public.clinics c
   where c.status in ('published', 'preliminary')
@@ -469,7 +464,7 @@ select coalesce(jsonb_agg(to_jsonb(items) order by items.status_order, items.dis
 from (
   select *
   from visible
-  where not has_google_maps or not has_google_reviews
+  where not has_google_maps
   order by status_order, display_name
   limit {max(1, min(100, int(limit)))}
 ) items;
@@ -519,7 +514,6 @@ def process_clinic(
         "clinic_name": clinic.get("display_name"),
         "website": website,
         "has_google_maps": bool(clinic.get("has_google_maps")),
-        "has_google_reviews": bool(clinic.get("has_google_reviews")),
     }
     if not website:
         return {**result, "status": "skipped", "reason": "missing website"}
@@ -555,8 +549,6 @@ def process_clinic(
     proposed_fields = {}
     if not clinic.get("has_google_maps") and links.get("maps_url"):
         proposed_fields["maps_url"] = links["maps_url"]
-    if not clinic.get("has_google_reviews") and links.get("google_reviews_url"):
-        proposed_fields["google_reviews_url"] = links["google_reviews_url"]
 
     result.update({
         "status": "ready" if proposed_fields else "empty",
@@ -590,7 +582,7 @@ def summarize(results: list[dict[str, Any]], apply: bool) -> dict[str, Any]:
         "empty": sum(1 for item in results if item.get("status") == "empty"),
         "failed": sum(1 for item in results if item.get("status") == "failed"),
         "maps_links_found": sum(1 for item in results if (item.get("proposed_fields") or {}).get("maps_url")),
-        "review_links_found": sum(1 for item in results if (item.get("proposed_fields") or {}).get("google_reviews_url")),
+        "review_links_found": 0,
         "items": results,
         "safety": "creates review cards only; does not edit clinic profiles, resolve reviews or publish the website",
     }
@@ -639,7 +631,7 @@ def safe_compact_summary(summary: dict[str, Any]) -> dict[str, Any]:
                 **item,
                 "proposed_field_keys": sorted(proposed_fields.keys()),
                 "maps_proposed": "maps_url" in proposed_fields,
-                "reviews_proposed": "google_reviews_url" in proposed_fields,
+                "reviews_proposed": False,
             })
             cleaned[-1].pop("proposed_fields", None)
         compact[key] = cleaned

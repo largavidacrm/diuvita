@@ -36,7 +36,6 @@ FIELD_LABELS = {
     "region": "Region",
     "address": "Direccion",
     "maps_url": "Google Maps",
-    "google_reviews_url": "Valoraciones Google",
     "summary": "Resumen",
     "services": "Servicios",
     "specialties": "Especialidades",
@@ -62,7 +61,6 @@ PHONE_FIELDS = {"telefono", "phone_fixed", "phone_mobile", "phone_whatsapp"}
 PHONE_CANDIDATE_RE = re.compile(r"(?:\+34|0034|34)?[\s().-]*[6789](?:[\s().-]*\d){8}")
 FIELD_REVIEW_ORDER = [
     "maps_url",
-    "google_reviews_url",
     "locations",
     "address",
     "telefono",
@@ -112,6 +110,10 @@ def normalize_space(value: Any) -> str:
 def canonical_field(key: Any) -> str:
     clean = str(key or "").strip()
     return FIELD_ALIASES.get(clean, clean)
+
+
+def is_deprecated_field(key: Any) -> bool:
+    return canonical_field(key) == "google_reviews_url"
 
 
 def field_label(key: Any) -> str:
@@ -215,7 +217,6 @@ def location_key(value: Any) -> str:
             value.get("city"),
             value.get("address"),
             value.get("maps_url") or value.get("google_maps_url"),
-            value.get("google_reviews_url") or value.get("reviews_url"),
         ]
         return "|".join(value_key(part) for part in parts if not is_empty(part))
     return value_key(value)
@@ -309,7 +310,7 @@ def merge_fields(cards: list[dict[str, Any]]) -> tuple[dict[str, Any], list[dict
         review_id = card.get("id")
         for raw_key, raw_value in proposed_fields(payload).items():
             field = canonical_field(raw_key)
-            if is_empty(raw_value):
+            if is_deprecated_field(field) or is_empty(raw_value):
                 continue
             split_phone_fields = expanded_phone_fields(field, raw_value)
             if split_phone_fields:
@@ -405,7 +406,7 @@ def field_review_action(field: str, state: str) -> str:
         return "corregir telefono antes de guardar"
     if state == "already_present":
         return "cerrar sobrante si no aporta nada nuevo"
-    if field in {"maps_url", "google_reviews_url"}:
+    if field == "maps_url":
         return "confirmar perfil real de Google antes de guardar"
     if field in {"profesionales", "team_credentialing_visible", "public_pricing", "pricing_url"}:
         return "revision humana antes de publicar"

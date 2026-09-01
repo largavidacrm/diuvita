@@ -37,8 +37,6 @@ def main():
             "locations_missing_address": 0,
             "locations_with_google_maps_profile": 1,
             "locations_missing_google_maps_profile": 2,
-            "locations_with_google_reviews": 0,
-            "locations_missing_google_reviews": 3,
             "clinics_with_location_proposals": 1,
             "proposed_location_rows": 2,
             "clinics_with_location_claims": 1,
@@ -52,8 +50,8 @@ def main():
             "location_index": 1,
             "location_label": "Sede principal",
             "clinic_location_count": 2,
-            "pending_fields": ["Google Maps de clínica", "Valoraciones Google"],
-            "pending_count": 2,
+            "pending_fields": ["Google Maps de clínica"],
+            "pending_count": 1,
         },
         "pending_locations": [
             {
@@ -64,8 +62,8 @@ def main():
                 "location_index": 1,
                 "location_label": "Sede principal",
                 "clinic_location_count": 2,
-                "pending_fields": ["Google Maps de clínica", "Valoraciones Google"],
-                "pending_count": 2,
+                "pending_fields": ["Google Maps de clínica"],
+                "pending_count": 1,
             },
             {
                 "slug": "clinic-a",
@@ -75,7 +73,7 @@ def main():
                 "location_index": 2,
                 "location_label": "",
                 "clinic_location_count": 2,
-                "pending_fields": ["Valoraciones Google"],
+                "pending_fields": ["Google Maps de clínica"],
                 "pending_count": 1,
             },
         ],
@@ -123,7 +121,7 @@ def main():
     check("Clínicas con varias sedes: 1" in output, "multi-location count missing")
     check("Sedes medidas: 3" in output, "location count missing")
     check("Sedes con Google Maps de clínica: 1/3 (33%)" in output, "Maps coverage missing")
-    check("Sedes con valoraciones Google: 0/3 (0%)" in output, "reviews coverage missing")
+    check("valoraciones Google" not in output, "Google reviews should no longer be a location coverage field")
     check("Bandeja de revisión: con margen: 40/50 revisiones abiertas" in output, "backlog guard output missing")
     check("Clínicas con sedes propuestas en bandeja: 1" in output, "location proposal clinic count missing")
     check("Sedes propuestas en bandeja: 2" in output, "location proposal count missing")
@@ -132,7 +130,7 @@ def main():
     check("Writes data: no" in output, "read-only signal missing")
     check("Siguiente acción" in output, "next action section missing")
     check("Clinic A · Madrid · publicada · Sede adicional · 2 sedes" in output, "pending location row missing")
-    check("siguiente: añadir el enlace directo a valoraciones Google de Clinic A para Sede adicional" in output, "row next step missing")
+    check("siguiente: añadir el perfil real de Google Business de Clinic A para Sede adicional" in output, "row next step missing")
     check("Sedes propuestas en bandeja" in output, "location proposals section missing")
     check("Clinic C · Barcelona · publicada · 2 sedes detectadas · 2 revisiones abiertas" in output, "location proposal row missing")
     check("cargar sedes detectadas en el editor" in output, "location proposal next step missing")
