@@ -30,9 +30,13 @@ def sample_enrichment_row():
             "requested_field_labels": ["Especialistas publicados", "Teléfono principal"],
             "primary_requested_fields": ["profesionales"],
             "primary_requested_field_labels": ["Especialistas publicados"],
+            "operator_requested_field_keys": ["profesionales", "telefono"],
+            "operator_requested_field_labels": ["Especialistas publicados", "Teléfono principal"],
+            "operator_requested_field_summary": "especialistas publicados, teléfono principal",
             "target_scope": "primary_target_first",
             "ui_route": "manual_review_banner_source_handoff",
             "allowed_output": "review_queue_proposal_only",
+            "llm_boundary": "respect_source_job_context_scope",
             "operator_intent": "Daniel indica que esta URL oficial contiene especialistas y contacto.",
             "proposed_fields": {
                 "maps_url": "https://www.google.com/maps/search/Unidad+de+Longevidad+IMDA",
@@ -193,9 +197,14 @@ def main():
     check(source_context["source_host"] == "imda.example", "source job context should keep source host")
     check(source_context["requested_fields"] == ["profesionales", "telefono"], "source job context should keep requested fields")
     check(source_context["primary_requested_fields"] == ["profesionales"], "source job context should keep primary requested fields")
+    check(
+        source_context["operator_requested_field_summary"] == "especialistas publicados, teléfono principal",
+        "source job context should keep Daniel's field summary",
+    )
     check(source_context["target_scope"] == "primary_target_first", "source job context should keep primary target scope")
     check(source_context["ui_route"] == "manual_review_banner_source_handoff", "source job context should keep UI route")
     check(source_context["allowed_output"] == "review_queue_proposal_only", "source job context should keep proposal-only output")
+    check(source_context["llm_boundary"] == "respect_source_job_context_scope", "source job context should keep LLM boundary")
     check("source_url" not in source_context, "safe source job context should omit full source URL")
     origin_status = safe_packet["source_origin_status"]
     check(origin_status["status"] == "context_ready", "source origin should detect ready operator context")

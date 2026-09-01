@@ -480,10 +480,14 @@ def source_job_context(payload: dict[str, Any], include_values: bool = False) ->
         "requested_field_labels": clean_list(payload.get("requested_field_labels")),
         "primary_requested_fields": clean_list(payload.get("primary_requested_fields")),
         "primary_requested_field_labels": clean_list(payload.get("primary_requested_field_labels")),
+        "operator_requested_field_keys": clean_list(payload.get("operator_requested_field_keys")),
+        "operator_requested_field_labels": clean_list(payload.get("operator_requested_field_labels")),
+        "operator_requested_field_summary": str(payload.get("operator_requested_field_summary") or "").strip(),
         "target_scope": str(payload.get("target_scope") or "").strip(),
         "ui_route": str(payload.get("ui_route") or "").strip(),
         "allowed_output": str(payload.get("allowed_output") or "review_queue_proposal_only").strip(),
         "write_policy": "creates_review_proposal_only",
+        "llm_boundary": str(payload.get("llm_boundary") or "respect_source_job_context_scope").strip(),
         "operator_intent": redacted_text(payload.get("operator_intent"), include_values),
     }
     if source_host:

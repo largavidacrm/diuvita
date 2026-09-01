@@ -5900,8 +5900,20 @@
           : targetScope === "primary_target_first"
           ? "manual_review_banner_source_handoff"
           : "review_card_source_handoff",
+        llmBoundary: "respect_source_job_context_scope",
         paused: full || paused
       };
+    }
+
+    function reviewSourceJobOperatorIntent(sourceJob) {
+      var labels = sourceJob && sourceJob.labels ? sourceJob.labels : "el campo indicado";
+      if (sourceJob && sourceJob.targetScope === "specialist_source_only") {
+        return "Daniel indica que esta URL oficial contiene especialistas publicados de esta clínica. Revisar solo especialistas y devolver una propuesta revisable.";
+      }
+      if (sourceJob && sourceJob.targetScope === "primary_target_first") {
+        return "Daniel indica que esta URL oficial contiene información para el campo activo: " + labels + ". Revisar primero ese campo y devolver una propuesta revisable.";
+      }
+      return "Daniel indica que esta URL oficial contiene información para los campos pendientes: " + labels + ". Revisar solo esos campos y devolver propuestas revisables.";
     }
 
     function reviewActiveManualTarget(row) {
@@ -9171,12 +9183,16 @@
           requested_field_labels: targets.map(function (item) { return item.label; }),
           primary_requested_fields: targets.slice(0, 1).map(function (item) { return item.key; }),
           primary_requested_field_labels: targets.slice(0, 1).map(function (item) { return item.label; }),
+          operator_requested_field_keys: targets.map(function (item) { return item.key; }),
+          operator_requested_field_labels: targets.map(function (item) { return item.label; }),
+          operator_requested_field_summary: sourceJob.labels,
           from_review_id: row.id,
           human_supplied_source: true,
           target_scope: sourceJob.targetScope,
           ui_route: sourceJob.uiRoute,
           source_job_version: "2026-08-31.manual-review-source",
-          operator_intent: "Daniel indica que esta URL oficial contiene informacion para completar los campos pendientes de esta revision.",
+          operator_intent: reviewSourceJobOperatorIntent(sourceJob),
+          llm_boundary: sourceJob.llmBoundary,
           allowed_output: "review_queue_proposal_only",
           instruction: "Extrae solo datos claros de esta fuente y crea propuestas revisables. No publiques ni guardes datos en la ficha sin aprobacion humana."
         },

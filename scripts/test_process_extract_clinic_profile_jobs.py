@@ -63,6 +63,8 @@ def main():
             "human_supplied_source": True,
             "source_job_version": "2026-08-31.manual-review-source",
             "operator_intent": "Daniel indica que esta URL oficial contiene especialistas.",
+            "operator_requested_field_summary": "especialistas publicados, unidades",
+            "llm_boundary": "respect_source_job_context_scope",
             "allowed_output": "review_queue_proposal_only",
         },
     }
@@ -98,10 +100,14 @@ def main():
     check(payload["requested_field_labels"] == ["Especialistas publicados", "Unidades"], "payload should keep requested labels")
     check(payload["primary_requested_fields"] == ["profesionales"], "payload should keep primary requested fields")
     check(payload["primary_requested_field_labels"] == ["Especialistas publicados"], "payload should keep primary requested labels")
+    check(payload["operator_requested_field_keys"] == ["profesionales", "unidades"], "payload should keep operator requested field keys")
+    check(payload["operator_requested_field_labels"] == ["Especialistas publicados", "Unidades"], "payload should keep operator requested labels")
+    check(payload["operator_requested_field_summary"] == "especialistas publicados, unidades", "payload should keep operator requested summary")
     check(payload["target_scope"] == "primary_target_first", "payload should keep target scope")
     check(payload["ui_route"] == "manual_review_banner_source_handoff", "payload should keep UI route")
     check(payload["human_supplied_source"] is True, "payload should mark human-supplied source URLs")
     check(payload["operator_intent"].startswith("Daniel indica"), "payload should preserve operator intent")
+    check(payload["llm_boundary"] == "respect_source_job_context_scope", "payload should keep LLM boundary")
     check(payload["allowed_output"] == "review_queue_proposal_only", "payload should preserve proposal-only contract")
     check("No edita la ficha ni publica datos" in " ".join(payload["warnings"]), "payload should keep safety warning")
 

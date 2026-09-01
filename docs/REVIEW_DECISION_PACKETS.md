@@ -29,8 +29,8 @@ El contrato principal es:
   revisable de especialistas.
 - Si esa URL ya generó una propuesta revisable, el paquete de esa propuesta
   conserva `source_job_context`: origen aportado por Daniel, campo pedido,
-  alcance, ruta del admin y política de salida. Sin `--include-values`, las URLs
-  completas siguen ocultas.
+  resumen humano del campo solicitado, alcance, ruta del admin, barrera LLM y
+  política de salida. Sin `--include-values`, las URLs completas siguen ocultas.
 - Si una propuesta antigua solo trae una fuente pero no conserva contexto de
   trabajo, el paquete expone `source_origin_status:
   "source_without_context"` con el host y el límite LLM: no inferir intención

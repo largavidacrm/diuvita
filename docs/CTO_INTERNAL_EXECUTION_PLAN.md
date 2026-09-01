@@ -1066,6 +1066,12 @@ Next 10 technical steps:
      `scripts/release_readiness_report.py`: local readiness now verifies that
      both the CTO digest and global plan still expose source-origin readiness
      before considering the worktree locally prepared.
+205. Preserve Daniel's bounded source intent for future LLM help. Done locally
+     in `/admin/` and `scripts/process_extract_clinic_profile_jobs.py`: source
+     jobs created from review cards now carry the human field summary and LLM
+     boundary through to the resulting review packet, so a pasted URL such as a
+     team page can help only the requested field and still returns as a
+     proposal for Daniel.
 
 ## Daniel decision checkpoints
 

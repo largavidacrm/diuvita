@@ -100,7 +100,8 @@ Operator bridge:
   `source_url`, `clinic_slug`, `from_review_id`, `requested_fields`,
   `requested_field_labels`, `primary_requested_fields`,
   `primary_requested_field_labels`, `human_supplied_source`,
-  `operator_intent`, `target_scope`, `ui_route` and an `allowed_output` of
+  `operator_intent`, `operator_requested_field_summary`, `llm_boundary`,
+  `target_scope`, `ui_route` and an `allowed_output` of
   `review_queue_proposal_only`.
 - When the source is supplied from a manual-review field banner, the job should
   carry `target_scope: "primary_target_first"` and `ui_route:

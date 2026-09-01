@@ -185,12 +185,20 @@ def build_payload_for_job(job: dict[str, Any], verification: dict[str, Any]) -> 
         ],
         "primary_requested_fields": primary_fields,
         "primary_requested_field_labels": primary_requested_field_labels(input_data, primary_fields),
+        "operator_requested_field_keys": clean_string_list(
+            input_data.get("operator_requested_field_keys") or input_data.get("requested_fields")
+        ),
+        "operator_requested_field_labels": clean_string_list(
+            input_data.get("operator_requested_field_labels") or input_data.get("requested_field_labels")
+        ),
+        "operator_requested_field_summary": clean_str(input_data.get("operator_requested_field_summary")),
         "target_scope": clean_str(input_data.get("target_scope")),
         "ui_route": clean_str(input_data.get("ui_route")),
         "missing_fields": [clean_str(item) for item in as_list(input_data.get("missing_fields")) if clean_str(item)],
         "human_supplied_source": bool(input_data.get("human_supplied_source")),
         "source_job_version": clean_str(input_data.get("source_job_version")),
         "operator_intent": clean_str(input_data.get("operator_intent")),
+        "llm_boundary": clean_str(input_data.get("llm_boundary") or "respect_source_job_context_scope"),
         "allowed_output": clean_str(input_data.get("allowed_output") or "review_queue_proposal_only"),
         "warnings": warnings,
     })

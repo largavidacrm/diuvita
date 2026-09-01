@@ -329,9 +329,18 @@ def main() -> None:
     check(
         'target_scope: sourceJob.targetScope' in index
         and 'ui_route: sourceJob.uiRoute' in index
+        and "operator_requested_field_summary: sourceJob.labels" in index
+        and "llm_boundary: sourceJob.llmBoundary" in index
         and 'primary_requested_fields: targets.slice(0, 1).map(function (item) { return item.key; })' in index
         and 'primary_requested_field_labels: targets.slice(0, 1).map(function (item) { return item.label; })' in index,
-        "source jobs should persist the UI route and primary field scope",
+        "source jobs should persist the UI route, primary field scope and LLM boundary",
+    )
+    check(
+        "function reviewSourceJobOperatorIntent" in index
+        and "Revisar solo especialistas y devolver una propuesta revisable" in index
+        and "Revisar primero ese campo y devolver una propuesta revisable" in index
+        and "Revisar solo esos campos y devolver propuestas revisables" in index,
+        "source jobs should persist Daniel's bounded operator intent for later LLM help",
     )
     check(
         'payload.ui_route === "manual_review_banner_source_handoff"' in index
