@@ -342,13 +342,27 @@ def main() -> None:
         and "function suspiciousSpecialistValues" in index
         and "function proposalSpecialistsStatus" in index
         and "function reviewApprovalBlockReason" in index
+        and "function reviewFieldApprovalConfirmationReason" in index
+        and "function noisySpecialistApprovalConfirmation" in index
+        and "function confirmNoisySpecialistApproval" in index
         and "Especialistas contiene entradas sospechosas" in index
         and "Corregir antes de aprobar" in index
         and "Usa Modificar y deja solo nombres claros" in index
+        and "Daniel puede aprobarla igualmente si la ha revisado" in index
+        and "Si has revisado la fuente y quieres aceptarlo igualmente como decisión humana, confirma" in index
+        and "confirmedNoisySpecialists" in index
+        and "window.confirm(message)" in index
         and "humanModifiedSpecialists" in index
         and "Boolean(reviewApprovalBlockReason(activeReview))" in index
-        and "var approvalBlock = reviewApprovalBlockReason(activeReview);" in index,
-        "dirty specialist proposals should warn and block direct approval until modified",
+        and "var approvalBlock = reviewApprovalBlockReason(activeReview);" in index
+        and 'data-review-field-confirm="noisy-specialists"' in index,
+        "dirty specialist proposals should warn and require explicit human confirmation before approval",
+    )
+    review_block_start = index.index("function reviewApprovalBlockReason")
+    review_block_end = index.index("function noisySpecialistApprovalExamples", review_block_start)
+    check(
+        "reviewHasNoisySpecialistProposal" not in index[review_block_start:review_block_end],
+        "dirty specialists should not disable Daniel's main approve button",
     )
     check(
         "function reviewSupportsInlineFieldDecision" in index
@@ -362,7 +376,7 @@ def main() -> None:
         and "function handleReviewFieldAction" in index
         and "function reviewPayloadAfterFieldDecision" in index
         and "field_decisions" in index
-        and "saveExistingClinicReviewFields(fields, Boolean(modified), {}, note)" in index
+        and "saveExistingClinicReviewFields(fields, Boolean(modified), {}, note, {" in index
         and "Campo guardado." in index
         and "Quedan " in index,
         "profile-enrichment proposal fields should be directly approvable, rejectable or editable in-card",

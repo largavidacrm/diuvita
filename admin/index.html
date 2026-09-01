@@ -8224,7 +8224,14 @@
       if (!reviewSupportsInlineFieldDecision(row, item)) return "";
       var fields = {};
       fields[item.key] = item.value;
-      return approvalSafetyWarnings(fields)[0] || "";
+      return approvalSafetyWarnings(fields, { confirmedNoisySpecialists: true })[0] || "";
+    }
+
+    function reviewFieldApprovalConfirmationReason(row, item) {
+      if (!reviewSupportsInlineFieldDecision(row, item)) return "";
+      if (canonicalProposalField(item.key) !== "profesionales") return "";
+      if (!suspiciousSpecialistValues(item.value).length) return "";
+      return "Esta lista tiene texto sospechoso. Daniel puede aprobarla igualmente si la ha revisado.";
     }
 
     function reviewProposalFieldEditRows(key) {
@@ -8251,9 +8258,12 @@
       if (!reviewSupportsInlineFieldDecision(row, item)) return "";
       if (activeReviewFieldModifyIndex === index) return reviewProposalFieldEditorHtml(item, index);
       var approveBlock = reviewFieldApprovalBlockReason(row, item);
+      var approveConfirm = reviewFieldApprovalConfirmationReason(row, item);
       return '<div class="review-proposal-actions">' +
         '<button class="btn" type="button" data-review-field-action="approve" data-review-field-index="' + html(index) + '"' +
-        (approveBlock ? ' data-review-field-blocked="true" disabled title="' + html(approveBlock) + '"' : ' title="Aprobar solo este campo"') +
+        (approveBlock
+          ? ' data-review-field-blocked="true" disabled title="' + html(approveBlock) + '"'
+          : ' title="' + html(approveConfirm || "Aprobar solo este campo") + '"' + (approveConfirm ? ' data-review-field-confirm="noisy-specialists"' : "")) +
         '>Aprobar</button>' +
         '<button class="btn danger" type="button" data-review-field-action="reject" data-review-field-index="' + html(index) + '">Rechazar</button>' +
         '<button class="btn secondary" type="button" data-review-field-action="edit" data-review-field-index="' + html(index) + '">Modificar</button>' +
@@ -8386,10 +8396,35 @@
       if (Number(((row.payload || {}).duplicate_probability) || 0) >= 0.9) {
         return "Duplicado probable: rechaza o modifica tras revisar.";
       }
-      if (reviewHasNoisySpecialistProposal(row)) {
-        return "Especialistas con texto dudoso: usa Modificar y deja solo nombres claros.";
-      }
       return "";
+    }
+
+    function noisySpecialistApprovalExamples(fields) {
+      var examples = [];
+      Object.keys(fields || {}).forEach(function (rawKey) {
+        if (canonicalProposalField(rawKey) !== "profesionales") return;
+        suspiciousSpecialistValues(fields[rawKey]).forEach(function (entry) {
+          var value = compactText(entry.value, 90);
+          if (value && examples.indexOf(value) < 0) examples.push(value);
+        });
+      });
+      return examples.slice(0, 3);
+    }
+
+    function noisySpecialistApprovalConfirmation(fields, modified, options) {
+      options = options || {};
+      if (modified || options.confirmedNoisySpecialists) return "";
+      var examples = noisySpecialistApprovalExamples(fields);
+      if (!examples.length) return "";
+      return "La lista de especialistas contiene texto que puede venir mezclado con navegación, legal, sociedades o categorías.\n\n" +
+        "Ejemplos:\n- " + examples.join("\n- ") + "\n\n" +
+        "Si has revisado la fuente y quieres aceptarlo igualmente como decisión humana, confirma. Si no, usa Modificar.";
+    }
+
+    function confirmNoisySpecialistApproval(fields, modified, options) {
+      var message = noisySpecialistApprovalConfirmation(fields, modified, options);
+      if (!message) return true;
+      return window.confirm(message);
     }
 
     function reviewMapsExpectedClinicLabel(row) {
@@ -8850,7 +8885,7 @@
             }
           });
         }
-        if (key === "profesionales" && !options.humanModifiedSpecialists && suspiciousSpecialistValues(value).length) {
+        if (key === "profesionales" && !options.humanModifiedSpecialists && !options.confirmedNoisySpecialists && suspiciousSpecialistValues(value).length) {
           add("Especialistas contiene entradas sospechosas. Usa Modificar y deja solo nombres de profesionales publicados.");
         }
         var phoneWarning = proposalPhoneWarning(key, value);
@@ -9182,7 +9217,8 @@
       clinic.verification_status = draft.verification;
     }
 
-    async function saveExistingClinicReviewFields(fields, modified, profileFields, note) {
+    async function saveExistingClinicReviewFields(fields, modified, profileFields, note, options) {
+      options = options || {};
       profileFields = profileFields || {};
       var clinic = reviewClinicForRow(activeReview);
       if (!clinic) {
@@ -9190,7 +9226,8 @@
         return false;
       }
       var safetyWarnings = approvalSafetyWarnings(Object.assign({}, fields || {}, profileFields), {
-        humanModifiedSpecialists: Boolean(modified)
+        humanModifiedSpecialists: Boolean(modified),
+        confirmedNoisySpecialists: Boolean(options.confirmedNoisySpecialists)
       });
       if (safetyWarnings.length) {
         toast(safetyWarnings[0]);
@@ -9233,7 +9270,8 @@
       return true;
     }
 
-    async function approveExistingClinicReview(fields, modified, profileFields) {
+    async function approveExistingClinicReview(fields, modified, profileFields, options) {
+      options = options || {};
       profileFields = profileFields || {};
       if (!Object.keys(fields || {}).length && !Object.keys(profileFields).length) {
         var resolvedOnly = await resolveReviewItem(
@@ -9250,7 +9288,7 @@
       var note = trimmed("reviewResolutionNote") || (modified
         ? "Propuesta aprobada con modificación manual."
         : "Propuesta aprobada y aplicada.");
-      var saved = await saveExistingClinicReviewFields(fields, modified, profileFields, note);
+      var saved = await saveExistingClinicReviewFields(fields, modified, profileFields, note, options);
       if (!saved) return false;
       var resolveResult = await resolveReviewItem(activeReview.id, "resolved", note);
       if (resolveResult.error) {
@@ -9296,8 +9334,12 @@
       var value = modified ? reviewInlineModifiedValue(item, index) : item.value;
       var fields = reviewFieldObject(item, value);
       var note = reviewFieldDecisionNote(modified ? "modify" : "approve", item);
+      var confirmedNoisySpecialists = !modified && confirmNoisySpecialistApproval(fields, false);
+      if (!confirmedNoisySpecialists) return;
       setReviewDecisionLoading(true);
-      var saved = await saveExistingClinicReviewFields(fields, Boolean(modified), {}, note);
+      var saved = await saveExistingClinicReviewFields(fields, Boolean(modified), {}, note, {
+        confirmedNoisySpecialists: confirmedNoisySpecialists
+      });
       if (saved) await persistReviewFieldDecision(activeReview, item, modified ? "modify" : "approve", value, note);
       setReviewDecisionLoading(false);
     }
@@ -9336,14 +9378,18 @@
       else if (action === "cancel") cancelReviewFieldModification();
     }
 
-    async function approveCandidateReview(fields, modified, profileFields) {
+    async function approveCandidateReview(fields, modified, profileFields, options) {
+      options = options || {};
       profileFields = profileFields || {};
       if (Number(((activeReview.payload || {}).duplicate_probability) || 0) >= 0.9) {
         toast("Duplicado probable: no apruebo una ficha nueva desde esta tarjeta.");
         return false;
       }
       var combinedFields = Object.assign({}, fields || {}, profileFields);
-      var safetyWarnings = approvalSafetyWarnings(combinedFields);
+      var safetyWarnings = approvalSafetyWarnings(combinedFields, {
+        humanModifiedSpecialists: Boolean(modified),
+        confirmedNoisySpecialists: Boolean(options.confirmedNoisySpecialists)
+      });
       if (safetyWarnings.length) {
         toast(safetyWarnings[0]);
         return false;
@@ -9374,14 +9420,20 @@
       var fields = modified ? reviewModifiedDecisionFields(activeReview) : reviewOriginalDecisionFields(activeReview);
       var profileFields = reviewClinicProfileEditedFields(activeReview);
       var decisionModified = Boolean(modified || Object.keys(profileFields).length);
+      var confirmedNoisySpecialists = !decisionModified && confirmNoisySpecialistApproval(fields, false);
+      if (!confirmedNoisySpecialists) return;
       setReviewDecisionLoading(true);
       var ok = false;
       if (activeReview.review_type === "candidate_clinic") {
-        ok = await approveCandidateReview(fields, decisionModified, profileFields);
+        ok = await approveCandidateReview(fields, decisionModified, profileFields, {
+          confirmedNoisySpecialists: confirmedNoisySpecialists
+        });
       } else if (isClinicClaimRequestReview(activeReview)) {
         ok = await approveClinicClaimRequestReview(fields, decisionModified, profileFields);
       } else if (activeReview.clinic_id) {
-        ok = await approveExistingClinicReview(fields, decisionModified, profileFields);
+        ok = await approveExistingClinicReview(fields, decisionModified, profileFields, {
+          confirmedNoisySpecialists: confirmedNoisySpecialists
+        });
       } else {
         var result = await resolveReviewItem(
           activeReview.id,

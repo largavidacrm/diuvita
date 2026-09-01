@@ -1392,6 +1392,13 @@ Next 10 technical steps:
      pre-SEO target while keeping SEO programmatic blocked until fields and
      traceability are ready. The report does not publish, edit clinics, resolve
      review cards, push or deploy.
+259. Let Daniel override noisy specialist warnings manually. Done locally in
+     `/admin/`: specialist proposals with navigation/legal/category noise still
+     show a strong warning and the LLM validator still rejects approving them
+     as-is, but Daniel's human approval path now asks for explicit confirmation
+     instead of disabling the approve action. Confirmed approvals continue
+     through the existing guarded review flow and remain traceable as manual
+     decisions.
 
 ## Daniel decision checkpoints
 
