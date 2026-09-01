@@ -13,7 +13,13 @@ def check(condition: bool, message: str) -> None:
 
 def main() -> None:
     source = (ROOT / "build.py").read_text(encoding="utf-8")
-    sql = (ROOT / "supabase" / "migrations" / "0025_public_clinic_recommendations.sql").read_text(encoding="utf-8")
+    sql = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in [
+            ROOT / "supabase" / "migrations" / "0025_public_clinic_recommendations.sql",
+            ROOT / "supabase" / "migrations" / "0026_dedupe_public_clinic_recommendations.sql",
+        ]
+    )
     admin = (ROOT / "admin" / "index.html").read_text(encoding="utf-8")
 
     for marker in [
@@ -38,6 +44,7 @@ def main() -> None:
         "p_requested_info:requested",
         "p_honeypot:trap",
         "Recibido. Queda como trabajo pendiente para revisión interna.",
+        "Ya estaba en cola para revisión interna.",
         ".recommend{max-width:1180px",
         ".recommend-form{display:grid",
         ".recommend-status.error",
@@ -53,6 +60,9 @@ def main() -> None:
         "'source', 'public_site_recommend_clinic'",
         "'allowed_output', 'review_queue_proposal_only'",
         "'public_clinic_recommendation_received'",
+        "'duplicate', true",
+        "existing_job public.agent_jobs%rowtype",
+        "status in ('queued', 'running')",
         "grant usage on schema public to anon, authenticated",
         "grant execute on function public.public_recommend_clinic(text, text, text, text, text, text, text) to anon, authenticated",
     ]:

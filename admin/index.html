@@ -1427,6 +1427,46 @@
       return values.map(cleanHttpUrl).filter(Boolean);
     }
 
+    function jobComparableUrl(value) {
+      var clean = cleanHttpUrl(value);
+      if (!clean) return "";
+      try {
+        var parsed = new URL(clean);
+        parsed.hash = "";
+        parsed.pathname = parsed.pathname.replace(/\/+$/, "") || "/";
+        return parsed.toString().replace(/\/$/, "").toLowerCase();
+      } catch (_error) {
+        return clean.replace(/\/+$/, "").toLowerCase();
+      }
+    }
+
+    function jobComparableUrls(input) {
+      return jobSourceUrls(input).map(jobComparableUrl).filter(Boolean);
+    }
+
+    function pendingJobMatchesSource(row, sourceUrl, clinicId) {
+      if (!row || ["queued", "running"].indexOf(row.status) < 0) return false;
+      if (clinicId && String(row.clinic_id || row.entity_id || "") !== String(clinicId)) return false;
+      var wanted = jobComparableUrl(sourceUrl);
+      return Boolean(wanted && jobComparableUrls(jobInput(row)).indexOf(wanted) >= 0);
+    }
+
+    async function findPendingSourceJobDuplicate(jobType, sourceUrl, clinicId) {
+      var wanted = jobComparableUrl(sourceUrl);
+      if (!wanted) return null;
+      var result = await client
+        .from("agent_jobs")
+        .select("id, job_type, status, entity_id, clinic_id, input, created_at, scheduled_for")
+        .eq("job_type", jobType)
+        .in("status", ["queued", "running"])
+        .order("created_at", { ascending: false })
+        .limit(80);
+      if (result.error) return null;
+      return (result.data || []).find(function (row) {
+        return pendingJobMatchesSource(row, sourceUrl, clinicId);
+      }) || null;
+    }
+
     function jobHasOfficialSource(row) {
       return jobSourceUrls(jobInput(row)).length > 0;
     }
@@ -10219,6 +10259,27 @@
       }
       var targets = sourceJob.targets;
       el(buttonId).disabled = true;
+      var duplicateJob = await findPendingSourceJobDuplicate("EXTRACT_CLINIC_PROFILE", url, clinic.id);
+      if (duplicateJob) {
+        var duplicateResolve = await resolveReviewItem(
+          row.id,
+          "resolved",
+          reviewSourceJobPendingNote(sourceJob, url) + " El trabajo ya estaba pendiente, no se crea duplicado."
+        );
+        if (duplicateResolve.error) {
+          el(buttonId).disabled = false;
+          toast("Ese link ya está en Trabajos pendientes, pero no pude cerrar esta revisión automáticamente.");
+          return;
+        }
+        setInput(urlInputId, "");
+        closeReviewWorkspaceAfterSourceJob(row);
+        await loadDashboard();
+        el("reviewSelectionMessage").textContent =
+          "Ese link ya estaba en Trabajos pendientes. Cierro esta revisión hasta que vuelva como propuesta.";
+        show(el("reviewSelectionPanel"), true);
+        toast("Ese link ya estaba en cola. No creo duplicado.");
+        return;
+      }
       var payload = {
         job_type: "EXTRACT_CLINIC_PROFILE",
         status: "queued",
@@ -10306,6 +10367,12 @@
         ? "Daniel indica que esta URL oficial contiene " + labelSummary + " de esta clínica. Revisar solo ese alcance y devolver propuestas revisables."
         : "Daniel recomienda esta URL oficial para completar una clínica existente. Extraer solo datos claros de esa URL y devolver propuestas revisables.";
       if (operatorNote) intent += " Nota de Daniel: " + operatorNote;
+      var duplicateJob = await findPendingSourceJobDuplicate("EXTRACT_CLINIC_PROFILE", url, clinic.id);
+      if (duplicateJob) {
+        setInput("jobSourceUrl", "");
+        toast("Ese link ya está en Trabajos pendientes para esta clínica.");
+        return true;
+      }
       var payload = {
         job_type: "EXTRACT_CLINIC_PROFILE",
         status: "queued",
@@ -10416,6 +10483,16 @@
         jobInputData.source_url = sourceUrl;
         jobInputData.source_urls = [sourceUrl];
         jobInputData.human_supplied_source = true;
+      }
+      if (jobType === "DISCOVER_CLINIC" && sourceUrl) {
+        var duplicateJob = await findPendingSourceJobDuplicate("DISCOVER_CLINIC", sourceUrl, "");
+        if (duplicateJob) {
+          setInput("jobSourceUrl", "");
+          el("jobBtn").disabled = false;
+          toast("Ese link ya está en Trabajos pendientes.");
+          await loadDashboard();
+          return;
+        }
       }
       var payload = {
         job_type: jobType,

@@ -1047,7 +1047,11 @@ JS = """<script>
       }).then(function(response){
         if(!response.ok) throw new Error("No se pudo enviar");
         return response.json();
-      }).then(function(){
+      }).then(function(result){
+        if(result&&result.duplicate){
+          setRecommendationStatus("Ya estaba en cola para revisión interna.", "ok");
+          return;
+        }
         recommendForm.reset();
         document.getElementById("recommendClinicCountry").value="España";
         setRecommendationStatus("Recibido. Queda como trabajo pendiente para revisión interna.", "ok");

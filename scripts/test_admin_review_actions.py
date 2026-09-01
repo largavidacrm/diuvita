@@ -430,6 +430,11 @@ def main() -> None:
         and "URL recomendada · " in index
         and "ciclo CTO supervisado · vuelve como propuesta revisable" in index
         and "En cola para ciclo CTO supervisado" in index
+        and "function findPendingSourceJobDuplicate" in index
+        and "function pendingJobMatchesSource" in index
+        and "function jobComparableUrl" in index
+        and "Ese link ya está en Trabajos pendientes" in index
+        and "No creo duplicado" in index
         and "var recentJobRows = (jobRows.data || []).filter(function (row)" in index
         and 'return ["queued", "running"].indexOf(row.status) < 0;' in index
         and "recentJobRows.map(function (row)" in index

@@ -1279,6 +1279,13 @@ Next 10 technical steps:
      queued or running jobs appear only under **Trabajos pendientes**. They
      move to **Trabajos recientes** only after leaving the pending states, so
      Daniel does not see the same recommendation twice.
+242. Prevent repeated recommendation jobs. Done locally in `/admin/`, the
+     public form response handling and migration
+     `supabase/migrations/0026_dedupe_public_clinic_recommendations.sql`:
+     when the same official URL is already queued or running, the UI reports
+     that it is already pending instead of adding another job. Review-source
+     handoffs still close the current card because the existing job can return
+     the replacement proposal.
 
 ## Daniel decision checkpoints
 
