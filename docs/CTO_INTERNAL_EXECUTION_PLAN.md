@@ -918,13 +918,6 @@ Next 10 technical steps:
      compact internal origin line with the requested field and
      `primary_target_first` scope, so Daniel can see why that evidence is being
      considered without opening other queue context.
-175. Replace manual source hints with one concrete proposal. Done locally in
-     `scripts/process_extract_clinic_profile_jobs.py` and
-     `scripts/submit_shadow_extraction_review.py`: when Daniel gives an
-     official URL from a manual review, the worker can refresh the open
-     enrichment card for that clinic, preserve the source/job context for later
-     LLM review, and mark the originating manual card as superseded without
-     editing or publishing clinic data.
 175. Expose source-job context in LLM decision packets. Done locally in
      `scripts/review_proposal_decision_packets.py` and
      `scripts/prepare_review_decision_llm_prompt.py`: proposals generated from
@@ -938,9 +931,9 @@ Next 10 technical steps:
      preserves the human Google Business/Profile check.
 177. Resolve manual review cards field by field. Done locally in `/admin/`:
      when a quality/manual review contains several missing fields, saving the
-     active field removes only that issue from the open card and then reopens
-     the next pending field. If the active field is still incomplete, the card
-     stays open instead of being silently resolved.
+     active field removes only that issue from the open card and returns Daniel
+     to the review list. If the active field is still incomplete, the card stays
+     open instead of being silently resolved.
 178. Audit old review cards for source-job context. Done locally in
      `scripts/audit_review_source_job_context.py`: open enrichment proposals can
      now be checked for LLM-source provenance, including whether missing context
@@ -953,6 +946,18 @@ Next 10 technical steps:
      `scripts/admin_digest.py`: Google Maps review counts now include weak or
      malformed proposed Maps URLs, while the save/publication guards still
      accept only real clinic Google Business/Profile links after human review.
+181. Replace manual source hints with one concrete proposal. Done locally in
+     `scripts/process_extract_clinic_profile_jobs.py` and
+     `scripts/submit_shadow_extraction_review.py`: when Daniel gives an
+     official URL from a manual review, the worker can refresh the open
+     enrichment card for that clinic, preserve the source/job context for later
+     LLM review, and mark the originating manual card as superseded without
+     editing or publishing clinic data.
+182. Return to the review list after each decision. Done locally in `/admin/`:
+     approving, rejecting, modifying or sending an official URL to the agent now
+     closes the active review and returns Daniel to the list. Source-sent manual
+     cards disappear immediately while the queued worker prepares a concrete
+     proposal; no clinic data is published or saved by that handoff.
 181. Keep manual reviews sequential without losing columns. Done locally in
      `/admin/`: clicking **Revisar** on a manual review now opens the normal
      clinic-plus-decision workspace instead of jumping straight to the full

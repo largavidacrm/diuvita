@@ -268,12 +268,14 @@ def main() -> None:
         and "function reviewClinicProfileValue" in index
         and 'await finishReviewDecision(modified ? "Modificación guardada." : "Propuesta aprobada.", currentId)' in index
         and 'await finishReviewDecision("Propuesta rechazada.", currentId)' in index
-        and "openReviewEntry(nextReview.id)" in index
-        and "Cola terminada. No quedan propuestas pendientes." in index
+        and "Propuesta cerrada. Elige la siguiente revisión en la lista." in index
+        and "Vuelvo a la lista." in index
+        and "Paso a la siguiente propuesta." not in index
+        and "Clínica guardada. Paso a la siguiente propuesta." not in index
         and "admin_update_clinic" in index
         and "admin_create_draft_clinic_from_review_v2" in index
         and "admin_resolve_review_item" in index,
-        "approve, reject and modify should resolve one proposal and continue the queue",
+        "approve, reject and modify should resolve one proposal and return to the review list",
     )
     check(
         'item.action !== "Revisión manual"' in index
@@ -333,9 +335,9 @@ def main() -> None:
         "manual_review_progress" in index
         and ".from(\"review_queue\")" in index
         and ".update({ payload: nextPayload })" in index
-        and "Campo guardado. Paso al siguiente campo pendiente." in index
+        and "Campo guardado. La revisión vuelve a la lista con los pendientes restantes." in index
         and "Ficha guardada, pero ese campo sigue pendiente. Lo mantengo abierto." in index,
-        "manual review saves should resolve only the active missing field",
+        "manual review saves should resolve only the active missing field and return to the list",
     )
     check(
         "return focusedTargets.length ? focusedTargets : fallbackTargets;" in index
@@ -353,6 +355,14 @@ def main() -> None:
         and 'primary_requested_fields: targets.slice(0, 1).map(function (item) { return item.key; })' in index
         and 'primary_requested_field_labels: targets.slice(0, 1).map(function (item) { return item.label; })' in index,
         "source jobs should persist the UI route, primary field scope and LLM boundary",
+    )
+    check(
+        "function reviewSourceJobPendingNote" in index
+        and "function closeReviewWorkspaceAfterSourceJob" in index
+        and 'resolveReviewItem(row.id, "resolved", reviewSourceJobPendingNote(sourceJob, url))' in index
+        and "Fuente enviada al agente. La revisión volverá como propuesta cuando haya datos revisables." in index
+        and "Cierro esta revisión hasta que vuelva como propuesta." in index,
+        "source jobs should close the originating review until the agent returns a proposal",
     )
     check(
         "function reviewSourceJobOperatorIntent" in index

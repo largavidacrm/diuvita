@@ -300,8 +300,8 @@ Algunas tareas internas no son clínicas nuevas, sino mejoras para una ficha que
    confirma con **Guardar modificación**.
    En revisiones manuales, **Modificar** o **Revisión manual** te lleva al campo
    que falta.
-7. Al terminar, el panel cierra esa ficha y abre la siguiente propuesta
-   pendiente. Si no queda ninguna, vuelve a la lista.
+7. Al terminar, el panel cierra esa ficha y vuelve a la lista. Tú eliges la
+   siguiente revisión; el panel no salta automáticamente a otra tarjeta.
 
 La aprobación aplica la propuesta mediante el flujo existente, pero no cambia la
 publicación por accidente. Datos sensibles, Google Maps dudoso, precios, equipo
@@ -329,6 +329,11 @@ original. No se usa como orden para el LLM ni para completar otros campos.
 Si la tarjeta ya trae campos propuestos, puedes aprobarlos, rechazarlos o
 modificarlos manualmente; lo único bloqueado es pedirle al LLM que amplíe la
 ficha desde esa fuente sin contexto.
+
+Si pegas una **URL oficial para el agente**, la revisión actual se cierra y
+desaparece de la cola visible. El agente solo puede crear una nueva propuesta
+revisable con lo que haya encontrado; no publica ni guarda datos directamente en
+la ficha.
 
 Puedes usar el filtro **Claims bloqueantes** para ver solo ese tipo de revisión.
 Puedes usar el filtro **Especialistas** para ver solo tarjetas que mencionan

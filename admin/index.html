@@ -7639,19 +7639,19 @@
       });
     }
 
-    function nextReviewAfterCurrent(currentId) {
-      return (reviewCache || []).find(function (row) {
-        return row.id !== currentId && row.status === "open";
-      }) || null;
+    function openReviewCount() {
+      return (reviewCache || []).filter(function (row) {
+        return row.status === "open";
+      }).length;
     }
 
     async function finishReviewDecision(message, currentId) {
       closeReviewEditor();
       await loadDashboard();
-      var nextReview = nextReviewAfterCurrent(currentId);
-      if (nextReview) {
-        toast(message + " Paso a la siguiente propuesta.");
-        openReviewEntry(nextReview.id);
+      if (openReviewCount()) {
+        el("reviewSelectionMessage").textContent = "Propuesta cerrada. Elige la siguiente revisión en la lista.";
+        show(el("reviewSelectionPanel"), true);
+        toast(message + " Vuelvo a la lista.");
         return;
       }
       el("reviewSelectionMessage").textContent = "Cola terminada. No quedan propuestas pendientes.";
@@ -8971,24 +8971,14 @@
       closeClinicEditor();
       await loadDashboard();
       if (resolvedFromClinicReview) {
-        if (continueSameManualReview) {
-          var sameReview = reviewCache.find(function (row) {
-            return row.id === reviewContinueId && row.status === "open";
-          });
-          if (sameReview) {
-            toast(resolveWarning
-              ? "Ficha guardada, pero no pude actualizar toda la revisión."
-              : "Campo guardado. Paso al siguiente campo pendiente.");
-            openReviewEntry(sameReview.id);
-            return;
-          }
-        }
-        var nextReview = nextReviewAfterCurrent(reviewContinueId);
-        if (nextReview) {
+        if (openReviewCount()) {
+          el("reviewSelectionMessage").textContent = continueSameManualReview
+            ? "Campo guardado. La revisión vuelve a la lista con los pendientes restantes."
+            : "Ficha cerrada. Elige la siguiente revisión en la lista.";
+          show(el("reviewSelectionPanel"), true);
           toast(resolveWarning
             ? "Clínica guardada, pero alguna tarjeta no se cerró automáticamente."
-            : "Clínica guardada. Paso a la siguiente propuesta.");
-          openReviewEntry(nextReview.id);
+            : "Clínica guardada. Vuelvo a la lista.");
           return;
         }
         el("reviewSelectionMessage").textContent = "Cola terminada. No quedan propuestas pendientes.";
@@ -9259,6 +9249,24 @@
       toast(defaultDismissNote(reviewType));
     }
 
+    function reviewSourceJobPendingNote(sourceJob, url) {
+      var labels = sourceJob && sourceJob.labels ? sourceJob.labels : "el campo indicado";
+      return "URL oficial enviada al agente para revisar " + labels +
+        ". La tarjeta se cierra hasta que vuelva como propuesta revisable. No publica ni guarda datos en la ficha. Fuente: " + url;
+    }
+
+    function closeReviewWorkspaceAfterSourceJob(row) {
+      if (activeClinicReview && row && activeClinicReview.id === row.id) {
+        closeClinicEditor();
+        return;
+      }
+      if (activeReview && row && activeReview.id === row.id) {
+        closeReviewEditor();
+        return;
+      }
+      resetReviewWorkAreaForNav();
+    }
+
     async function createReviewSourceJobFor(row, urlInputId, buttonId, target) {
       if (!reviewSourceJobEligible(row)) return;
       var sourceJob = reviewSourceJobContext(row, target);
@@ -9327,11 +9335,19 @@
         toast("No se pudo crear el trabajo con esa fuente.");
         return;
       }
+      var resolveResult = await resolveReviewItem(row.id, "resolved", reviewSourceJobPendingNote(sourceJob, url));
+      if (resolveResult.error) {
+        toast("Trabajo creado, pero no pude cerrar esta revisión automáticamente.");
+        await loadDashboard();
+        return;
+      }
       setInput(urlInputId, "");
-      toast("Trabajo creado. El agente mirará esa fuente y dejará propuestas revisables.");
+      closeReviewWorkspaceAfterSourceJob(row);
       await loadDashboard();
-      if (activeReview) renderReviewValidationView(activeReview);
-      if (activeClinicReview) renderClinicManualReviewContext();
+      el("reviewSelectionMessage").textContent =
+        "Fuente enviada al agente. La revisión volverá como propuesta cuando haya datos revisables.";
+      show(el("reviewSelectionPanel"), true);
+      toast("Trabajo creado. Cierro esta revisión hasta que vuelva como propuesta.");
     }
 
     async function createReviewSourceJob() {
