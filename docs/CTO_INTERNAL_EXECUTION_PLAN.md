@@ -1334,6 +1334,17 @@ Next 10 technical steps:
      links or Google review links without a confirmed Maps profile. This is a
      human triage signal only; it does not approve links, edit clinic data or
      change the publication gate.
+250. Guard noisy specialist review approvals. Done locally in `/admin/`,
+     `scripts/review_proposal_decision_packets.py` and docs: specialist
+     proposals that contain legal/navigation fragments, professional-society
+     labels or category text are flagged as **Corregir antes de aprobar**.
+     Daniel can still reject them or use **Modificar** to leave only clear
+     public professional names, but the direct approve path is blocked.
+251. Validate noisy specialist LLM suggestions. Done locally in
+     `scripts/validate_review_decision_suggestion.py`: future LLM assistance
+     cannot suggest approving contaminated specialist lists or modifying them
+     while leaving the same noisy entries. Cleaned specialist corrections remain
+     valid, and rejected cards remain rejectable.
 
 ## Daniel decision checkpoints
 
