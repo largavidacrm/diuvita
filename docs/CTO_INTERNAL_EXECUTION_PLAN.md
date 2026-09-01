@@ -1048,6 +1048,11 @@ Next 10 technical steps:
      field-level manual review now routes straight to the clinic editor with
      that exact field focused, while normal proposals still open the
      approve/reject/modify decision view.
+201. Clarify local dashboard version and port during testing. Done locally in
+     `scripts/serve_local_dashboard.py` and `docs/DANIEL_ADMIN_GUIDE.md`: the
+     local helper now prints the exact URL and current git version it serves,
+     and Daniel's guide explains that the active local port is the latest one
+     Codex provides, not always `8765`.
 
 ## Daniel decision checkpoints
 

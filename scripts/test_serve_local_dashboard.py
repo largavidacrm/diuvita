@@ -11,6 +11,7 @@ from serve_local_dashboard import (
     dashboard_root,
     ensure_dist_ready,
     ensure_loopback_host,
+    local_version_label,
     make_handler,
 )
 
@@ -43,6 +44,7 @@ def main():
     check("Prueba primero http://127.0.0.1:8765/admin/" in busy_message, "busy port message should point Daniel to the dashboard URL")
     check("--port 8766" in busy_message, "busy port message should suggest the next port")
     check("permiso local" in permission_message, "permission message should be user-friendly")
+    check(local_version_label(root) == "no disponible", "missing git metadata should stay user-friendly")
     check(exits(ensure_loopback_host, "0.0.0.0"), "network-exposed hosts should be blocked")
     ensure_loopback_host("localhost")
 

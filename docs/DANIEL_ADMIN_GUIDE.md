@@ -9,11 +9,13 @@ https://www.vitalarga.com/admin/
 URL local de trabajo, cuando Codex deja un servidor abierto:
 
 ```text
-http://127.0.0.1:8765/admin/
+http://127.0.0.1:PUERTO/admin/
 ```
 
-El acceso local sirve solo la web generada en `dist/`. No publica producción,
-no toca Netlify y no expone el archivo `.env`.
+Usa siempre el enlace local concreto que te dé Codex en ese momento. Si hay
+varias pestañas con puertos distintos, normalmente vale el más reciente. El
+acceso local sirve solo la web generada en `dist/`. No publica producción, no
+toca Netlify y no expone el archivo `.env`.
 
 El botón de menú de la cabecera permite reducir o mostrar la barra lateral
 izquierda. Sirve para ganar anchura cuando estés revisando fichas largas.

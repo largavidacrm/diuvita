@@ -7,6 +7,7 @@ import errno
 import functools
 import http.server
 import socketserver
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,31 @@ def ensure_loopback_host(host: str) -> None:
 
 def make_handler(dist: Path = DIST) -> Any:
     return functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(dist))
+
+
+def local_version_label(root: Path = ROOT) -> str:
+    try:
+        branch = subprocess.run(
+            ["git", "branch", "--show-current"],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5,
+        ).stdout.strip()
+        commit = subprocess.run(
+            ["git", "log", "-1", "--oneline"],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "no disponible"
+    if branch and commit:
+        return f"{branch} · {commit}"
+    return commit or branch or "no disponible"
 
 
 def bind_error_message(host: str, port: int, error: OSError) -> str:
@@ -74,6 +100,8 @@ def main() -> int:
     try:
         with ReusableTCPServer((args.host, args.port), handler) as httpd:
             print(f"Dashboard local: http://{args.host}:{args.port}/admin/")
+            print("Si tienes varias pestañas locales, usa esta URL.")
+            print(f"Version local: {local_version_label()}")
             print(f"Sirviendo solo: {dist}")
             httpd.serve_forever()
     except OSError as error:
