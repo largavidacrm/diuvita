@@ -1183,6 +1183,12 @@ Next 10 technical steps:
      correct. This preserves the automation path without expanding
      `editable_fields`, allowing writes, resolving cards or changing the
      return-to-list review flow.
+225. Add private internal-contact editing to review side panel. Done locally in
+     `/admin/`: **Editar ficha** now includes interlocutor, internal email,
+     internal phone and internal note, using the existing private
+     `current_data.internal_contact` path. These values remain non-public and
+     are saved only through **Aprobar** or **Modificar**, never through
+     **Rechazar**.
 
 ## Daniel decision checkpoints
 

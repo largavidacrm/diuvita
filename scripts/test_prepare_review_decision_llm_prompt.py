@@ -142,6 +142,10 @@ def main():
         any(item["key"] == "summary" and item["review_input_id"] == "reviewClinicEditSummary" for item in manual_profile["fields"]),
         "prompt digest should include editable side-panel clinic fields",
     )
+    check(
+        any(item["key"] == "internal_contact" and item["review_input_id"] == "reviewClinicEditInternalContactName" for item in manual_profile["fields"]),
+        "prompt digest should include the private internal-contact side-panel field",
+    )
     check("value" not in str(manual_profile), "prompt digest should not expose side-panel raw values")
     check(prompt["messages"][0]["role"] == "system", "system message missing")
     check("No publicas" in prompt["messages"][0]["content"], "system safety instruction missing")

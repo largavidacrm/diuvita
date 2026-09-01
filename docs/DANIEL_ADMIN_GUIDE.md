@@ -209,6 +209,8 @@ cambios no se guardan al escribirlos: solo se aplican si apruebas la propuesta
 o guardas una modificación. Si rechazas la propuesta, esas correcciones no se
 aplican. Mientras editas, verás un resumen corto de los cambios manuales
 preparados para comprobarlos antes de decidir.
+También puedes corregir ahí el **Contacto interno** de la clínica. Ese apartado
+es privado de operación y no se muestra en la web pública.
 
 Al entrar en la ficha desde **Revisión manual**, arriba verás una banda con el
 campo afectado y el motivo exacto de la tarjeta. Si sabes que el dato está en

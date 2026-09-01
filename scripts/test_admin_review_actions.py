@@ -42,6 +42,10 @@ def main() -> None:
         'id="reviewClinicEditServices"',
         'id="reviewClinicEditProfessionals"',
         'id="reviewClinicEditPhone"',
+        'id="reviewClinicEditInternalContactName"',
+        'id="reviewClinicEditInternalContactEmail"',
+        'id="reviewClinicEditInternalContactPhone"',
+        'id="reviewClinicEditInternalContactNote"',
         'id="reviewClinicEditChanges"',
         'id="reviewClinicEditChangesList"',
         'id="reviewClinicEditHint"',
@@ -307,6 +311,9 @@ def main() -> None:
         and "function toggleReviewClinicInlineEdit" in index
         and "function applyProfileEditFieldsToDraft" in index
         and "applyProfileEditFieldsToDraft(draft, profileFields)" in index
+        and 'key: "internal_contact"' in index
+        and "setClinicInternalContact(draft.currentData, value)" in index
+        and "candidate.internal_contact = cleanInternalClinicContact(value)" in index
         and "persistModifiedCandidatePayload(activeReview, combinedFields)" in index
         and "Object.keys(reviewClinicProfileEditedFields(activeReview)).length && !reviewEditableItems(activeReview).length" in index
         and 'el("reviewClinicInlineEditBtn").addEventListener("click", toggleReviewClinicInlineEdit)' in index

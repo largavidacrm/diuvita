@@ -785,6 +785,26 @@
                   <label for="reviewClinicEditInstagram">Instagram</label>
                   <input id="reviewClinicEditInstagram" type="text">
                 </div>
+                <div class="field field-wide">
+                  <label>Contacto interno</label>
+                  <p class="field-note">No visible en la web pública.</p>
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditInternalContactName">Interlocutor</label>
+                  <input id="reviewClinicEditInternalContactName" type="text">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditInternalContactEmail">Email interno</label>
+                  <input id="reviewClinicEditInternalContactEmail" type="email">
+                </div>
+                <div class="field">
+                  <label for="reviewClinicEditInternalContactPhone">Teléfono interno</label>
+                  <input id="reviewClinicEditInternalContactPhone" type="tel">
+                </div>
+                <div class="field field-wide">
+                  <label for="reviewClinicEditInternalContactNote">Nota interna</label>
+                  <textarea id="reviewClinicEditInternalContactNote" rows="3"></textarea>
+                </div>
               </div>
               <div class="review-clinic-edit-changes hidden" id="reviewClinicEditChanges">
                 <strong>Cambios manuales preparados</strong>
@@ -6960,6 +6980,7 @@
         phone_whatsapp: candidate.phone_whatsapp || payload.phone_whatsapp,
         instagram: candidate.instagram || payload.instagram,
         care_mode: candidate.care_mode || payload.care_mode,
+        internal_contact: candidate.internal_contact || payload.internal_contact,
         locations: candidate.locations || payload.locations
       };
       if (key === "locations" && !lookup.locations && (lookup.address || lookup.city)) {
@@ -6998,9 +7019,7 @@
     }
 
     function reviewClinicProfileInternalContact(row) {
-      var clinic = reviewClinicForRow(row);
-      var data = (clinic && clinic.current_data) || {};
-      var contact = clinicInternalContactFromData(data);
+      var contact = cleanInternalClinicContact(reviewClinicProfileValue(row, "internal_contact"));
       var values = [];
       if (contact.name) values.push("Nombre: " + contact.name);
       if (contact.email) values.push("Email: " + contact.email);
@@ -7106,11 +7125,22 @@
         { key: "phone_fixed", inputId: "reviewClinicEditPhoneFixed", kind: "text" },
         { key: "phone_mobile", inputId: "reviewClinicEditPhoneMobile", kind: "text" },
         { key: "phone_whatsapp", inputId: "reviewClinicEditPhoneWhatsapp", kind: "text" },
-        { key: "instagram", inputId: "reviewClinicEditInstagram", kind: "text" }
+        { key: "instagram", inputId: "reviewClinicEditInstagram", kind: "text" },
+        {
+          key: "internal_contact",
+          kind: "internal_contact",
+          inputIds: {
+            name: "reviewClinicEditInternalContactName",
+            email: "reviewClinicEditInternalContactEmail",
+            phone: "reviewClinicEditInternalContactPhone",
+            note: "reviewClinicEditInternalContactNote"
+          }
+        }
       ];
     }
 
     function reviewClinicProfileEditBaseValue(row, definition) {
+      if (definition.kind === "internal_contact") return cleanInternalClinicContact(reviewClinicProfileValue(row, "internal_contact"));
       var value = reviewClinicProfileValue(row, definition.key);
       if (definition.key === "care_mode") return clinicCareModeValue({ care_mode: value });
       if (definition.kind === "locations") return normalizedLocations(value);
@@ -7137,11 +7167,27 @@
 
     function populateReviewClinicEditFields(row) {
       reviewClinicProfileEditDefinitions().forEach(function (definition) {
+        if (definition.kind === "internal_contact") {
+          var contact = cleanInternalClinicContact(reviewClinicProfileEditBaseValue(row, definition));
+          setInput(definition.inputIds.name, contact.name || "");
+          setInput(definition.inputIds.email, contact.email || "");
+          setInput(definition.inputIds.phone, contact.phone || "");
+          setInput(definition.inputIds.note, contact.note || "");
+          return;
+        }
         setInput(definition.inputId, reviewClinicProfileEditDisplayValue(row, definition));
       });
     }
 
     function reviewClinicProfileInputValue(definition) {
+      if (definition.kind === "internal_contact") {
+        return cleanInternalClinicContact({
+          name: trimmed(definition.inputIds.name),
+          email: trimmed(definition.inputIds.email),
+          phone: trimmed(definition.inputIds.phone),
+          note: trimmed(definition.inputIds.note)
+        });
+      }
       if (definition.kind === "locations") return linesToLocations(el(definition.inputId).value);
       if (definition.kind === "array") return linesToArray(el(definition.inputId).value);
       return trimmed(definition.inputId);
@@ -7883,6 +7929,10 @@
         setJsonText(draft.currentData, "google_reviews_url", clean);
         return;
       }
+      if (canonicalKey === "internal_contact") {
+        setClinicInternalContact(draft.currentData, value);
+        return;
+      }
       if (canonicalKey === "locations") {
         setJsonLocations(draft.currentData, "locations", sanitizedLocationsForSave(value));
         return;
@@ -7949,6 +7999,7 @@
         else if (["country", "city", "region", "summary", "address"].indexOf(key) >= 0) candidate[key] = proposalListValue(value);
         else if (["services", "specialties", "unidades", "profesionales", "tech"].indexOf(key) >= 0) candidate[key] = Array.isArray(value) ? value : linesToArray(value);
         else if (key === "locations") candidate.locations = normalizedLocations(value);
+        else if (key === "internal_contact") candidate.internal_contact = cleanInternalClinicContact(value);
         else candidate[key] = proposalListValue(value);
       });
       payload.candidate = candidate;

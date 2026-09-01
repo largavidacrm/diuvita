@@ -146,7 +146,7 @@ def main():
     check(profile_context["field_count"] >= 20, "side-panel editable field count missing")
     profile_keys = [item["key"] for item in profile_context["fields"]]
     check(
-        all(key in profile_keys for key in ["display_name", "summary", "website", "profesionales", "telefono"]),
+        all(key in profile_keys for key in ["display_name", "summary", "website", "profesionales", "telefono", "internal_contact"]),
         "side-panel editable fields should include core clinic fields",
     )
     check("value" not in profile_context["fields"][0]["current"], "safe side-panel context should omit raw values")

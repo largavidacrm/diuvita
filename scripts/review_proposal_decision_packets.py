@@ -103,6 +103,7 @@ MANUAL_PROFILE_EDIT_FIELD_TARGETS = [
     ("phone_mobile", "Móvil", "reviewClinicEditPhoneMobile", "clinicPhoneMobile"),
     ("phone_whatsapp", "WhatsApp", "reviewClinicEditPhoneWhatsapp", "clinicPhoneWhatsapp"),
     ("instagram", "Instagram", "reviewClinicEditInstagram", "clinicInstagram"),
+    ("internal_contact", "Contacto interno", "reviewClinicEditInternalContactName", "clinicInternalContactName"),
 ]
 REVIEW_TYPE_LABELS = {
     "candidate_clinic": "Clínica nueva",
