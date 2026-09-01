@@ -1291,6 +1291,12 @@ Next 10 technical steps:
      explícitas sin Maps/valoraciones**, making clear that it measures only
      structured location rows, while publication readiness still measures
      every ficha that needs Google Maps before publication.
+244. Unblock source-backed recommendation picking. Done locally in
+     `scripts/process_discovery_recommendation_jobs.py`: the worker still
+     requires an active admin email, but checks it directly against
+     `admin_users` before locking the queued job. This lets the supervised CTO
+     cycle consume public/admin recommendations with official URLs and return
+     review cards without publishing or editing clinic profiles.
 
 ## Daniel decision checkpoints
 

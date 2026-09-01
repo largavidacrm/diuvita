@@ -298,7 +298,12 @@ target as (
   select j.id
   from public.agent_jobs j
   cross join claims
-  where public.is_admin()
+  where exists (
+      select 1
+      from public.admin_users au
+      where au.active = true
+        and lower(au.email) = lower({sql_literal(admin_email)})
+    )
     and j.status = 'queued'
     and j.scheduled_for <= now()
     and j.job_type = {sql_literal(JOB_TYPE)}

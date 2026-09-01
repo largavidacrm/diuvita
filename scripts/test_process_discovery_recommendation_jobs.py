@@ -163,6 +163,7 @@ def main():
     check(picked is None, "empty source-backed queue should return None")
     pick_sql = captured.get("sql", "")
     check("j.job_type = 'DISCOVER_CLINIC'" in pick_sql, "picker should only target discovery jobs")
+    check("from public.admin_users au" in pick_sql and "au.active = true" in pick_sql, "picker should require an active admin email")
     check("source_url" in pick_sql and "website" in pick_sql and "source_urls" in pick_sql, "picker should require source-backed input")
     check("source_backed_discovery_job_picked" in pick_sql, "picker should audit source-backed assignment")
 
