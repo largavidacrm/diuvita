@@ -18,11 +18,13 @@ from admin_digest import (
     next_action_label,
     next_publication_action,
     next_profile_action,
+    next_portal_action,
     next_source_action,
     next_specialist_action,
     parse_timestamp,
     publication_control_status,
     publication_readiness_status,
+    portal_status,
     review_backlog_guard_status,
     source_coverage_status,
     specialist_review_status,
@@ -38,6 +40,8 @@ TYPE_LABELS = {
     "clinic_claim_request": ("reclamación de ficha", "reclamaciones de ficha"),
     "candidate_clinic": ("clínica nueva", "clínicas nuevas"),
     "clinic_profile_enrichment": ("mejora de ficha", "mejoras de ficha"),
+    "portal_profile_change": ("cambio pedido por clínica", "cambios pedidos por clínicas"),
+    "portal_recommended_clinic": ("clínica sugerida por usuario", "clínicas sugeridas por usuarios"),
     "source_change_detected": ("cambio de fuente", "cambios de fuente"),
     "clinic_quality_audit": ("revisión manual", "revisiones manuales"),
 }
@@ -45,10 +49,12 @@ ACCOUNT_FIELD_KEYS = {"admin_email"}
 ACTION_TYPE_ORDER = {
     "blocking_claim_review": 0,
     "clinic_claim_request": 1,
-    "candidate_clinic": 2,
-    "source_change_detected": 3,
-    "clinic_profile_enrichment": 4,
-    "clinic_quality_audit": 5,
+    "portal_profile_change": 2,
+    "portal_recommended_clinic": 3,
+    "candidate_clinic": 4,
+    "source_change_detected": 5,
+    "clinic_profile_enrichment": 6,
+    "clinic_quality_audit": 7,
 }
 
 
@@ -463,6 +469,16 @@ def first_step(digest: dict[str, Any]) -> list[str]:
             review_case_line(first_review(digest, "clinic_claim_request"), "Reclamaciones")
             + " No confirma identidad, no da acceso y no cambia datos por sí sola.",
         ]
+    if counts.get("portal_profile_change"):
+        return [
+            "Primero revisa cambios pedidos por clínicas.",
+            review_case_line(first_review(digest, "portal_profile_change"), "Mejoras de ficha"),
+        ]
+    if counts.get("portal_recommended_clinic"):
+        return [
+            "Primero valora clínicas sugeridas por usuarios.",
+            review_case_line(first_review(digest, "portal_recommended_clinic"), "Clínicas nuevas"),
+        ]
     action_review = first_action_review(digest)
     if action_review:
         return review_first_step_copy(action_review)
@@ -521,6 +537,8 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         for review_type in [
             "blocking_claim_review",
             "clinic_claim_request",
+            "portal_profile_change",
+            "portal_recommended_clinic",
             "candidate_clinic",
             "source_change_detected",
             "clinic_profile_enrichment",
@@ -545,6 +563,10 @@ def format_brief(digest: dict[str, Any], production_health: dict[str, Any] | Non
         f"- Siguiente publicación: {next_publication_action(digest)}.",
         f"- Madurez de auto-publicación: {maturity_status(digest)}.",
         "- Crear borrador no publica. Publicar se decide después en el editor, en Validación final.",
+        "",
+        "## Portal clínicas",
+        f"- Estado: {portal_status(digest)}.",
+        f"- Siguiente portal: {next_portal_action(digest)}.",
         "",
         "## Señales técnicas",
         f"- Clínicas visibles: {as_int(clinics.get('published'))} publicadas y {as_int(clinics.get('preliminary'))} preliminares.",

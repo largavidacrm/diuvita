@@ -108,8 +108,13 @@ Already built:
 - Duplicated review pressure has a read-only brief with concrete clinics to start from, and the safe CTO cycle includes that measurement.
 - Blocking-claim briefs now show a plain recommended next step per affected clinic without resolving the claim.
 - Global plan status can be generated as a read-only executive snapshot from real Supabase state.
+
 - Manual review routes can be summarized read-only, including direct field
   targets and bounded source-URL handoffs for future LLM assistance.
+- Clinic portal intake exists as a guarded manual-review surface for
+  recommendations, claims and clinic-originated changes. It stays proposal-only
+  until Daniel reviews legal/privacy/Supabase activation decisions.
+
 
 Not yet mature:
 
@@ -125,6 +130,9 @@ Not yet mature:
   should be used in small batches before source-shadow extraction.
 - Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
 - Daily/weekly digest and notification cadence.
+- Clinic portal production activation, including legal/privacy review, Supabase
+  Auth email settings, a controlled real-flow test and the future decision on
+  document uploads.
 - Rollback controls in the admin UI need operational usage, but the restore path and preview now exist.
 - Accuracy measurement needs more human-reviewed volume, but the measurement tool now exists.
 
@@ -634,6 +642,7 @@ Next 10 technical steps:
      card lacks its own source URL, the read-only report now also shows source
      URLs linked to internal specialist claims, making cases like Neolife
      reviewable without publishing names automatically.
+
 124. Repair IMDA-style source extraction. Done locally in
      `scripts/capture_source_snapshot.py`, `scripts/extract_clinic_profile_shadow.py`
      and team-source discovery: Elementor/WordPress pages no longer hide visible
@@ -1402,6 +1411,7 @@ Next 10 technical steps:
      no longer display the full Neurotrans SLU/NIF/address/email line in the
      footer. The legal-owner block remains available on the dedicated legal
      pages, where it belongs.
+
 
 ## Daniel decision checkpoints
 

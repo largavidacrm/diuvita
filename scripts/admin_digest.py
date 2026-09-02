@@ -78,6 +78,14 @@ publication_control as (
 typed_reviews as (
   select
     case
+      when review_type = 'clinic_claim_request'
+        then 'clinic_claim_request'
+      when review_type = 'candidate_clinic'
+        and coalesce(payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+        then 'portal_recommended_clinic'
+      when review_type = 'clinic_profile_enrichment'
+        and coalesce(payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+        then 'portal_profile_change'
       when review_type = 'clinic_quality_audit'
         and payload ->> 'quality_context' = 'blocking_claims'
         then 'blocking_claim_review'
@@ -100,6 +108,32 @@ reviews_by_type as (
     group by review_type
   ) grouped
 ),
+portal_reviews as (
+  select jsonb_build_object(
+    'claim_access_open', count(*) filter (where rq.review_type = 'clinic_claim_request'),
+    'recommended_clinic_open', count(*) filter (
+      where rq.review_type = 'candidate_clinic'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+    ),
+    'profile_change_open', count(*) filter (
+      where rq.review_type = 'clinic_profile_enrichment'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+    ),
+    'open_total', count(*) filter (
+      where rq.review_type = 'clinic_claim_request'
+        or (
+          rq.review_type = 'candidate_clinic'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+        )
+        or (
+          rq.review_type = 'clinic_profile_enrichment'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+        )
+    )
+  ) as data
+  from public.review_queue rq
+  where rq.status = 'open'
+),
 open_reviews as (
   select coalesce(jsonb_agg(to_jsonb(items) order by items.priority desc, items.created_at asc, items.title asc, items.id asc), '[]'::jsonb) as data
   from (
@@ -107,6 +141,14 @@ open_reviews as (
       rq.id,
       rq.review_type as raw_review_type,
       case
+        when rq.review_type = 'clinic_claim_request'
+          then 'clinic_claim_request'
+        when rq.review_type = 'candidate_clinic'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+          then 'portal_recommended_clinic'
+        when rq.review_type = 'clinic_profile_enrichment'
+          and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+          then 'portal_profile_change'
         when rq.review_type = 'clinic_quality_audit'
           and rq.payload ->> 'quality_context' = 'blocking_claims'
           then 'blocking_claim_review'
@@ -160,6 +202,7 @@ enrichment_review_groups as (
   left join public.clinics c on c.id = rq.clinic_id
   where rq.status = 'open'
     and rq.review_type = 'clinic_profile_enrichment'
+    and not (coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id')
     and rq.clinic_id is not null
   group by rq.clinic_id, c.slug, c.display_name, c.city, c.status
 ),
@@ -201,6 +244,9 @@ review_clinic_workgroups as (
     c.status as clinic_status,
     count(*) as open_count,
     count(*) filter (
+      where rq.review_type = 'clinic_claim_request'
+    ) as portal_claim_reviews,
+    count(*) filter (
       where rq.review_type = 'clinic_quality_audit'
         and rq.payload ->> 'quality_context' = 'blocking_claims'
     ) as blocking_claim_reviews,
@@ -208,10 +254,24 @@ review_clinic_workgroups as (
       where rq.review_type = 'clinic_quality_audit'
         and coalesce(rq.payload ->> 'quality_context', '') <> 'blocking_claims'
     ) as quality_reviews,
-    count(*) filter (where rq.review_type = 'clinic_profile_enrichment') as enrichment_reviews,
     count(*) filter (where rq.review_type = 'clinic_claim_request') as claim_request_reviews,
+    count(*) filter (
+      where rq.review_type = 'clinic_profile_enrichment'
+        and not (coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id')
+    ) as enrichment_reviews,
+    count(*) filter (
+      where rq.review_type = 'clinic_profile_enrichment'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+    ) as portal_change_reviews,
     count(*) filter (where rq.review_type = 'source_change_detected') as source_change_reviews,
-    count(*) filter (where rq.review_type = 'candidate_clinic') as candidate_reviews,
+    count(*) filter (
+      where rq.review_type = 'candidate_clinic'
+        and not (coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id')
+    ) as candidate_reviews,
+    count(*) filter (
+      where rq.review_type = 'candidate_clinic'
+        and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+    ) as portal_recommendation_reviews,
     max(rq.priority) as max_priority,
     min(rq.created_at) as oldest_created_at
   from public.review_queue rq
@@ -231,18 +291,23 @@ review_first_clinic_workgroup as (
           city,
           clinic_status,
           open_count,
+          portal_claim_reviews,
           blocking_claim_reviews,
           quality_reviews,
           enrichment_reviews,
           claim_request_reviews,
+          portal_change_reviews,
           source_change_reviews,
           candidate_reviews,
+          portal_recommendation_reviews,
           max_priority,
           oldest_created_at
         from review_clinic_workgroups
         order by
+          portal_claim_reviews desc,
           blocking_claim_reviews desc,
           claim_request_reviews desc,
+          portal_change_reviews desc,
           open_count desc,
           max_priority desc,
           oldest_created_at asc,
@@ -580,6 +645,14 @@ review_examples_by_type as (
         rq.id,
         rq.review_type as raw_review_type,
         case
+          when rq.review_type = 'clinic_claim_request'
+            then 'clinic_claim_request'
+          when rq.review_type = 'candidate_clinic'
+            and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+            then 'portal_recommended_clinic'
+          when rq.review_type = 'clinic_profile_enrichment'
+            and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+            then 'portal_profile_change'
           when rq.review_type = 'clinic_quality_audit'
             and rq.payload ->> 'quality_context' = 'blocking_claims'
             then 'blocking_claim_review'
@@ -614,6 +687,14 @@ review_examples_by_type as (
         end as professionals_count,
         row_number() over (
           partition by case
+            when rq.review_type = 'clinic_claim_request'
+              then 'clinic_claim_request'
+            when rq.review_type = 'candidate_clinic'
+              and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_claim_request_id'
+              then 'portal_recommended_clinic'
+            when rq.review_type = 'clinic_profile_enrichment'
+              and coalesce(rq.payload, '{{}}'::jsonb) ? 'portal_change_request_id'
+              then 'portal_profile_change'
             when rq.review_type = 'clinic_quality_audit'
               and rq.payload ->> 'quality_context' = 'blocking_claims'
               then 'blocking_claim_review'
@@ -1310,6 +1391,7 @@ select jsonb_build_object(
   'summary', (select data from summary),
   'publication_control', (select data from publication_control),
   'reviews_by_type', (select data from reviews_by_type),
+  'portal_reviews', (select data from portal_reviews),
   'open_reviews', (select data from open_reviews),
   'review_backlog_quality', (select data from review_backlog_quality),
   'review_backlog_first_duplicate_target', (select data from review_backlog_first_duplicate_target),
@@ -1349,6 +1431,8 @@ def format_review_type(review_type: str) -> str:
         "clinic_quality_audit": "revisiones manuales",
         "blocking_claim_review": "claims bloqueantes",
         "clinic_claim_request": "reclamaciones de ficha",
+        "portal_profile_change": "cambios pedidos por clinicas",
+        "portal_recommended_clinic": "clinicas sugeridas por usuarios",
         "source_change_detected": "cambios de fuente",
     }
     return labels.get(review_type, review_type.replace("_", " "))
@@ -1397,6 +1481,106 @@ def publication_control_status(digest: dict[str, Any]) -> str:
     if minutes > 1:
         return f"agrupada cada {minutes} min"
     return "directa"
+
+
+def portal_summary(digest: dict[str, Any]) -> dict[str, Any]:
+    summary = digest.get("summary") or {}
+    portal = summary.get("portal") or {}
+    return portal if isinstance(portal, dict) else {}
+
+
+def portal_review_counts(digest: dict[str, Any]) -> dict[str, int]:
+    portal_reviews = digest.get("portal_reviews") or {}
+    if not isinstance(portal_reviews, dict):
+        return {
+            "claim_access_open": 0,
+            "recommended_clinic_open": 0,
+            "profile_change_open": 0,
+            "open_total": 0,
+        }
+    return {
+        "claim_access_open": as_int(portal_reviews.get("claim_access_open")),
+        "recommended_clinic_open": as_int(portal_reviews.get("recommended_clinic_open")),
+        "profile_change_open": as_int(portal_reviews.get("profile_change_open")),
+        "open_total": as_int(portal_reviews.get("open_total")),
+    }
+
+
+def portal_pending_total(digest: dict[str, Any]) -> int:
+    portal = portal_summary(digest)
+    review_counts = portal_review_counts(digest)
+    review_type_total = 0
+    for item in digest.get("reviews_by_type") or []:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("review_type") or "") in (
+            "clinic_claim_request",
+            "portal_profile_change",
+            "portal_recommended_clinic",
+        ):
+            review_type_total += as_int(item.get("open_count"))
+    summary_total = as_int(portal.get("claim_requests_pending")) + as_int(portal.get("change_requests_pending"))
+    return max(summary_total, review_counts["open_total"], review_type_total)
+
+
+def portal_status(digest: dict[str, Any]) -> str:
+    portal = portal_summary(digest)
+    review_counts = portal_review_counts(digest)
+    pending_requests = as_int(portal.get("claim_requests_pending"))
+    pending_changes = as_int(portal.get("change_requests_pending"))
+    access_open = review_counts["claim_access_open"]
+    recommended_open = review_counts["recommended_clinic_open"]
+    profile_open = review_counts["profile_change_open"]
+    active_memberships = as_int(portal.get("active_memberships"))
+    identity_confirmed = as_int(portal.get("identity_confirmed"))
+
+    if portal_pending_total(digest):
+        details = []
+        if access_open:
+            details.append(f"{access_open} {plural(access_open, 'reclamación de ficha', 'reclamaciones de ficha')}")
+        if recommended_open:
+            details.append(f"{recommended_open} {plural(recommended_open, 'sugerencia', 'sugerencias')}")
+        if profile_open:
+            details.append(f"{profile_open} {plural(profile_open, 'cambio', 'cambios')}")
+        if not details:
+            if pending_requests:
+                details.append(
+                    f"{pending_requests} {plural(pending_requests, 'solicitud/recomendación', 'solicitudes/recomendaciones')}"
+                )
+            if pending_changes:
+                details.append(f"{pending_changes} {plural(pending_changes, 'cambio', 'cambios')}")
+        if not details:
+            details.append(f"{portal_pending_total(digest)} {plural(portal_pending_total(digest), 'tarjeta', 'tarjetas')}")
+        return (
+            f"{portal_pending_total(digest)} pendientes: {', '.join(details)}; "
+            f"{identity_confirmed} {plural(identity_confirmed, 'ficha', 'fichas')} con datos confirmados por el centro"
+        )
+
+    return (
+        f"sin solicitudes pendientes; {active_memberships} {plural(active_memberships, 'cuenta activa', 'cuentas activas')}; "
+        f"{identity_confirmed} {plural(identity_confirmed, 'ficha', 'fichas')} con datos confirmados por el centro"
+    )
+
+
+def next_portal_action(digest: dict[str, Any]) -> str:
+    review_counts = portal_review_counts(digest)
+    portal = portal_summary(digest)
+    access_open = review_counts["claim_access_open"]
+    recommended_open = review_counts["recommended_clinic_open"]
+    profile_open = review_counts["profile_change_open"]
+    if access_open:
+        return f"Revisar {access_open} {plural(access_open, 'reclamación de ficha', 'reclamaciones de ficha')}"
+    if profile_open:
+        return f"Revisar {profile_open} {plural(profile_open, 'cambio pedido por clínica', 'cambios pedidos por clínicas')}"
+    if recommended_open:
+        return f"Valorar {recommended_open} {plural(recommended_open, 'clínica sugerida por usuario', 'clínicas sugeridas por usuarios')}"
+    pending_requests = as_int(portal.get("claim_requests_pending"))
+    pending_changes = as_int(portal.get("change_requests_pending"))
+    if pending_requests:
+        return f"Abrir el portal en el panel y revisar {pending_requests} {plural(pending_requests, 'solicitud/recomendación', 'solicitudes/recomendaciones')}"
+    if pending_changes:
+        return f"Abrir el portal en el panel y revisar {pending_changes} {plural(pending_changes, 'cambio pendiente', 'cambios pendientes')}"
+    return "sin solicitudes pendientes"
 
 
 PROFILE_COMPLETENESS_FIELDS = [
@@ -1472,6 +1656,8 @@ def first_clinic_workgroup(digest: dict[str, Any]) -> str:
         ("enrichment_reviews", "mejora", "mejoras"),
         ("source_change_reviews", "cambio de fuente", "cambios de fuente"),
         ("quality_reviews", "revisión manual", "revisiones manuales"),
+        ("portal_change_reviews", "cambio portal", "cambios portal"),
+        ("portal_recommendation_reviews", "sugerencia", "sugerencias"),
         ("candidate_reviews", "candidata", "candidatas"),
     ]:
         count = as_int(target.get(key))
@@ -1721,6 +1907,10 @@ def next_action_label(digest: dict[str, Any]) -> str:
     action_label = action_label_for_review_type(action_type)
     if action_label:
         return action_label
+    if reviews_by_type.get("portal_profile_change"):
+        return "Revisar cambios pedidos por clínicas"
+    if reviews_by_type.get("portal_recommended_clinic"):
+        return "Valorar clínicas sugeridas por usuarios"
     if any(item.get("review_type") == "candidate_clinic" and as_int(item.get("priority")) >= 90 for item in open_reviews):
         return "Validar candidatas"
     if reviews_by_type.get("candidate_clinic"):
@@ -1900,6 +2090,7 @@ def format_digest(digest: dict[str, Any]) -> str:
     jobs = summary.get("jobs") or {}
     evidence = summary.get("evidence") or {}
     automation = summary.get("automation") or {}
+    portal = portal_summary(digest)
     costs = digest.get("costs") or {}
     source_monitoring = digest.get("source_monitoring") or {}
     source_coverage = digest.get("source_coverage") or {}
@@ -1968,6 +2159,14 @@ def format_digest(digest: dict[str, Any]) -> str:
     output.append(line("Bajo riesgo", "lista" if not blockers else "no lista"))
     if blockers:
         output.append(line("Motivo principal", blockers[0]))
+    output.append("")
+
+    output.append("## Portal clinicas")
+    output.append(line("Estado", portal_status(digest)))
+    output.append(line("Siguiente portal", next_portal_action(digest)))
+    if portal:
+        output.append(line("Cuentas activas", as_int(portal.get("active_memberships"))))
+        output.append(line("Datos confirmados por el centro", as_int(portal.get("identity_confirmed"))))
     output.append("")
 
     output.append("## Trabajo abierto")

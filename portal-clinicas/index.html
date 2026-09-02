@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal de clínicas | Vitalarga</title>
+  <meta name="description" content="Solicitudes de clínicas para reclamar fichas, recomendar centros y proponer cambios sujetos a validación manual de Vitalarga.">
+  <link rel="canonical" href="https://www.vitalarga.com/portal-clinicas/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/portal-clinicas/portal.css">
+</head>
+<body>
+  <header class="site">
+    <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
+    <nav>
+      <a href="/#buscar">Buscar clínica</a>
+      <a href="/portal-clinicas/">Portal clínicas</a>
+      <a href="/sobre/">Sobre la guía</a>
+    </nav>
+  </header>
+
+  <main class="portal-shell">
+    <section class="portal-hero">
+      <p class="kicker">Solicitudes revisadas por Vitalarga</p>
+      <h1>Portal de clínicas</h1>
+      <p>Las clínicas pueden pedir acceso a su ficha, recomendar un centro que falta o proponer cambios. Nada se publica automáticamente.</p>
+    </section>
+
+    <section class="portal-status warning" id="configNotice" hidden>
+      Falta activar la conexión segura para recibir solicitudes.
+    </section>
+
+    <section class="portal-layout" aria-label="Solicitudes de clínicas">
+      <article class="portal-panel intake-panel">
+        <div class="panel-headline">
+          <div>
+            <p class="eyebrow">Solicitud pública</p>
+            <h2>Enviar una solicitud</h2>
+          </div>
+          <div class="mode-tabs" role="tablist" aria-label="Tipo de solicitud">
+            <button class="mode-tab active" id="claimTab" type="button" data-mode="claim" role="tab" aria-controls="claimForm" aria-selected="true">Reclamar ficha</button>
+            <button class="mode-tab" id="recommendTab" type="button" data-mode="recommend" role="tab" aria-controls="recommendForm" aria-selected="false">Recomendar clínica</button>
+          </div>
+        </div>
+
+        <form class="portal-form" id="claimForm">
+          <div class="field">
+            <label for="claimClinic">Clínica</label>
+            <select id="claimClinic" name="claimClinic" required></select>
+          </div>
+          <div class="field">
+            <label for="claimRequesterName">Nombre y apellidos</label>
+            <input id="claimRequesterName" name="claimRequesterName" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="claimRequesterRole">Cargo o relación con la clínica</label>
+            <input id="claimRequesterRole" name="claimRequesterRole" autocomplete="organization-title" placeholder="Dirección, gerencia, comunicación...">
+          </div>
+          <div class="field">
+            <label for="claimEmail">Email corporativo</label>
+            <input id="claimEmail" name="claimEmail" type="email" autocomplete="email" required>
+          </div>
+          <div class="field field-wide">
+            <label for="claimMessage">Mensaje para revisión</label>
+            <textarea id="claimMessage" name="claimMessage" rows="4" placeholder="Indica cómo podemos comprobar que representas al centro."></textarea>
+          </div>
+          <label class="check-row field-wide">
+            <input id="claimAccept" name="claimAccept" type="checkbox" required>
+            <span>Acepto que Vitalarga revise manualmente la solicitud antes de dar acceso o cambiar la ficha.</span>
+          </label>
+          <div class="form-actions field-wide">
+            <button class="btn" type="submit">Enviar reclamación</button>
+          </div>
+        </form>
+
+        <form class="portal-form hidden" id="recommendForm">
+          <div class="field">
+            <label for="recommendClinicName">Nombre de la clínica</label>
+            <input id="recommendClinicName" name="recommendClinicName" required>
+          </div>
+          <div class="field">
+            <label for="recommendWebsite">Web oficial</label>
+            <input id="recommendWebsite" name="recommendWebsite" type="url" placeholder="https://" required>
+          </div>
+          <div class="field">
+            <label for="recommendCity">Ciudad</label>
+            <input id="recommendCity" name="recommendCity" required>
+          </div>
+          <div class="field">
+            <label for="recommendCountry">País</label>
+            <input id="recommendCountry" name="recommendCountry" value="España" required>
+          </div>
+          <div class="field">
+            <label for="recommendRequesterName">Tu nombre</label>
+            <input id="recommendRequesterName" name="recommendRequesterName" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="recommendRequesterRole">Relación con la clínica</label>
+            <input id="recommendRequesterRole" name="recommendRequesterRole" placeholder="Trabajo allí, soy usuario, la conozco...">
+          </div>
+          <div class="field">
+            <label for="recommendEmail">Tu email</label>
+            <input id="recommendEmail" name="recommendEmail" type="email" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="recommendSourceUrls">Fuentes públicas</label>
+            <textarea id="recommendSourceUrls" name="recommendSourceUrls" rows="3" placeholder="Una URL por línea"></textarea>
+          </div>
+          <div class="field field-wide">
+            <label for="recommendMessage">Motivo o contexto</label>
+            <textarea id="recommendMessage" name="recommendMessage" rows="4" placeholder="Añade solo información pública y verificable."></textarea>
+          </div>
+          <label class="check-row field-wide">
+            <input id="recommendAccept" name="recommendAccept" type="checkbox" required>
+            <span>Acepto que Vitalarga revise manualmente la solicitud antes de crear o publicar una ficha.</span>
+          </label>
+          <div class="form-actions field-wide">
+            <button class="btn" type="submit">Enviar recomendación</button>
+          </div>
+        </form>
+
+        <p class="portal-message" id="intakeMessage" role="status"></p>
+      </article>
+
+      <aside class="portal-panel access-panel">
+        <div class="panel-headline">
+          <div>
+            <p class="eyebrow">Cuenta de clínica</p>
+            <h2>Acceso privado</h2>
+          </div>
+          <span class="status-pill" id="sessionPill">Sin sesión</span>
+        </div>
+        <form class="portal-form compact" id="loginForm">
+          <div class="field field-wide">
+            <label for="portalEmail">Email aprobado</label>
+            <input id="portalEmail" name="portalEmail" type="email" autocomplete="email" required>
+          </div>
+          <div class="form-actions field-wide">
+            <button class="btn secondary" id="portalLoginBtn" type="submit">Recibir enlace de acceso</button>
+          </div>
+        </form>
+        <div class="session-box hidden" id="sessionBox">
+          <p>Sesión iniciada como <strong id="sessionEmail"></strong></p>
+          <button class="btn secondary" id="signOutBtn" type="button">Salir</button>
+        </div>
+        <p class="portal-message" id="loginMessage" role="status"></p>
+        <div class="boundary-note">
+          <strong>Importante:</strong> no incluyas datos de pacientes, reseñas, promesas terapéuticas ni textos promocionales.
+        </div>
+      </aside>
+    </section>
+
+    <section class="portal-panel workspace-panel hidden" id="workspacePanel" aria-label="Zona privada de clínica">
+      <div class="panel-headline">
+        <div>
+          <p class="eyebrow">Zona privada</p>
+          <h2>Proponer cambios de ficha</h2>
+        </div>
+        <button class="btn secondary" id="refreshWorkspaceBtn" type="button">Actualizar estado</button>
+      </div>
+
+      <div class="workspace-grid">
+        <div>
+          <h3>Clínicas con acceso aprobado</h3>
+          <div class="stack-list" id="membershipList"></div>
+        </div>
+        <div>
+          <h3>Solicitudes recientes</h3>
+          <div class="stack-list" id="requestList"></div>
+        </div>
+      </div>
+
+      <form class="portal-form change-form" id="changeForm">
+        <div class="field field-wide">
+          <label for="changeClinic">Ficha</label>
+          <select id="changeClinic" name="changeClinic" required></select>
+        </div>
+        <div class="field">
+          <label for="changeDisplayName">Nombre visible</label>
+          <input id="changeDisplayName" name="changeDisplayName">
+        </div>
+        <div class="field">
+          <label for="changeWebsite">Web oficial</label>
+          <input id="changeWebsite" name="changeWebsite" type="url" placeholder="https://">
+        </div>
+        <div class="field">
+          <label for="changeCity">Ciudad</label>
+          <input id="changeCity" name="changeCity">
+        </div>
+        <div class="field">
+          <label for="changeCountry">País</label>
+          <input id="changeCountry" name="changeCountry">
+        </div>
+        <div class="field">
+          <label for="changeRegion">Región</label>
+          <input id="changeRegion" name="changeRegion">
+        </div>
+        <div class="field">
+          <label for="changeAddress">Dirección</label>
+          <input id="changeAddress" name="changeAddress">
+        </div>
+        <div class="field field-wide">
+          <label for="changeSummary">Resumen propuesto</label>
+          <textarea id="changeSummary" name="changeSummary" rows="4"></textarea>
+        </div>
+        <div class="field">
+          <label for="changeServices">Servicios</label>
+          <textarea id="changeServices" name="changeServices" rows="4" placeholder="Un elemento por línea"></textarea>
+        </div>
+        <div class="field">
+          <label for="changeSpecialties">Especialidades</label>
+          <textarea id="changeSpecialties" name="changeSpecialties" rows="4" placeholder="Un elemento por línea"></textarea>
+        </div>
+        <div class="field">
+          <label for="changeUnits">Unidades</label>
+          <textarea id="changeUnits" name="changeUnits" rows="4" placeholder="Un elemento por línea"></textarea>
+        </div>
+        <div class="field">
+          <label for="changeProfessionals">Profesionales publicados</label>
+          <textarea id="changeProfessionals" name="changeProfessionals" rows="4" placeholder="Un nombre o cargo por línea"></textarea>
+        </div>
+        <div class="field">
+          <label for="changeTech">Tecnología</label>
+          <textarea id="changeTech" name="changeTech" rows="4"></textarea>
+        </div>
+        <div class="field">
+          <label for="changeEmail">Email publicado</label>
+          <input id="changeEmail" name="changeEmail" type="email">
+        </div>
+        <div class="field">
+          <label for="changePhone">Teléfono publicado</label>
+          <input id="changePhone" name="changePhone">
+        </div>
+        <div class="field">
+          <label for="changeInstagram">Instagram</label>
+          <input id="changeInstagram" name="changeInstagram">
+        </div>
+        <div class="field">
+          <label for="changeSourceUrls">Fuentes públicas</label>
+          <textarea id="changeSourceUrls" name="changeSourceUrls" rows="3" placeholder="Una URL por línea"></textarea>
+        </div>
+        <div class="field field-wide">
+          <label for="changeMessage">Nota para Vitalarga</label>
+          <textarea id="changeMessage" name="changeMessage" rows="3"></textarea>
+        </div>
+        <div class="form-actions field-wide">
+          <button class="btn" type="submit">Enviar cambios para validar</button>
+        </div>
+      </form>
+      <p class="portal-message" id="workspaceMessage" role="status"></p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <p><strong>Vitalarga</strong> — La guía de las clínicas de longevidad. Guía informativa e independiente: no emitimos recomendaciones médicas, no hacemos rankings y ninguna clínica paga por aparecer.</p>
+      <p class="legal-id"><strong>Titular:</strong> Neurotrans SLU · NIF B-67221093 · Padilla 327 Ent 68, 08025 Barcelona · <a href="mailto:admin@neurotrans.es">admin@neurotrans.es</a></p>
+      <nav class="legal-links" aria-label="Información legal"><a href="/aviso-legal/">Aviso legal</a><a href="/privacidad/">Privacidad</a><a href="/cookies/">Cookies</a></nav>
+    </div>
+  </footer>
+
+  <script>
+    window.VITALARGA_PORTAL_CONFIG = __VITALARGA_PORTAL_CONFIG__;
+    window.VITALARGA_PORTAL_CLINICS = __VITALARGA_PORTAL_CLINICS__;
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/portal-clinicas/portal.js"></script>
+</body>
+</html>

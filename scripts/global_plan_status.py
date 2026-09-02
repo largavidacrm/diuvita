@@ -18,9 +18,12 @@ from admin_digest import (
     next_action_label,
     next_publication_action,
     next_profile_action,
+    next_portal_action,
     next_source_action,
     next_specialist_action,
     parse_timestamp,
+    portal_pending_total,
+    portal_status,
     publication_control_status,
     publication_readiness_status,
     review_backlog_guard_status,
@@ -111,6 +114,8 @@ def plan_phase(digest: dict[str, Any]) -> str:
         return "estabilización técnica"
     if review_backlog_needs_care(digest):
         return "centro de control y reducción de bandeja"
+    if portal_pending_total(digest):
+        return "portal de clínicas y validación manual"
     return "centro de control, trazabilidad y ciclo sombra"
 
 
@@ -228,6 +233,7 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Coste Netlify: publicación {publication_control_status(digest)}.",
         f"- Preparación para publicación: {publication_readiness_status(digest)}.",
         f"- Principal faltante para publicar: {top_publication_missing_field(digest)}.",
+        f"- Portal clínicas: {portal_status(digest)}.",
         f"- Knowledge graph clínico: {specialist_status(digest)}.",
         "- Growth/SEO/outreach: pendiente hasta que la precisión y la bandeja estén más maduras.",
         "",
@@ -239,6 +245,8 @@ def format_global_plan_status(digest: dict[str, Any], git_ref: str = "") -> str:
         f"- Siguiente publicación: {next_publication_action(digest)}.",
         f"- Siguiente fuente: {next_source_action(digest)}.",
         f"- Fichas pendientes: {profile_queue_signal(digest)}.",
+        f"- Siguiente ficha: {next_profile_action(digest)}.",
+        f"- Siguiente portal: {next_portal_action(digest)}.",
         f"- Siguiente especialistas: {next_specialist_action(digest)}.",
         f"- Campo más pendiente: {top_pending_profile_field(digest)}.",
         "",

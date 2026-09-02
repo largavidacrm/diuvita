@@ -203,6 +203,19 @@ def main() -> None:
         "clinic claim requests should register a private clinic contact without web publication",
     )
     check(
+        "function isPortalChangeReview" in index
+        and "function portalChangeRequestId" in index
+        and "admin_resolve_clinic_profile_change_request" in index
+        and "reviewSourceJobPanel" in index,
+        "portal-originated profile changes should close through the current focused review flow",
+    )
+    check(
+        'id="reviewContextPanel"' not in index
+        and 'id="reviewProfilePanel"' not in index
+        and 'id="reviewNeedsInfoBtn"' not in index,
+        "review editor should not render the old portal context panels",
+    )
+    check(
         'return /^https?:\\/\\//i.test(clean) ? clean : "";' in index
         and '["maps_url", "Google Maps", "maps_url"]' in index
         and '["pricing_url", "Página de precios", "pricing_url"]' in index,

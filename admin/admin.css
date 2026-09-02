@@ -2804,6 +2804,101 @@ td small.job-next-step {
   line-height: 1.35;
 }
 
+.review-profile-panel {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+  background: #fbf7ee;
+}
+
+.review-profile-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.portal-request-card {
+  border-color: rgba(14, 79, 74, 0.22);
+  background: #f7fbf5;
+}
+
+.review-profile-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.review-profile-head span:not(.pill),
+.review-profile-field span,
+.review-profile-summary span,
+.review-user-message span,
+.review-portal-alerts > span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.review-profile-head h3 {
+  margin: 0.14rem 0 0;
+  font-size: 1.16rem;
+  line-height: 1.18;
+}
+
+.review-profile-head p,
+.review-profile-summary p,
+.review-profile-field p,
+.review-user-message p {
+  margin: 0.16rem 0 0;
+  color: var(--ink);
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.review-profile-head p {
+  color: var(--muted);
+}
+
+.review-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.review-profile-summary,
+.review-user-message,
+.review-portal-alerts,
+.review-profile-field {
+  padding: 0.68rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.review-profile-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.58rem;
+}
+
+.review-change-list {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.review-profile-panel .diff-item {
+  background: #fff;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
