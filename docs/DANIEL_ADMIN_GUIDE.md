@@ -361,6 +361,10 @@ publicación por accidente. Datos sensibles, Google Maps dudoso, precios, equipo
 o claims conflictivos siguen requiriendo revisión humana y pueden quedar
 bloqueados como aviso.
 
+Hasta que no guardes, la web pública no cambia. Después de guardar una ficha
+publicada o preliminar, queda **pendiente de verse online**. Termina primero el
+lote de ediciones y pulsa una sola vez **Actualizar web ahora**.
+
 Si ves una tarjeta llamada **Claim bloqueante**, significa que el sistema encontró una evidencia en conflicto o sin fuente suficiente. Ábrela, revisa **Fuente o evidencia** y decide si apruebas, rechazas o modificas esa propuesta. Un claim rechazado normal no te bloquea: simplemente queda fuera de publicación y sirve para medir la precisión del sistema.
 
 Si ves una tarjeta llamada **Reclamación de ficha**, trátala como una solicitud

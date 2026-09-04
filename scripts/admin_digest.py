@@ -1475,6 +1475,10 @@ def publication_control_status(digest: dict[str, Any]) -> str:
     control = digest.get("publication_control") or {}
     if not control.get("rebuild_hook_configured"):
         return "no configurada"
+    if control.get("publication_mode") == "manual":
+        if control.get("pending_public_site_rebuild"):
+            return "manual, con cambios pendientes"
+        return "manual"
     if control.get("pending_public_site_rebuild"):
         return "con cambios pendientes de verse online"
     minutes = as_int(control.get("rebuild_batch_minutes"))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks that the admin surfaces publication batching status."""
+"""Checks that the admin surfaces manual publication status."""
 from pathlib import Path
 
 
@@ -25,18 +25,21 @@ def main() -> None:
         "admin_request_public_site_rebuild_now",
         "admin_publication_control_summary",
         "rebuild_hook_configured",
+        "publication_mode",
+        "automatic_rebuild_enabled",
         "rebuild_batch_minutes",
         "last_public_site_rebuild_requested_at",
         "last_public_site_change_at",
         "pending_public_site_rebuild",
         "can_request_public_site_rebuild_now",
-        "Publicación agrupada",
+        "Publicación web",
         "Publicación web",
         "Último rebuild",
         "Actualizar web ahora",
         "Hay cambios guardados que todavía no se ven online.",
         "Netlify puede tardar unos minutos.",
         "Agrupada · ",
+        "Manual · pendiente",
         "Cambios pendientes",
         "No se pudo leer Supabase.",
         "var publicationControl = await loadPublicationControl();",
@@ -51,7 +54,7 @@ def main() -> None:
     ]:
         check(marker in css, f"missing publication banner style: {marker}")
 
-    print("OK admin publication control: batching status visible")
+    print("OK admin publication control: manual publication status visible")
 
 
 if __name__ == "__main__":

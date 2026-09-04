@@ -205,7 +205,7 @@ def main():
     check("Sedes y ubicaciones: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Ciclo autónomo: activo en sombra; señal automática base" in output, "shadow cycle line missing")
     check("Ayuda IA para revisar propuestas: 19/22 preparables para ayuda IA; 4 con contexto completo; 3 recuperables desde trabajo; 15 acotadas a campos propuestos" in output, "LLM review preparation line missing")
-    check("Coste Netlify: publicación agrupada cada 30 min" in output, "netlify cost line missing")
+    check("Coste Netlify: publicación manual" in output, "netlify cost line missing")
     check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness line missing")
     check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "top publication blocker missing")
     check("Portal clínicas: sin solicitudes pendientes" in output, "portal status line missing")

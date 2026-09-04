@@ -449,7 +449,7 @@ def main():
     check("Siguiente publicacion: Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total" in output, "next publication line missing")
     check("Sedes: 3 sedes explícitas; 1 clínica multisede; 2 propuestas en bandeja; 3 internas detectadas" in output, "location coverage line missing")
     check("Auto-publicacion: desactivada" in output, "auto-publish safety missing")
-    check("Publicacion web: agrupada cada 30 min" in output, "publication batching missing")
+    check("Publicacion web: manual" in output, "manual publication status missing")
     check("Ultimo cambio guardado: 2026-08-30 10:35" in output, "last public change missing")
     check("Ultima peticion Netlify: 2026-08-30 10:35" in output, "last rebuild request missing")
     check("Bajo riesgo: no lista" in output, "maturity signal missing")
@@ -469,10 +469,10 @@ def main():
     pending_digest["publication_control"]["pending_public_site_rebuild"] = True
     pending_output = format_digest(pending_digest)
     check(
-        publication_control_status(pending_digest) == "con cambios pendientes de verse online",
+        publication_control_status(pending_digest) == "manual, con cambios pendientes",
         "pending publication status should be explicit",
     )
-    check("Publicacion web: con cambios pendientes de verse online" in pending_output, "pending publication line missing")
+    check("Publicacion web: manual, con cambios pendientes" in pending_output, "pending publication line missing")
     check("Freno bandeja: pausa preventiva: 48/50 abiertas; baja de 45" in output, "backlog guard line missing")
     check("Google Maps pendientes: 4 tarjetas; 2 parecen perfil directo; 1 dudosa; primera: Completar enlaces Google: Sensabell" in output, "Google Maps pending line missing")
     check("'direct_maps_count', count(*) filter (where direct_maps_proposed)" in source, "Google Maps digest should count direct-looking profiles")

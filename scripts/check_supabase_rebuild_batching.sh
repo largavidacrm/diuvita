@@ -67,7 +67,9 @@ export PGSSLMODE=require
   -U "$SUPABASE_DB_USER" \
   -v ON_ERROR_STOP=1 \
   -c "select count(*) as private_rebuild_hook_configured from private.app_settings where key = 'vitalarga_build_hook_url' and btrim(value) <> '';" \
+  -c "select coalesce(max(value), 'not configured') as publication_mode from private.app_settings where key = 'vitalarga_publication_mode';" \
   -c "select coalesce(max(value), 'not configured') as rebuild_batch_minutes from private.app_settings where key = 'vitalarga_rebuild_batch_minutes';" \
-  -c "select position('vitalarga_rebuild_batch_minutes' in pg_get_functiondef('private.request_public_site_rebuild()'::regprocedure)) > 0 as rebuild_batching_enabled;" \
+  -c "select position('mark_public_site_rebuild_pending' in pg_get_functiondef('private.request_public_site_rebuild()'::regprocedure)) > 0 and position('net.http_post' in pg_get_functiondef('private.request_public_site_rebuild()'::regprocedure)) = 0 as automatic_rebuilds_disabled;" \
+  -c "select position('net.http_post' in pg_get_functiondef('public.admin_request_public_site_rebuild_now(text)'::regprocedure)) > 0 as manual_rebuild_enabled;" \
   -c "select exists (select 1 from information_schema.columns where table_schema = 'private' and table_name = 'rebuild_state' and column_name = 'last_change_at') as pending_rebuild_tracking_enabled;" \
   -c "select last_requested_at as last_public_site_rebuild_requested_at, last_change_at as last_public_site_change_at, last_sent_at as last_public_site_rebuild_sent_at from private.rebuild_state where name = 'public_site';"
