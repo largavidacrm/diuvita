@@ -840,6 +840,13 @@ HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
 <script data-goatcounter="https://vitalarga.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-84F16JHF9E"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', 'G-84F16JHF9E');
+</script>
 {jsonld}</head><body>
 <header class="site"><a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
 <nav><a href="/#buscar">Buscar clínica</a><a href="/#recomendar-clinica">Recomendar Clínica</a><a href="/portal-clinicas/">Portal clínicas</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
