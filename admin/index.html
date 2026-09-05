@@ -426,6 +426,14 @@
             </select>
           </div>
           <div class="field">
+            <label for="clinicRegistryNumber">Registro sanitario</label>
+            <input id="clinicRegistryNumber" name="clinicRegistryNumber">
+          </div>
+          <div class="field">
+            <label for="clinicProfessionalLicenseNumbers">Nº colegiado</label>
+            <textarea id="clinicProfessionalLicenseNumbers" name="clinicProfessionalLicenseNumbers" rows="3"></textarea>
+          </div>
+          <div class="field">
             <label for="clinicPublicPricing">Precio público</label>
             <select id="clinicPublicPricing" name="clinicPublicPricing">
               <option value=""></option>
@@ -434,6 +442,10 @@
               <option value="no">No publicado</option>
               <option value="no consta">No consta</option>
             </select>
+          </div>
+          <div class="field">
+            <label for="clinicVisitPrice">Precio visita</label>
+            <input id="clinicVisitPrice" name="clinicVisitPrice">
           </div>
           <div class="field field-wide">
             <label for="clinicPricingUrl">Página de precios</label>
@@ -7015,7 +7027,13 @@
         telephone: "telefono",
         google_maps_url: "maps_url",
         reviews_url: "google_reviews_url",
-        professionals: "profesionales"
+        professionals: "profesionales",
+        "prices.initial_visit": "visit_price",
+        "prices.initial_consultation": "visit_price",
+        "prices.url": "pricing_url",
+        "clinic.registry": "clinic_registry_number",
+        "clinic.registry_number": "clinic_registry_number",
+        "team.professional_license_numbers": "professional_license_numbers"
       };
       var clean = text(key).trim();
       return aliases[clean] || clean;
@@ -7059,7 +7077,10 @@
         years_in_practice: "Años en ejercicio",
         specialists_count: "Número de especialistas",
         team_credentialing_visible: "Colegiación visible",
+        clinic_registry_number: "Registro sanitario",
+        professional_license_numbers: "Nº colegiado",
         public_pricing: "Precio público",
+        visit_price: "Precio visita",
         pricing_url: "Página de precios",
         tech: "Tecnología",
         email: "Email",
@@ -7486,7 +7507,10 @@
         years_in_practice: "Años en ejercicio",
         specialists_count: "Número de especialistas",
         team_credentialing_visible: "Colegiación visible",
+        clinic_registry_number: "Registro sanitario",
+        professional_license_numbers: "Nº colegiado",
         public_pricing: "Precio público",
+        visit_price: "Precio visita",
         pricing_url: "Página de precios",
         tech: "Tecnología",
         email: "Email",
@@ -7793,7 +7817,10 @@
         years_in_practice: candidate.years_in_practice || payload.years_in_practice,
         specialists_count: candidate.specialists_count || payload.specialists_count,
         team_credentialing_visible: candidate.team_credentialing_visible || payload.team_credentialing_visible,
+        clinic_registry_number: candidate.clinic_registry_number || payload.clinic_registry_number,
+        professional_license_numbers: candidate.professional_license_numbers || payload.professional_license_numbers,
         public_pricing: candidate.public_pricing || payload.public_pricing,
+        visit_price: candidate.visit_price || payload.visit_price,
         pricing_url: candidate.pricing_url || payload.pricing_url,
         email: candidate.email || payload.email,
         telefono: candidate.telefono || candidate.phone || candidate.telephone || payload.telefono || payload.phone || payload.telephone,
@@ -9556,7 +9583,10 @@
         "years_in_practice",
         "specialists_count",
         "team_credentialing_visible",
+        "clinic_registry_number",
+        "professional_license_numbers",
         "public_pricing",
+        "visit_price",
         "pricing_url",
         "tech",
         "email",
@@ -10378,7 +10408,10 @@
       setInput("clinicYearsInPractice", data.years_in_practice);
       setInput("clinicSpecialistsCount", data.specialists_count);
       setInput("clinicTeamCredentialingVisible", data.team_credentialing_visible);
+      setInput("clinicRegistryNumber", data.clinic_registry_number);
+      setInput("clinicProfessionalLicenseNumbers", arrayLines(data.professional_license_numbers));
       setInput("clinicPublicPricing", data.public_pricing);
+      setInput("clinicVisitPrice", data.visit_price);
       setInput("clinicPricingUrl", data.pricing_url);
       setInput("clinicTech", data.tech);
       setInput("clinicEmail", data.email);
@@ -10437,7 +10470,9 @@
         years_in_practice: "clinicYearsInPractice",
         specialists_count: "clinicSpecialistsCount",
         team_credentialing_visible: "clinicTeamCredentialingVisible",
+        clinic_registry_number: "clinicRegistryNumber",
         public_pricing: "clinicPublicPricing",
+        visit_price: "clinicVisitPrice",
         pricing_url: "clinicPricingUrl",
         tech: "clinicTech",
         email: "clinicEmail",
@@ -10460,6 +10495,7 @@
       if (hasOwn(fields, "unidades")) setInput("clinicUnits", arrayLines(fields.unidades));
       if (hasOwn(fields, "profesionales")) setInput("clinicProfessionals", arrayLines(fields.profesionales));
       if (hasOwn(fields, "professionals")) setInput("clinicProfessionals", arrayLines(fields.professionals));
+      if (hasOwn(fields, "professional_license_numbers")) setInput("clinicProfessionalLicenseNumbers", arrayLines(fields.professional_license_numbers));
       if (hasOwn(fields, "locations")) renderLocationEditor(fields.locations);
       renderPendingSpecialistsForClinic();
       renderPendingLocationsForClinic();
@@ -10663,7 +10699,10 @@
       setJsonText(currentData, "years_in_practice", trimmed("clinicYearsInPractice"));
       setJsonInteger(currentData, "specialists_count", trimmed("clinicSpecialistsCount"));
       setJsonText(currentData, "team_credentialing_visible", trimmed("clinicTeamCredentialingVisible"));
+      setJsonText(currentData, "clinic_registry_number", trimmed("clinicRegistryNumber"));
+      setJsonArray(currentData, "professional_license_numbers", el("clinicProfessionalLicenseNumbers").value);
       setJsonText(currentData, "public_pricing", trimmed("clinicPublicPricing"));
+      setJsonText(currentData, "visit_price", trimmed("clinicVisitPrice"));
       setJsonText(currentData, "pricing_url", trimmed("clinicPricingUrl"));
       setJsonText(currentData, "tech", trimmed("clinicTech"));
       setJsonText(currentData, "email", trimmed("clinicEmail"));

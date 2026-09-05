@@ -40,7 +40,11 @@ PENDING_FIELD_TARGETS = {
     "years_in_practice": {"years_in_practice"},
     "specialists_count": {"specialists_count"},
     "team_credentialing_visible": {"team_credentialing_visible"},
-    "public_pricing": {"public_pricing"},
+    "clinic_registry_number": {"clinic_registry_number"},
+    "professional_license_numbers": {"professional_license_numbers"},
+    "public_pricing": {"public_pricing", "visit_price", "pricing_url"},
+    "pricing_url": {"pricing_url"},
+    "visit_price": {"visit_price"},
 }
 
 

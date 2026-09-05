@@ -24,6 +24,7 @@ def main():
 <body>
   <p>Medicina preventiva, longevidad and VO2 max.</p>
   <p>Unidad de Longevidad con Dra. Laura García Pérez, nº colegiada 12345.</p>
+  <p>Registro sanitario CS-12345.</p>
   <p>Equipo de 12 especialistas con más de 20 años de experiencia.</p>
   <p>Consulta inicial: 120 euros.</p>
   <p>Sede principal: Calle Serrano 100, 28006 Madrid.</p>
@@ -57,6 +58,10 @@ def main():
     check(fields["specialists_count"] == 12, "specialist-count field missing")
     check(fields["team_credentialing_visible"] == "si", "credentialing field missing")
     check(fields["public_pricing"] == "si", "public-pricing field missing")
+    check(fields["clinic_registry_number"] == "CS-12345", "clinic registry field missing")
+    check(fields["professional_license_numbers"] == ["12345"], "professional license field missing")
+    check(fields["visit_price"] == "120 €", "visit price field missing")
+    check(fields["pricing_url"] == "https://exampleclinic.test/longevity", "pricing URL field missing")
     check("field_claims" in payload, "claims missing")
     check("rule_decisions" in payload, "rule decisions missing")
     dirty_payload = review_payload("eternal", {

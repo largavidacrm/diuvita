@@ -69,8 +69,17 @@ REQUESTED_FIELD_TARGETS = {
     "years_in_practice": {"years_in_practice"},
     "specialists_count": {"specialists_count"},
     "team_credentialing_visible": {"team_credentialing_visible"},
+    "clinic_registry_number": {"clinic_registry_number"},
+    "registry": {"clinic_registry_number"},
+    "regcess": {"clinic_registry_number"},
+    "professional_license_numbers": {"professional_license_numbers"},
+    "license": {"professional_license_numbers", "team_credentialing_visible"},
+    "colegiacion": {"professional_license_numbers", "team_credentialing_visible"},
     "public_pricing": {"public_pricing"},
-    "pricing_url": {"public_pricing"},
+    "pricing_url": {"public_pricing", "pricing_url"},
+    "visit_price": {"visit_price", "public_pricing", "pricing_url"},
+    "price": {"visit_price", "public_pricing", "pricing_url"},
+    "precio": {"visit_price", "public_pricing", "pricing_url"},
 }
 
 SOURCE_JOB_REVIEW_HANDOFF_ROUTES = {

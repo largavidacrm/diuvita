@@ -70,6 +70,25 @@ PUBLIC_PRICING_RE = re.compile(
     r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
     re.I,
 )
+PRICE_AMOUNT_RE = re.compile(
+    r"\b(?:precio\s+(?:de\s+)?(?:primera\s+visita|visita|consulta(?:\s+inicial)?|valoraci[oó]n|check[-\s]?up|chequeo)|"
+    r"primera\s+visita|visita|consulta(?:\s+inicial)?|valoraci[oó]n|check[-\s]?up|chequeo)"
+    r"[^.\n]{0,80}?(?P<amount>\d{2,5}(?:[.,]\d{1,2})?)\s*(?:€|eur(?:os)?)|"
+    r"\b(?P<amount_first>\d{2,5}(?:[.,]\d{1,2})?)\s*(?:€|eur|euros)"
+    r"[^.\n]{0,80}?(?:primera\s+visita|visita|consulta(?:\s+inicial)?|valoraci[oó]n|check[-\s]?up|chequeo)\b",
+    re.I,
+)
+CLINIC_REGISTRY_RE = re.compile(
+    r"\b(?:REGCESS|registro\s+sanitario|n[ºo]\s*registro\s+sanitario|n[uú]mero\s+de\s+registro\s+sanitario|"
+    r"centro\s+sanitario\s+(?:autorizado\s+)?(?:n[ºo]|n[uú]mero)?)"
+    r"[\s:.-]{0,12}(?P<registry>[A-Z]{0,4}[-/\s]?\d{2,8}(?:[-/\s][A-Z0-9]{1,8}){0,3})\b",
+    re.I,
+)
+PROFESSIONAL_LICENSE_RE = re.compile(
+    r"\b(?:n[ºo]\s*colegiad[oa]|n[uú]mero\s+de\s+colegiad[oa]|colegiad[oa]\s*(?:n[ºo]|n[uú]mero)|col\.)"
+    r"[\s:.-]{0,12}(?P<license>[A-Z]{0,6}[-/\s]?\d{2,8}(?:[-/\s][A-Z0-9]{1,8}){0,3})\b",
+    re.I,
+)
 SUMMARY_NOISE_RE = re.compile(
     r"\b(?:"
     r"acceptance|aceptaci[oó]n|additional information|apellido|blog articles|"
@@ -1090,6 +1109,46 @@ def extract_transparency(text: str, professionals: list[str]) -> dict[str, Any]:
     return transparency
 
 
+def clean_registry_value(value: str) -> str:
+    clean = normalize_space(value).strip(" .,:;")
+    clean = re.sub(r"\s*/\s*", "/", clean)
+    clean = re.sub(r"\s*-\s*", "-", clean)
+    return clean
+
+
+def looks_like_phone_registry(value: str) -> bool:
+    digits = re.sub(r"\D", "", value or "")
+    return len(digits) == 9 and digits[0] in {"6", "7", "8", "9"}
+
+
+def extract_clinic_registry_numbers(text: str) -> list[str]:
+    numbers = []
+    for match in CLINIC_REGISTRY_RE.finditer(text):
+        value = clean_registry_value(match.group("registry"))
+        if value and not looks_like_phone_registry(value):
+            numbers.append(value)
+    return unique(numbers)[:5]
+
+
+def extract_professional_license_numbers(text: str) -> list[str]:
+    numbers = []
+    for match in PROFESSIONAL_LICENSE_RE.finditer(text):
+        value = clean_registry_value(match.group("license"))
+        if value and not looks_like_phone_registry(value):
+            numbers.append(value)
+    return unique(numbers)[:12]
+
+
+def extract_visit_price(text: str) -> str | None:
+    match = PRICE_AMOUNT_RE.search(text)
+    if not match:
+        return None
+    amount = match.group("amount") or match.group("amount_first")
+    if not amount:
+        return None
+    return normalize_space(amount.replace(".", ",")) + " €"
+
+
 def extract_years_in_practice(text: str) -> str | None:
     years_match = YEARS_IN_PRACTICE_RE.search(text)
     if years_match:
@@ -1238,6 +1297,9 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     professionals = extract_professionals(text)
     locations = extract_locations(text)
     transparency = extract_transparency(text, professionals)
+    clinic_registry_numbers = extract_clinic_registry_numbers(text)
+    professional_license_numbers = extract_professional_license_numbers(text)
+    visit_price = extract_visit_price(text)
     keywords = detect_keywords(text)
     summary = extract_summary(text, str(snapshot.get("source_title") or ""), source_url)
     claims: list[dict[str, Any]] = []
@@ -1276,6 +1338,15 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         claims.append(claim("team.credentialing_visible", transparency["team_credentialing_visible"], 0.62, source_url))
     if transparency.get("public_pricing"):
         claims.append(claim("prices.public_status", transparency["public_pricing"], 0.62, source_url))
+    if clinic_registry_numbers:
+        claims.append(claim("clinic.registry_number", clinic_registry_numbers[0], 0.72, source_url))
+    if professional_license_numbers:
+        claims.append(claim("team.professional_license_numbers", professional_license_numbers, 0.70, source_url))
+    if visit_price:
+        claims.append(claim("prices.initial_visit", visit_price, 0.64, source_url))
+        claims.append(claim("prices.public_status", "si", 0.62, source_url))
+        if source_url:
+            claims.append(claim("prices.url", source_url, 0.78, source_url))
     for field_path, values in keywords.items():
         if values:
             claims.append(claim(field_path, values, 0.70, source_url))
@@ -1288,6 +1359,9 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     professionals = extract_professionals(text)
     locations = extract_locations(text)
     transparency = extract_transparency(text, professionals)
+    clinic_registry_numbers = extract_clinic_registry_numbers(text)
+    professional_license_numbers = extract_professional_license_numbers(text)
+    visit_price = extract_visit_price(text)
     keywords = detect_keywords(text)
     name = guess_name(snapshot)
     summary = extract_summary(text, str(snapshot.get("source_title") or ""), str(snapshot.get("final_url") or snapshot.get("source_url") or ""))
@@ -1307,6 +1381,10 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
         "specialists_count": transparency.get("specialists_count"),
         "team_credentialing_visible": transparency.get("team_credentialing_visible"),
         "public_pricing": transparency.get("public_pricing"),
+        "clinic_registry_number": clinic_registry_numbers[0] if clinic_registry_numbers else None,
+        "professional_license_numbers": professional_license_numbers,
+        "visit_price": visit_price,
+        "pricing_url": str(snapshot.get("final_url") or snapshot.get("source_url") or "") if visit_price else None,
         "technologies": keywords.get("technologies.list", []),
     }
     return {key: value for key, value in profile.items() if value}

@@ -45,7 +45,11 @@ FIELD_MAP = {
     "transparency.years_in_practice": "years_in_practice",
     "transparency.specialists_count": "specialists_count",
     "team.credentialing_visible": "team_credentialing_visible",
+    "clinic.registry_number": "clinic_registry_number",
+    "team.professional_license_numbers": "professional_license_numbers",
     "prices.public_status": "public_pricing",
+    "prices.initial_visit": "visit_price",
+    "prices.url": "pricing_url",
 }
 
 

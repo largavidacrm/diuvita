@@ -23,6 +23,14 @@ PUBLIC_PRICING_SIGNAL_RE = re.compile(
     r"(?:€|eur|euros)[^.]{0,90}(?:precio|tarifa|consulta|programa|bono)",
     re.I,
 )
+CLINIC_REGISTRY_SIGNAL_RE = re.compile(
+    r"\b(?:registro\s+sanitario|regcess|n[uú]mero\s+de\s+registro|centro\s+sanitario)\b",
+    re.I,
+)
+PROFESSIONAL_LICENSE_SIGNAL_RE = re.compile(
+    r"\b(?:n[ºo]\s*colegiad[oa]|n[uú]mero\s+de\s+colegiad[oa]|colegiad[oa]\s*(?:n[ºo]|n[uú]mero)|col\.)\b",
+    re.I,
+)
 
 
 def normalized_text(value: Any) -> str:
@@ -104,6 +112,29 @@ def verify_contact_phone(value: Any, haystack: str) -> tuple[str, float, str]:
     return "rejected", 0.88, "phone digits not found"
 
 
+def verify_digit_value(value: Any, haystack: str, signal_re: re.Pattern[str], label: str) -> tuple[str, float, str]:
+    values = value if isinstance(value, list) else [value]
+    value_digits = [digits(item) for item in values if digits(item)]
+    if not value_digits:
+        return "review", 0.50, f"{label} value is empty"
+    text_digits = digits(haystack)
+    supported = [item for item in value_digits if item in text_digits]
+    if len(supported) == len(value_digits) and signal_re.search(haystack):
+        return "accepted", 0.82, f"{label} digits and label found explicitly"
+    if supported:
+        return "review", 0.68, f"{label} digits found but need manual confirmation"
+    return "review", 0.60, f"{label} needs manual review"
+
+
+def verify_price_value(value: Any, haystack: str) -> tuple[str, float, str]:
+    value_digits = digits(value)
+    if not value_digits:
+        return "review", 0.50, "price value is empty"
+    if value_digits in digits(haystack) and PUBLIC_PRICING_SIGNAL_RE.search(haystack):
+        return "accepted", 0.82, "price amount and pricing signal found explicitly"
+    return "review", 0.62, "price needs manual review"
+
+
 def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str, Any]:
     field_path = str(claim.get("field_path") or "")
     value = claim.get("value")
@@ -143,6 +174,20 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"
         confidence = 0.90 if supported else 0.62
+    elif field_path.startswith("clinic.registry"):
+        verdict, confidence, reason = verify_digit_value(
+            value,
+            haystack,
+            CLINIC_REGISTRY_SIGNAL_RE,
+            "clinic registry",
+        )
+    elif field_path == "team.professional_license_numbers":
+        verdict, confidence, reason = verify_digit_value(
+            value,
+            haystack,
+            PROFESSIONAL_LICENSE_SIGNAL_RE,
+            "professional license",
+        )
     elif field_path == "team.credentialing_visible":
         if TEAM_CREDENTIALING_SIGNAL_RE.search(haystack):
             verdict, confidence, reason = "accepted", 0.88, "professional credentialing signal found explicitly"
@@ -153,6 +198,16 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
             verdict, confidence, reason = "accepted", 0.88, "public pricing signal found explicitly"
         else:
             verdict, confidence, reason = "review", 0.58, "pricing signal needs manual review"
+    elif field_path == "prices.initial_visit":
+        verdict, confidence, reason = verify_price_value(value, haystack)
+    elif field_path == "prices.url":
+        source = extraction.get("source") or {}
+        source_url = str(source.get("source_url") or "")
+        final_url = str(source.get("final_url") or "")
+        if value and str(value) in {source_url, final_url}:
+            verdict, confidence, reason = "review", 0.78, "pricing URL is the reviewed source URL"
+        else:
+            verdict, confidence, reason = "review", 0.60, "pricing URL needs manual review"
     elif field_path.startswith(("prices.", "treatments.", "medical_claims.", "outcomes.", "evidence.")):
         supported, reason = value_supported(value, haystack)
         verdict = "accepted" if supported else "review"

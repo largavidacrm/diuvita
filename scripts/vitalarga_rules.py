@@ -37,8 +37,10 @@ MEDIUM_RISK_PREFIXES = (
 )
 
 HIGH_RISK_PREFIXES = (
+    "clinic.registry",
     "team.credentialing_visible",
     "team.credentials",
+    "team.professional_license_numbers",
     "prices.",
     "treatments.",
     "medical_claims.",

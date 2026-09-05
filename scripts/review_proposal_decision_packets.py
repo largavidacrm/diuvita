@@ -34,6 +34,12 @@ FIELD_ALIASES = {
     "google_maps_url": "maps_url",
     "reviews_url": "google_reviews_url",
     "professionals": "profesionales",
+    "prices.initial_visit": "visit_price",
+    "prices.initial_consultation": "visit_price",
+    "prices.url": "pricing_url",
+    "clinic.registry": "clinic_registry_number",
+    "clinic.registry_number": "clinic_registry_number",
+    "team.professional_license_numbers": "professional_license_numbers",
 }
 FIELD_ORDER = [
     "display_name",
@@ -52,7 +58,10 @@ FIELD_ORDER = [
     "years_in_practice",
     "specialists_count",
     "team_credentialing_visible",
+    "clinic_registry_number",
+    "professional_license_numbers",
     "public_pricing",
+    "visit_price",
     "pricing_url",
     "tech",
     "email",
@@ -77,6 +86,8 @@ ADMIN_FIELD_TARGETS = [
     (("years", "años", "anos", "trayectoria", "ejercicio"), "years_in_practice", "Años en ejercicio", "clinicYearsInPractice"),
     (("count", "numero de especialistas", "número de especialistas", "num specialists"), "specialists_count", "Número de especialistas", "clinicSpecialistsCount"),
     (("credential", "colegi"), "team_credentialing_visible", "Colegiación visible", "clinicTeamCredentialingVisible"),
+    (("registro", "regcess", "sanitario"), "clinic_registry_number", "Registro sanitario", "clinicRegistryNumber"),
+    (("colegiado", "colegiación concreta", "colegiacion concreta", "license"), "professional_license_numbers", "Nº colegiado", "clinicProfessionalLicenseNumbers"),
     (("price", "precio", "tarifa"), "public_pricing", "Precio público", "clinicPublicPricing"),
 ]
 MANUAL_PROFILE_EDIT_FIELD_TARGETS = [
@@ -94,6 +105,10 @@ MANUAL_PROFILE_EDIT_FIELD_TARGETS = [
     ("specialties", "Especialidades", "reviewClinicEditSpecialties", "clinicSpecialties"),
     ("unidades", "Unidades", "reviewClinicEditUnits", "clinicUnits"),
     ("profesionales", "Especialistas", "reviewClinicEditProfessionals", "clinicProfessionals"),
+    ("clinic_registry_number", "Registro sanitario", "reviewClinicEditRegistryNumber", "clinicRegistryNumber"),
+    ("professional_license_numbers", "Nº colegiado", "reviewClinicEditProfessionalLicenseNumbers", "clinicProfessionalLicenseNumbers"),
+    ("visit_price", "Precio visita", "reviewClinicEditVisitPrice", "clinicVisitPrice"),
+    ("pricing_url", "Página de precios", "reviewClinicEditPricingUrl", "clinicPricingUrl"),
     ("tech", "Tecnología", "reviewClinicEditTech", "clinicTech"),
     ("email", "Email", "reviewClinicEditEmail", "clinicEmail"),
     ("telefono", "Teléfono principal", "reviewClinicEditPhone", "clinicPhone"),
@@ -113,7 +128,7 @@ REVIEW_TYPE_LABELS = {
     "specialist_review": "Especialistas",
 }
 PHONE_FIELDS = {"telefono", "phone_fixed", "phone_mobile", "phone_whatsapp"}
-SENSITIVE_FIELDS = {"public_pricing", "pricing_url", "team_credentialing_visible", "profesionales"}
+SENSITIVE_FIELDS = {"public_pricing", "pricing_url", "visit_price", "team_credentialing_visible", "professional_license_numbers", "profesionales"}
 SYNTHETIC_PREFIXES = ("quality_issue", "source_change")
 GOOGLE_MAPS_STATUS_LABELS = {
     "direct_profile": "Parece perfil directo; confirmar clínica",

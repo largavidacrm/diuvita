@@ -119,7 +119,10 @@ def normalize_clinic(clinic):
         "google_maps_url",
         "years_in_practice",
         "team_credentialing_visible",
+        "clinic_registry_number",
+        "professional_license_numbers",
         "public_pricing",
+        "visit_price",
         "pricing_url",
     ):
         if key in clinic and clinic[key] is None:
@@ -460,6 +463,15 @@ def transparency_items(c):
     ))
     if credentialing:
         items.append(("Colegiación visible", h(credentialing)))
+    registry = first_text(c.get("clinic_registry_number"), c.get("health_registry_number"), c.get("regcess_number"))
+    if registry:
+        items.append(("Registro sanitario", h(registry)))
+    licenses = c.get("professional_license_numbers")
+    if isinstance(licenses, list):
+        licenses = " · ".join(visible_values(licenses))
+    licenses = first_text(licenses, c.get("professional_license_number"), c.get("medical_license_numbers"))
+    if licenses:
+        items.append(("Nº colegiado", h(licenses)))
     pricing = transparency_status_label(first_text(c.get("public_pricing"), c.get("prices_public"), c.get("price_public")))
     pricing_url = external_url(c.get("pricing_url"))
     if pricing:
@@ -468,6 +480,9 @@ def transparency_items(c):
         else:
             pricing = h(pricing)
         items.append(("Precio público", pricing))
+    visit_price = first_text(c.get("visit_price"), c.get("initial_visit_price"), c.get("initial_consultation_price"))
+    if visit_price:
+        items.append(("Precio visita", h(visit_price)))
     return items
 
 def display_url(value):
@@ -910,7 +925,11 @@ def attrs(c):
         c.get("years_in_practice", ""),
         c.get("specialists_count", ""),
         c.get("team_credentialing_visible", ""),
+        c.get("clinic_registry_number", ""),
+        " ".join(visible_values(c.get("professional_license_numbers") if isinstance(c.get("professional_license_numbers"), list) else [c.get("professional_license_numbers", "")])),
         c.get("public_pricing", ""),
+        c.get("visit_price", ""),
+        c.get("pricing_url", ""),
         " ".join(c["specialties"]),
         " ".join(c["services"]),
         " ".join(c.get("unidades", [])),

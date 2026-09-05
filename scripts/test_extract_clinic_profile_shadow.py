@@ -4,10 +4,13 @@ from capture_source_snapshot import FetchResult
 from extract_clinic_profile_shadow import (
     clean_professional_values,
     extract_contacts,
+    extract_clinic_registry_numbers,
     extract_from_fetch,
     extract_locations,
     extract_professionals,
     extract_summary,
+    extract_visit_price,
+    extract_professional_license_numbers,
     extract_years_in_practice,
 )
 
@@ -29,6 +32,7 @@ def main():
   <p>Unidad de Longevidad dirigida por Dra. Laura García Pérez.</p>
   <p>Más de 20 años de experiencia y equipo de 12 especialistas.</p>
   <p>Dra. Laura García Pérez, nº colegiada 12345.</p>
+  <p>Centro autorizado. Registro sanitario CS-12345.</p>
   <p>Precio consulta: 120 €.</p>
   <p>Pruebas disponibles: DEXA, VO2 max, biomarcadores y test epigenético.</p>
   <p>Sedes: Calle Serrano 100, 28006 Madrid. Avenida Diagonal 450, 08006 Barcelona.</p>
@@ -76,9 +80,24 @@ def main():
     check(profile["specialists_count"] == 12, "specialist count detection failed")
     check(profile["team_credentialing_visible"] == "si", "credentialing visibility detection failed")
     check(profile["public_pricing"] == "si", "public pricing detection failed")
+    check(profile["clinic_registry_number"] == "CS-12345", "clinic registry detection failed")
+    check(profile["professional_license_numbers"] == ["12345"], "professional license detection failed")
+    check(profile["visit_price"] == "120 €", "visit price detection failed")
     check(
         extract_years_in_practice("Con experiencia de más de una década y miles de clientes") == "más de 10 años",
         "textual decade experience should be normalized",
+    )
+    check(
+        extract_clinic_registry_numbers("REGCESS: 08012345. Teléfono 934 000 000") == ["08012345"],
+        "REGCESS should be extracted without treating phones as registry numbers",
+    )
+    check(
+        extract_professional_license_numbers("Dra. Ana Pérez, nº colegiada 08-29679-5") == ["08-29679-5"],
+        "professional license numbers should be extracted",
+    )
+    check(
+        extract_visit_price("Primera visita de valoración: 180 euros") == "180 €",
+        "visit price should be extracted from public price text",
     )
     check(
         extract_years_in_practice("Dos décadas de experiencia clínica") == "20 años",
@@ -92,6 +111,10 @@ def main():
     check("transparency.specialists_count" in fields, "specialist count claim missing")
     check("team.credentialing_visible" in fields, "credentialing claim missing")
     check("prices.public_status" in fields, "pricing claim missing")
+    check("clinic.registry_number" in fields, "clinic registry claim missing")
+    check("team.professional_license_numbers" in fields, "professional license claim missing")
+    check("prices.initial_visit" in fields, "visit price claim missing")
+    check("prices.url" in fields, "pricing URL claim missing")
     check(extraction["rule_decisions"], "rule decisions missing")
     imda_contact_html = """
 <!doctype html>
