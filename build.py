@@ -36,6 +36,7 @@ CITY_HINTS = (
     "Valencia",
     "Zaragoza",
 )
+PRIORITY_SEO_CITIES = ("Barcelona", "Madrid", "Marbella", "Valencia")
 
 import re
 
@@ -182,6 +183,12 @@ def slugify(s):
 
 def h(value):
     return html.escape(str(value or ""), quote=True)
+
+def meta_description(value, limit=155):
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip(" .,;:") + "…"
 
 def visible_values(values):
     return [str(value).strip() for value in values if str(value or "").strip()]
@@ -783,6 +790,29 @@ a{color:var(--green-deep);text-decoration:none}a:hover{text-decoration:underline
 .recommend-status.ok{color:var(--green-deep)}
 .recommend-status.error{color:#B63B2E}
 .recommend-trap{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+.city-links{max-width:1180px;margin:.3rem auto 0;padding:0 5vw 1.1rem}
+.city-links h2{font-family:'Archivo',system-ui,sans-serif;font-size:.78rem;text-transform:uppercase;color:var(--muted);letter-spacing:0;margin:0 0 .45rem;font-weight:800}
+.city-link-row{display:flex;gap:.45rem;overflow-x:auto;scrollbar-width:thin}
+.city-link-row a{flex:0 0 auto;display:inline-flex;align-items:center;min-height:2.15rem;padding:.38rem .7rem;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--green-deep);font-weight:800;font-size:.9rem}
+.city-link-row a:hover{background:var(--wash);text-decoration:none}
+.city-landing{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:1.1rem;margin-bottom:1.2rem}
+.city-copy{display:grid;gap:.85rem;color:var(--muted);font-size:1.02rem}
+.city-copy strong{color:var(--ink)}
+.city-panel{align-self:start;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:1rem;display:grid;gap:.7rem}
+.city-panel h2{font-family:'Archivo',system-ui,sans-serif;font-size:.78rem;text-transform:uppercase;color:var(--muted);letter-spacing:0;font-weight:800}
+.city-panel dl{display:grid;gap:.5rem}
+.city-panel div{border-top:1px solid var(--line);padding-top:.5rem}
+.city-panel div:first-child{border-top:0;padding-top:0}
+.city-panel dt{font-size:.72rem;text-transform:uppercase;color:var(--coral);font-weight:800;letter-spacing:0}
+.city-panel dd{color:var(--ink);font-weight:700}
+.city-guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1.25rem 0}
+.city-guide section{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:1rem}
+.city-guide h2{font-family:'Newsreader',Georgia,serif;font-size:1.25rem;font-weight:500;margin-bottom:.55rem}
+.city-guide ul{padding-left:1.1rem;color:var(--muted)}
+.city-guide li{margin:.25rem 0}
+.city-grid-head{margin:1.45rem 0 .75rem}
+.city-grid-head h2{font-family:'Newsreader',Georgia,serif;font-size:1.45rem;font-weight:500}
+.city-grid-head p{color:var(--muted);margin-top:.25rem}
 footer{border-top:1px solid var(--line);padding:2rem 5vw;color:var(--muted);font-size:.9rem;background:rgba(247,244,238,.56)}
 .footer-inner{max-width:1120px;margin:0 auto;display:grid;gap:.72rem}
 footer p{margin:0}
@@ -792,8 +822,8 @@ footer p{margin:0}
 .legal-copy{display:grid;gap:1rem;margin-top:1.2rem;color:var(--muted)}
 .legal-copy h2{margin-top:.4rem}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
-@media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro,.recommend-form{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}.recommend-head{align-items:flex-start;flex-direction:column}.recommend-toggle{width:100%}}
-@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-carousel{grid-template-columns:38px minmax(0,1fr) 38px}.logo-nav{width:38px;height:38px;font-size:1.3rem}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}.recommend-actions{display:grid;grid-template-columns:1fr}.recommend-submit{width:100%}}
+@media(max-width:860px){.hero{padding-top:2rem}.hero h1{font-size:2.65rem}.filter-grid,.profile-sections,.clinic-intro,.recommend-form,.city-landing,.city-guide{grid-template-columns:1fr}.clinic-side{order:2}.resbar{position:static;align-items:flex-start;flex-direction:column}.clear-btn{width:100%}.recommend-head{align-items:flex-start;flex-direction:column}.recommend-toggle{width:100%}}
+@media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-carousel{grid-template-columns:38px minmax(0,1fr) 38px}.logo-nav{width:38px;height:38px;font-size:1.3rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}.recommend-actions{display:grid;grid-template-columns:1fr}.recommend-submit{width:100%}}
 """
 
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -955,6 +985,11 @@ featured_logo_clinics = [c for c in clinics if c.get("slug") in thumb_files]
 featured_logos = "".join(
     f'<a class="mini-logo" href="/clinica/{h(c["slug"])}/" data-neutral-item data-slug="{h(c["slug"])}" aria-label="Ver ficha de {h(c["name"])}"><img src="/assets/logos/thumb/{h(thumb_files[c["slug"]])}" alt="{h(c["name"])}" loading="lazy" onerror="this.closest(\'.mini-logo\').classList.add(\'logo-failed\')"><span class="logo-fallback">{h(c["name"])}</span></a>'
     for c in featured_logo_clinics
+)
+priority_city_links = "".join(
+    f'<a href="/ciudad/{slugify(city)}/">Clínicas de longevidad en {h(city)}</a>'
+    for city in PRIORITY_SEO_CITIES
+    if city in cities
 )
 
 PUBLIC_SITE_CONFIG_JSON = json.dumps({
@@ -1335,6 +1370,10 @@ index = head(f"{SITE} — {TAGLINE}", "Todos queremos vivir más años con salud
 </div>
 </div>
 </section>
+<section class="city-links" aria-label="Páginas principales por ciudad">
+<h2>Buscar por ciudad</h2>
+<nav class="city-link-row">{priority_city_links}</nav>
+</section>
 <section class="logo-carousel" data-logo-carousel aria-label="Clínicas con logo en Vitalarga">
 <button class="logo-nav" data-logo-nav="prev" type="button" aria-label="Logo anterior">&lsaquo;</button>
 <div class="logo-viewport"><div class="logo-strip" tabindex="0" data-neutral-results="home-logos" aria-label="Logos de clínicas en la guía">{featured_logos}</div></div>
@@ -1557,12 +1596,130 @@ def ficha(c):
 </div>
 {prelim}</main>""" + FOOTER
 
+def city_services(city_clinics):
+    return sorted({service for clinic in city_clinics for service in visible_values(clinic.get("services"))})[:10]
+
+def city_specialties(city_clinics):
+    return sorted({specialty for clinic in city_clinics for specialty in visible_values(clinic.get("specialties"))})[:10]
+
+def city_locations_count(city_clinics):
+    return sum(max(1, len(clinic_locations(clinic))) for clinic in city_clinics)
+
+def city_profiles_with(field_name, city_clinics):
+    return sum(1 for clinic in city_clinics if visible_values(clinic.get(field_name)))
+
+def city_verified_count(city_clinics):
+    fields = ("verified_at", "last_verified_at", "last_reviewed_at", "updated_at")
+    return sum(1 for clinic in city_clinics if any(str(clinic.get(field) or "").strip() for field in fields))
+
+def city_intro(city, city_clinics):
+    count = len(city_clinics)
+    specialties = city_specialties(city_clinics)
+    specialty_text = ", ".join(specialties[:4])
+    if specialty_text:
+        specialty_text = f" En las fichas aparecen áreas como {specialty_text}, siempre como información descriptiva del centro."
+    return (
+        f"Esta página reúne las clínicas de longevidad documentadas por Vitalarga en {city}. "
+        "La selección se presenta como guía informativa: no es un ranking, no representa una recomendación médica y el orden es rotatorio neutral. "
+        f"Cada ficha enlaza con la web oficial del centro y muestra únicamente datos recogidos en la base editorial de Vitalarga.{specialty_text} "
+        "Antes de tomar una decisión sanitaria, conviene contrastar la información con la propia clínica y con un profesional cualificado."
+    )
+
+def city_checklist(city):
+    return [
+        "Qué incluye la primera visita o el chequeo inicial.",
+        "Si la atención es presencial, online o mixta.",
+        "Qué pruebas concretas constan públicamente.",
+        "Si el equipo médico y la colegiación profesional están publicados.",
+        "Si hay precio público o página de tarifas verificable.",
+        "Si la ficha incluye enlace directo al perfil de Google Maps de la clínica.",
+    ]
+
+def city_jsonld(city, city_clinics):
+    url = f"{BASE}/ciudad/{slugify(city)}/"
+    return {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "CollectionPage",
+                "@id": url + "#webpage",
+                "url": url,
+                "name": f"Clínicas de longevidad en {city}",
+                "description": meta_description(city_intro(city, city_clinics)),
+                "inLanguage": "es",
+                "isPartOf": {"@type": "WebSite", "name": SITE, "url": BASE},
+                "about": {"@type": "MedicalBusiness", "name": "Clínicas de longevidad"},
+            },
+            {
+                "@type": "ItemList",
+                "@id": url + "#clinics",
+                "name": f"Clínicas documentadas en {city}",
+                "numberOfItems": len(city_clinics),
+                "itemListOrder": "https://schema.org/Unordered",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": index + 1,
+                        "url": f"{BASE}/clinica/{clinic['slug']}/",
+                        "name": clinic["name"],
+                    }
+                    for index, clinic in enumerate(city_clinics)
+                ],
+            },
+        ],
+    }
+
+def city_seo_blocks(city, city_clinics):
+    services = city_services(city_clinics)
+    specialties = city_specialties(city_clinics)
+    checklist = "".join(f"<li>{h(item)}</li>" for item in city_checklist(city))
+    service_items = "".join(f"<li>{h(item)}</li>" for item in services[:8])
+    specialty_items = "".join(f"<li>{h(item)}</li>" for item in specialties[:8])
+    services_block = (
+        f'<section><h2>Servicios que constan en las fichas</h2><ul>{service_items}</ul></section>'
+        if services else ""
+    )
+    specialties_block = (
+        f'<section><h2>Áreas frecuentes en {h(city)}</h2><ul>{specialty_items}</ul></section>'
+        if specialties else ""
+    )
+    return f"""
+<div class="city-guide">
+<section><h2>Qué comparar antes de contactar</h2><ul>{checklist}</ul></section>
+{services_block}
+{specialties_block}
+</div>
+"""
+
 def ciudad_page(city):
     cs = cities[city]
     grid = "".join(card(c) for c in cs)
-    return head(f"Clínicas de longevidad en {city} | {SITE}", f"Las {len(cs)} clínicas de medicina de longevidad documentadas en {city}.", f"/ciudad/{slugify(city)}/") + f"""
-<div class="hero"><h1>Clínicas de longevidad en <em>{city}</em></h1><p class="sub">{len(cs)} clínica{"s" if len(cs)>1 else ""} documentada{"s" if len(cs)>1 else ""} en la guía.</p></div>
-<div class="wrap">{ORDER_NOTE}<div class="grid" data-neutral-results="city:{h(city)}">{grid}</div></div>{NEUTRAL_ORDER_JS}""" + FOOTER
+    desc = meta_description(
+        f"Guía informativa de clínicas de longevidad en {city}: centros documentados, áreas médicas visibles, servicios publicados y enlaces a fichas revisadas."
+    )
+    ld = '<script type="application/ld+json">' + json.dumps(city_jsonld(city, cs), ensure_ascii=False) + "</script>"
+    stats = [
+        ("Clínicas visibles", len(cs)),
+        ("Sedes documentadas", city_locations_count(cs)),
+        ("Fichas con fecha", city_verified_count(cs)),
+        ("Con especialistas publicados", city_profiles_with("profesionales", cs)),
+    ]
+    stats_html = "".join(f"<div><dt>{h(label)}</dt><dd>{h(str(value))}</dd></div>" for label, value in stats)
+    advanced = city in PRIORITY_SEO_CITIES
+    seo_copy = city_intro(city, cs)
+    guide = city_seo_blocks(city, cs) if advanced else ""
+    return head(f"Clínicas de longevidad en {city} | {SITE}", desc, f"/ciudad/{slugify(city)}/", ld) + f"""
+<main class="ficha city-page"><p class="crumbs"><a href="/">Vitalarga</a> → {h(city)}</p>
+<h1>Clínicas de longevidad en <em>{h(city)}</em></h1>
+<section class="city-landing">
+<div class="city-copy"><p>{h(seo_copy)}</p>
+<p><strong>Cómo leer esta página:</strong> Vitalarga muestra información factual publicada o revisada; la presencia de una clínica no equivale a aval médico.</p></div>
+<aside class="city-panel" aria-label="Resumen de datos de {h(city)}"><h2>Datos de la guía</h2><dl>{stats_html}</dl></aside>
+</section>
+{guide}
+<div class="city-grid-head"><h2>Fichas en {h(city)}</h2><p>Orden rotatorio neutral: no representa recomendación ni valoración médica.</p></div>
+<div class="grid" data-neutral-results="city:{h(city)}">{grid}</div>
+</main>{NEUTRAL_ORDER_JS}""" + FOOTER
 
 SOBRE = head(f"Sobre la guía | {SITE}", "Qué es Vitalarga y con qué criterios incluimos clínicas en la guía.", "/sobre/") + """
 <div class="ficha"><h1>Sobre Vitalarga</h1>

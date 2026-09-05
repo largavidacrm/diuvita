@@ -129,6 +129,28 @@ Not yet mature:
 - Team/about source discovery exists for visible clinics; it is optional and
   should be used in small batches before source-shadow extraction.
 - Profile completeness can now be measured and shown in `/admin/`, but filling missing fields still needs sourced review cards and Daniel's final validation.
+- Comparable-profile fields are now part of the plan, but should be introduced
+  as reviewable proposals before they shape public SEO pages: checkup contents,
+  duration, public price, online/presencial modality, languages, concrete tests,
+  REGCESS/health registry, last verification date and source label.
+- Clinic registry numbers, professional license numbers and visit prices are now
+  first-class profile fields in the local plan and should be filled through
+  sourced proposals before publication.
+- First controlled city SEO layer is now safe to build locally: enrich
+  Barcelona, Madrid, Marbella and Valencia on existing `/ciudad/<city>/` URLs
+  with neutral copy, factual checklist, aggregate guide data and unordered
+  schema. Do not expand treatment pages until comparable fields are better
+  verified.
+- AI citation readiness has its first local implementation: generated
+  `llms.txt`, richer clinic schema, visible verification metadata and a built
+  site readiness check. It still needs field-level source pages, assistant
+  citation monitoring and more dated clinic verification evidence.
+- B2B enablement remains strategic only. No sales pages, outreach, paid
+  placement, lead model or clinic-facing claims should be built without Daniel's
+  explicit business/legal approval.
+- Editorial clinic relationship CRM is now the safe first step toward outreach:
+  the admin can prepare reviewable emails and register draft history, but it
+  does not send messages automatically. See `docs/CLINIC_RELATIONSHIP_CRM.md`.
 - Daily/weekly digest and notification cadence.
 - Clinic portal production activation, including legal/privacy review, Supabase
   Auth email settings, a controlled real-flow test and the future decision on

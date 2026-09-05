@@ -66,6 +66,7 @@ TEST_STEPS = [
     ("test: public home simplified", "scripts/test_public_home_simplified.py"),
     ("test: public neutral order", "scripts/test_public_neutral_order.py"),
     ("test: public clinic recommendations", "scripts/test_public_clinic_recommendations.py"),
+    ("test: public city SEO", "scripts/test_public_city_seo.py"),
     ("test: public profile UX", "scripts/test_public_profile_ux.py"),
     ("test: public site assets", "scripts/test_public_site_assets.py"),
     ("test: public legal identity", "scripts/test_public_legal_identity.py"),

@@ -135,3 +135,70 @@ resuelven revisiones.
 La base tecnica SEO puede seguir mejorando ya en local. Lo que no conviene aun
 es crecer con muchas paginas nuevas hasta que las fichas tengan datos base mas
 limpios, la bandeja sea facil de revisar y cada propuesta tenga fuente clara.
+
+Antes de escalar paginas nuevas, revisar estos bloqueos:
+
+- la bandeja no debe acumular mas de 25 revisiones abiertas;
+- no debe haber claims bloqueantes;
+- las fichas visibles deben tener trazabilidad suficiente;
+- las fichas visibles deben cubrir campos base: resumen, web oficial, direccion
+  o sede, Google Maps de clinica, contacto, servicios y especialidades;
+- los cambios guardados que Daniel haya aprobado deben estar publicados en la
+  web publica.
+
+Las páginas por ciudad, especialidad o tratamiento deben usar solo datos
+verificados y lenguaje informativo. No pueden crear rankings, recomendaciones,
+promesas médicas ni claims de superioridad.
+
+La ordenación pública de fichas debe mantenerse como orden rotatorio neutral y
+visible, nunca como ranking. El orden puede cambiar entre builds, pero no debe
+usar puntuaciones, prioridad editorial ni calidad percibida.
+
+Primer bloque aprobado para avanzar sin escalar el riesgo:
+
+- usar las URLs existentes `/ciudad/<ciudad>/`;
+- enriquecer primero Barcelona, Madrid, Marbella y Valencia;
+- mantener el resto de ciudades como páginas canónicas simples;
+- añadir texto propio de ayuda, checklist factual y datos agregados de la guía;
+- incluir JSON-LD de `CollectionPage` e `ItemList` con orden no ordenado;
+- no crear páginas por tratamiento hasta que haya más campos comparables
+  verificados.
+
+### AI citation readiness
+
+Debe avanzar después del SEO técnico y en paralelo al cierre de campos base.
+Objetivo: que Vitalarga sea fácil de entender, citar y verificar por asistentes
+sin convertirse en un sitio de recomendaciones.
+
+Checklist inicial:
+
+- sitemap y canonical correctos;
+- `robots.txt` claro;
+- schema por ficha con datos factuales y seguros;
+- `llms.txt` o equivalente con alcance, sitemap y páginas principales;
+- fecha visible de última verificación por ficha;
+- fuente visible o rastreable para campos sensibles;
+- REGCESS/registro sanitario cuando sea público y verificado;
+- ninguna afirmación de calidad, ranking, recomendación o aval médico;
+- medición periódica de presencia en respuestas de asistentes para consultas
+  objetivo.
+
+No sustituye al SEO programático. Lo complementa: primero verdad verificable,
+después páginas de crecimiento.
+
+## Diagnóstico
+
+Ejecutar:
+
+```bash
+python3 scripts/pre_seo_readiness.py
+```
+
+Salida JSON para automatización:
+
+```bash
+python3 scripts/pre_seo_readiness.py --json
+```
+
+El diagnóstico es de solo lectura: no publica, no edita Supabase, no resuelve
+revisiones y no toca Netlify.
