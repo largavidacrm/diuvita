@@ -81,12 +81,46 @@ with clinic_rows as (
       ''
     )), '') is not null as has_team_credentialing_visible,
     nullif(btrim(coalesce(
+      c.current_data ->> 'clinic_registry_number',
+      c.current_data ->> 'health_registry_number',
+      c.current_data ->> 'regcess_number',
+      c.current_data #>> '{{clinic,registry_number}}',
+      ''
+    )), '') is not null as has_clinic_registry_number,
+    (
+      nullif(btrim(coalesce(
+        c.current_data ->> 'professional_license_number',
+        c.current_data ->> 'medical_license_numbers',
+        c.current_data #>> '{{team,professional_license_numbers}}',
+        ''
+      )), '') is not null
+      or coalesce(jsonb_array_length(
+        case
+          when jsonb_typeof(c.current_data -> 'professional_license_numbers') = 'array'
+            then c.current_data -> 'professional_license_numbers'
+          else '[]'::jsonb
+        end
+      ), 0) > 0
+    ) as has_professional_license_numbers,
+    nullif(btrim(coalesce(
       c.current_data ->> 'public_pricing',
       c.current_data ->> 'prices_public',
       c.current_data ->> 'price_public',
       c.current_data #>> '{{prices,public_status}}',
       ''
     )), '') is not null as has_public_pricing,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'visit_price',
+      c.current_data ->> 'initial_visit_price',
+      c.current_data ->> 'initial_consultation_price',
+      c.current_data #>> '{{prices,initial_visit}}',
+      ''
+    )), '') is not null as has_visit_price,
+    nullif(btrim(coalesce(
+      c.current_data ->> 'care_mode',
+      c.current_data ->> 'clinic_online',
+      ''
+    )), '') is not null as has_care_mode,
     case
       when jsonb_typeof(c.current_data -> 'services') = 'array'
         then jsonb_array_length(c.current_data -> 'services')
@@ -161,7 +195,11 @@ profile_checks as (
       case when not has_years_in_practice then 'Años en ejercicio' end,
       case when not has_specialists_count then 'Número de especialistas' end,
       case when not has_team_credentialing_visible then 'Colegiación visible' end,
-      case when not has_public_pricing then 'Precio público' end
+      case when not has_professional_license_numbers then 'Nº colegiado' end,
+      case when not has_clinic_registry_number then 'Registro sanitario' end,
+      case when not has_public_pricing then 'Precio público' end,
+      case when not has_visit_price then 'Precio visita' end,
+      case when not has_care_mode then 'Modalidad de atención' end
     ], null) as pending_fields
   from checks
 ),
@@ -193,7 +231,11 @@ field_summary as (
     jsonb_build_object('field', 'years_in_practice', 'label', 'Años en ejercicio', 'present', count(*) filter (where has_years_in_practice), 'pending', count(*) filter (where not has_years_in_practice)),
     jsonb_build_object('field', 'specialists_count', 'label', 'Número de especialistas', 'present', count(*) filter (where has_specialists_count), 'pending', count(*) filter (where not has_specialists_count)),
     jsonb_build_object('field', 'team_credentialing_visible', 'label', 'Colegiación visible', 'present', count(*) filter (where has_team_credentialing_visible), 'pending', count(*) filter (where not has_team_credentialing_visible)),
-    jsonb_build_object('field', 'public_pricing', 'label', 'Precio público', 'present', count(*) filter (where has_public_pricing), 'pending', count(*) filter (where not has_public_pricing))
+    jsonb_build_object('field', 'professional_license_numbers', 'label', 'Nº colegiado', 'present', count(*) filter (where has_professional_license_numbers), 'pending', count(*) filter (where not has_professional_license_numbers)),
+    jsonb_build_object('field', 'clinic_registry_number', 'label', 'Registro sanitario', 'present', count(*) filter (where has_clinic_registry_number), 'pending', count(*) filter (where not has_clinic_registry_number)),
+    jsonb_build_object('field', 'public_pricing', 'label', 'Precio público', 'present', count(*) filter (where has_public_pricing), 'pending', count(*) filter (where not has_public_pricing)),
+    jsonb_build_object('field', 'visit_price', 'label', 'Precio visita', 'present', count(*) filter (where has_visit_price), 'pending', count(*) filter (where not has_visit_price)),
+    jsonb_build_object('field', 'care_mode', 'label', 'Modalidad de atención', 'present', count(*) filter (where has_care_mode), 'pending', count(*) filter (where not has_care_mode))
   ) as data
   from checks
 ),
