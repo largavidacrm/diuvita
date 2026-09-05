@@ -183,6 +183,26 @@ from (
       end,
       case
         when nullif(btrim(coalesce(
+          c.current_data ->> 'clinic_registry_number',
+          c.current_data ->> 'health_registry_number',
+          c.current_data ->> 'regcess_number',
+          c.current_data #>> '{{clinic,registry_number}}',
+          ''
+        )), '') is null
+          then 'clinic_registry_number'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'professional_license_number',
+          c.current_data ->> 'medical_license_numbers',
+          c.current_data #>> '{{team,professional_license_numbers}}',
+          ''
+        )), '') is null
+        and coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'professional_license_numbers') = 'array' then c.current_data -> 'professional_license_numbers' else '[]'::jsonb end), 0) = 0
+          then 'professional_license_numbers'
+      end,
+      case
+        when nullif(btrim(coalesce(
           c.current_data ->> 'public_pricing',
           c.current_data ->> 'prices_public',
           c.current_data ->> 'price_public',
@@ -190,6 +210,20 @@ from (
           ''
         )), '') is null
           then 'public_pricing'
+      end,
+      case
+        when nullif(btrim(coalesce(
+          c.current_data ->> 'visit_price',
+          c.current_data ->> 'initial_visit_price',
+          c.current_data ->> 'initial_consultation_price',
+          c.current_data #>> '{{prices,initial_visit}}',
+          ''
+        )), '') is null
+          then 'visit_price'
+      end,
+      case
+        when nullif(btrim(coalesce(c.current_data ->> 'care_mode', c.current_data ->> 'clinic_online', '')), '') is null
+          then 'care_mode'
       end,
       case
         when coalesce(jsonb_array_length(case when jsonb_typeof(c.current_data -> 'services') = 'array' then c.current_data -> 'services' else '[]'::jsonb end), 0) = 0
