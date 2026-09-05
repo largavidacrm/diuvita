@@ -23,6 +23,16 @@ def main() -> None:
     automatic_path = function_body(sql, "private.request_public_site_rebuild()")
     clinic_trigger_path = function_body(sql, "private.clinics_request_public_site_rebuild()")
 
+    check(
+        "'diuvita_build_hook_url'" in sql
+        and "'vitalarga_build_hook_url'" in sql,
+        "migration must preserve the configured legacy build hook",
+    )
+    check(
+        "create or replace function private.public_site_rebuild_batch_minutes()" in sql,
+        "manual publication migration must be independently deployable",
+    )
+
     for marker in [
         "vitalarga_publication_mode",
         "'manual'",

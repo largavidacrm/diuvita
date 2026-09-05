@@ -1,5 +1,34 @@
 begin;
 
+-- Production may still carry the pre-Vitalarga setting names. Copy only the
+-- deploy-related values so this safety migration can be applied independently
+-- without rolling out unrelated schema changes.
+insert into private.app_settings (key, value)
+select 'vitalarga_build_hook_url', source.value
+from (
+  select value
+  from private.app_settings
+  where key in ('vitalarga_build_hook_url', 'diuvita_build_hook_url')
+    and btrim(value) <> ''
+  order by (key = 'vitalarga_build_hook_url') desc
+  limit 1
+) source
+on conflict (key) do update
+set value = excluded.value;
+
+insert into private.app_settings (key, value)
+select 'vitalarga_rebuild_batch_minutes', source.value
+from (
+  select value
+  from private.app_settings
+  where key in ('vitalarga_rebuild_batch_minutes', 'diuvita_rebuild_batch_minutes')
+    and btrim(value) <> ''
+  order by (key = 'vitalarga_rebuild_batch_minutes') desc
+  limit 1
+) source
+on conflict (key) do update
+set value = excluded.value;
+
 insert into private.app_settings (key, value)
 values ('vitalarga_publication_mode', 'manual')
 on conflict (key) do update
@@ -9,6 +38,21 @@ alter table private.rebuild_state
   add column if not exists last_change_at timestamptz,
   add column if not exists last_sent_at timestamptz,
   alter column last_requested_at drop not null;
+
+create or replace function private.public_site_rebuild_batch_minutes()
+returns integer
+language sql
+stable
+security definer
+set search_path = private
+as $$
+  select coalesce(
+    max(greatest(1, least(1440, nullif(regexp_replace(value, '[^0-9]', '', 'g'), '')::integer))),
+    30
+  )
+  from private.app_settings
+  where key = 'vitalarga_rebuild_batch_minutes';
+$$;
 
 create or replace function private.mark_public_site_rebuild_pending()
 returns void
