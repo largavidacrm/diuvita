@@ -10,6 +10,7 @@ DIST = os.path.join(ROOT, "dist")
 SITE = "Vitalarga"
 TAGLINE = "La guía de las clínicas de longevidad"
 BASE = "https://www.vitalarga.com"
+GA4_MEASUREMENT_ID = os.getenv("VITALARGA_GA4_MEASUREMENT_ID", "").strip()
 LEGAL_OWNER = {
     "name": "Neurotrans SLU",
     "tax_id": "B-67221093",
@@ -841,6 +842,26 @@ footer p{margin:0}
 @media(max-width:640px){.site{position:static;align-items:flex-start;flex-direction:column}.site nav{justify-content:flex-start}.hero h1{font-size:2.25rem}.hero p.sub,.ficha .summary{font-size:1.05rem}.finder{padding:.75rem}.logo-carousel{grid-template-columns:38px minmax(0,1fr) 38px}.logo-nav{width:38px;height:38px;font-size:1.3rem}.logo-strip{padding-left:5vw}.grid{grid-template-columns:1fr}.card{min-height:auto}.clinic-main h1,.ficha>h1{font-size:2.2rem}.facts,.transparency-grid{grid-template-columns:1fr}.profile-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.profile-nav a{min-width:0;padding:.36rem .45rem}.profile-nav-label{min-width:0;overflow:hidden;text-overflow:ellipsis}.recommend-actions{display:grid;grid-template-columns:1fr}.recommend-submit{width:100%}}
 """
 
+def analytics_head() -> str:
+    if not GA4_MEASUREMENT_ID:
+        return ""
+    measurement_id = h(GA4_MEASUREMENT_ID)
+    return f"""
+<script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('consent', 'default', {{
+    'analytics_storage': 'denied',
+    'ad_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied'
+  }});
+  gtag('js', new Date());
+  gtag('config', '{measurement_id}', {{'anonymize_ip': true}});
+</script>"""
+
+
 HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title}</title>
@@ -855,13 +876,7 @@ HEAD = """<!doctype html><html lang="es"><head><meta charset="utf-8">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
 <script data-goatcounter="https://vitalarga.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-84F16JHF9E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){{dataLayer.push(arguments);}}
-  gtag('js', new Date());
-  gtag('config', 'G-84F16JHF9E');
-</script>
+{analytics}
 {jsonld}</head><body>
 <header class="site"><a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span><span>Vitalarga</span></a>
 <nav><a href="/#buscar">Buscar clínica</a><a href="/#recomendar-clinica">Recomendar Clínica</a><a href="/portal-clinicas/">Portal clínicas</a><a href="/blog/">Blog</a><a href="/sobre/">Sobre la guía</a></nav></header>
@@ -875,7 +890,7 @@ FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
 """
 
 def head(title, desc, path, jsonld=""):
-    return HEAD.format(title=title, desc=desc, url=BASE + path, jsonld=jsonld)
+    return HEAD.format(title=title, desc=desc, url=BASE + path, analytics=analytics_head(), jsonld=jsonld)
 
 def legal_owner_address():
     return f'{LEGAL_OWNER["address_line_1"]}, {LEGAL_OWNER["postal_city"]}'

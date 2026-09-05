@@ -47,8 +47,11 @@ def main() -> None:
         'candidate.getAttribute("data-slug")===slug',
         "this.closest(\\'.logobox\\').classList.add(\\'logo-failed\\')",
         "this.closest(\\'.mini-logo\\').classList.add(\\'logo-failed\\')",
-        "www.googletagmanager.com/gtag/js?id=G-84F16JHF9E",
-        "gtag('config', 'G-84F16JHF9E')",
+        "VITALARGA_GA4_MEASUREMENT_ID",
+        "def analytics_head",
+        "www.googletagmanager.com/gtag/js?id={measurement_id}",
+        "gtag('consent', 'default'",
+        "'analytics_storage': 'denied'",
     ]:
         check(marker in source, f"missing public asset marker: {marker}")
 
