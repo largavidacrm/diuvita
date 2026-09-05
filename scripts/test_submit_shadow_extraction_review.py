@@ -27,6 +27,7 @@ def main():
   <p>Registro sanitario CS-12345.</p>
   <p>Equipo de 12 especialistas con más de 20 años de experiencia.</p>
   <p>Consulta inicial: 120 euros.</p>
+  <p>Consulta presencial y seguimiento online por videoconsulta.</p>
   <p>Sede principal: Calle Serrano 100, 28006 Madrid.</p>
   <p>Teléfonos: 91 6325659 y 676 629 862.</p>
   <p>Contact: info@exampleclinic.test @exampleclinic</p>
@@ -52,6 +53,7 @@ def main():
     check(fields["phone_mobile"] == "676 629 862", "mobile phone field missing")
     check(fields["instagram"] == "@exampleclinic", "instagram field missing")
     check(fields["locations"][0]["address"].startswith("Calle Serrano"), "location field missing")
+    check(fields["care_mode"] == "hibrida", "care mode field missing")
     check(fields["unidades"] == ["Unidad de Longevidad"], "units field missing")
     check(fields["profesionales"] == ["Dra. Laura García Pérez"], "professionals field missing")
     check(fields["years_in_practice"] == "más de 20 años", "years-in-practice field missing")

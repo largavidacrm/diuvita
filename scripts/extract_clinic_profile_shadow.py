@@ -89,6 +89,17 @@ PROFESSIONAL_LICENSE_RE = re.compile(
     r"[\s:.-]{0,12}(?P<license>[A-Z]{0,6}[-/\s]?\d{2,8}(?:[-/\s][A-Z0-9]{1,8}){0,3})\b",
     re.I,
 )
+ONLINE_CARE_RE = re.compile(
+    r"\b(?:consulta|visita|seguimiento|servicio|programa|atenci[oó]n|medicina)\s+"
+    r"(?:online|en\s+l[ií]nea|virtual|remot[ao]|por\s+videoconsulta|por\s+videollamada)|"
+    r"\b(?:teleconsulta|telemedicina|videoconsulta|videollamada)\b",
+    re.I,
+)
+PHYSICAL_CARE_RE = re.compile(
+    r"\b(?:consulta|visita|atenci[oó]n|servicio|programa)\s+presencial|"
+    r"\b(?:centro|cl[ií]nica|sede|ubicaci[oó]n|direcci[oó]n)\s+(?:en|f[ií]sica|presencial)",
+    re.I,
+)
 SUMMARY_NOISE_RE = re.compile(
     r"\b(?:"
     r"acceptance|aceptaci[oó]n|additional information|apellido|blog articles|"
@@ -1149,6 +1160,18 @@ def extract_visit_price(text: str) -> str | None:
     return normalize_space(amount.replace(".", ",")) + " €"
 
 
+def extract_care_mode(text: str, locations: list[dict[str, str]] | None = None) -> str | None:
+    has_online = bool(ONLINE_CARE_RE.search(text))
+    has_physical = bool(PHYSICAL_CARE_RE.search(text)) or bool(locations)
+    if has_online and has_physical:
+        return "hibrida"
+    if has_online:
+        return "online"
+    if has_physical:
+        return "presencial"
+    return None
+
+
 def extract_years_in_practice(text: str) -> str | None:
     years_match = YEARS_IN_PRACTICE_RE.search(text)
     if years_match:
@@ -1300,6 +1323,7 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
     clinic_registry_numbers = extract_clinic_registry_numbers(text)
     professional_license_numbers = extract_professional_license_numbers(text)
     visit_price = extract_visit_price(text)
+    care_mode = extract_care_mode(text, locations)
     keywords = detect_keywords(text)
     summary = extract_summary(text, str(snapshot.get("source_title") or ""), source_url)
     claims: list[dict[str, Any]] = []
@@ -1328,6 +1352,8 @@ def build_claims(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
         claims.append(claim("contact.instagram", contacts["instagram"][0], 0.80, source_url))
     if locations:
         claims.append(claim("location.locations", locations[:MAX_LOCATIONS], 0.66, source_url))
+    if care_mode:
+        claims.append(claim("profile.care_mode", care_mode, 0.64, source_url))
     if professionals:
         claims.append(claim("professionals.published", professionals[:MAX_PROFESSIONALS], 0.64, source_url))
     if transparency.get("years_in_practice"):
@@ -1362,6 +1388,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
     clinic_registry_numbers = extract_clinic_registry_numbers(text)
     professional_license_numbers = extract_professional_license_numbers(text)
     visit_price = extract_visit_price(text)
+    care_mode = extract_care_mode(text, locations)
     keywords = detect_keywords(text)
     name = guess_name(snapshot)
     summary = extract_summary(text, str(snapshot.get("source_title") or ""), str(snapshot.get("final_url") or snapshot.get("source_url") or ""))
@@ -1373,6 +1400,7 @@ def build_profile(snapshot: dict[str, Any]) -> dict[str, Any]:
         "phones": contacts["phones"],
         "instagram": contacts["instagram"],
         "locations": locations[:MAX_LOCATIONS],
+        "care_mode": care_mode,
         "services": keywords.get("services.list", []),
         "specialties": keywords.get("specialties.list", []),
         "units": keywords.get("units.list", []),

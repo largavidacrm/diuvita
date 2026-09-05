@@ -37,6 +37,7 @@ FIELD_MAP = {
     "contact.phone_whatsapp": "phone_whatsapp",
     "contact.instagram": "instagram",
     "location.locations": "locations",
+    "profile.care_mode": "care_mode",
     "services.list": "services",
     "specialties.list": "specialties",
     "units.list": "unidades",

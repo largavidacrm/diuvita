@@ -5,6 +5,7 @@ from extract_clinic_profile_shadow import (
     clean_professional_values,
     extract_contacts,
     extract_clinic_registry_numbers,
+    extract_care_mode,
     extract_from_fetch,
     extract_locations,
     extract_professionals,
@@ -34,6 +35,7 @@ def main():
   <p>Dra. Laura García Pérez, nº colegiada 12345.</p>
   <p>Centro autorizado. Registro sanitario CS-12345.</p>
   <p>Precio consulta: 120 €.</p>
+  <p>Atención presencial y seguimiento online por videoconsulta.</p>
   <p>Pruebas disponibles: DEXA, VO2 max, biomarcadores y test epigenético.</p>
   <p>Sedes: Calle Serrano 100, 28006 Madrid. Avenida Diagonal 450, 08006 Barcelona.</p>
   <p>{filler}</p>
@@ -71,6 +73,7 @@ def main():
     check(len(profile["locations"]) == 2, "two locations should be extracted")
     check(profile["locations"][0]["city"] == "Madrid", "Madrid location city missing")
     check(profile["locations"][1]["city"] == "Barcelona", "Barcelona location city missing")
+    check(profile["care_mode"] == "hibrida", "hybrid care mode detection failed")
     check("VO2 max" in profile["technologies"], "technology detection failed")
     check("Hipoxia intermitente" in profile["technologies"], "later-page technology detection failed")
     check("Medicina preventiva" in profile["services"], "service detection failed")
@@ -100,11 +103,24 @@ def main():
         "visit price should be extracted from public price text",
     )
     check(
+        extract_care_mode("Consulta online por videoconsulta") == "online",
+        "online care mode should be extracted",
+    )
+    check(
+        extract_care_mode("Consulta presencial en clínica", [{"address": "Calle A 1"}]) == "presencial",
+        "physical care mode should be extracted",
+    )
+    check(
+        extract_care_mode("Consulta presencial y seguimiento online") == "hibrida",
+        "hybrid care mode should be extracted",
+    )
+    check(
         extract_years_in_practice("Dos décadas de experiencia clínica") == "20 años",
         "decades should be converted to years",
     )
     check("contact.email" in fields, "email claim missing")
     check("location.locations" in fields, "location claim missing")
+    check("profile.care_mode" in fields, "care mode claim missing")
     check("units.list" in fields, "unit claim missing")
     check("professionals.published" in fields, "professional claim missing")
     check("transparency.years_in_practice" in fields, "years claim missing")

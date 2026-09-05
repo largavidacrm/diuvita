@@ -135,6 +135,31 @@ def verify_price_value(value: Any, haystack: str) -> tuple[str, float, str]:
     return "review", 0.62, "price needs manual review"
 
 
+def verify_care_mode(value: Any, haystack: str) -> tuple[str, float, str]:
+    clean = normalized_text(value)
+    has_online = bool(re.search(
+        r"\b(?:consulta|visita|seguimiento|servicio|programa|atenci[oó]n|medicina)\s+"
+        r"(?:online|en\s+l[ií]nea|virtual|remot[ao]|por\s+videoconsulta|por\s+videollamada)|"
+        r"\b(?:teleconsulta|telemedicina|videoconsulta|videollamada)\b",
+        haystack,
+        re.I,
+    ))
+    has_physical = bool(re.search(
+        r"\b(?:consulta|visita|atenci[oó]n|servicio|programa)\s+presencial|"
+        r"\b(?:centro|cl[ií]nica|sede|ubicaci[oó]n|direcci[oó]n)\s+(?:en|f[ií]sica|presencial)|"
+        r"\b\d{5}\b",
+        haystack,
+        re.I,
+    ))
+    if clean in {"hibrida", "mixta", "presencial y online"} and has_online and has_physical:
+        return "accepted", 0.78, "online and physical care signals found explicitly"
+    if clean == "online" and has_online:
+        return "accepted", 0.78, "online care signal found explicitly"
+    if clean == "presencial" and has_physical:
+        return "accepted", 0.78, "physical care signal found explicitly"
+    return "review", 0.62, "care modality needs manual review"
+
+
 def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str, Any]:
     field_path = str(claim.get("field_path") or "")
     value = claim.get("value")
@@ -161,9 +186,12 @@ def verify_claim(claim: dict[str, Any], extraction: dict[str, Any]) -> dict[str,
         verdict = "accepted" if supported else "review"
         confidence = 0.66 if supported else 0.45
     elif field_path.startswith("profile."):
-        supported, reason = value_supported(value, haystack)
-        verdict = "accepted" if supported else "review"
-        confidence = 0.88 if supported else 0.58
+        if field_path == "profile.care_mode":
+            verdict, confidence, reason = verify_care_mode(value, haystack)
+        else:
+            supported, reason = value_supported(value, haystack)
+            verdict = "accepted" if supported else "review"
+            confidence = 0.88 if supported else 0.58
     elif field_path.startswith("location."):
         verdict, confidence, reason = verify_locations(value, haystack)
     elif field_path.startswith(("services.", "specialties.", "units.", "diagnostics.", "programs.", "technologies.", "professionals.")):

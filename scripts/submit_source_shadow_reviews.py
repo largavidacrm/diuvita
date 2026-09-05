@@ -31,6 +31,9 @@ CreateReviewFn = Callable[[str, dict[str, Any], str, dict[str, str], bool, bool]
 PENDING_FIELD_TARGETS = {
     "address": {"locations"},
     "locations": {"locations"},
+    "care_mode": {"care_mode"},
+    "modalidad": {"care_mode"},
+    "online": {"care_mode", "locations"},
     "contact": {"email", "telefono", "phone_fixed", "phone_mobile", "phone_whatsapp", "instagram"},
     "services": {"services"},
     "specialties": {"specialties"},
