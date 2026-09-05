@@ -1880,7 +1880,7 @@
         : "";
       if (!missing.length) {
         if (webPending) {
-          return '<div class="publish-cell is-web-pending"><span class="pill warning">Pendiente de web</span><strong>Guardada en admin</strong><small>La web pública va por detrás; se verá tras la actualización agrupada.</small></div>';
+          return '<div class="publish-cell is-web-pending"><span class="pill warning">Pendiente de web</span><strong>Guardada en admin</strong><small>La web pública va por detrás; se verá cuando pulses Actualizar web ahora.</small></div>';
         }
         return '<div class="publish-cell"><span class="pill">Lista</span><small>' +
           html(visible ? "Visible sin faltantes obligatorios." : "Puede pasar a preliminar/publicada.") +
@@ -2058,6 +2058,8 @@
     function emptyPublicationControl() {
       return {
         rebuildHookConfigured: false,
+        publicationMode: null,
+        automaticRebuildEnabled: null,
         rebuildBatchMinutes: null,
         lastPublicSiteRebuildRequestedAt: null,
         lastPublicSiteChangeAt: null,
@@ -2745,6 +2747,10 @@
       }
       var data = result.data || {};
       control.rebuildHookConfigured = Boolean(data.rebuild_hook_configured);
+      control.publicationMode = data.publication_mode || null;
+      control.automaticRebuildEnabled = data.automatic_rebuild_enabled == null
+        ? null
+        : Boolean(data.automatic_rebuild_enabled);
       control.rebuildBatchMinutes = data.rebuild_batch_minutes == null ? null : Number(data.rebuild_batch_minutes);
       control.lastPublicSiteRebuildRequestedAt = data.last_public_site_rebuild_requested_at || null;
       control.lastPublicSiteChangeAt = data.last_public_site_change_at || null;
@@ -2765,6 +2771,9 @@
       control = control || emptyPublicationControl();
       if (control.unavailable) return "No disponible";
       if (!control.rebuildHookConfigured) return "Hook no configurado";
+      if (control.publicationMode === "manual") {
+        return publicationHasPendingChanges(control) ? "Manual · pendiente" : "Manual";
+      }
       if (publicationHasPendingChanges(control)) return "Cambios pendientes";
       if (Number(control.rebuildBatchMinutes || 0) > 1) return "Agrupada · " + control.rebuildBatchMinutes + " min";
       return "Directa";
@@ -2773,11 +2782,17 @@
     function publicationControlDetail(control) {
       control = control || emptyPublicationControl();
       if (control.unavailable) return "No se pudo leer Supabase.";
-      if (!control.rebuildHookConfigured) return "No se pedirá rebuild automático.";
+      if (!control.rebuildHookConfigured) return "No se puede solicitar la publicación manual porque falta configurar el hook.";
       var last = control.lastPublicSiteRebuildRequestedAt ? date(control.lastPublicSiteRebuildRequestedAt) : "sin petición todavía";
       if (publicationHasPendingChanges(control)) {
         var change = control.lastPublicSiteChangeAt ? date(control.lastPublicSiteChangeAt) : "cambio reciente";
+        if (control.publicationMode === "manual") {
+          return "Los cambios están guardados. Netlify solo se ejecutará al pulsar Actualizar web ahora. Último cambio: " + change + " · última web: " + last;
+        }
         return "Último cambio: " + change + " · última web: " + last;
+      }
+      if (control.publicationMode === "manual") {
+        return "Publicación manual. Netlify solo se ejecuta cuando pulsas Actualizar web ahora. Última petición: " + last;
       }
       return "Última petición: " + last;
     }
@@ -2798,8 +2813,8 @@
       if (!control.rebuildHookConfigured) {
         show(banner, true);
         banner.classList.add("is-pending");
-        el("publicationBannerTitle").textContent = "La actualización automática de la web no está configurada.";
-        el("publicationBannerDetail").textContent = "Las fichas se guardan, pero la web pública no se reconstruirá hasta configurar el hook.";
+        el("publicationBannerTitle").textContent = "La publicación manual de la web no está configurada.";
+        el("publicationBannerDetail").textContent = "Las fichas se guardan, pero el botón de publicación no funcionará hasta configurar el hook.";
         return;
       }
       if (!publicationHasPendingChanges(control)) {
@@ -2890,7 +2905,7 @@
       if (hasUnsavedClinicFormChanges()) {
         box.classList.add("is-pending");
         el("clinicPublicSyncTitle").textContent = "Cambios todavía no guardados.";
-        el("clinicPublicSyncDetail").textContent = "Primero guarda la clínica. Si queda publicada o preliminar, después entrará en la publicación agrupada.";
+        el("clinicPublicSyncDetail").textContent = "Primero guarda la clínica. Si queda publicada o preliminar, después podrás incluirla al pulsar Actualizar web ahora.";
         return;
       }
 
@@ -2910,7 +2925,7 @@
       if (!control.rebuildHookConfigured) {
         box.classList.add("is-pending");
         el("clinicPublicSyncTitle").textContent = "La web no se actualizará sola.";
-        el("clinicPublicSyncDetail").textContent = "Esta ficha está guardada en Supabase, pero falta activar la publicación agrupada.";
+        el("clinicPublicSyncDetail").textContent = "Esta ficha está guardada en Supabase, pero falta configurar el botón de publicación manual.";
         return;
       }
       if (clinicHasPendingPublicChange(activeClinic, control)) {
@@ -4563,7 +4578,7 @@
         systemItem("Primer atasco", duplicateTargetLabel, backlogQuality.firstDuplicateTarget ? "warning-text" : ""),
         systemItem("Web pública", publicSiteLabel, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
         systemItem("Checks web", publicSiteDetail, publicSite.unavailable || publicSite.failed ? "warning-text" : ""),
-        systemItem("Publicación agrupada", publicationControlLabel(publication), publication.unavailable || !publication.rebuildHookConfigured || publicationHasPendingChanges(publication) ? "warning-text" : ""),
+        systemItem("Publicación web", publicationControlLabel(publication), publication.unavailable || !publication.rebuildHookConfigured || publicationHasPendingChanges(publication) ? "warning-text" : ""),
         systemItem("Último rebuild", publicationControlDetail(publication)),
         systemItem("Trabajos ahora", (jobs.queued || 0) + " cola · " + runningJobs + " corriendo"),
         systemItem("Fallos", failedJobs, failedJobs ? "danger-text" : ""),
@@ -6430,7 +6445,7 @@
       }
       if (!isPublicClinicStatus(trimmed("clinicStatus"))) setInput("clinicStatus", "preliminary");
       var confirmed = window.confirm(
-        "La ficha pasará a estar online como preliminar. Quedará guardado en el historial y entrará en la próxima publicación agrupada.\n\n¿Publicar?"
+        "La ficha quedará guardada como preliminar y pendiente de web. Cuando termines el lote, pulsa Actualizar web ahora para hacerla visible.\n\n¿Guardar como preliminar?"
       );
       if (!confirmed) return;
       if (!trimmed("clinicNote")) setInput("clinicNote", "Ficha marcada como online desde el panel.");
@@ -6471,7 +6486,7 @@
         quality_audit_completed: "Auditoría completada",
         clinic_profile_enrichment_proposals_created: "Propuestas de ficha creadas",
         public_site_rebuild_requested: "Publicación solicitada",
-        public_site_rebuild_skipped: "Publicación agrupada",
+        public_site_rebuild_skipped: "Publicación manual",
         clinic_field_locks_updated: "Campos protegidos",
         source_change_detected: "Cambio de fuente detectado",
         clinic_version_restored: "Versión restaurada",
@@ -10789,7 +10804,7 @@
       } else if (resolveWarning) {
         toast("Clínica guardada, pero alguna tarjeta no se cerró automáticamente.");
       } else if (selectedStatus === "published" || selectedStatus === "preliminary") {
-        toast("Clínica guardada. La web pública se actualiza en una publicación agrupada.");
+        toast("Clínica guardada. Queda pendiente hasta que pulses Actualizar web ahora.");
       } else {
         toast("Clínica guardada. No está publicada.");
       }
@@ -11585,6 +11600,12 @@
         console.error(result.error);
         setPublicRebuildLoading(false);
         toast("No se pudo pedir la actualización web. Puede faltar activar la migración.");
+        return;
+      }
+      if (result.data && result.data.status === "skipped") {
+        toast("No había cambios públicos pendientes. Netlify no se ha ejecutado.");
+        setPublicRebuildLoading(false);
+        await loadDashboard();
         return;
       }
       toast("Actualización web solicitada. Netlify puede tardar unos minutos.");

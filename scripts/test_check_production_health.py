@@ -70,7 +70,7 @@ def main():
     check("location-list" in profile_check["markers"], "profile deployment should include locations marker")
     check("section-count" not in profile_check["markers"], "profile deployment should not expect decorative counters")
     check("loadPublicationControl" in admin_check["markers"], "admin deployment should include publication control loader marker")
-    check("Publicación agrupada" in admin_check["markers"], "admin deployment should include batched publication marker")
+    check("Publicación web" in admin_check["markers"], "admin deployment should include manual publication marker")
     check("Duplicados mejoras" in admin_check["markers"], "admin deployment should include review-backlog marker")
     check("Contexto de grupo" in admin_check["markers"], "admin deployment should include clinic workgroup marker")
     check("Primer atasco" in admin_check["markers"], "admin deployment should include first backlog target marker")

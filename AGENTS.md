@@ -55,5 +55,10 @@ When Daniel asks Codex to keep advancing the general Vitalarga plan without stay
 - Run checks before committing.
 - Commit cohesive changes with clear messages.
 - Batch pushes to reduce Netlify deploys; avoid small production pushes unless they fix a live issue, unblock Daniel or complete a meaningful batch.
+- Use branches and Netlify Deploy Previews for intermediate work. Do not push each
+  implementation commit to `main`; publish one verified, cohesive batch.
+- Treat clinic edits as pending public changes. Never trigger the Netlify build
+  hook automatically; the admin's **Actualizar web ahora** action is the explicit
+  production-publication boundary.
 - Push only when the change is low-risk for production and contains no private/proposed clinic payloads; otherwise leave the commit local and explain the approval needed.
 - End with a concise Spanish summary: completed work, verification, open risks, and the next best step.

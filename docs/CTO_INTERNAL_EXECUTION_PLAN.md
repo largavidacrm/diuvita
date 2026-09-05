@@ -1411,6 +1411,11 @@ Next 10 technical steps:
      no longer display the full Neurotrans SLU/NIF/address/email line in the
      footer. The legal-owner block remains available on the dedicated legal
      pages, where it belongs.
+261. Stop automatic paid Netlify deploys from clinic edits. Done in
+     `supabase/migrations/0026_manual_public_site_deploys.sql`: visible clinic
+     changes only mark the web as pending, while the authenticated **Actualizar
+     web ahora** action is the sole path that can call the production build
+     hook. Draft-only work does not create public deployment work.
 
 
 ## Daniel decision checkpoints

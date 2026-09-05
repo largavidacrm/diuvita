@@ -35,6 +35,7 @@ def sample_digest():
         },
         "publication_control": {
             "rebuild_hook_configured": True,
+            "publication_mode": "manual",
             "rebuild_batch_minutes": 30,
             "last_public_site_rebuild_requested_at": "2026-08-31T06:24:00+00:00",
             "last_public_site_change_at": "2026-08-31T06:47:00+00:00",
@@ -283,7 +284,7 @@ def main():
     check("1 cambio de fuente pendiente" in output, "source-change singular missing")
     check("Auto-publicación: apagada" in output, "auto-publish state missing")
     check("Modo sombra: activo" in output, "shadow mode state missing")
-    check("Publicación web: con cambios pendientes de verse online" in output, "publication control state missing")
+    check("Publicación web: manual, con cambios pendientes" in output, "publication control state missing")
     check("Preparación para publicación: 3/24 fichas sin faltantes obligatorios; 21 con faltantes; 1 con claims bloqueantes" in output, "publication readiness state missing")
     check("Principal faltante para publicar: Google Maps de clínica · 20 fichas" in output, "publication top blocker missing")
     check("Siguiente publicación: Revisar Longevity Marbella: primer faltante obligatorio: Google Maps de clínica; 2 faltantes en total" in output, "publication next action missing")

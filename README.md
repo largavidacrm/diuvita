@@ -62,11 +62,12 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `supabase/migrations/0015_candidate_draft_validation_flow.sql`: flujo claro candidata -> borrador -> validación final.
 - `supabase/migrations/0016_normalize_existing_candidate_drafts.sql`: normaliza candidatas internas antiguas a borrador.
 - `supabase/migrations/0017_admin_restore_clinic_version.sql`: restauración auditada de fichas desde el historial.
-- `supabase/migrations/0018_batch_public_site_rebuilds.sql`: prepara ventanas de publicacion agrupada para reducir rebuilds de Netlify desde Supabase.
-- `supabase/migrations/0019_admin_publication_control_summary.sql`: expone al admin el estado de publicacion agrupada sin revelar el hook privado.
+- `supabase/migrations/0018_batch_public_site_rebuilds.sql`: conserva la primera etapa histórica de agrupación de rebuilds de Netlify.
+- `supabase/migrations/0019_admin_publication_control_summary.sql`: expone al admin el estado de publicación sin revelar el hook privado.
 - `supabase/migrations/0021_vitalarga_brand_rename.sql`: migra ajustes internos vivos de la marca anterior a Vitalarga.
 - `supabase/migrations/0022_neutralize_progevita_summary.sql`: neutraliza texto sensible de Progevita en Supabase.
 - `supabase/migrations/0023_clinic_portal.sql`: tablas y funciones para portal de clínicas, reclamaciones, membresías y propuestas de cambios.
+- `supabase/migrations/0026_manual_public_site_deploys.sql`: evita deploys automáticos desde ediciones de clínicas y reserva el hook de Netlify para el botón manual del admin.
 - `supabase/migrations/0001_agent_foundation.sql`: tablas base para verdad versionada, fuentes, jobs, revision humana y eventos.
 - `supabase/migrations/0003_admin_clinic_editing.sql`: funcion segura para editar clinicas desde `/admin/` con historial.
 - `supabase/migrations/0004_public_site_feed.sql`: feed publico controlado para que la web pueda construir desde Supabase.
@@ -76,7 +77,7 @@ La web publica sigue siendo estatica por ahora. La base tecnica para la siguient
 - `scripts/export_supabase_bootstrap.py`: genera un SQL unico con migracion e importacion inicial.
 - `scripts/apply_supabase_bootstrap.sh`: aplica el bootstrap contra Supabase usando `DATABASE_URL` local.
 - `scripts/check_supabase_foundation.sh`: comprueba recuentos basicos de la base Supabase.
-- `scripts/check_supabase_rebuild_batching.sh`: comprueba si Supabase agrupa peticiones de rebuild a Netlify.
+- `scripts/check_supabase_rebuild_batching.sh`: comprueba que Supabase solo permite pedir Netlify desde la acción manual del admin.
 - `scripts/capture_source_snapshot.py`: captura metadatos, hash y extracto corto de una fuente publica.
 - `scripts/source_snapshot_records.py`: helpers SQL para guardar capturas compactas en Supabase.
 - `scripts/vitalarga_rules.py`: motor local de reglas por riesgo de campo.

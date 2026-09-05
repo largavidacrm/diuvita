@@ -124,7 +124,7 @@ def main() -> None:
         "Pendiente de web",
         "Guardada en admin",
         "Guardada; pendiente de actualizar web pública.",
-        "La web pública va por detrás; se verá tras la actualización agrupada.",
+        "La web pública va por detrás; se verá cuando pulses Actualizar web ahora.",
         "No visibles",
         'el("clinicPublishFilter").addEventListener("change", renderClinics)',
         'if (filter === "web_pending") return clinicHasPendingPublicChange(row, publicationControlCache);',
