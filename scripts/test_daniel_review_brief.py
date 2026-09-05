@@ -35,6 +35,7 @@ def sample_digest():
         },
         "publication_control": {
             "rebuild_hook_configured": True,
+            "publication_mode": "manual",
             "rebuild_batch_minutes": 30,
             "last_public_site_rebuild_requested_at": "2026-08-31T06:24:00+00:00",
             "last_public_site_change_at": "2026-08-31T06:47:00+00:00",
